@@ -1,14 +1,321 @@
-// Update this page (the content is just a fallback if you fail to update the page)
 
-const Index = () => {
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Layout from '@/components/layout/Layout';
+import QueueList from '@/components/queue/QueueList';
+import LineQRCode from '@/components/ui/LineQRCode';
+import { mockQueues, mockPatients, QueueStatus, QueueType } from '@/lib/mockData';
+import { toast } from 'sonner';
+import { 
+  Users, 
+  Clock, 
+  CheckCircle, 
+  SkipForward, 
+  LayoutGrid,
+  QrCode,
+  Calendar
+} from 'lucide-react';
+
+const Dashboard = () => {
+  const [queues, setQueues] = useState(mockQueues);
+  
+  // Filter queues by status
+  const waitingQueues = queues.filter(q => q.status === QueueStatus.WAITING);
+  const activeQueues = queues.filter(q => q.status === QueueStatus.ACTIVE);
+  const completedQueues = queues.filter(q => q.status === QueueStatus.COMPLETED);
+  const skippedQueues = queues.filter(q => q.status === QueueStatus.SKIPPED);
+  
+  // Count queue types
+  const generalCount = queues.filter(q => q.type === QueueType.GENERAL && q.status !== QueueStatus.COMPLETED).length;
+  const priorityCount = queues.filter(q => q.type === QueueType.PRIORITY && q.status !== QueueStatus.COMPLETED).length;
+  const followUpCount = queues.filter(q => q.type === QueueType.FOLLOW_UP && q.status !== QueueStatus.COMPLETED).length;
+  const elderlyCount = queues.filter(q => q.type === QueueType.ELDERLY && q.status !== QueueStatus.COMPLETED).length;
+  
+  // Update queue status
+  const handleUpdateStatus = (queueId: string, status: QueueStatus) => {
+    setQueues(queues.map(q => {
+      if (q.id === queueId) {
+        const updatedQueue = { 
+          ...q, 
+          status, 
+          updatedAt: new Date(),
+          ...(status === QueueStatus.COMPLETED ? { completedAt: new Date() } : {})
+        };
+        
+        // Show toast notification
+        if (status === QueueStatus.COMPLETED) {
+          toast.success(`คิวหมายเลข ${q.number} เสร็จสิ้นการให้บริการ`);
+        } else if (status === QueueStatus.SKIPPED) {
+          toast.info(`คิวหมายเลข ${q.number} ถูกข้าม`);
+        } else if (status === QueueStatus.WAITING) {
+          toast.info(`คิวหมายเลข ${q.number} ถูกพักไว้ชั่วคราว`);
+        }
+        
+        return updatedQueue;
+      }
+      return q;
+    }));
+  };
+  
+  // Call queue (set to active)
+  const handleCallQueue = (queueId: string) => {
+    setQueues(queues.map(q => {
+      // Set all active queues back to waiting
+      if (q.status === QueueStatus.ACTIVE) {
+        return { ...q, status: QueueStatus.WAITING, updatedAt: new Date() };
+      }
+      
+      // Set the selected queue to active
+      if (q.id === queueId) {
+        const calledQueue = { 
+          ...q, 
+          status: QueueStatus.ACTIVE, 
+          updatedAt: new Date(),
+          calledAt: new Date()
+        };
+        
+        // Find the patient for this queue
+        const patient = mockPatients.find(p => p.id === q.patientId);
+        if (patient) {
+          toast.success(`กำลังเรียกคิวหมายเลข ${q.number} - ${patient.name}`);
+        } else {
+          toast.success(`กำลังเรียกคิวหมายเลข ${q.number}`);
+        }
+        
+        return calledQueue;
+      }
+      
+      return q;
+    }));
+  };
+  
+  // Recall queue (announce again)
+  const handleRecallQueue = (queueId: string) => {
+    const queue = queues.find(q => q.id === queueId);
+    if (queue) {
+      // Find the patient for this queue
+      const patient = mockPatients.find(p => p.id === queue.patientId);
+      if (patient) {
+        toast.info(`เรียกซ้ำคิวหมายเลข ${queue.number} - ${patient.name}`);
+      } else {
+        toast.info(`เรียกซ้ำคิวหมายเลข ${queue.number}`);
+      }
+    }
+  };
+  
+  // Reset all queues (just for demo)
+  const handleResetAllQueues = () => {
+    setQueues(mockQueues);
+    toast.success('รีเซ็ตคิวทั้งหมดเรียบร้อย');
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <Layout>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">แดชบอร์ด</h1>
+          <p className="text-gray-500">ระบบจัดการคิวห้องยา</p>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button className="bg-pharmacy-600 hover:bg-pharmacy-700 text-white" asChild>
+            <Link to="/queue-board">
+              <LayoutGrid className="w-4 h-4 mr-2" />
+              หน้าจอแสดงคิว
+            </Link>
+          </Button>
+          
+          <Button variant="outline" onClick={handleResetAllQueues}>
+            รีเซ็ตการสาธิต
+          </Button>
+        </div>
       </div>
-    </div>
+      
+      {/* Queue summary cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <Card className="dashboard-card">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500">คิวที่รอดำเนินการ</p>
+                <h3 className="text-3xl font-bold text-gray-900 mt-1">{waitingQueues.length}</h3>
+              </div>
+              <div className="bg-blue-100 p-3 rounded-full">
+                <Clock className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center gap-2">
+              <div className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full">ทั่วไป: {generalCount}</div>
+              <div className="text-xs bg-red-50 text-red-700 px-2 py-1 rounded-full">ด่วน: {priorityCount}</div>
+              <div className="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded-full">ผู้สูงอายุ: {elderlyCount}</div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="dashboard-card">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500">คิวที่กำลังให้บริการ</p>
+                <h3 className="text-3xl font-bold text-gray-900 mt-1">{activeQueues.length}</h3>
+              </div>
+              <div className="bg-green-100 p-3 rounded-full">
+                <Users className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
+            {activeQueues.length > 0 && (
+              <div className="mt-4">
+                <div className="text-sm font-medium">คิวปัจจุบัน: <span className="text-green-600">#{activeQueues[0].number}</span></div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        
+        <Card className="dashboard-card">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500">เสร็จสิ้นวันนี้</p>
+                <h3 className="text-3xl font-bold text-gray-900 mt-1">{completedQueues.length}</h3>
+              </div>
+              <div className="bg-gray-100 p-3 rounded-full">
+                <CheckCircle className="w-6 h-6 text-gray-600" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="text-xs text-gray-500">
+                อัตราการให้บริการเฉลี่ย: <span className="font-medium">12 นาที/คิว</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="dashboard-card">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500">นัดหมายวันนี้</p>
+                <h3 className="text-3xl font-bold text-gray-900 mt-1">3</h3>
+              </div>
+              <div className="bg-purple-100 p-3 rounded-full">
+                <Calendar className="w-6 h-6 text-purple-600" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded-full">ติดตามการใช้ยา: {followUpCount}</div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-3">
+          <Tabs defaultValue="waiting">
+            <TabsList className="mb-4">
+              <TabsTrigger value="waiting">รอดำเนินการ ({waitingQueues.length})</TabsTrigger>
+              <TabsTrigger value="active">กำลังให้บริการ ({activeQueues.length})</TabsTrigger>
+              <TabsTrigger value="completed">เสร็จสิ้น ({completedQueues.length})</TabsTrigger>
+              <TabsTrigger value="skipped">ข้ามไปแล้ว ({skippedQueues.length})</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="waiting" className="animate-fade-in">
+              <QueueList
+                queues={waitingQueues}
+                patients={mockPatients}
+                title="คิวที่รอดำเนินการ"
+                emptyMessage="ไม่มีคิวที่รอดำเนินการ"
+                onUpdateStatus={handleUpdateStatus}
+                onCallQueue={handleCallQueue}
+                onRecallQueue={handleRecallQueue}
+              />
+            </TabsContent>
+            
+            <TabsContent value="active" className="animate-fade-in">
+              <QueueList
+                queues={activeQueues}
+                patients={mockPatients}
+                title="คิวที่กำลังให้บริการ"
+                emptyMessage="ไม่มีคิวที่กำลังให้บริการ"
+                onUpdateStatus={handleUpdateStatus}
+                onCallQueue={handleCallQueue}
+                onRecallQueue={handleRecallQueue}
+              />
+            </TabsContent>
+            
+            <TabsContent value="completed" className="animate-fade-in">
+              <QueueList
+                queues={completedQueues}
+                patients={mockPatients}
+                title="คิวที่เสร็จสิ้นแล้ว"
+                emptyMessage="ไม่มีคิวที่เสร็จสิ้น"
+                onUpdateStatus={handleUpdateStatus}
+                onCallQueue={handleCallQueue}
+                onRecallQueue={handleRecallQueue}
+              />
+            </TabsContent>
+            
+            <TabsContent value="skipped" className="animate-fade-in">
+              <QueueList
+                queues={skippedQueues}
+                patients={mockPatients}
+                title="คิวที่ถูกข้าม"
+                emptyMessage="ไม่มีคิวที่ถูกข้าม"
+                onUpdateStatus={handleUpdateStatus}
+                onCallQueue={handleCallQueue}
+                onRecallQueue={handleRecallQueue}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
+        
+        <div className="space-y-6">
+          <Card className="dashboard-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center">
+                <QrCode className="h-5 w-5 mr-2 text-pharmacy-600" />
+                ลงทะเบียนผ่าน LINE
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <LineQRCode queueNumber={999} />
+              <div className="mt-4 text-center text-sm text-gray-500">
+                <p>สแกนเพื่อเข้าสู่ระบบการจองคิวออนไลน์</p>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="dashboard-card bg-pharmacy-50 border-pharmacy-100">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg text-pharmacy-800">สถิติการให้บริการ</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">เวลาเฉลี่ยต่อคิว</span>
+                  <span className="font-semibold">12 นาที</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">ผู้รับบริการวันนี้</span>
+                  <span className="font-semibold">{completedQueues.length} คน</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">เวลารอเฉลี่ย</span>
+                  <span className="font-semibold">25 นาที</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">คิวสูงสุดวันนี้</span>
+                  <span className="font-semibold">8</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </Layout>
   );
 };
 
-export default Index;
+export default Dashboard;
