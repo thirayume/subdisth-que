@@ -41,8 +41,8 @@ const Dashboard = () => {
         const updatedQueue = { 
           ...q, 
           status, 
-          updatedAt: new Date(),
-          ...(status === QueueStatus.COMPLETED ? { completedAt: new Date() } : {})
+          updatedAt: new Date().toISOString(),
+          ...(status === QueueStatus.COMPLETED ? { completedAt: new Date().toISOString() } : {})
         };
         
         // Show toast notification
@@ -65,7 +65,7 @@ const Dashboard = () => {
     setQueues(queues.map(q => {
       // Set all active queues back to waiting
       if (q.status === QueueStatus.ACTIVE) {
-        return { ...q, status: QueueStatus.WAITING, updatedAt: new Date() };
+        return { ...q, status: QueueStatus.WAITING, updatedAt: new Date().toISOString() };
       }
       
       // Set the selected queue to active
@@ -73,8 +73,8 @@ const Dashboard = () => {
         const calledQueue = { 
           ...q, 
           status: QueueStatus.ACTIVE, 
-          updatedAt: new Date(),
-          calledAt: new Date()
+          updatedAt: new Date().toISOString(),
+          calledAt: new Date().toISOString()
         };
         
         // Find the patient for this queue

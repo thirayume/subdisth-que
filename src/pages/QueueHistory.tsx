@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,7 +50,7 @@ const QueueHistory = () => {
     }));
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [dateRange, setDateRange] = useState<DateRange>({
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(new Date().setHours(0, 0, 0, 0)),
     to: new Date(new Date().setHours(23, 59, 59, 999)),
   });
@@ -67,8 +66,8 @@ const QueueHistory = () => {
     // Filter by date range
     const completedDate = new Date(queue.completedAt!);
     const matchesDateRange = 
-      (!dateRange.from || completedDate >= dateRange.from) && 
-      (!dateRange.to || completedDate <= dateRange.to);
+      (!dateRange?.from || completedDate >= dateRange.from) && 
+      (!dateRange?.to || completedDate <= dateRange.to);
     
     // Filter by queue type
     const matchesType = queueType === 'all' || queue.type === queueType;
@@ -123,6 +122,10 @@ const QueueHistory = () => {
     const diffMinutes = Math.round((calledTime - createdTime) / (1000 * 60));
     
     return `${diffMinutes} นาที`;
+  };
+  
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    setDateRange(range);
   };
   
   return (
@@ -234,7 +237,7 @@ const QueueHistory = () => {
                     mode="range"
                     defaultMonth={dateRange?.from}
                     selected={dateRange}
-                    onSelect={(range) => setDateRange(range || {})}
+                    onSelect={handleDateRangeChange}
                     numberOfMonths={2}
                     className="p-3 pointer-events-auto"
                   />
