@@ -17,7 +17,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel }
   const [formData, setFormData] = useState<Partial<Patient>>(
     patient || {
       name: '',
-      phoneNumber: '',
+      phone: '',
       lineId: '',
       address: '',
     }
@@ -60,11 +60,11 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel }
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="phoneNumber">เบอร์โทรศัพท์</Label>
+              <Label htmlFor="phone">เบอร์โทรศัพท์</Label>
               <Input
-                id="phoneNumber"
-                name="phoneNumber"
-                value={formData.phoneNumber}
+                id="phone"
+                name="phone"
+                value={formData.phone}
                 onChange={handleChange}
                 placeholder="เบอร์โทรศัพท์"
                 required

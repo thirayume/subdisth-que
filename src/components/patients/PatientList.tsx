@@ -7,14 +7,14 @@ import { Edit, Phone, MapPin, MessageCircle } from 'lucide-react';
 
 interface PatientListProps {
   patients: Patient[];
-  onSelectPatient: (patient: Patient) => void;
-  onEditPatient: (patient: Patient) => void;
+  onSelectPatient?: (patient: Patient) => void;
+  onEditPatient?: (patient: Patient) => void;
 }
 
 const PatientList: React.FC<PatientListProps> = ({ 
   patients, 
-  onSelectPatient, 
-  onEditPatient 
+  onSelectPatient = () => {}, 
+  onEditPatient = () => {} 
 }) => {
   return (
     <div className="space-y-4">
@@ -50,7 +50,7 @@ const PatientList: React.FC<PatientListProps> = ({
                       <h4 className="font-medium text-gray-900">{patient.name}</h4>
                       <div className="flex items-center text-sm text-gray-500">
                         <Phone className="h-3 w-3 mr-1" />
-                        {patient.phoneNumber}
+                        {patient.phone}
                       </div>
                     </div>
                   </div>

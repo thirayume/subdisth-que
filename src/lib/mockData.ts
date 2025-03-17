@@ -1,3 +1,17 @@
+export enum QueueType {
+  GENERAL = 'GENERAL',
+  PRIORITY = 'PRIORITY',
+  ELDERLY = 'ELDERLY',
+  FOLLOW_UP = 'FOLLOW_UP'
+}
+
+export enum QueueStatus {
+  WAITING = 'WAITING',
+  ACTIVE = 'ACTIVE',
+  COMPLETED = 'COMPLETED',
+  SKIPPED = 'SKIPPED'
+}
+
 export interface Queue {
   id: string;
   number: number;
@@ -8,6 +22,7 @@ export interface Queue {
   updatedAt: string;
   calledAt?: string;
   completedAt?: string;
+  notes?: string; // Add notes field
 }
 
 export interface Patient {
@@ -15,10 +30,14 @@ export interface Patient {
   name: string;
   gender: string;
   birthDate: string;
-  phone: string;
+  phone: string;     // Original property
+  phoneNumber?: string; // Add compatibility with components
   address: string;
   createdAt: string;
   updatedAt: string;
+  lineId?: string;   // Add lineId
+  profileImage?: string; // Add profileImage
+  distanceFromHospital?: number; // Add distanceFromHospital
 }
 
 export const mockQueues: Queue[] = [
@@ -261,20 +280,6 @@ export const mockPatients: Patient[] = [
     updatedAt: new Date().toISOString(),
   },
 ];
-
-export enum QueueType {
-  GENERAL = 'GENERAL',
-  PRIORITY = 'PRIORITY',
-  ELDERLY = 'ELDERLY',
-  FOLLOW_UP = 'FOLLOW_UP'
-}
-
-export enum QueueStatus {
-  WAITING = 'WAITING',
-  ACTIVE = 'ACTIVE',
-  COMPLETED = 'COMPLETED',
-  SKIPPED = 'SKIPPED'
-}
 
 export const mockMedications = [
   {

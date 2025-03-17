@@ -129,7 +129,7 @@ const QueueCard: React.FC<QueueCardProps> = ({ queue, patient, className }) => {
             </div>
             <div className="queue-number text-4xl font-bold mb-2 text-pharmacy-700">{queue.number}</div>
             <div className="font-medium text-gray-900">{patient.name}</div>
-            <div className="text-sm text-gray-500">{patient.phoneNumber}</div>
+            <div className="text-sm text-gray-500">{patient.phone}</div>
           </div>
 
           <div className="flex flex-col items-end">

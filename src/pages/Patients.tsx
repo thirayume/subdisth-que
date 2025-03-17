@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import Layout from '@/components/layout/Layout';
 import PatientList from '@/components/patients/PatientList';
 import PatientForm from '@/components/patients/PatientForm';
-import { mockPatients } from '@/lib/mockData';
+import { mockPatients, Patient } from '@/lib/mockData';
 import { toast } from 'sonner';
 import { Search, UserPlus, MapPin, RefreshCw } from 'lucide-react';
 
@@ -16,6 +16,7 @@ const Patients = () => {
   const [patients, setPatients] = useState(mockPatients);
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const navigate = useNavigate();
 
   const filteredPatients = patients.filter(patient => 
@@ -24,10 +25,29 @@ const Patients = () => {
     patient.phone.includes(searchTerm)
   );
 
-  const handleAddPatient = (newPatient: any) => {
-    setPatients([...patients, { ...newPatient, id: `P${patients.length + 1000}` }]);
+  const handleAddPatient = (newPatient: Partial<Patient>) => {
+    const patient = {
+      ...newPatient,
+      id: `P${patients.length + 1000}`,
+      gender: newPatient.gender || 'ไม่ระบุ',
+      birthDate: newPatient.birthDate || new Date().toISOString().split('T')[0],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    } as Patient;
+    
+    setPatients([...patients, patient]);
     setShowForm(false);
     toast.success(`เพิ่มข้อมูลผู้ป่วย ${newPatient.name} เรียบร้อยแล้ว`);
+  };
+  
+  const handleSelectPatient = (patient: Patient) => {
+    setSelectedPatient(patient);
+    // Navigate to patient detail or show detail modal
+  };
+  
+  const handleEditPatient = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setShowForm(true);
   };
 
   return (
@@ -41,7 +61,10 @@ const Patients = () => {
         <div className="flex items-center gap-2">
           <Button 
             className="bg-pharmacy-600 hover:bg-pharmacy-700 text-white"
-            onClick={() => setShowForm(true)}
+            onClick={() => {
+              setSelectedPatient(null);
+              setShowForm(true);
+            }}
           >
             <UserPlus className="w-4 h-4 mr-2" />
             เพิ่มผู้ป่วยใหม่
@@ -111,12 +134,16 @@ const Patients = () => {
       {showForm ? (
         <Card>
           <CardHeader>
-            <CardTitle>เพิ่มข้อมูลผู้ป่วยใหม่</CardTitle>
+            <CardTitle>{selectedPatient ? 'แก้ไขข้อมูลผู้ป่วย' : 'เพิ่มข้อมูลผู้ป่วยใหม่'}</CardTitle>
           </CardHeader>
           <CardContent>
             <PatientForm 
+              patient={selectedPatient || undefined}
               onSubmit={handleAddPatient} 
-              onCancel={() => setShowForm(false)}
+              onCancel={() => {
+                setShowForm(false);
+                setSelectedPatient(null);
+              }}
             />
           </CardContent>
         </Card>
@@ -135,8 +162,12 @@ const Patients = () => {
           </div>
           
           <Card>
-            <CardContent className="p-0">
-              <PatientList patients={filteredPatients} />
+            <CardContent className="p-6">
+              <PatientList 
+                patients={filteredPatients} 
+                onSelectPatient={handleSelectPatient}
+                onEditPatient={handleEditPatient}
+              />
             </CardContent>
           </Card>
         </div>

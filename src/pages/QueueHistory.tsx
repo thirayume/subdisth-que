@@ -39,6 +39,7 @@ import {
   PopoverTrigger, 
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { DateRange } from "react-day-picker";
 
 const QueueHistory = () => {
   // Add completion time to completed queues for demo purposes
@@ -46,14 +47,11 @@ const QueueHistory = () => {
     .filter(q => q.status === QueueStatus.COMPLETED)
     .map(q => ({
       ...q,
-      completedAt: new Date(new Date().getTime() - Math.random() * 10000000)
+      completedAt: new Date(new Date().getTime() - Math.random() * 10000000).toISOString()
     }));
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [dateRange, setDateRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>({
+  const [dateRange, setDateRange] = useState<DateRange>({
     from: new Date(new Date().setHours(0, 0, 0, 0)),
     to: new Date(new Date().setHours(23, 59, 59, 999)),
   });
@@ -236,7 +234,7 @@ const QueueHistory = () => {
                     mode="range"
                     defaultMonth={dateRange?.from}
                     selected={dateRange}
-                    onSelect={setDateRange}
+                    onSelect={(range) => setDateRange(range || {})}
                     numberOfMonths={2}
                     className="p-3 pointer-events-auto"
                   />
