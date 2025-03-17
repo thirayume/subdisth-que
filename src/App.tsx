@@ -7,6 +7,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import QueueBoard from "./pages/QueueBoard";
 import NotFound from "./pages/NotFound";
+import Patients from "./pages/Patients";
+import Medications from "./pages/Medications";
+import Appointments from "./pages/Appointments";
+import QueueHistory from "./pages/QueueHistory";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +24,11 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/queue-board" element={<QueueBoard />} />
+          <Route path="/patients" element={<Patients />} />
+          <Route path="/medications" element={<Medications />} />
+          <Route path="/appointments" element={<Appointments />} />
+          <Route path="/history" element={<QueueHistory />} />
+          <Route path="/settings" element={<Settings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
