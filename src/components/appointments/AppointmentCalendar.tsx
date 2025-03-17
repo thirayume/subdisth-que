@@ -40,7 +40,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({ appointments 
           day_today: 'bg-pharmacy-50 text-pharmacy-600',
         }}
         components={{
-          DayContent: ({ date, ...props }) => {
+          DayContent: ({ date, activeModifiers }) => {
             const dateStr = format(date, 'yyyy-MM-dd');
             const appointmentCount = appointmentDates[dateStr] || 0;
             
@@ -51,7 +51,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({ appointments 
                   <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 -mb-1">
                     <div className={cn(
                       "h-1 w-1 rounded-full",
-                      props.isSelected ? "bg-white" : "bg-pharmacy-600"
+                      activeModifiers.selected ? "bg-white" : "bg-pharmacy-600"
                     )} />
                   </div>
                 )}
