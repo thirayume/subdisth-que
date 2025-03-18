@@ -53,11 +53,13 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
   const [queueType, setQueueType] = useState<QueueType>(QueueType.GENERAL);
   const [notes, setNotes] = useState('');
   
-  // State for QR code dialog
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [createdQueueNumber, setCreatedQueueNumber] = useState<number | null>(null);
+  const [selectedPatientName, setSelectedPatientName] = useState('');
+  const [selectedPatientPhone, setSelectedPatientPhone] = useState('');
+  const [createdQueueType, setCreatedQueueType] = useState<QueueType>(QueueType.GENERAL);
+  const [createdPurpose, setCreatedPurpose] = useState('');
 
-  // Reset states when dialog opens/closes
   useEffect(() => {
     if (!open) {
       setPhoneNumber('');
@@ -68,10 +70,11 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
       setPatientId('');
       setQueueType(QueueType.GENERAL);
       setNotes('');
+      setSelectedPatientName('');
+      setSelectedPatientPhone('');
     }
   }, [open]);
 
-  // Handle phone number search
   const handlePhoneSearch = () => {
     if (!phoneNumber) {
       toast.error('กรุณากรอกเบอร์โทรศัพท์');
@@ -80,8 +83,6 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
 
     setIsSearching(true);
     
-    // In a real app, this would be an API call
-    // For now, we'll filter the mock data
     const foundPatients = mockPatients.filter(patient => 
       patient.phone && patient.phone.includes(phoneNumber)
     );
@@ -102,7 +103,14 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
   };
 
   const handleSelectPatient = (id: string) => {
+    const selectedPatient = mockPatients.find(p => p.id === id);
     setPatientId(id);
+    
+    if (selectedPatient) {
+      setSelectedPatientName(selectedPatient.name);
+      setSelectedPatientPhone(selectedPatient.phone || '');
+    }
+    
     setShowNewPatientForm(false);
   };
 
@@ -113,31 +121,31 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
     }
 
     let selectedPatientId = patientId;
+    let finalPatientName = selectedPatientName;
+    let finalPatientPhone = selectedPatientPhone;
 
-    // If creating a new patient
     if (showNewPatientForm && newPatientName) {
-      // In a real app, this would be an API call to create a new patient
       const newPatient = {
         id: uuidv4(),
         name: newPatientName,
         phone: phoneNumber,
-        gender: '', // Added required field with default empty value
-        birthDate: '', // Added required field with default empty value
-        address: '', // Added required field with default empty value
+        gender: '',
+        birthDate: '',
+        address: '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
       
-      // Add to mock data (in real app, this would be handled by the API)
       mockPatients.push(newPatient);
       selectedPatientId = newPatient.id;
+      finalPatientName = newPatientName;
+      finalPatientPhone = phoneNumber;
       
       toast.success(`สร้างข้อมูลผู้ป่วยใหม่: ${newPatientName}`);
     }
 
     const purpose = queueTypePurposes[queueType];
     
-    // Generate a queue number between 1 and 100
     const queueNumber = Math.floor(Math.random() * 100) + 1;
     
     const newQueue = {
@@ -145,7 +153,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
       number: queueNumber,
       patientId: selectedPatientId,
       type: queueType,
-      purpose: purpose, // Use the purpose based on queue type
+      purpose: purpose,
       notes,
       status: QueueStatus.WAITING,
       createdAt: new Date().toISOString(),
@@ -153,13 +161,13 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
     };
 
     onCreateQueue(newQueue);
-    toast.success(`สร้างคิวหมายเลข ${newQueue.number} เรียบร้อยแล้ว`);
+    toast.success(`สร้างคิวหมายเลข ${queueNumber} เรียบร้อยแล้ว`);
     
-    // Set created queue number and open QR dialog
     setCreatedQueueNumber(queueNumber);
+    setCreatedQueueType(queueType);
+    setCreatedPurpose(purpose);
     setQrDialogOpen(true);
     
-    // Close the create queue dialog
     onOpenChange(false);
   };
 
@@ -171,7 +179,6 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
             <DialogTitle>สร้างคิวใหม่</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            {/* Step 1: Phone Number Search */}
             <div className="grid gap-2">
               <Label htmlFor="phoneNumber">เบอร์โทรศัพท์</Label>
               <div className="flex gap-2">
@@ -193,7 +200,6 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
               </div>
             </div>
 
-            {/* Step 2: Show matched patients or new patient form */}
             {matchedPatients.length > 0 && (
               <div className="grid gap-2">
                 <div className="flex justify-between items-center">
@@ -235,7 +241,6 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
               </div>
             )}
             
-            {/* Show these fields only if a patient is selected or creating new patient */}
             {(patientId || (showNewPatientForm && newPatientName)) && (
               <>
                 <div className="grid gap-2">
@@ -283,12 +288,15 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
         </DialogContent>
       </Dialog>
       
-      {/* QR Code Dialog after queue creation */}
       {createdQueueNumber !== null && (
         <QueueCreatedDialog 
           open={qrDialogOpen} 
           onOpenChange={setQrDialogOpen} 
-          queueNumber={createdQueueNumber} 
+          queueNumber={createdQueueNumber}
+          queueType={createdQueueType}
+          patientName={finalPatientName}
+          patientPhone={finalPatientPhone}
+          purpose={createdPurpose}
         />
       )}
     </>

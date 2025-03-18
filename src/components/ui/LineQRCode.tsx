@@ -3,13 +3,22 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { QrCode } from 'lucide-react';
+import { QueueType } from '@/lib/mockData';
+import { formatQueueNumber } from '@/components/queue/QueueCreatedDialog';
 
 interface LineQRCodeProps {
   queueNumber: number;
+  queueType?: QueueType;
   className?: string;
 }
 
-const LineQRCode: React.FC<LineQRCodeProps> = ({ queueNumber, className }) => {
+const LineQRCode: React.FC<LineQRCodeProps> = ({ 
+  queueNumber, 
+  queueType = QueueType.GENERAL, 
+  className 
+}) => {
+  const formattedQueueNumber = formatQueueNumber(queueType, queueNumber);
+  
   // This is a placeholder for a real QR code generator
   // In a real app, you would generate a proper QR code for LINE integration
   return (
@@ -47,7 +56,7 @@ const LineQRCode: React.FC<LineQRCodeProps> = ({ queueNumber, className }) => {
         
         <div className="mt-4 text-center">
           <p className="text-sm text-gray-500">คิวหมายเลข</p>
-          <p className="text-xl font-bold text-pharmacy-700">{queueNumber}</p>
+          <p className="text-xl font-bold text-pharmacy-700">{formattedQueueNumber}</p>
         </div>
       </CardContent>
     </Card>

@@ -6,22 +6,48 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import LineQRCode from '@/components/ui/LineQRCode';
-import { Check, Printer } from 'lucide-react';
+import { Check, Printer, Phone, User } from 'lucide-react';
+import { QueueType } from '@/lib/mockData';
+
+// Queue type format mapping
+export const queueTypeFormat = {
+  [QueueType.GENERAL]: { prefix: 'A', padLength: 3 },
+  [QueueType.PRIORITY]: { prefix: 'P', padLength: 3 },
+  [QueueType.ELDERLY]: { prefix: 'E', padLength: 3 },
+  [QueueType.FOLLOW_UP]: { prefix: 'F', padLength: 3 },
+};
+
+// Format the queue number with the type prefix
+export const formatQueueNumber = (queueType: QueueType, queueNumber: number): string => {
+  const format = queueTypeFormat[queueType];
+  return `${format.prefix}${queueNumber.toString().padStart(format.padLength, '0')}`;
+};
 
 interface QueueCreatedDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   queueNumber: number;
+  queueType: QueueType;
+  patientName?: string;
+  patientPhone?: string;
+  purpose?: string;
 }
 
 const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
   open,
   onOpenChange,
   queueNumber,
+  queueType = QueueType.GENERAL,
+  patientName = '',
+  patientPhone = '',
+  purpose = '',
 }) => {
+  const formattedQueueNumber = formatQueueNumber(queueType, queueNumber);
+  
   const handlePrint = () => {
     // Create a new window with just the content we want to print
     const printWindow = window.open('', '_blank');
@@ -35,7 +61,7 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
       <!DOCTYPE html>
       <html>
         <head>
-          <title>คิวหมายเลข ${queueNumber}</title>
+          <title>คิวหมายเลข ${formattedQueueNumber}</title>
           <style>
             body {
               font-family: 'Sukhumvit Set', 'Prompt', system-ui, sans-serif;
@@ -43,8 +69,8 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
               text-align: center;
             }
             .queue-info {
-              margin: 20px 0;
-              font-size: 24px;
+              margin: 16px 0;
+              font-size: 18px;
               font-weight: bold;
             }
             .queue-number {
@@ -52,6 +78,15 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
               font-weight: bold;
               color: #158a7b;
               margin: 20px 0;
+            }
+            .patient-info {
+              margin: 8px 0;
+              font-size: 16px;
+            }
+            .purpose-info {
+              margin: 10px 0;
+              font-size: 16px;
+              color: #555;
             }
             .qr-placeholder {
               margin: 20px auto;
@@ -71,7 +106,10 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
         </head>
         <body>
           <h2>คิวของท่าน</h2>
-          <div class="queue-number">${queueNumber}</div>
+          <div class="queue-number">${formattedQueueNumber}</div>
+          ${patientName ? `<div class="patient-info">ชื่อผู้ป่วย: ${patientName}</div>` : ''}
+          ${patientPhone ? `<div class="patient-info">โทรศัพท์: ${patientPhone}</div>` : ''}
+          ${purpose ? `<div class="purpose-info">วัตถุประสงค์: ${purpose}</div>` : ''}
           <div class="queue-info">
             วันที่: ${new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
           </div>
@@ -111,15 +149,33 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
             <Check className="h-5 w-5 text-green-500" />
             <span>สร้างคิวเรียบร้อยแล้ว</span>
           </DialogTitle>
+          <DialogDescription className="text-center text-sm">
+            {purpose}
+          </DialogDescription>
         </DialogHeader>
         
         <div className="flex flex-col items-center justify-center py-4">
           <div className="text-center mb-4">
-            <p className="text-lg font-medium text-pharmacy-700">คิวหมายเลข: <span className="text-2xl">{queueNumber}</span></p>
-            <p className="text-sm text-gray-500 mt-1">สแกน QR Code เพื่อติดตามคิวบน LINE</p>
+            <p className="text-lg font-medium text-pharmacy-700">คิวหมายเลข: <span className="text-2xl">{formattedQueueNumber}</span></p>
+            
+            {patientName && (
+              <div className="flex items-center justify-center gap-1 mt-2 text-sm text-gray-600">
+                <User className="h-3.5 w-3.5" />
+                <span>{patientName}</span>
+              </div>
+            )}
+            
+            {patientPhone && (
+              <div className="flex items-center justify-center gap-1 mt-1 text-sm text-gray-600">
+                <Phone className="h-3.5 w-3.5" />
+                <span>{patientPhone}</span>
+              </div>
+            )}
+            
+            <p className="text-sm text-gray-500 mt-2">สแกน QR Code เพื่อติดตามคิวบน LINE</p>
           </div>
           
-          <LineQRCode queueNumber={queueNumber} className="w-full max-w-[250px] mx-auto" />
+          <LineQRCode queueNumber={queueNumber} queueType={queueType} className="w-full max-w-[250px] mx-auto" />
         </div>
         
         <DialogFooter className="flex flex-col sm:flex-row gap-2">
