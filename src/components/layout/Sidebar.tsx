@@ -16,6 +16,8 @@ import {
   ClipboardList,
   Pill
 } from 'lucide-react';
+import CreateQueueDialog from '@/components/queue/CreateQueueDialog';
+import { mockQueues } from '@/lib/mockData';
 
 interface SidebarProps {
   className?: string;
@@ -24,6 +26,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const [expanded, setExpanded] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [createQueueDialogOpen, setCreateQueueDialogOpen] = useState(false);
 
   const toggleSidebar = () => {
     setExpanded(!expanded);
@@ -31,6 +34,14 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
 
   const toggleMobileSidebar = () => {
     setMobileSidebarOpen(!mobileSidebarOpen);
+  };
+
+  const handleCreateQueue = (newQueue: any) => {
+    // In a real application, we'd update the global state or send to API
+    console.log('New queue created:', newQueue);
+    
+    // For now, just add to mockQueues for demonstration
+    mockQueues.push(newQueue);
   };
 
   const navItems = [
@@ -122,12 +133,20 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
               "w-full bg-pharmacy-600 hover:bg-pharmacy-700 text-white transition-all duration-300",
               !expanded && "p-2"
             )}
+            onClick={() => setCreateQueueDialogOpen(true)}
           >
             <PlusCircle className="h-5 w-5 mr-2" />
             {expanded && <span>สร้างคิวใหม่</span>}
           </Button>
         </div>
       </aside>
+
+      {/* Create Queue Dialog */}
+      <CreateQueueDialog
+        open={createQueueDialogOpen}
+        onOpenChange={setCreateQueueDialogOpen}
+        onCreateQueue={handleCreateQueue}
+      />
     </>
   );
 };
