@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { QrCode } from 'lucide-react';
 
 interface LineQRCodeProps {
   queueNumber: number;
@@ -21,24 +22,25 @@ const LineQRCode: React.FC<LineQRCodeProps> = ({ queueNumber, className }) => {
         
         <div className="w-40 h-40 bg-white border-2 border-pharmacy-100 rounded-lg flex items-center justify-center relative overflow-hidden">
           {/* Placeholder for actual QR code */}
-          <div className="absolute inset-4 grid grid-cols-4 grid-rows-4 gap-1">
-            {Array.from({ length: 16 }).map((_, i) => (
+          <div className="absolute inset-4 grid grid-cols-5 grid-rows-5 gap-1">
+            {Array.from({ length: 25 }).map((_, i) => (
               <div 
                 key={i} 
                 className={cn(
-                  "bg-black rounded-sm",
-                  // Create a pattern that looks like a QR code
-                  (i === 0 || i === 3 || i === 12 || i === 15 || i % 7 === 0) && "bg-black",
-                  (i === 5 || i === 6 || i === 9 || i === 10) && "bg-white"
+                  "rounded-sm",
+                  // Create a pattern that looks like a QR code with queue number influence
+                  (i === 0 || i === 4 || i === 20 || i === 24 || 
+                   i % (queueNumber % 7 === 0 ? 7 : queueNumber % 5 + 3) === 0) ? "bg-black" : "",
+                  (i === 6 || i === 7 || i === 8 || i === 11 || i === 13 || i === 16 || i === 17 || i === 18) && "bg-white"
                 )}
               />
             ))}
           </div>
           
-          {/* LINE logo overlay in the center */}
+          {/* QR code center with queue number */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-8 h-8 bg-white flex items-center justify-center rounded-md shadow-sm">
-              <span className="text-xs font-bold text-green-500">LINE</span>
+            <div className="w-10 h-10 bg-white flex items-center justify-center rounded-md shadow-sm">
+              <QrCode className="h-6 w-6 text-green-500" />
             </div>
           </div>
         </div>

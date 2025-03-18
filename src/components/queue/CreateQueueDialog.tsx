@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -22,6 +21,7 @@ import {
 import { toast } from 'sonner';
 import { QueueType, QueueStatus, mockPatients } from '@/lib/mockData';
 import { PlusCircle, Search } from 'lucide-react';
+import QueueCreatedDialog from './QueueCreatedDialog';
 
 interface CreateQueueDialogProps {
   open: boolean;
@@ -52,6 +52,10 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
   const [patientId, setPatientId] = useState('');
   const [queueType, setQueueType] = useState<QueueType>(QueueType.GENERAL);
   const [notes, setNotes] = useState('');
+  
+  // State for QR code dialog
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [createdQueueNumber, setCreatedQueueNumber] = useState<number | null>(null);
 
   // Reset states when dialog opens/closes
   useEffect(() => {
@@ -133,9 +137,12 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
 
     const purpose = queueTypePurposes[queueType];
     
+    // Generate a queue number between 1 and 100
+    const queueNumber = Math.floor(Math.random() * 100) + 1;
+    
     const newQueue = {
       id: uuidv4(),
-      number: Math.floor(Math.random() * 100) + 1, // In a real app, this would be generated sequentially
+      number: queueNumber,
       patientId: selectedPatientId,
       type: queueType,
       purpose: purpose, // Use the purpose based on queue type
@@ -147,130 +154,144 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
 
     onCreateQueue(newQueue);
     toast.success(`สร้างคิวหมายเลข ${newQueue.number} เรียบร้อยแล้ว`);
-    onOpenChange(false);
     
-    // Navigate to the dashboard
-    navigate('/');
+    // Set created queue number and open QR dialog
+    setCreatedQueueNumber(queueNumber);
+    setQrDialogOpen(true);
+    
+    // Close the create queue dialog
+    onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>สร้างคิวใหม่</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          {/* Step 1: Phone Number Search */}
-          <div className="grid gap-2">
-            <Label htmlFor="phoneNumber">เบอร์โทรศัพท์</Label>
-            <div className="flex gap-2">
-              <Input
-                id="phoneNumber"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="กรอกเบอร์โทรศัพท์"
-                disabled={isSearching}
-              />
-              <Button 
-                variant="outline" 
-                onClick={handlePhoneSearch}
-                disabled={isSearching}
-                className="px-3"
-              >
-                <Search className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Step 2: Show matched patients or new patient form */}
-          {matchedPatients.length > 0 && (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>สร้างคิวใหม่</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {/* Step 1: Phone Number Search */}
             <div className="grid gap-2">
-              <div className="flex justify-between items-center">
-                <Label>ผู้ป่วยที่พบ</Label>
+              <Label htmlFor="phoneNumber">เบอร์โทรศัพท์</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="phoneNumber"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="กรอกเบอร์โทรศัพท์"
+                  disabled={isSearching}
+                />
                 <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={handleAddNewPatient}
-                  className="h-8 px-2 text-xs"
+                  variant="outline" 
+                  onClick={handlePhoneSearch}
+                  disabled={isSearching}
+                  className="px-3"
                 >
-                  <PlusCircle className="h-3.5 w-3.5 mr-1" />
-                  เพิ่มผู้ป่วยใหม่
+                  <Search className="h-4 w-4" />
                 </Button>
               </div>
-              <div className="border rounded-md p-1 bg-muted/30 space-y-1">
-                {matchedPatients.map(patient => (
-                  <div 
-                    key={patient.id} 
-                    className={`p-2 rounded-sm cursor-pointer hover:bg-muted flex justify-between ${patientId === patient.id ? 'bg-muted' : ''}`}
-                    onClick={() => handleSelectPatient(patient.id)}
-                  >
-                    <span>{patient.name}</span>
-                    <span className="text-muted-foreground text-sm">{patient.phone}</span>
-                  </div>
-                ))}
-              </div>
             </div>
-          )}
 
-          {showNewPatientForm && (
-            <div className="grid gap-2">
-              <Label htmlFor="newPatientName">ชื่อ-นามสกุล (ผู้ป่วยใหม่)</Label>
-              <Input
-                id="newPatientName"
-                value={newPatientName}
-                onChange={(e) => setNewPatientName(e.target.value)}
-                placeholder="กรอกชื่อ-นามสกุลผู้ป่วยใหม่"
-              />
-            </div>
-          )}
-          
-          {/* Show these fields only if a patient is selected or creating new patient */}
-          {(patientId || (showNewPatientForm && newPatientName)) && (
-            <>
+            {/* Step 2: Show matched patients or new patient form */}
+            {matchedPatients.length > 0 && (
               <div className="grid gap-2">
-                <Label htmlFor="queueType">ประเภทคิว</Label>
-                <Select 
-                  value={queueType} 
-                  onValueChange={(value) => setQueueType(value as QueueType)}
-                >
-                  <SelectTrigger id="queueType">
-                    <SelectValue placeholder="เลือกประเภทคิว" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={QueueType.GENERAL}>ทั่วไป - {queueTypePurposes[QueueType.GENERAL]}</SelectItem>
-                    <SelectItem value={QueueType.PRIORITY}>ด่วน - {queueTypePurposes[QueueType.PRIORITY]}</SelectItem>
-                    <SelectItem value={QueueType.ELDERLY}>ผู้สูงอายุ - {queueTypePurposes[QueueType.ELDERLY]}</SelectItem>
-                    <SelectItem value={QueueType.FOLLOW_UP}>ติดตามการรักษา - {queueTypePurposes[QueueType.FOLLOW_UP]}</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex justify-between items-center">
+                  <Label>ผู้ป่วยที่พบ</Label>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleAddNewPatient}
+                    className="h-8 px-2 text-xs"
+                  >
+                    <PlusCircle className="h-3.5 w-3.5 mr-1" />
+                    เพิ่มผู้ป่วยใหม่
+                  </Button>
+                </div>
+                <div className="border rounded-md p-1 bg-muted/30 space-y-1">
+                  {matchedPatients.map(patient => (
+                    <div 
+                      key={patient.id} 
+                      className={`p-2 rounded-sm cursor-pointer hover:bg-muted flex justify-between ${patientId === patient.id ? 'bg-muted' : ''}`}
+                      onClick={() => handleSelectPatient(patient.id)}
+                    >
+                      <span>{patient.name}</span>
+                      <span className="text-muted-foreground text-sm">{patient.phone}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              
+            )}
+
+            {showNewPatientForm && (
               <div className="grid gap-2">
-                <Label htmlFor="notes">บันทึกเพิ่มเติม</Label>
+                <Label htmlFor="newPatientName">ชื่อ-นามสกุล (ผู้ป่วยใหม่)</Label>
                 <Input
-                  id="notes"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="บันทึกเพิ่มเติม (ถ้ามี)"
+                  id="newPatientName"
+                  value={newPatientName}
+                  onChange={(e) => setNewPatientName(e.target.value)}
+                  placeholder="กรอกชื่อ-นามสกุลผู้ป่วยใหม่"
                 />
               </div>
-            </>
-          )}
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            ยกเลิก
-          </Button>
-          <Button 
-            className="bg-pharmacy-600 hover:bg-pharmacy-700" 
-            onClick={handleCreateQueue}
-            disabled={!patientId && !(showNewPatientForm && newPatientName)}
-          >
-            สร้างคิว
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            )}
+            
+            {/* Show these fields only if a patient is selected or creating new patient */}
+            {(patientId || (showNewPatientForm && newPatientName)) && (
+              <>
+                <div className="grid gap-2">
+                  <Label htmlFor="queueType">ประเภทคิว</Label>
+                  <Select 
+                    value={queueType} 
+                    onValueChange={(value) => setQueueType(value as QueueType)}
+                  >
+                    <SelectTrigger id="queueType">
+                      <SelectValue placeholder="เลือกประเภทคิว" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={QueueType.GENERAL}>ทั่วไป - {queueTypePurposes[QueueType.GENERAL]}</SelectItem>
+                      <SelectItem value={QueueType.PRIORITY}>ด่วน - {queueTypePurposes[QueueType.PRIORITY]}</SelectItem>
+                      <SelectItem value={QueueType.ELDERLY}>ผู้สูงอายุ - {queueTypePurposes[QueueType.ELDERLY]}</SelectItem>
+                      <SelectItem value={QueueType.FOLLOW_UP}>ติดตามการรักษา - {queueTypePurposes[QueueType.FOLLOW_UP]}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="notes">บันทึกเพิ่มเติม</Label>
+                  <Input
+                    id="notes"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="บันทึกเพิ่มเติม (ถ้ามี)"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              ยกเลิก
+            </Button>
+            <Button 
+              className="bg-pharmacy-600 hover:bg-pharmacy-700" 
+              onClick={handleCreateQueue}
+              disabled={!patientId && !(showNewPatientForm && newPatientName)}
+            >
+              สร้างคิว
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* QR Code Dialog after queue creation */}
+      {createdQueueNumber !== null && (
+        <QueueCreatedDialog 
+          open={qrDialogOpen} 
+          onOpenChange={setQrDialogOpen} 
+          queueNumber={createdQueueNumber} 
+        />
+      )}
+    </>
   );
 };
 
