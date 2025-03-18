@@ -117,6 +117,9 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
         id: uuidv4(),
         name: newPatientName,
         phone: phoneNumber,
+        gender: '', // Added required field with default empty value
+        birthDate: '', // Added required field with default empty value
+        address: '', // Added required field with default empty value
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
