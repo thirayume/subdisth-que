@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,6 +5,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Form,
   FormControl,
@@ -43,7 +43,6 @@ import {
   Trash2,
   Edit,
   Check,
-  X,
   CopyPlus
 } from 'lucide-react';
 
@@ -85,7 +84,7 @@ const Settings = () => {
   const [editingQueueType, setEditingQueueType] = useState<string | null>(null);
   const [newQueueType, setNewQueueType] = useState(false);
   
-  // Initial queue types based on existing system
+  // Initial queue types based on existing system - Fixed format type to use the exact string literals
   const initialQueueTypes = [
     {
       id: QueueType.GENERAL,
@@ -93,7 +92,7 @@ const Settings = () => {
       name: 'ทั่วไป',
       prefix: 'A',
       purpose: 'รับยาทั่วไป',
-      format: '0',
+      format: '0' as const,
       enabled: true,
     },
     {
@@ -102,7 +101,7 @@ const Settings = () => {
       name: 'ด่วน',
       prefix: 'P',
       purpose: 'กรณีเร่งด่วน',
-      format: '0',
+      format: '0' as const,
       enabled: true,
     },
     {
@@ -111,7 +110,7 @@ const Settings = () => {
       name: 'ผู้สูงอายุ',
       prefix: 'E',
       purpose: 'รับยาสำหรับผู้สูงอายุ',
-      format: '0',
+      format: '0' as const,
       enabled: true,
     },
     {
@@ -120,10 +119,11 @@ const Settings = () => {
       name: 'ติดตามการใช้ยา',
       prefix: 'F',
       purpose: 'ติดตามการรักษา',
-      format: '0',
+      format: '0' as const,
       enabled: true,
     },
   ];
+  
   
   const form = useForm<z.infer<typeof queueSettingsSchema>>({
     resolver: zodResolver(queueSettingsSchema),
@@ -143,6 +143,7 @@ const Settings = () => {
   });
   
   const queueTypes = form.watch('queue_types');
+  
   
   const onSubmit = async (data: z.infer<typeof queueSettingsSchema>) => {
     setIsSubmitting(true);
@@ -225,6 +226,8 @@ const Settings = () => {
     form.setValue('queue_types', updatedQueueTypes);
     toast.success('คัดลอกประเภทคิวเรียบร้อยแล้ว');
   };
+
+  
 
   return (
     <Layout>
