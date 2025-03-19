@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Patient } from '@/lib/mockData';
+import { Patient } from '@/integrations/supabase/schema';
 
 interface PatientFormProps {
   patient?: Patient;
@@ -18,7 +18,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel }
     patient || {
       name: '',
       phone: '',
-      lineId: '',
+      line_id: '',
       address: '',
     }
   );
@@ -52,7 +52,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel }
               <Input
                 id="name"
                 name="name"
-                value={formData.name}
+                value={formData.name || ''}
                 onChange={handleChange}
                 placeholder="ชื่อ-นามสกุล"
                 required
@@ -64,7 +64,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel }
               <Input
                 id="phone"
                 name="phone"
-                value={formData.phone}
+                value={formData.phone || ''}
                 onChange={handleChange}
                 placeholder="เบอร์โทรศัพท์"
                 required
@@ -73,11 +73,11 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel }
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="lineId">LINE ID (ถ้ามี)</Label>
+            <Label htmlFor="line_id">LINE ID (ถ้ามี)</Label>
             <Input
-              id="lineId"
-              name="lineId"
-              value={formData.lineId || ''}
+              id="line_id"
+              name="line_id"
+              value={formData.line_id || ''}
               onChange={handleChange}
               placeholder="LINE ID"
             />

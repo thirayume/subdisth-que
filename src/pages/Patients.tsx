@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,36 +8,55 @@ import { Input } from '@/components/ui/input';
 import Layout from '@/components/layout/Layout';
 import PatientList from '@/components/patients/PatientList';
 import PatientForm from '@/components/patients/PatientForm';
-import { mockPatients, Patient } from '@/lib/mockData';
 import { toast } from 'sonner';
 import { Search, UserPlus, MapPin, RefreshCw } from 'lucide-react';
+import { usePatients } from '@/hooks/usePatients';
+import { Patient } from '@/integrations/supabase/schema';
 
 const Patients = () => {
-  const [patients, setPatients] = useState(mockPatients);
+  const { 
+    patients, 
+    loading, 
+    error, 
+    addPatient, 
+    updatePatient,
+    searchPatients 
+  } = usePatients();
+  
   const [searchTerm, setSearchTerm] = useState('');
+  const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const navigate = useNavigate();
 
-  const filteredPatients = patients.filter(patient => 
-    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.phone.includes(searchTerm)
-  );
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setFilteredPatients(patients);
+    } else {
+      const performSearch = async () => {
+        const results = await searchPatients(searchTerm);
+        setFilteredPatients(results);
+      };
+      
+      performSearch();
+    }
+  }, [searchTerm, patients, searchPatients]);
 
-  const handleAddPatient = (newPatient: Partial<Patient>) => {
-    const patient = {
-      ...newPatient,
-      id: `P${patients.length + 1000}`,
-      gender: newPatient.gender || 'ไม่ระบุ',
-      birthDate: newPatient.birthDate || new Date().toISOString().split('T')[0],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    } as Patient;
-    
-    setPatients([...patients, patient]);
-    setShowForm(false);
-    toast.success(`เพิ่มข้อมูลผู้ป่วย ${newPatient.name} เรียบร้อยแล้ว`);
+  const handleAddPatient = async (newPatient: Partial<Patient>) => {
+    const result = await addPatient(newPatient);
+    if (result) {
+      setShowForm(false);
+    }
+  };
+  
+  const handleUpdatePatient = async (updatedPatient: Partial<Patient>) => {
+    if (selectedPatient) {
+      const result = await updatePatient(selectedPatient.id, updatedPatient);
+      if (result) {
+        setShowForm(false);
+        setSelectedPatient(null);
+      }
+    }
   };
   
   const handleSelectPatient = (patient: Patient) => {
@@ -48,6 +67,14 @@ const Patients = () => {
   const handleEditPatient = (patient: Patient) => {
     setSelectedPatient(patient);
     setShowForm(true);
+  };
+
+  const handleSubmitPatient = (patientData: Partial<Patient>) => {
+    if (selectedPatient) {
+      handleUpdatePatient(patientData);
+    } else {
+      handleAddPatient(patientData);
+    }
   };
 
   return (
@@ -86,7 +113,7 @@ const Patients = () => {
             </div>
             <div className="mt-4">
               <div className="text-xs text-gray-500">
-                เพิ่มขึ้น <span className="font-medium text-green-600">+5</span> ในเดือนนี้
+                ข้อมูลจากฐานข้อมูล Supabase
               </div>
             </div>
           </CardContent>
@@ -97,7 +124,9 @@ const Patients = () => {
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm font-medium text-gray-500">ผู้ป่วยในพื้นที่</p>
-                <h3 className="text-3xl font-bold text-gray-900 mt-1">68%</h3>
+                <h3 className="text-3xl font-bold text-gray-900 mt-1">
+                  {Math.round((patients.filter(p => p.distance_from_hospital !== undefined && p.distance_from_hospital <= 20).length / (patients.length || 1)) * 100)}%
+                </h3>
               </div>
               <div className="bg-green-100 p-3 rounded-full">
                 <MapPin className="w-6 h-6 text-green-600" />
@@ -105,7 +134,7 @@ const Patients = () => {
             </div>
             <div className="mt-4">
               <div className="text-xs text-gray-500">
-                ห่างจากโรงพยาบาลโดยเฉลี่ย <span className="font-medium">12 กม.</span>
+                ห่างจากโรงพยาบาลไม่เกิน 20 กิโลเมตร
               </div>
             </div>
           </CardContent>
@@ -115,8 +144,10 @@ const Patients = () => {
           <CardContent className="p-6">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-gray-500">ผู้ป่วยที่มารับบริการซ้ำ</p>
-                <h3 className="text-3xl font-bold text-gray-900 mt-1">45%</h3>
+                <p className="text-sm font-medium text-gray-500">ผู้ป่วยที่มี LINE ID</p>
+                <h3 className="text-3xl font-bold text-gray-900 mt-1">
+                  {Math.round((patients.filter(p => p.line_id).length / (patients.length || 1)) * 100)}%
+                </h3>
               </div>
               <div className="bg-purple-100 p-3 rounded-full">
                 <RefreshCw className="w-6 h-6 text-purple-600" />
@@ -124,7 +155,7 @@ const Patients = () => {
             </div>
             <div className="mt-4">
               <div className="text-xs text-gray-500">
-                เปรียบเทียบรายเดือน <span className="font-medium text-green-600">+12%</span>
+                สามารถติดต่อผ่าน LINE ได้
               </div>
             </div>
           </CardContent>
@@ -139,7 +170,7 @@ const Patients = () => {
           <CardContent>
             <PatientForm 
               patient={selectedPatient || undefined}
-              onSubmit={handleAddPatient} 
+              onSubmit={handleSubmitPatient} 
               onCancel={() => {
                 setShowForm(false);
                 setSelectedPatient(null);
@@ -163,11 +194,21 @@ const Patients = () => {
           
           <Card>
             <CardContent className="p-6">
-              <PatientList 
-                patients={filteredPatients} 
-                onSelectPatient={handleSelectPatient}
-                onEditPatient={handleEditPatient}
-              />
+              {loading ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">กำลังโหลดข้อมูล...</p>
+                </div>
+              ) : error ? (
+                <div className="text-center py-8 text-red-500">
+                  <p>เกิดข้อผิดพลาด: {error}</p>
+                </div>
+              ) : (
+                <PatientList 
+                  patients={filteredPatients} 
+                  onSelectPatient={handleSelectPatient}
+                  onEditPatient={handleEditPatient}
+                />
+              )}
             </CardContent>
           </Card>
         </div>

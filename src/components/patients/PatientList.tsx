@@ -2,8 +2,8 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Patient } from '@/lib/mockData';
 import { Edit, Phone, MapPin, MessageCircle } from 'lucide-react';
+import { Patient } from '@/integrations/supabase/schema';
 
 interface PatientListProps {
   patients: Patient[];
@@ -34,9 +34,9 @@ const PatientList: React.FC<PatientListProps> = ({
                 <div className="flex items-start justify-between">
                   <div className="flex items-center">
                     <div className="h-10 w-10 rounded-full overflow-hidden bg-pharmacy-100 flex items-center justify-center mr-3">
-                      {patient.profileImage ? (
+                      {patient.profile_image ? (
                         <img 
-                          src={patient.profileImage} 
+                          src={patient.profile_image} 
                           alt={patient.name} 
                           className="h-full w-full object-cover"
                         />
@@ -68,10 +68,10 @@ const PatientList: React.FC<PatientListProps> = ({
                 </div>
                 
                 <div className="mt-4 space-y-2 text-sm">
-                  {patient.lineId && (
+                  {patient.line_id && (
                     <div className="flex items-center text-gray-500">
                       <MessageCircle className="h-3.5 w-3.5 mr-2 text-green-500" />
-                      LINE: {patient.lineId}
+                      LINE: {patient.line_id}
                     </div>
                   )}
                   
@@ -82,9 +82,9 @@ const PatientList: React.FC<PatientListProps> = ({
                     </div>
                   )}
                   
-                  {patient.distanceFromHospital !== undefined && (
+                  {patient.distance_from_hospital !== undefined && (
                     <div className="text-xs text-gray-400 mt-2">
-                      ระยะห่างจากโรงพยาบาล: {patient.distanceFromHospital} กม.
+                      ระยะห่างจากโรงพยาบาล: {patient.distance_from_hospital} กม.
                     </div>
                   )}
                 </div>

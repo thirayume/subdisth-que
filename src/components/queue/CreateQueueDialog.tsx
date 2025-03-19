@@ -20,9 +20,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { QueueType, QueueStatus, mockPatients } from '@/lib/mockData';
+import { QueueType, QueueStatus } from '@/lib/mockData';
 import { PlusCircle, Search } from 'lucide-react';
 import QueueCreatedDialog from './QueueCreatedDialog';
+import { supabase } from '@/integrations/supabase/client';
+import { Patient } from '@/integrations/supabase/schema';
 
 interface CreateQueueDialogProps {
   open: boolean;
@@ -46,7 +48,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
   const navigate = useNavigate();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [matchedPatients, setMatchedPatients] = useState<any[]>([]);
+  const [matchedPatients, setMatchedPatients] = useState<Patient[]>([]);
   const [showNewPatientForm, setShowNewPatientForm] = useState(false);
   
   const [newPatientName, setNewPatientName] = useState('');
@@ -81,7 +83,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
     }
   }, [open]);
 
-  const handlePhoneSearch = () => {
+  const handlePhoneSearch = async () => {
     if (!phoneNumber) {
       toast.error('กรุณากรอกเบอร์โทรศัพท์');
       return;
@@ -89,19 +91,29 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
 
     setIsSearching(true);
     
-    const foundPatients = mockPatients.filter(patient => 
-      patient.phone && patient.phone.includes(phoneNumber)
-    );
-    
-    setMatchedPatients(foundPatients);
-    
-    if (foundPatients.length === 0) {
-      setShowNewPatientForm(true);
-    } else {
-      setShowNewPatientForm(false);
+    try {
+      const { data, error } = await supabase
+        .from('patients')
+        .select('*')
+        .ilike('phone', `%${phoneNumber}%`);
+        
+      if (error) {
+        throw error;
+      }
+      
+      setMatchedPatients(data || []);
+      
+      if (data.length === 0) {
+        setShowNewPatientForm(true);
+      } else {
+        setShowNewPatientForm(false);
+      }
+    } catch (err) {
+      console.error('Error searching for patients:', err);
+      toast.error('ไม่สามารถค้นหาข้อมูลผู้ป่วยได้');
+    } finally {
+      setIsSearching(false);
     }
-    
-    setIsSearching(false);
   };
 
   const handleAddNewPatient = () => {
@@ -109,7 +121,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
   };
 
   const handleSelectPatient = (id: string) => {
-    const selectedPatient = mockPatients.find(p => p.id === id);
+    const selectedPatient = matchedPatients.find(p => p.id === id);
     setPatientId(id);
     
     if (selectedPatient) {
@@ -120,7 +132,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
     setShowNewPatientForm(false);
   };
 
-  const handleCreateQueue = () => {
+  const handleCreateQueue = async () => {
     if (!patientId && !newPatientName) {
       toast.error('กรุณาเลือกผู้ป่วยหรือกรอกชื่อผู้ป่วยใหม่');
       return;
@@ -131,23 +143,36 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
     let patientPhoneToUse = selectedPatientPhone;
 
     if (showNewPatientForm && newPatientName) {
-      const newPatient = {
-        id: uuidv4(),
-        name: newPatientName,
-        phone: phoneNumber,
-        gender: '',
-        birthDate: '',
-        address: '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      
-      mockPatients.push(newPatient);
-      selectedPatientId = newPatient.id;
-      patientNameToUse = newPatientName;
-      patientPhoneToUse = phoneNumber;
-      
-      toast.success(`สร้างข้อมูลผู้ป่วยใหม่: ${newPatientName}`);
+      try {
+        // Generate a patient_id with format P + 4 digits
+        const patientIdNum = Math.floor(1000 + Math.random() * 9000);
+        const patient_id = `P${patientIdNum}`;
+        
+        const { data: newPatientData, error } = await supabase
+          .from('patients')
+          .insert([{
+            name: newPatientName,
+            phone: phoneNumber,
+            patient_id: patient_id,
+          }])
+          .select();
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (newPatientData && newPatientData.length > 0) {
+          selectedPatientId = newPatientData[0].id;
+          patientNameToUse = newPatientName;
+          patientPhoneToUse = phoneNumber;
+          
+          toast.success(`สร้างข้อมูลผู้ป่วยใหม่: ${newPatientName}`);
+        }
+      } catch (err) {
+        console.error('Error creating new patient:', err);
+        toast.error('ไม่สามารถสร้างข้อมูลผู้ป่วยใหม่ได้');
+        return;
+      }
     }
 
     // Set the final patient information
