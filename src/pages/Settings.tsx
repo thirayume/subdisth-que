@@ -38,9 +38,27 @@ import {
   Save,
   Users,
   ClipboardList,
-  Calendar
+  Calendar,
+  Plus,
+  Trash2,
+  Edit,
+  Check,
+  X,
+  CopyPlus
 } from 'lucide-react';
 
+// Add a schema for queue type configuration
+const queueTypeConfigSchema = z.object({
+  id: z.string().optional(),
+  code: z.string().min(1, 'ต้องระบุรหัสประเภทคิว'),
+  name: z.string().min(1, 'ต้องระบุชื่อประเภทคิว'),
+  prefix: z.string().min(1, 'ต้องระบุ Prefix'),
+  purpose: z.string().min(1, 'ต้องระบุจุดประสงค์'),
+  format: z.enum(['0', '00', '000']).default('0'),
+  enabled: z.boolean().default(true),
+});
+
+// Update the main settings schema to include queue types
 const queueSettingsSchema = z.object({
   hospital_name: z.string().min(3, 'ต้องมีอย่างน้อย 3 ตัวอักษร'),
   hospital_address: z.string().min(5, 'ต้องมีอย่างน้อย 5 ตัวอักษร'),
@@ -52,10 +70,60 @@ const queueSettingsSchema = z.object({
   queue_announcement_text: z.string().min(3, 'ต้องมีอย่างน้อย 3 ตัวอักษร'),
   queue_voice_enabled: z.boolean(),
   line_notification_enabled: z.boolean(),
+  queue_types: z.array(queueTypeConfigSchema),
 });
+
+// Define the format options for the queue number display
+const formatOptions = [
+  { value: '0', label: 'ไม่เติมศูนย์ (1, 2, 3, ...)', example: 'A1, A2, ..., A10, A11' },
+  { value: '00', label: 'เติมศูนย์ 2 หลัก (01, 02, ...)', example: 'A01, A02, ..., A10, A11' },
+  { value: '000', label: 'เติมศูนย์ 3 หลัก (001, 002, ...)', example: 'A001, A002, ..., A010, A011' },
+];
 
 const Settings = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingQueueType, setEditingQueueType] = useState<string | null>(null);
+  const [newQueueType, setNewQueueType] = useState(false);
+  
+  // Initial queue types based on existing system
+  const initialQueueTypes = [
+    {
+      id: QueueType.GENERAL,
+      code: 'GENERAL',
+      name: 'ทั่วไป',
+      prefix: 'A',
+      purpose: 'รับยาทั่วไป',
+      format: '0',
+      enabled: true,
+    },
+    {
+      id: QueueType.PRIORITY,
+      code: 'PRIORITY',
+      name: 'ด่วน',
+      prefix: 'P',
+      purpose: 'กรณีเร่งด่วน',
+      format: '0',
+      enabled: true,
+    },
+    {
+      id: QueueType.ELDERLY,
+      code: 'ELDERLY',
+      name: 'ผู้สูงอายุ',
+      prefix: 'E',
+      purpose: 'รับยาสำหรับผู้สูงอายุ',
+      format: '0',
+      enabled: true,
+    },
+    {
+      id: QueueType.FOLLOW_UP,
+      code: 'FOLLOW_UP',
+      name: 'ติดตามการใช้ยา',
+      prefix: 'F',
+      purpose: 'ติดตามการรักษา',
+      format: '0',
+      enabled: true,
+    },
+  ];
   
   const form = useForm<z.infer<typeof queueSettingsSchema>>({
     resolver: zodResolver(queueSettingsSchema),
@@ -70,8 +138,11 @@ const Settings = () => {
       queue_announcement_text: 'เชิญหมายเลข {queueNumber} ที่ช่องจ่ายยา {counter}',
       queue_voice_enabled: true,
       line_notification_enabled: true,
+      queue_types: initialQueueTypes,
     },
   });
+  
+  const queueTypes = form.watch('queue_types');
   
   const onSubmit = async (data: z.infer<typeof queueSettingsSchema>) => {
     setIsSubmitting(true);
@@ -83,6 +154,76 @@ const Settings = () => {
     toast.success('บันทึกการตั้งค่าเรียบร้อยแล้ว');
     
     setIsSubmitting(false);
+  };
+
+  const handleAddQueueType = () => {
+    setNewQueueType(true);
+    // Generate a unique ID for the new queue type
+    const newId = `CUSTOM_${Date.now()}`;
+    const newQueueTypeItem = {
+      id: newId,
+      code: '',
+      name: '',
+      prefix: '',
+      purpose: '',
+      format: '0' as const,
+      enabled: true,
+    };
+    
+    form.setValue('queue_types', [...queueTypes, newQueueTypeItem]);
+    setEditingQueueType(newId);
+  };
+  
+  const handleRemoveQueueType = (index: number) => {
+    const updatedQueueTypes = [...queueTypes];
+    updatedQueueTypes.splice(index, 1);
+    form.setValue('queue_types', updatedQueueTypes);
+    toast.success('ลบประเภทคิวเรียบร้อยแล้ว');
+  };
+  
+  const handleEditQueueType = (id: string) => {
+    setEditingQueueType(id);
+  };
+  
+  const handleSaveQueueType = (index: number) => {
+    // Validate the queue type first
+    const queueType = queueTypes[index];
+    const result = queueTypeConfigSchema.safeParse(queueType);
+    
+    if (!result.success) {
+      // Display validation errors
+      const errors = result.error.errors;
+      errors.forEach(error => {
+        toast.error(`ข้อผิดพลาด: ${error.message}`);
+      });
+      return;
+    }
+    
+    setEditingQueueType(null);
+    setNewQueueType(false);
+    toast.success('บันทึกประเภทคิวเรียบร้อยแล้ว');
+  };
+  
+  const handleCancelEdit = (index: number) => {
+    if (newQueueType) {
+      // If this was a new queue type, remove it
+      const updatedQueueTypes = [...queueTypes];
+      updatedQueueTypes.splice(index, 1);
+      form.setValue('queue_types', updatedQueueTypes);
+      setNewQueueType(false);
+    }
+    setEditingQueueType(null);
+  };
+  
+  const handleDuplicateQueueType = (index: number) => {
+    const queueTypeToDuplicate = { ...queueTypes[index] };
+    // Generate a new ID for the duplicate
+    queueTypeToDuplicate.id = `CUSTOM_${Date.now()}`;
+    queueTypeToDuplicate.name = `${queueTypeToDuplicate.name} (สำเนา)`;
+    
+    const updatedQueueTypes = [...queueTypes, queueTypeToDuplicate];
+    form.setValue('queue_types', updatedQueueTypes);
+    toast.success('คัดลอกประเภทคิวเรียบร้อยแล้ว');
   };
 
   return (
@@ -264,48 +405,217 @@ const Settings = () => {
                   </div>
                   
                   <div className="pt-2">
-                    <h3 className="text-base font-medium mb-4">ประเภทคิวที่เปิดใช้งาน</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">ทั่วไป</FormLabel>
-                          <FormDescription>
-                            คิวสำหรับผู้ป่วยทั่วไป
-                          </FormDescription>
-                        </div>
-                        <Switch defaultChecked={true} />
-                      </div>
-                      
-                      <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">ด่วน</FormLabel>
-                          <FormDescription>
-                            คิวสำหรับกรณีฉุกเฉินหรือเร่งด่วน
-                          </FormDescription>
-                        </div>
-                        <Switch defaultChecked={true} />
-                      </div>
-                      
-                      <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">ผู้สูงอายุ</FormLabel>
-                          <FormDescription>
-                            คิวสำหรับผู้สูงอายุที่มีอายุ 60 ปีขึ้นไป
-                          </FormDescription>
-                        </div>
-                        <Switch defaultChecked={true} />
-                      </div>
-                      
-                      <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">ติดตามการใช้ยา</FormLabel>
-                          <FormDescription>
-                            คิวสำหรับผู้ป่วยที่นัดติดตามการใช้ยา
-                          </FormDescription>
-                        </div>
-                        <Switch defaultChecked={true} />
-                      </div>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-base font-medium">ประเภทคิวที่เปิดใช้งาน</h3>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleAddQueueType}
+                        className="flex items-center"
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        เพิ่มประเภทคิว
+                      </Button>
                     </div>
+                    
+                    {queueTypes.map((queueType, index) => {
+                      const isEditing = editingQueueType === queueType.id;
+                      
+                      return (
+                        <div key={queueType.id} className="mb-4 rounded-lg border p-4">
+                          {isEditing ? (
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <Label htmlFor={`queueType_${index}_code`}>รหัสประเภทคิว</Label>
+                                  <Input
+                                    id={`queueType_${index}_code`}
+                                    value={queueType.code}
+                                    onChange={(e) => {
+                                      const updatedQueueTypes = [...queueTypes];
+                                      updatedQueueTypes[index] = {
+                                        ...updatedQueueTypes[index],
+                                        code: e.target.value,
+                                      };
+                                      form.setValue('queue_types', updatedQueueTypes);
+                                    }}
+                                    placeholder="เช่น GENERAL, PRIORITY"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor={`queueType_${index}_name`}>ชื่อประเภทคิว</Label>
+                                  <Input
+                                    id={`queueType_${index}_name`}
+                                    value={queueType.name}
+                                    onChange={(e) => {
+                                      const updatedQueueTypes = [...queueTypes];
+                                      updatedQueueTypes[index] = {
+                                        ...updatedQueueTypes[index],
+                                        name: e.target.value,
+                                      };
+                                      form.setValue('queue_types', updatedQueueTypes);
+                                    }}
+                                    placeholder="เช่น ทั่วไป, ด่วน"
+                                  />
+                                </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <Label htmlFor={`queueType_${index}_prefix`}>Prefix</Label>
+                                  <Input
+                                    id={`queueType_${index}_prefix`}
+                                    value={queueType.prefix}
+                                    onChange={(e) => {
+                                      const updatedQueueTypes = [...queueTypes];
+                                      updatedQueueTypes[index] = {
+                                        ...updatedQueueTypes[index],
+                                        prefix: e.target.value,
+                                      };
+                                      form.setValue('queue_types', updatedQueueTypes);
+                                    }}
+                                    placeholder="เช่น A, B, C"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor={`queueType_${index}_purpose`}>จุดประสงค์</Label>
+                                  <Input
+                                    id={`queueType_${index}_purpose`}
+                                    value={queueType.purpose}
+                                    onChange={(e) => {
+                                      const updatedQueueTypes = [...queueTypes];
+                                      updatedQueueTypes[index] = {
+                                        ...updatedQueueTypes[index],
+                                        purpose: e.target.value,
+                                      };
+                                      form.setValue('queue_types', updatedQueueTypes);
+                                    }}
+                                    placeholder="เช่น รับยาทั่วไป, กรณีเร่งด่วน"
+                                  />
+                                </div>
+                              </div>
+                              
+                              <div>
+                                <Label htmlFor={`queueType_${index}_format`}>รูปแบบหมายเลขคิว</Label>
+                                <div className="space-y-2">
+                                  {formatOptions.map((option) => (
+                                    <div key={option.value} className="flex items-center">
+                                      <input
+                                        type="radio"
+                                        id={`queueType_${index}_format_${option.value}`}
+                                        name={`queueType_${index}_format`}
+                                        className="mr-2"
+                                        checked={queueType.format === option.value}
+                                        onChange={() => {
+                                          const updatedQueueTypes = [...queueTypes];
+                                          updatedQueueTypes[index] = {
+                                            ...updatedQueueTypes[index],
+                                            format: option.value as '0' | '00' | '000',
+                                          };
+                                          form.setValue('queue_types', updatedQueueTypes);
+                                        }}
+                                      />
+                                      <label htmlFor={`queueType_${index}_format_${option.value}`} className="text-sm">
+                                        {option.label}
+                                        <div className="text-xs text-gray-500">ตัวอย่าง: {option.example}</div>
+                                      </label>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                              
+                              <div className="flex justify-end space-x-2 pt-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleCancelEdit(index)}
+                                >
+                                  <X className="h-4 w-4 mr-1" />
+                                  ยกเลิก
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="bg-pharmacy-600 hover:bg-pharmacy-700"
+                                  onClick={() => handleSaveQueueType(index)}
+                                >
+                                  <Check className="h-4 w-4 mr-1" />
+                                  บันทึก
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col md:flex-row justify-between">
+                              <div className="space-y-1">
+                                <div className="flex items-center space-x-2">
+                                  <h4 className="font-medium text-lg">{queueType.name}</h4>
+                                  <div className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                                    {queueType.code}
+                                  </div>
+                                  <Switch
+                                    checked={queueType.enabled}
+                                    onCheckedChange={(checked) => {
+                                      const updatedQueueTypes = [...queueTypes];
+                                      updatedQueueTypes[index] = {
+                                        ...updatedQueueTypes[index],
+                                        enabled: checked,
+                                      };
+                                      form.setValue('queue_types', updatedQueueTypes);
+                                    }}
+                                  />
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  จุดประสงค์: {queueType.purpose}
+                                </div>
+                                <div className="text-sm flex space-x-3">
+                                  <span className="text-gray-500">
+                                    <strong>Prefix:</strong> {queueType.prefix}
+                                  </span>
+                                  <span className="text-gray-500">
+                                    <strong>รูปแบบ:</strong> {
+                                      formatOptions.find(opt => opt.value === queueType.format)?.label.split(' ')[0] || 
+                                      queueType.format
+                                    }
+                                  </span>
+                                  <span className="text-gray-500">
+                                    <strong>ตัวอย่าง:</strong> {
+                                      queueType.prefix + 
+                                      (queueType.format === '0' ? '1' : 
+                                        queueType.format === '00' ? '01' : '001')
+                                    }
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex space-x-1 mt-3 md:mt-0">
+                                <Button 
+                                  variant="outline" 
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleDuplicateQueueType(index)}
+                                >
+                                  <CopyPlus className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="icon" 
+                                  className="h-8 w-8"
+                                  onClick={() => handleEditQueueType(queueType.id)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="icon" 
+                                  className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => handleRemoveQueueType(index)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
