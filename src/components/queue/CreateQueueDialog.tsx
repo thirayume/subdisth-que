@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -59,6 +60,9 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
   const [selectedPatientPhone, setSelectedPatientPhone] = useState('');
   const [createdQueueType, setCreatedQueueType] = useState<QueueType>(QueueType.GENERAL);
   const [createdPurpose, setCreatedPurpose] = useState('');
+  // Added these two state variables to track final patient info
+  const [finalPatientName, setFinalPatientName] = useState('');
+  const [finalPatientPhone, setFinalPatientPhone] = useState('');
 
   useEffect(() => {
     if (!open) {
@@ -72,6 +76,8 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
       setNotes('');
       setSelectedPatientName('');
       setSelectedPatientPhone('');
+      setFinalPatientName('');
+      setFinalPatientPhone('');
     }
   }, [open]);
 
@@ -121,8 +127,8 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
     }
 
     let selectedPatientId = patientId;
-    let finalPatientName = selectedPatientName;
-    let finalPatientPhone = selectedPatientPhone;
+    let patientNameToUse = selectedPatientName;
+    let patientPhoneToUse = selectedPatientPhone;
 
     if (showNewPatientForm && newPatientName) {
       const newPatient = {
@@ -138,11 +144,15 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
       
       mockPatients.push(newPatient);
       selectedPatientId = newPatient.id;
-      finalPatientName = newPatientName;
-      finalPatientPhone = phoneNumber;
+      patientNameToUse = newPatientName;
+      patientPhoneToUse = phoneNumber;
       
       toast.success(`สร้างข้อมูลผู้ป่วยใหม่: ${newPatientName}`);
     }
+
+    // Set the final patient information
+    setFinalPatientName(patientNameToUse);
+    setFinalPatientPhone(patientPhoneToUse);
 
     const purpose = queueTypePurposes[queueType];
     
