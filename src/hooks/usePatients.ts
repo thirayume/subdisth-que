@@ -43,11 +43,18 @@ export const usePatients = () => {
       const patientIdNum = Math.floor(1000 + Math.random() * 9000); // Random 4-digit number
       const patient_id = `P${patientIdNum}`;
       
+      // Ensure required fields are present
+      if (!patientData.name || !patientData.phone) {
+        throw new Error('Name and phone are required fields');
+      }
+      
       const { data, error } = await supabase
         .from('patients')
         .insert([{ 
           ...patientData, 
-          patient_id 
+          patient_id,
+          name: patientData.name,
+          phone: patientData.phone
         }])
         .select();
 
