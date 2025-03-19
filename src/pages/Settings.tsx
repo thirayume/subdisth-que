@@ -43,10 +43,10 @@ import {
   Trash2,
   Edit,
   Check,
+  X,
   CopyPlus
 } from 'lucide-react';
 
-// Add a schema for queue type configuration
 const queueTypeConfigSchema = z.object({
   id: z.string().optional(),
   code: z.string().min(1, 'ต้องระบุรหัสประเภทคิว'),
@@ -57,7 +57,6 @@ const queueTypeConfigSchema = z.object({
   enabled: z.boolean().default(true),
 });
 
-// Update the main settings schema to include queue types
 const queueSettingsSchema = z.object({
   hospital_name: z.string().min(3, 'ต้องมีอย่างน้อย 3 ตัวอักษร'),
   hospital_address: z.string().min(5, 'ต้องมีอย่างน้อย 5 ตัวอักษร'),
@@ -72,7 +71,6 @@ const queueSettingsSchema = z.object({
   queue_types: z.array(queueTypeConfigSchema),
 });
 
-// Define the format options for the queue number display
 const formatOptions = [
   { value: '0', label: 'ไม่เติมศูนย์ (1, 2, 3, ...)', example: 'A1, A2, ..., A10, A11' },
   { value: '00', label: 'เติมศูนย์ 2 หลัก (01, 02, ...)', example: 'A01, A02, ..., A10, A11' },
@@ -84,7 +82,6 @@ const Settings = () => {
   const [editingQueueType, setEditingQueueType] = useState<string | null>(null);
   const [newQueueType, setNewQueueType] = useState(false);
   
-  // Initial queue types based on existing system - Fixed format type to use the exact string literals
   const initialQueueTypes = [
     {
       id: QueueType.GENERAL,
@@ -124,7 +121,6 @@ const Settings = () => {
     },
   ];
   
-  
   const form = useForm<z.infer<typeof queueSettingsSchema>>({
     resolver: zodResolver(queueSettingsSchema),
     defaultValues: {
@@ -144,11 +140,9 @@ const Settings = () => {
   
   const queueTypes = form.watch('queue_types');
   
-  
   const onSubmit = async (data: z.infer<typeof queueSettingsSchema>) => {
     setIsSubmitting(true);
     
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     console.log('Settings data submitted:', data);
@@ -159,7 +153,6 @@ const Settings = () => {
 
   const handleAddQueueType = () => {
     setNewQueueType(true);
-    // Generate a unique ID for the new queue type
     const newId = `CUSTOM_${Date.now()}`;
     const newQueueTypeItem = {
       id: newId,
@@ -187,12 +180,10 @@ const Settings = () => {
   };
   
   const handleSaveQueueType = (index: number) => {
-    // Validate the queue type first
     const queueType = queueTypes[index];
     const result = queueTypeConfigSchema.safeParse(queueType);
     
     if (!result.success) {
-      // Display validation errors
       const errors = result.error.errors;
       errors.forEach(error => {
         toast.error(`ข้อผิดพลาด: ${error.message}`);
@@ -207,7 +198,6 @@ const Settings = () => {
   
   const handleCancelEdit = (index: number) => {
     if (newQueueType) {
-      // If this was a new queue type, remove it
       const updatedQueueTypes = [...queueTypes];
       updatedQueueTypes.splice(index, 1);
       form.setValue('queue_types', updatedQueueTypes);
@@ -218,7 +208,6 @@ const Settings = () => {
   
   const handleDuplicateQueueType = (index: number) => {
     const queueTypeToDuplicate = { ...queueTypes[index] };
-    // Generate a new ID for the duplicate
     queueTypeToDuplicate.id = `CUSTOM_${Date.now()}`;
     queueTypeToDuplicate.name = `${queueTypeToDuplicate.name} (สำเนา)`;
     
@@ -226,8 +215,6 @@ const Settings = () => {
     form.setValue('queue_types', updatedQueueTypes);
     toast.success('คัดลอกประเภทคิวเรียบร้อยแล้ว');
   };
-
-  
 
   return (
     <Layout>
