@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Queue, QueueStatus } from '@/lib/mockData';
+import { Queue, QueueStatus } from '@/integrations/supabase/schema';
 import { 
   PhoneOutgoing, 
   RefreshCw, 
@@ -28,7 +28,7 @@ const QueueControls: React.FC<QueueControlsProps> = ({
 }) => {
   return (
     <div className={`flex items-center gap-2 flex-wrap ${className}`}>
-      {queue.status === QueueStatus.WAITING && (
+      {queue.status === 'WAITING' && (
         <Button 
           onClick={() => onCallQueue(queue.id)} 
           className="bg-pharmacy-600 hover:bg-pharmacy-700 text-white"
@@ -39,7 +39,7 @@ const QueueControls: React.FC<QueueControlsProps> = ({
         </Button>
       )}
       
-      {queue.status === QueueStatus.ACTIVE && (
+      {queue.status === 'ACTIVE' && (
         <>
           <Button 
             onClick={() => onRecallQueue(queue.id)} 
@@ -52,7 +52,7 @@ const QueueControls: React.FC<QueueControlsProps> = ({
           </Button>
           
           <Button 
-            onClick={() => onUpdateStatus(queue.id, QueueStatus.COMPLETED)} 
+            onClick={() => onUpdateStatus(queue.id, 'COMPLETED')} 
             variant="outline" 
             size="sm"
             className="border-green-200 text-green-700 hover:bg-green-50"
@@ -62,7 +62,7 @@ const QueueControls: React.FC<QueueControlsProps> = ({
           </Button>
           
           <Button 
-            onClick={() => onUpdateStatus(queue.id, QueueStatus.SKIPPED)} 
+            onClick={() => onUpdateStatus(queue.id, 'SKIPPED')} 
             variant="outline" 
             size="sm"
             className="border-amber-200 text-amber-700 hover:bg-amber-50"
@@ -72,7 +72,7 @@ const QueueControls: React.FC<QueueControlsProps> = ({
           </Button>
           
           <Button 
-            onClick={() => onUpdateStatus(queue.id, QueueStatus.WAITING)} 
+            onClick={() => onUpdateStatus(queue.id, 'WAITING')} 
             variant="outline" 
             size="sm"
             className="border-blue-200 text-blue-700 hover:bg-blue-50"
@@ -83,7 +83,7 @@ const QueueControls: React.FC<QueueControlsProps> = ({
         </>
       )}
       
-      {queue.status === QueueStatus.SKIPPED && (
+      {queue.status === 'SKIPPED' && (
         <Button 
           onClick={() => onCallQueue(queue.id)} 
           variant="outline" 
@@ -95,7 +95,7 @@ const QueueControls: React.FC<QueueControlsProps> = ({
         </Button>
       )}
       
-      {queue.status === QueueStatus.COMPLETED && (
+      {queue.status === 'COMPLETED' && (
         <span className="text-sm text-gray-500 italic">เสร็จสิ้นการให้บริการ</span>
       )}
     </div>

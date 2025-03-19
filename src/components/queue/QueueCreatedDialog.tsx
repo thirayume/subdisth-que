@@ -11,14 +11,14 @@ import {
 import { Button } from '@/components/ui/button';
 import LineQRCode from '@/components/ui/LineQRCode';
 import { Check, Printer, Phone, User } from 'lucide-react';
-import { QueueType } from '@/lib/mockData';
+import { QueueType } from '@/integrations/supabase/schema';
 
 // Queue type format mapping
 export const queueTypeFormat = {
-  [QueueType.GENERAL]: { prefix: 'A', padLength: 3 },
-  [QueueType.PRIORITY]: { prefix: 'P', padLength: 3 },
-  [QueueType.ELDERLY]: { prefix: 'E', padLength: 3 },
-  [QueueType.FOLLOW_UP]: { prefix: 'F', padLength: 3 },
+  'GENERAL': { prefix: 'A', padLength: 3 },
+  'PRIORITY': { prefix: 'P', padLength: 3 },
+  'ELDERLY': { prefix: 'E', padLength: 3 },
+  'FOLLOW_UP': { prefix: 'F', padLength: 3 },
 };
 
 // Format the queue number with the type prefix
@@ -41,7 +41,7 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
   open,
   onOpenChange,
   queueNumber,
-  queueType = QueueType.GENERAL,
+  queueType = 'GENERAL',
   patientName = '',
   patientPhone = '',
   purpose = '',

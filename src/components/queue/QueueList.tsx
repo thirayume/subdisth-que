@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Queue, Patient, QueueStatus } from '@/lib/mockData';
+import { Queue, Patient, QueueStatus } from '@/integrations/supabase/schema';
 import QueueCard from './QueueCard';
 import QueueControls from './QueueControls';
 
@@ -45,7 +45,7 @@ const QueueList: React.FC<QueueListProps> = ({
             <div key={queue.id} className="animate-fade-in">
               <QueueCard
                 queue={queue}
-                patient={findPatient(queue.patientId)}
+                patient={findPatient(queue.patient_id)}
               />
               <div className="mt-2 ml-1">
                 <QueueControls

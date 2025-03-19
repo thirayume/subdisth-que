@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
 import { 
   Dialog,
   DialogContent,
@@ -20,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { QueueType, QueueStatus } from '@/lib/mockData';
+import { QueueType, QueueStatus } from '@/integrations/supabase/schema';
 import { PlusCircle, Search } from 'lucide-react';
 import QueueCreatedDialog from './QueueCreatedDialog';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,10 +33,10 @@ interface CreateQueueDialogProps {
 
 // Define the queue type purpose mapping
 const queueTypePurposes = {
-  [QueueType.GENERAL]: 'รับยาทั่วไป',
-  [QueueType.PRIORITY]: 'กรณีเร่งด่วน',
-  [QueueType.ELDERLY]: 'รับยาสำหรับผู้สูงอายุ',
-  [QueueType.FOLLOW_UP]: 'ติดตามการรักษา'
+  'GENERAL': 'รับยาทั่วไป',
+  'PRIORITY': 'กรณีเร่งด่วน',
+  'ELDERLY': 'รับยาสำหรับผู้สูงอายุ',
+  'FOLLOW_UP': 'ติดตามการรักษา'
 };
 
 const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
@@ -53,14 +52,14 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
   
   const [newPatientName, setNewPatientName] = useState('');
   const [patientId, setPatientId] = useState('');
-  const [queueType, setQueueType] = useState<QueueType>(QueueType.GENERAL);
+  const [queueType, setQueueType] = useState<QueueType>('GENERAL');
   const [notes, setNotes] = useState('');
   
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [createdQueueNumber, setCreatedQueueNumber] = useState<number | null>(null);
   const [selectedPatientName, setSelectedPatientName] = useState('');
   const [selectedPatientPhone, setSelectedPatientPhone] = useState('');
-  const [createdQueueType, setCreatedQueueType] = useState<QueueType>(QueueType.GENERAL);
+  const [createdQueueType, setCreatedQueueType] = useState<QueueType>('GENERAL');
   const [createdPurpose, setCreatedPurpose] = useState('');
   // Added these two state variables to track final patient info
   const [finalPatientName, setFinalPatientName] = useState('');
@@ -74,7 +73,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
       setShowNewPatientForm(false);
       setNewPatientName('');
       setPatientId('');
-      setQueueType(QueueType.GENERAL);
+      setQueueType('GENERAL');
       setNotes('');
       setSelectedPatientName('');
       setSelectedPatientPhone('');
@@ -108,7 +107,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
       } else {
         setShowNewPatientForm(false);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error searching for patients:', err);
       toast.error('ไม่สามารถค้นหาข้อมูลผู้ป่วยได้');
     } finally {
@@ -183,27 +182,37 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
     
     const queueNumber = Math.floor(Math.random() * 100) + 1;
     
-    const newQueue = {
-      id: uuidv4(),
-      number: queueNumber,
-      patientId: selectedPatientId,
-      type: queueType,
-      purpose: purpose,
-      notes,
-      status: QueueStatus.WAITING,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    onCreateQueue(newQueue);
-    toast.success(`สร้างคิวหมายเลข ${queueNumber} เรียบร้อยแล้ว`);
-    
-    setCreatedQueueNumber(queueNumber);
-    setCreatedQueueType(queueType);
-    setCreatedPurpose(purpose);
-    setQrDialogOpen(true);
-    
-    onOpenChange(false);
+    try {
+      const { data, error } = await supabase
+        .from('queues')
+        .insert([{
+          number: queueNumber,
+          patient_id: selectedPatientId,
+          type: queueType,
+          status: 'WAITING' as QueueStatus,
+          notes: notes
+        }])
+        .select();
+        
+      if (error) {
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        onCreateQueue(data[0]);
+        toast.success(`สร้างคิวหมายเลข ${queueNumber} เรียบร้อยแล้ว`);
+        
+        setCreatedQueueNumber(queueNumber);
+        setCreatedQueueType(queueType);
+        setCreatedPurpose(purpose);
+        setQrDialogOpen(true);
+        
+        onOpenChange(false);
+      }
+    } catch (err) {
+      console.error('Error creating queue:', err);
+      toast.error('ไม่สามารถสร้างคิวได้');
+    }
   };
 
   return (
@@ -288,10 +297,10 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
                       <SelectValue placeholder="เลือกประเภทคิว" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={QueueType.GENERAL}>ทั่วไป - {queueTypePurposes[QueueType.GENERAL]}</SelectItem>
-                      <SelectItem value={QueueType.PRIORITY}>ด่วน - {queueTypePurposes[QueueType.PRIORITY]}</SelectItem>
-                      <SelectItem value={QueueType.ELDERLY}>ผู้สูงอายุ - {queueTypePurposes[QueueType.ELDERLY]}</SelectItem>
-                      <SelectItem value={QueueType.FOLLOW_UP}>ติดตามการรักษา - {queueTypePurposes[QueueType.FOLLOW_UP]}</SelectItem>
+                      <SelectItem value="GENERAL">ทั่วไป - {queueTypePurposes['GENERAL']}</SelectItem>
+                      <SelectItem value="PRIORITY">ด่วน - {queueTypePurposes['PRIORITY']}</SelectItem>
+                      <SelectItem value="ELDERLY">ผู้สูงอายุ - {queueTypePurposes['ELDERLY']}</SelectItem>
+                      <SelectItem value="FOLLOW_UP">ติดตามการรักษา - {queueTypePurposes['FOLLOW_UP']}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
