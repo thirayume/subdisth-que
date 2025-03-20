@@ -3,12 +3,22 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { mockQueues, mockPatients, QueueStatus } from '@/lib/mockData';
 import { ArrowLeft, Volume2, VolumeX } from 'lucide-react';
+import { useQueues } from '@/hooks/useQueues';
+import { usePatients } from '@/hooks/usePatients';
+import { QueueStatus } from '@/integrations/supabase/schema';
+import QueueBoardDisplay from '@/components/queue/QueueBoardDisplay';
 
 const QueueBoard = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [soundEnabled, setSoundEnabled] = useState(true);
+  
+  // Fetch data from Supabase
+  const { getQueuesByStatus } = useQueues();
+  const { patients } = usePatients();
+  const [activeQueues, setActiveQueues] = useState([]);
+  const [waitingQueues, setWaitingQueues] = useState([]);
+  const [completedQueues, setCompletedQueues] = useState([]);
   
   // Update time every second
   useEffect(() => {
@@ -18,6 +28,26 @@ const QueueBoard = () => {
     
     return () => clearInterval(timer);
   }, []);
+  
+  // Fetch queues data
+  useEffect(() => {
+    const fetchQueues = async () => {
+      const active = await getQueuesByStatus(QueueStatus.ACTIVE);
+      setActiveQueues(active);
+      
+      const waiting = await getQueuesByStatus(QueueStatus.WAITING);
+      setWaitingQueues(waiting.sort((a, b) => a.number - b.number).slice(0, 5));
+      
+      const completed = await getQueuesByStatus(QueueStatus.COMPLETED);
+      setCompletedQueues(completed.sort((a, b) => b.number - a.number).slice(0, 5));
+    };
+    
+    fetchQueues();
+    
+    // Refresh data every 30 seconds
+    const refreshTimer = setInterval(fetchQueues, 30000);
+    return () => clearInterval(refreshTimer);
+  }, [getQueuesByStatus]);
   
   // Format current time as HH:MM:SS
   const formatTime = (date: Date) => {
@@ -38,23 +68,10 @@ const QueueBoard = () => {
       day: 'numeric' 
     });
   };
-  
-  // Get active and waiting queues
-  const activeQueues = mockQueues.filter(q => q.status === QueueStatus.ACTIVE);
-  const waitingQueues = mockQueues
-    .filter(q => q.status === QueueStatus.WAITING)
-    .sort((a, b) => a.number - b.number)
-    .slice(0, 5);
-  
-  // Get completed queues from today
-  const completedQueues = mockQueues
-    .filter(q => q.status === QueueStatus.COMPLETED)
-    .sort((a, b) => b.number - a.number)
-    .slice(0, 5);
-  
+
   // Find patient by ID
   const findPatient = (patientId: string) => {
-    return mockPatients.find(p => p.id === patientId);
+    return patients.find(p => p.id === patientId);
   };
   
   return (
@@ -111,7 +128,7 @@ const QueueBoard = () => {
             ) : (
               <div className="space-y-4">
                 {activeQueues.map(queue => {
-                  const patient = findPatient(queue.patientId);
+                  const patient = findPatient(queue.patient_id);
                   return (
                     <Card key={queue.id} className="bg-white border-2 border-pharmacy-200 shadow-lg animate-pulse-gentle">
                       <CardContent className="p-8">
@@ -155,7 +172,7 @@ const QueueBoard = () => {
                             {queue.number}
                           </div>
                           <div className="text-sm">
-                            <div className="font-medium text-gray-900">{findPatient(queue.patientId)?.name}</div>
+                            <div className="font-medium text-gray-900">{findPatient(queue.patient_id)?.name}</div>
                             <div className="text-xs text-gray-500">รอประมาณ {5 * (index + 1)} นาที</div>
                           </div>
                         </div>
@@ -186,9 +203,9 @@ const QueueBoard = () => {
                             {queue.number}
                           </div>
                           <div className="text-sm">
-                            <div className="font-medium text-gray-900">{findPatient(queue.patientId)?.name}</div>
+                            <div className="font-medium text-gray-900">{findPatient(queue.patient_id)?.name}</div>
                             <div className="text-xs text-gray-500">เสร็จสิ้นเมื่อ {
-                              queue.completedAt && new Date(queue.completedAt).toLocaleTimeString('th-TH', {
+                              queue.completed_at && new Date(queue.completed_at).toLocaleTimeString('th-TH', {
                                 hour: '2-digit',
                                 minute: '2-digit',
                                 hour12: false
