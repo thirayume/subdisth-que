@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { QrCode } from 'lucide-react';
-import { QueueType } from '@/lib/mockData';
+import { QueueType } from '@/integrations/supabase/schema';
 import { formatQueueNumber } from '@/components/queue/QueueCreatedDialog';
 
 interface LineQRCodeProps {
@@ -14,7 +14,7 @@ interface LineQRCodeProps {
 
 const LineQRCode: React.FC<LineQRCodeProps> = ({ 
   queueNumber, 
-  queueType = QueueType.GENERAL, 
+  queueType = 'GENERAL', 
   className 
 }) => {
   const formattedQueueNumber = formatQueueNumber(queueType, queueNumber);
