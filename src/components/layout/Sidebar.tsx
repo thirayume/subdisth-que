@@ -89,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           <div className={cn("flex items-center", expanded ? "justify-between w-full" : "justify-center")}>
             {expanded && (
               <div className="flex items-center space-x-2">
-                <span className="font-bold text-pharmacy-700">PharmQueue</span>
+                <span className="font-bold text-pharmacy-700">SubdisTH Que</span>
               </div>
             )}
             <Button variant="ghost" size="icon" onClick={toggleSidebar} className="hidden lg:flex">
