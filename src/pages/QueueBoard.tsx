@@ -9,6 +9,14 @@ import { usePatients } from '@/hooks/usePatients';
 import { QueueStatus } from '@/integrations/supabase/schema';
 import QueueBoardDisplay from '@/components/queue/QueueBoardDisplay';
 
+// Define queue status constants to use as values
+const QUEUE_STATUS = {
+  ACTIVE: 'ACTIVE' as QueueStatus,
+  WAITING: 'WAITING' as QueueStatus,
+  COMPLETED: 'COMPLETED' as QueueStatus,
+  SKIPPED: 'SKIPPED' as QueueStatus
+};
+
 const QueueBoard = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -32,13 +40,13 @@ const QueueBoard = () => {
   // Fetch queues data
   useEffect(() => {
     const fetchQueues = async () => {
-      const active = await getQueuesByStatus(QueueStatus.ACTIVE);
+      const active = await getQueuesByStatus(QUEUE_STATUS.ACTIVE);
       setActiveQueues(active);
       
-      const waiting = await getQueuesByStatus(QueueStatus.WAITING);
+      const waiting = await getQueuesByStatus(QUEUE_STATUS.WAITING);
       setWaitingQueues(waiting.sort((a, b) => a.number - b.number).slice(0, 5));
       
-      const completed = await getQueuesByStatus(QueueStatus.COMPLETED);
+      const completed = await getQueuesByStatus(QUEUE_STATUS.COMPLETED);
       setCompletedQueues(completed.sort((a, b) => b.number - a.number).slice(0, 5));
     };
     
