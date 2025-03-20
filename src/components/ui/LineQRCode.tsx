@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { QrCode } from 'lucide-react';
 import { QueueType } from '@/integrations/supabase/schema';
-import { formatQueueNumber } from '@/components/queue/QueueCreatedDialog';
+import { formatQueueNumber } from '@/utils/queueFormatters';
 
 interface LineQRCodeProps {
   queueNumber: number;
