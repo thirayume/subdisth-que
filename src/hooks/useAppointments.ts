@@ -24,7 +24,11 @@ export const useAppointments = () => {
         throw error;
       }
 
-      setAppointments(data || []);
+      // Cast the data to ensure proper type conversion
+      setAppointments((data || []).map(item => ({
+        ...item,
+        status: item.status as AppointmentStatus
+      })));
     } catch (err: any) {
       console.error('Error fetching appointments:', err);
       setError(err.message || 'Failed to fetch appointments');
@@ -59,11 +63,17 @@ export const useAppointments = () => {
       }
 
       if (data && data.length > 0) {
-        setAppointments(prev => [...prev, data[0]].sort((a, b) => 
+        // Cast the returned data to ensure proper type conversion
+        const newAppointment: Appointment = {
+          ...data[0],
+          status: data[0].status as AppointmentStatus
+        };
+        
+        setAppointments(prev => [...prev, newAppointment].sort((a, b) => 
           new Date(a.date).getTime() - new Date(b.date).getTime()
         ));
         toast.success('เพิ่มการนัดหมายเรียบร้อยแล้ว');
-        return data[0];
+        return newAppointment;
       }
     } catch (err: any) {
       console.error('Error adding appointment:', err);
@@ -92,11 +102,17 @@ export const useAppointments = () => {
       }
 
       if (data && data.length > 0) {
+        // Cast the returned data to ensure proper type conversion
+        const updatedAppointment: Appointment = {
+          ...data[0],
+          status: data[0].status as AppointmentStatus
+        };
+        
         setAppointments(prev => prev.map(appointment => 
-          appointment.id === id ? { ...appointment, ...data[0] } : appointment
+          appointment.id === id ? updatedAppointment : appointment
         ));
         toast.success('อัปเดตการนัดหมายเรียบร้อยแล้ว');
-        return data[0];
+        return updatedAppointment;
       }
     } catch (err: any) {
       console.error('Error updating appointment:', err);
@@ -148,7 +164,11 @@ export const useAppointments = () => {
         throw error;
       }
 
-      return data || [];
+      // Cast the data to ensure proper type conversion
+      return (data || []).map(item => ({
+        ...item,
+        status: item.status as AppointmentStatus
+      }));
     } catch (err: any) {
       console.error('Error fetching appointments by date range:', err);
       setError(err.message || 'Failed to fetch appointments');

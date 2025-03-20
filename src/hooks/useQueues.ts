@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Queue, QueueStatus, QueueType, Patient } from '@/integrations/supabase/schema';
+import { Queue, QueueStatus, QueueType } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
 
 export const useQueues = () => {
@@ -24,7 +24,12 @@ export const useQueues = () => {
         throw error;
       }
 
-      setQueues(data || []);
+      // Cast the data to ensure proper type conversion
+      setQueues((data || []).map(item => ({
+        ...item,
+        type: item.type as QueueType,
+        status: item.status as QueueStatus
+      })));
     } catch (err: any) {
       console.error('Error fetching queues:', err);
       setError(err.message || 'Failed to fetch queues');
@@ -59,9 +64,16 @@ export const useQueues = () => {
       }
 
       if (data && data.length > 0) {
-        setQueues(prev => [data[0], ...prev]);
+        // Cast the returned data to ensure proper type conversion
+        const newQueue: Queue = {
+          ...data[0],
+          type: data[0].type as QueueType,
+          status: data[0].status as QueueStatus
+        };
+        
+        setQueues(prev => [newQueue, ...prev]);
         toast.success(`เพิ่มคิวหมายเลข ${queueData.number} เรียบร้อยแล้ว`);
-        return data[0];
+        return newQueue;
       }
     } catch (err: any) {
       console.error('Error adding queue:', err);
@@ -96,8 +108,15 @@ export const useQueues = () => {
       }
 
       if (data && data.length > 0) {
+        // Cast the returned data to ensure proper type conversion
+        const updatedQueue: Queue = {
+          ...data[0],
+          type: data[0].type as QueueType,
+          status: data[0].status as QueueStatus
+        };
+        
         setQueues(prev => prev.map(queue => 
-          queue.id === id ? { ...queue, ...data[0] } : queue
+          queue.id === id ? updatedQueue : queue
         ));
         
         let statusMessage = 'อัปเดตสถานะคิวเรียบร้อยแล้ว';
@@ -106,7 +125,7 @@ export const useQueues = () => {
         else if (status === 'SKIPPED') statusMessage = 'ข้ามคิวเรียบร้อยแล้ว';
         
         toast.success(statusMessage);
-        return data[0];
+        return updatedQueue;
       }
     } catch (err: any) {
       console.error('Error updating queue status:', err);
@@ -138,7 +157,12 @@ export const useQueues = () => {
         throw error;
       }
 
-      return data || [];
+      // Cast the data to ensure proper type conversion
+      return (data || []).map(item => ({
+        ...item,
+        type: item.type as QueueType,
+        status: item.status as QueueStatus
+      }));
     } catch (err: any) {
       console.error('Error fetching queues by status:', err);
       setError(err.message || 'Failed to fetch queues');

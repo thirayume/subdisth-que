@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,7 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Layout from '@/components/layout/Layout';
 import QueueList from '@/components/queue/QueueList';
 import LineQRCode from '@/components/ui/LineQRCode';
-import { mockQueues, mockPatients, QueueStatus, QueueType } from '@/lib/mockData';
+import { Queue, QueueStatus, QueueType, Patient } from '@/integrations/supabase/schema';
+import { useQueues } from '@/hooks/useQueues';
+import { usePatients } from '@/hooks/usePatients';
 import { toast } from 'sonner';
 import { 
   Users, 
@@ -20,96 +22,42 @@ import {
 } from 'lucide-react';
 
 const Dashboard = () => {
-  const [queues, setQueues] = useState(mockQueues);
+  const { queues, loading: loadingQueues, updateQueueStatus, callQueue } = useQueues();
+  const { patients, loading: loadingPatients } = usePatients();
   
-  // Filter queues by status
-  const waitingQueues = queues.filter(q => q.status === QueueStatus.WAITING);
-  const activeQueues = queues.filter(q => q.status === QueueStatus.ACTIVE);
-  const completedQueues = queues.filter(q => q.status === QueueStatus.COMPLETED);
-  const skippedQueues = queues.filter(q => q.status === QueueStatus.SKIPPED);
+  const [waitingQueues, setWaitingQueues] = useState<Queue[]>([]);
+  const [activeQueues, setActiveQueues] = useState<Queue[]>([]);
+  const [completedQueues, setCompletedQueues] = useState<Queue[]>([]);
+  const [skippedQueues, setSkippedQueues] = useState<Queue[]>([]);
+
+  // Update filtered queues when the main queues array changes
+  useEffect(() => {
+    if (queues) {
+      setWaitingQueues(queues.filter(q => q.status === 'WAITING'));
+      setActiveQueues(queues.filter(q => q.status === 'ACTIVE'));
+      setCompletedQueues(queues.filter(q => q.status === 'COMPLETED'));
+      setSkippedQueues(queues.filter(q => q.status === 'SKIPPED'));
+    }
+  }, [queues]);
   
   // Count queue types
-  const generalCount = queues.filter(q => q.type === QueueType.GENERAL && q.status !== QueueStatus.COMPLETED).length;
-  const priorityCount = queues.filter(q => q.type === QueueType.PRIORITY && q.status !== QueueStatus.COMPLETED).length;
-  const followUpCount = queues.filter(q => q.type === QueueType.FOLLOW_UP && q.status !== QueueStatus.COMPLETED).length;
-  const elderlyCount = queues.filter(q => q.type === QueueType.ELDERLY && q.status !== QueueStatus.COMPLETED).length;
-  
-  // Update queue status
-  const handleUpdateStatus = (queueId: string, status: QueueStatus) => {
-    setQueues(queues.map(q => {
-      if (q.id === queueId) {
-        const updatedQueue = { 
-          ...q, 
-          status, 
-          updatedAt: new Date().toISOString(),
-          ...(status === QueueStatus.COMPLETED ? { completedAt: new Date().toISOString() } : {})
-        };
-        
-        // Show toast notification
-        if (status === QueueStatus.COMPLETED) {
-          toast.success(`คิวหมายเลข ${q.number} เสร็จสิ้นการให้บริการ`);
-        } else if (status === QueueStatus.SKIPPED) {
-          toast.info(`คิวหมายเลข ${q.number} ถูกข้าม`);
-        } else if (status === QueueStatus.WAITING) {
-          toast.info(`คิวหมายเลข ${q.number} ถูกพักไว้ชั่วคราว`);
-        }
-        
-        return updatedQueue;
-      }
-      return q;
-    }));
-  };
-  
-  // Call queue (set to active)
-  const handleCallQueue = (queueId: string) => {
-    setQueues(queues.map(q => {
-      // Set all active queues back to waiting
-      if (q.status === QueueStatus.ACTIVE) {
-        return { ...q, status: QueueStatus.WAITING, updatedAt: new Date().toISOString() };
-      }
-      
-      // Set the selected queue to active
-      if (q.id === queueId) {
-        const calledQueue = { 
-          ...q, 
-          status: QueueStatus.ACTIVE, 
-          updatedAt: new Date().toISOString(),
-          calledAt: new Date().toISOString()
-        };
-        
-        // Find the patient for this queue
-        const patient = mockPatients.find(p => p.id === q.patientId);
-        if (patient) {
-          toast.success(`กำลังเรียกคิวหมายเลข ${q.number} - ${patient.name}`);
-        } else {
-          toast.success(`กำลังเรียกคิวหมายเลข ${q.number}`);
-        }
-        
-        return calledQueue;
-      }
-      
-      return q;
-    }));
-  };
+  const generalCount = queues.filter(q => q.type === 'GENERAL' && q.status !== 'COMPLETED').length;
+  const priorityCount = queues.filter(q => q.type === 'PRIORITY' && q.status !== 'COMPLETED').length;
+  const followUpCount = queues.filter(q => q.type === 'FOLLOW_UP' && q.status !== 'COMPLETED').length;
+  const elderlyCount = queues.filter(q => q.type === 'ELDERLY' && q.status !== 'COMPLETED').length;
   
   // Recall queue (announce again)
   const handleRecallQueue = (queueId: string) => {
     const queue = queues.find(q => q.id === queueId);
     if (queue) {
       // Find the patient for this queue
-      const patient = mockPatients.find(p => p.id === queue.patientId);
+      const patient = patients.find(p => p.id === queue.patient_id);
       if (patient) {
         toast.info(`เรียกซ้ำคิวหมายเลข ${queue.number} - ${patient.name}`);
       } else {
         toast.info(`เรียกซ้ำคิวหมายเลข ${queue.number}`);
       }
     }
-  };
-  
-  // Reset all queues (just for demo)
-  const handleResetAllQueues = () => {
-    setQueues(mockQueues);
-    toast.success('รีเซ็ตคิวทั้งหมดเรียบร้อย');
   };
 
   return (
@@ -126,10 +74,6 @@ const Dashboard = () => {
               <LayoutGrid className="w-4 h-4 mr-2" />
               หน้าจอแสดงคิว
             </Link>
-          </Button>
-          
-          <Button variant="outline" onClick={handleResetAllQueues}>
-            รีเซ็ตการสาธิต
           </Button>
         </div>
       </div>
@@ -224,11 +168,11 @@ const Dashboard = () => {
             <TabsContent value="waiting" className="animate-fade-in">
               <QueueList
                 queues={waitingQueues}
-                patients={mockPatients}
+                patients={patients}
                 title="คิวที่รอดำเนินการ"
                 emptyMessage="ไม่มีคิวที่รอดำเนินการ"
-                onUpdateStatus={handleUpdateStatus}
-                onCallQueue={handleCallQueue}
+                onUpdateStatus={updateQueueStatus}
+                onCallQueue={callQueue}
                 onRecallQueue={handleRecallQueue}
               />
             </TabsContent>
@@ -236,11 +180,11 @@ const Dashboard = () => {
             <TabsContent value="active" className="animate-fade-in">
               <QueueList
                 queues={activeQueues}
-                patients={mockPatients}
+                patients={patients}
                 title="คิวที่กำลังให้บริการ"
                 emptyMessage="ไม่มีคิวที่กำลังให้บริการ"
-                onUpdateStatus={handleUpdateStatus}
-                onCallQueue={handleCallQueue}
+                onUpdateStatus={updateQueueStatus}
+                onCallQueue={callQueue}
                 onRecallQueue={handleRecallQueue}
               />
             </TabsContent>
@@ -248,11 +192,11 @@ const Dashboard = () => {
             <TabsContent value="completed" className="animate-fade-in">
               <QueueList
                 queues={completedQueues}
-                patients={mockPatients}
+                patients={patients}
                 title="คิวที่เสร็จสิ้นแล้ว"
                 emptyMessage="ไม่มีคิวที่เสร็จสิ้น"
-                onUpdateStatus={handleUpdateStatus}
-                onCallQueue={handleCallQueue}
+                onUpdateStatus={updateQueueStatus}
+                onCallQueue={callQueue}
                 onRecallQueue={handleRecallQueue}
               />
             </TabsContent>
@@ -260,11 +204,11 @@ const Dashboard = () => {
             <TabsContent value="skipped" className="animate-fade-in">
               <QueueList
                 queues={skippedQueues}
-                patients={mockPatients}
+                patients={patients}
                 title="คิวที่ถูกข้าม"
                 emptyMessage="ไม่มีคิวที่ถูกข้าม"
-                onUpdateStatus={handleUpdateStatus}
-                onCallQueue={handleCallQueue}
+                onUpdateStatus={updateQueueStatus}
+                onCallQueue={callQueue}
                 onRecallQueue={handleRecallQueue}
               />
             </TabsContent>
