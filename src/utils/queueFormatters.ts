@@ -14,3 +14,25 @@ export const formatQueueNumber = (queueType: QueueType, queueNumber: number): st
   const format = queueTypeFormat[queueType];
   return `${format.prefix}${queueNumber.toString().padStart(format.padLength, '0')}`;
 };
+
+// Calculate waiting time in minutes
+export const calculateWaitingTime = (createdAt: string, calledAt?: string): string => {
+  if (!createdAt || !calledAt) return '?';
+  
+  const createdTime = new Date(createdAt).getTime();
+  const calledTime = new Date(calledAt).getTime();
+  const diffMinutes = Math.round((calledTime - createdTime) / (1000 * 60));
+  
+  return `${diffMinutes} นาที`;
+};
+
+// Calculate service time in minutes
+export const calculateServiceTime = (calledAt?: string, completedAt?: string): string => {
+  if (!calledAt || !completedAt) return '?';
+  
+  const calledTime = new Date(calledAt).getTime();
+  const completedTime = new Date(completedAt).getTime();
+  const diffMinutes = Math.round((completedTime - calledTime) / (1000 * 60));
+  
+  return `${diffMinutes} นาที`;
+};

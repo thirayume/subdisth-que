@@ -12,6 +12,7 @@ import Medications from "./pages/Medications";
 import Appointments from "./pages/Appointments";
 import QueueHistory from "./pages/QueueHistory";
 import Settings from "./pages/Settings";
+import QueueTicket from "./pages/QueueTicket";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/appointments" element={<Appointments />} />
           <Route path="/history" element={<QueueHistory />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/queue-ticket/:id" element={<QueueTicket />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

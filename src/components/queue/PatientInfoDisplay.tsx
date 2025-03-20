@@ -6,15 +6,19 @@ interface PatientInfoDisplayProps {
   patientName?: string;
   patientPhone?: string;
   formattedQueueNumber: string;
+  showQRInstructions?: boolean;
+  className?: string;
 }
 
 const PatientInfoDisplay: React.FC<PatientInfoDisplayProps> = ({
   patientName,
   patientPhone,
   formattedQueueNumber,
+  showQRInstructions = true,
+  className,
 }) => {
   return (
-    <div className="text-center mb-4">
+    <div className={`text-center ${className}`}>
       <p className="text-lg font-medium text-pharmacy-700">
         คิวหมายเลข: <span className="text-2xl">{formattedQueueNumber}</span>
       </p>
@@ -33,7 +37,9 @@ const PatientInfoDisplay: React.FC<PatientInfoDisplayProps> = ({
         </div>
       )}
       
-      <p className="text-sm text-gray-500 mt-2">สแกน QR Code เพื่อติดตามคิวบน LINE</p>
+      {showQRInstructions && (
+        <p className="text-sm text-gray-500 mt-2">สแกน QR Code เพื่อติดตามคิวบน LINE</p>
+      )}
     </div>
   );
 };
