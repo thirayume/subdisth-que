@@ -23,6 +23,7 @@ import { z } from 'zod';
 const Settings = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Define the form with explicit typing for the form values
   const form = useForm<z.infer<typeof queueSettingsSchema>>({
     resolver: zodResolver(queueSettingsSchema),
     defaultValues: {
@@ -40,7 +41,8 @@ const Settings = () => {
     },
   });
   
-  const queueTypes = form.watch('queue_types');
+  // Watch the queue_types field with explicit QueueType[] typing
+  const queueTypes = form.watch('queue_types') as QueueType[];
   
   const queueTypeActions = useQueueTypes({ 
     queueTypes, 

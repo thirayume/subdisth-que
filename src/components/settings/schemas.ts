@@ -2,6 +2,7 @@
 import * as z from 'zod';
 import { QueueType } from '@/hooks/useQueueTypes';
 
+// Define the Zod schema to match the QueueType interface
 export const queueTypeConfigSchema = z.object({
   id: z.string(),
   code: z.string().min(1, 'ต้องระบุรหัสประเภทคิว'),
@@ -38,7 +39,7 @@ export const formatOptions: FormatOption[] = [
   { value: '000' as const, label: 'เติมศูนย์ 3 หลัก (001, 002, ...)', example: 'A001, A002, ..., A010, A011' },
 ];
 
-// Making sure initialQueueTypes has the correct types for all required fields
+// Ensure initialQueueTypes has the proper QueueType type and all required fields
 export const initialQueueTypes: QueueType[] = [
   {
     id: 'GENERAL',
