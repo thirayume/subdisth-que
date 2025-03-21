@@ -1,9 +1,9 @@
 
 import * as z from 'zod';
-import { QueueType } from '@/lib/mockData';
+import { QueueType } from '@/hooks/useQueueTypes';
 
 export const queueTypeConfigSchema = z.object({
-  id: z.string().optional(),
+  id: z.string(),
   code: z.string().min(1, 'ต้องระบุรหัสประเภทคิว'),
   name: z.string().min(1, 'ต้องระบุชื่อประเภทคิว'),
   prefix: z.string().min(1, 'ต้องระบุ Prefix'),
@@ -38,9 +38,10 @@ export const formatOptions: FormatOption[] = [
   { value: '000' as const, label: 'เติมศูนย์ 3 หลัก (001, 002, ...)', example: 'A001, A002, ..., A010, A011' },
 ];
 
-export const initialQueueTypes = [
+// Making sure initialQueueTypes has the correct types for all required fields
+export const initialQueueTypes: QueueType[] = [
   {
-    id: QueueType.GENERAL,
+    id: 'GENERAL',
     code: 'GENERAL',
     name: 'ทั่วไป',
     prefix: 'A',
@@ -49,7 +50,7 @@ export const initialQueueTypes = [
     enabled: true,
   },
   {
-    id: QueueType.PRIORITY,
+    id: 'PRIORITY',
     code: 'PRIORITY',
     name: 'ด่วน',
     prefix: 'P',
@@ -58,7 +59,7 @@ export const initialQueueTypes = [
     enabled: true,
   },
   {
-    id: QueueType.ELDERLY,
+    id: 'ELDERLY',
     code: 'ELDERLY',
     name: 'ผู้สูงอายุ',
     prefix: 'E',
@@ -67,7 +68,7 @@ export const initialQueueTypes = [
     enabled: true,
   },
   {
-    id: QueueType.FOLLOW_UP,
+    id: 'FOLLOW_UP',
     code: 'FOLLOW_UP',
     name: 'ติดตามการใช้ยา',
     prefix: 'F',

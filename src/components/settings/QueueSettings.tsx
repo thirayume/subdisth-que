@@ -16,16 +16,7 @@ import {
 import { Plus } from 'lucide-react';
 import QueueTypeItem from './QueueTypeItem';
 import { FormatOption } from './schemas';
-
-interface QueueType {
-  id: string;
-  code: string;
-  name: string;
-  prefix: string;
-  purpose: string;
-  format: '0' | '00' | '000';
-  enabled: boolean;
-}
+import { QueueType } from '@/hooks/useQueueTypes';
 
 interface QueueSettingsProps {
   form: UseFormReturn<any>;

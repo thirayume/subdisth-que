@@ -17,7 +17,7 @@ import LineSettings from '@/components/settings/LineSettings';
 import SettingsTabs from '@/components/settings/SettingsTabs';
 import SettingsFormActions from '@/components/settings/SettingsFormActions';
 import { queueSettingsSchema, formatOptions, initialQueueTypes } from '@/components/settings/schemas';
-import { useQueueTypes } from '@/hooks/useQueueTypes';
+import { useQueueTypes, QueueType } from '@/hooks/useQueueTypes';
 import { z } from 'zod';
 
 const Settings = () => {

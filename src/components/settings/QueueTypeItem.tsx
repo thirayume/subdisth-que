@@ -5,16 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Edit, Trash2, Check, X, CopyPlus } from 'lucide-react';
 import { FormatOption } from './schemas';
-
-interface QueueType {
-  id: string;
-  code: string;
-  name: string;
-  prefix: string;
-  purpose: string;
-  format: '0' | '00' | '000';
-  enabled: boolean;
-}
+import { QueueType } from '@/hooks/useQueueTypes';
 
 interface QueueTypeItemProps {
   queueType: QueueType;
