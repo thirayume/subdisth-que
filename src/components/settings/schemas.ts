@@ -26,10 +26,16 @@ export const queueSettingsSchema = z.object({
   queue_types: z.array(queueTypeConfigSchema),
 });
 
-export const formatOptions = [
-  { value: '0', label: 'ไม่เติมศูนย์ (1, 2, 3, ...)', example: 'A1, A2, ..., A10, A11' },
-  { value: '00', label: 'เติมศูนย์ 2 หลัก (01, 02, ...)', example: 'A01, A02, ..., A10, A11' },
-  { value: '000', label: 'เติมศูนย์ 3 หลัก (001, 002, ...)', example: 'A001, A002, ..., A010, A011' },
+export type FormatOption = {
+  value: '0' | '00' | '000';
+  label: string;
+  example: string;
+};
+
+export const formatOptions: FormatOption[] = [
+  { value: '0' as const, label: 'ไม่เติมศูนย์ (1, 2, 3, ...)', example: 'A1, A2, ..., A10, A11' },
+  { value: '00' as const, label: 'เติมศูนย์ 2 หลัก (01, 02, ...)', example: 'A01, A02, ..., A10, A11' },
+  { value: '000' as const, label: 'เติมศูนย์ 3 หลัก (001, 002, ...)', example: 'A001, A002, ..., A010, A011' },
 ];
 
 export const initialQueueTypes = [

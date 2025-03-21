@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +15,7 @@ import {
 } from '@/components/ui/form';
 import { Plus } from 'lucide-react';
 import QueueTypeItem from './QueueTypeItem';
+import { FormatOption } from './schemas';
 
 interface QueueType {
   id: string;
@@ -33,11 +33,7 @@ interface QueueSettingsProps {
   setEditingQueueType: React.Dispatch<React.SetStateAction<string | null>>;
   newQueueType: boolean;
   setNewQueueType: React.Dispatch<React.SetStateAction<boolean>>;
-  formatOptions: Array<{
-    value: '0' | '00' | '000';
-    label: string;
-    example: string;
-  }>;
+  formatOptions: FormatOption[];
   handleAddQueueType: () => void;
   handleRemoveQueueType: (index: number) => void;
   handleEditQueueType: (id: string) => void;

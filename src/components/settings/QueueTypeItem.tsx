@@ -1,16 +1,10 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Edit, Trash2, Check, X, CopyPlus } from 'lucide-react';
-
-interface FormatOption {
-  value: '0' | '00' | '000';
-  label: string;
-  example: string;
-}
+import { FormatOption } from './schemas';
 
 interface QueueType {
   id: string;
