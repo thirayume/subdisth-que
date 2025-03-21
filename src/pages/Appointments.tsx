@@ -1,19 +1,20 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import Layout from '@/components/layout/Layout';
-import { mockAppointments, mockPatients } from '@/lib/mockData';
-import { toast } from 'sonner';
-import { Calendar, Search, Plus, Clock, Users, ChevronRight } from 'lucide-react';
-import { format } from 'date-fns';
-import { th } from 'date-fns/locale';
+import { useAppointments } from '@/hooks/useAppointments';
+import { usePatients } from '@/hooks/usePatients';
+import { Search, Plus } from 'lucide-react';
 import AppointmentCalendar from '@/components/appointments/AppointmentCalendar';
+import AppointmentsList from '@/components/appointments/AppointmentsList';
+import AppointmentStats from '@/components/appointments/AppointmentStats';
 
 const Appointments = () => {
-  const [appointments, setAppointments] = useState(mockAppointments);
+  const { appointments, loading } = useAppointments();
+  const { patients } = usePatients();
   const [searchTerm, setSearchTerm] = useState('');
   
   const today = new Date();
@@ -33,7 +34,7 @@ const Appointments = () => {
   );
   
   const getPatientName = (patientId: string) => {
-    const patient = mockPatients.find(p => p.id === patientId);
+    const patient = patients.find(p => p.id === patientId);
     return patient ? patient.name : 'ไม่ระบุชื่อ';
   };
 
@@ -53,64 +54,12 @@ const Appointments = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Card className="dashboard-card">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-gray-500">นัดหมายวันนี้</p>
-                <h3 className="text-3xl font-bold text-gray-900 mt-1">{todayAppointments.length}</h3>
-              </div>
-              <div className="bg-green-100 p-3 rounded-full">
-                <Calendar className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-            <div className="mt-4">
-              <div className="text-xs text-gray-500">
-                วันที่ {format(today, 'dd MMMM yyyy', { locale: th })}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="dashboard-card">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-gray-500">นัดหมายพรุ่งนี้</p>
-                <h3 className="text-3xl font-bold text-gray-900 mt-1">{tomorrowAppointments.length}</h3>
-              </div>
-              <div className="bg-blue-100 p-3 rounded-full">
-                <Clock className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-            <div className="mt-4">
-              <div className="text-xs text-gray-500">
-                วันที่ {format(tomorrow, 'dd MMMM yyyy', { locale: th })}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="dashboard-card">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-gray-500">นัดหมายทั้งหมด</p>
-                <h3 className="text-3xl font-bold text-gray-900 mt-1">{appointments.length}</h3>
-              </div>
-              <div className="bg-purple-100 p-3 rounded-full">
-                <Users className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-            <div className="mt-4">
-              <div className="text-xs text-gray-500">
-                กำลังรอการติดตาม <span className="font-medium text-purple-600">{upcomingAppointments.length}</span> รายการ
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <AppointmentStats 
+        todayCount={todayAppointments.length}
+        tomorrowCount={tomorrowAppointments.length}
+        totalCount={appointments.length}
+        upcomingCount={upcomingAppointments.length}
+      />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
@@ -134,117 +83,33 @@ const Appointments = () => {
             </div>
             
             <TabsContent value="today" className="animate-fade-in">
-              <Card>
-                <CardContent className="p-0">
-                  {todayAppointments.length === 0 ? (
-                    <div className="p-6 text-center text-gray-500">
-                      ไม่มีนัดหมายในวันนี้
-                    </div>
-                  ) : (
-                    <div className="divide-y">
-                      {todayAppointments.map((appointment) => (
-                        <div key={appointment.id} className="flex items-center p-4 hover:bg-gray-50">
-                          <div className="w-14 h-14 flex-shrink-0 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-4">
-                            <Calendar className="w-6 h-6" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {getPatientName(appointment.patientId)}
-                            </p>
-                            <p className="text-sm text-gray-500 truncate">
-                              {appointment.purpose}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              {format(new Date(appointment.date), 'HH:mm น.', { locale: th })}
-                            </p>
-                          </div>
-                          <div className="ml-4">
-                            <Button variant="ghost" size="sm">
-                              <ChevronRight className="h-5 w-5" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <AppointmentsList 
+                appointments={todayAppointments}
+                getPatientName={getPatientName}
+                emptyMessage="ไม่มีนัดหมายในวันนี้"
+                iconBgColor="bg-green-100"
+                iconColor="text-green-600"
+              />
             </TabsContent>
             
             <TabsContent value="tomorrow" className="animate-fade-in">
-              <Card>
-                <CardContent className="p-0">
-                  {tomorrowAppointments.length === 0 ? (
-                    <div className="p-6 text-center text-gray-500">
-                      ไม่มีนัดหมายในวันพรุ่งนี้
-                    </div>
-                  ) : (
-                    <div className="divide-y">
-                      {tomorrowAppointments.map((appointment) => (
-                        <div key={appointment.id} className="flex items-center p-4 hover:bg-gray-50">
-                          <div className="w-14 h-14 flex-shrink-0 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-4">
-                            <Calendar className="w-6 h-6" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {getPatientName(appointment.patientId)}
-                            </p>
-                            <p className="text-sm text-gray-500 truncate">
-                              {appointment.purpose}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              {format(new Date(appointment.date), 'HH:mm น.', { locale: th })}
-                            </p>
-                          </div>
-                          <div className="ml-4">
-                            <Button variant="ghost" size="sm">
-                              <ChevronRight className="h-5 w-5" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <AppointmentsList 
+                appointments={tomorrowAppointments}
+                getPatientName={getPatientName}
+                emptyMessage="ไม่มีนัดหมายในวันพรุ่งนี้"
+                iconBgColor="bg-blue-100"
+                iconColor="text-blue-600"
+              />
             </TabsContent>
             
             <TabsContent value="upcoming" className="animate-fade-in">
-              <Card>
-                <CardContent className="p-0">
-                  {upcomingAppointments.length === 0 ? (
-                    <div className="p-6 text-center text-gray-500">
-                      ไม่มีนัดหมายในอนาคต
-                    </div>
-                  ) : (
-                    <div className="divide-y">
-                      {upcomingAppointments.map((appointment) => (
-                        <div key={appointment.id} className="flex items-center p-4 hover:bg-gray-50">
-                          <div className="w-14 h-14 flex-shrink-0 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 mr-4">
-                            <Calendar className="w-6 h-6" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {getPatientName(appointment.patientId)}
-                            </p>
-                            <p className="text-sm text-gray-500 truncate">
-                              {appointment.purpose}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              {format(new Date(appointment.date), 'dd MMM yyyy, HH:mm น.', { locale: th })}
-                            </p>
-                          </div>
-                          <div className="ml-4">
-                            <Button variant="ghost" size="sm">
-                              <ChevronRight className="h-5 w-5" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <AppointmentsList 
+                appointments={upcomingAppointments}
+                getPatientName={getPatientName}
+                emptyMessage="ไม่มีนัดหมายในอนาคต"
+                iconBgColor="bg-purple-100"
+                iconColor="text-purple-600"
+              />
             </TabsContent>
           </Tabs>
         </div>

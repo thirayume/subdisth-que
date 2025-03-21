@@ -5,9 +5,10 @@ import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { Appointment } from '@/integrations/supabase/schema';
 
 interface AppointmentCalendarProps {
-  appointments: any[];
+  appointments: Appointment[];
 }
 
 const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({ appointments }) => {
