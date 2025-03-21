@@ -1,7 +1,5 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { z } from 'zod';
 import { queueSettingsSchema } from '@/components/settings/schemas';
 
 export type QueueType = {
@@ -26,7 +24,7 @@ export const useQueueTypes = ({ queueTypes, setValue }: UseQueueTypesProps) => {
   const handleAddQueueType = () => {
     setNewQueueType(true);
     const newId = `CUSTOM_${Date.now()}`;
-    const newQueueTypeItem = {
+    const newQueueTypeItem: QueueType = {
       id: newId,
       code: '',
       name: '',
