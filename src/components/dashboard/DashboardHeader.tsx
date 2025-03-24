@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LayoutGrid } from 'lucide-react';
+import { LayoutGrid, Smartphone } from 'lucide-react';
 
 const DashboardHeader: React.FC = () => {
   return (
@@ -13,6 +13,13 @@ const DashboardHeader: React.FC = () => {
       </div>
       
       <div className="flex items-center gap-2">
+        <Button variant="outline" className="text-pharmacy-600 border-pharmacy-200" asChild>
+          <Link to="/patient-portal">
+            <Smartphone className="w-4 h-4 mr-2" />
+            ระบบสำหรับผู้ป่วย
+          </Link>
+        </Button>
+        
         <Button className="bg-pharmacy-600 hover:bg-pharmacy-700 text-white" asChild>
           <Link to="/queue-board">
             <LayoutGrid className="w-4 h-4 mr-2" />
