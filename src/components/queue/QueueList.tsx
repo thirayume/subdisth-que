@@ -44,12 +44,6 @@ const QueueList: React.FC<QueueListProps> = ({
           {queues.map((queue) => {
             const patient = findPatient(queue.patient_id);
             
-            // Skip rendering this queue if patient is not found
-            if (!patient) {
-              console.warn(`Patient with ID ${queue.patient_id} not found for queue ${queue.number}`);
-              return null;
-            }
-            
             return (
               <div key={queue.id} className="animate-fade-in">
                 <QueueCard

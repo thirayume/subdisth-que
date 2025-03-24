@@ -7,7 +7,7 @@ import { Clock, AlertCircle, CheckCircle, ArrowRightCircle } from 'lucide-react'
 
 interface QueueCardProps {
   queue: Queue;
-  patient: Patient;
+  patient: Patient | undefined;
   className?: string;
 }
 

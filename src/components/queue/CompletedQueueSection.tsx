@@ -24,25 +24,30 @@ const CompletedQueueSection: React.FC<CompletedQueueSectionProps> = ({
                 <p className="text-gray-500">ยังไม่มีคิวที่เสร็จสิ้น</p>
               </div>
             ) : (
-              completedQueues.map(queue => (
-                <div key={queue.id} className="p-4 flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center mr-3">
-                      {queue.number}
-                    </div>
-                    <div className="text-sm">
-                      <div className="font-medium text-gray-900">{findPatient(queue.patient_id)?.name}</div>
-                      <div className="text-xs text-gray-500">เสร็จสิ้นเมื่อ {
-                        queue.completed_at && new Date(queue.completed_at).toLocaleTimeString('th-TH', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: false
-                        })
-                      }</div>
+              completedQueues.map(queue => {
+                const patient = findPatient(queue.patient_id);
+                const patientName = patient ? patient.name : "ไม่พบข้อมูลผู้ป่วย";
+                
+                return (
+                  <div key={queue.id} className="p-4 flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center mr-3">
+                        {queue.number}
+                      </div>
+                      <div className="text-sm">
+                        <div className="font-medium text-gray-900">{patientName}</div>
+                        <div className="text-xs text-gray-500">เสร็จสิ้นเมื่อ {
+                          queue.completed_at && new Date(queue.completed_at).toLocaleTimeString('th-TH', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
+                          })
+                        }</div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </CardContent>
