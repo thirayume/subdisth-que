@@ -1,13 +1,28 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Queue, QueueStatus, QueueType } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
+import { announceQueue } from '@/utils/textToSpeech';
 
 export const useQueues = () => {
   const [queues, setQueues] = useState<Queue[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [counterName, setCounterName] = useState('1');
+
+  // Load voice settings from localStorage on startup
+  useEffect(() => {
+    const savedVoiceEnabled = localStorage.getItem('queue_voice_enabled');
+    if (savedVoiceEnabled !== null) {
+      setVoiceEnabled(savedVoiceEnabled === 'true');
+    }
+    
+    const savedCounterName = localStorage.getItem('counter_name');
+    if (savedCounterName) {
+      setCounterName(savedCounterName);
+    }
+  }, []);
 
   // Fetch all queues
   const fetchQueues = async () => {
@@ -81,6 +96,16 @@ export const useQueues = () => {
       toast.error('ไม่สามารถเพิ่มคิวได้');
       return null;
     }
+  };
+
+  // Update queue settings
+  const updateQueueSettings = (enabled: boolean, counter: string) => {
+    setVoiceEnabled(enabled);
+    setCounterName(counter);
+    
+    // Save to localStorage
+    localStorage.setItem('queue_voice_enabled', String(enabled));
+    localStorage.setItem('counter_name', counter);
   };
 
   // Update queue status
@@ -175,7 +200,52 @@ export const useQueues = () => {
   
   // Call a queue
   const callQueue = async (id: string) => {
-    return updateQueueStatus(id, 'ACTIVE');
+    const updatedQueue = await updateQueueStatus(id, 'ACTIVE');
+    
+    // Announce the queue if voice is enabled
+    if (updatedQueue && voiceEnabled) {
+      try {
+        const announcementText = localStorage.getItem('queue_announcement_text') || 
+          'ขอเชิญหมายเลข {queueNumber} ที่ช่องบริการ {counter}';
+        
+        await announceQueue(
+          updatedQueue.number, 
+          counterName, 
+          updatedQueue.type,
+          announcementText
+        );
+      } catch (err) {
+        console.error('Error announcing queue:', err);
+      }
+    }
+    
+    return updatedQueue;
+  };
+  
+  // Recall a queue (announce again)
+  const recallQueue = async (id: string) => {
+    const queue = queues.find(q => q.id === id);
+    
+    if (queue && voiceEnabled) {
+      try {
+        const announcementText = localStorage.getItem('queue_announcement_text') || 
+          'ขอเชิญหมายเลข {queueNumber} ที่ช่องบริการ {counter}';
+        
+        await announceQueue(
+          queue.number, 
+          counterName, 
+          queue.type,
+          announcementText
+        );
+        
+        toast.info(`เรียกซ้ำคิวหมายเลข ${queue.number}`);
+      } catch (err) {
+        console.error('Error recalling queue:', err);
+        toast.error('ไม่สามารถประกาศเสียงเรียกคิวได้');
+      }
+    }
+    
+    return queue;
   };
   
   // Initial data fetch
@@ -192,5 +262,11 @@ export const useQueues = () => {
     updateQueueStatus,
     getQueuesByStatus,
     callQueue,
+    recallQueue,
+    voiceEnabled,
+    setVoiceEnabled,
+    counterName,
+    setCounterName,
+    updateQueueSettings
   };
 };

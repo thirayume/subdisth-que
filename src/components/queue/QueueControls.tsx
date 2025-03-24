@@ -8,8 +8,11 @@ import {
   Check, 
   SkipForward, 
   AlertTriangle, 
-  Pause
+  Pause,
+  Volume2
 } from 'lucide-react';
+import { announceQueue } from '@/utils/textToSpeech';
+import { useToast } from '@/hooks/use-toast';
 
 interface QueueControlsProps {
   queue: Queue;
@@ -17,6 +20,8 @@ interface QueueControlsProps {
   onCallQueue: (queueId: string) => void;
   onRecallQueue: (queueId: string) => void;
   className?: string;
+  patientName?: string;
+  counterName?: string;
 }
 
 const QueueControls: React.FC<QueueControlsProps> = ({ 
@@ -24,8 +29,30 @@ const QueueControls: React.FC<QueueControlsProps> = ({
   onUpdateStatus, 
   onCallQueue, 
   onRecallQueue,
-  className 
+  className,
+  patientName,
+  counterName = '1'
 }) => {
+  const { toast } = useToast();
+
+  // Function to handle queue announcement
+  const handleAnnounceQueue = async () => {
+    try {
+      await announceQueue(queue.number, counterName, queue.type);
+      toast({
+        title: "ประกาศเสียงเรียกคิว",
+        description: `ประกาศเสียงเรียกคิวหมายเลข ${queue.number} เรียบร้อยแล้ว`,
+      });
+    } catch (error) {
+      console.error('Error announcing queue:', error);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถประกาศเสียงเรียกคิวได้",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className={`flex items-center gap-2 flex-wrap ${className}`}>
       {queue.status === 'WAITING' && (
@@ -49,6 +76,16 @@ const QueueControls: React.FC<QueueControlsProps> = ({
           >
             <RefreshCw className="h-4 w-4 mr-1" />
             เรียกซ้ำ
+          </Button>
+          
+          <Button 
+            onClick={handleAnnounceQueue} 
+            variant="outline" 
+            size="sm"
+            className="border-blue-200 text-blue-700 hover:bg-blue-50"
+          >
+            <Volume2 className="h-4 w-4 mr-1" />
+            ประกาศเสียง
           </Button>
           
           <Button 

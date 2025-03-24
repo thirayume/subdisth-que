@@ -1,15 +1,18 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatQueueNumber } from '@/utils/queueFormatters';
 import QueueTypeLabel from './QueueTypeLabel';
 import { Queue } from '@/integrations/supabase/schema';
+import { announceQueue } from '@/utils/textToSpeech';
 
 interface QueueBoardDisplayProps {
   queue: Queue;
   patientName?: string;
   isActive?: boolean;
   className?: string;
+  counterName?: string;
+  autoAnnounce?: boolean;
 }
 
 const QueueBoardDisplay: React.FC<QueueBoardDisplayProps> = ({
@@ -17,8 +20,38 @@ const QueueBoardDisplay: React.FC<QueueBoardDisplayProps> = ({
   patientName,
   isActive = false,
   className,
+  counterName = '1',
+  autoAnnounce = false
 }) => {
+  const [hasAnnounced, setHasAnnounced] = useState(false);
   const formattedNumber = formatQueueNumber(queue.type, queue.number);
+  
+  // Auto announce when a queue becomes active
+  useEffect(() => {
+    const shouldAnnounce = isActive && autoAnnounce && !hasAnnounced;
+    
+    if (shouldAnnounce) {
+      const announceActiveQueue = async () => {
+        try {
+          // Get announcement settings from localStorage or use default
+          const announcementText = localStorage.getItem('queue_announcement_text') || 
+            'ขอเชิญหมายเลข {queueNumber} ที่ช่องบริการ {counter}';
+            
+          await announceQueue(queue.number, counterName, queue.type, announcementText);
+          setHasAnnounced(true);
+        } catch (error) {
+          console.error('Error auto-announcing queue:', error);
+        }
+      };
+      
+      announceActiveQueue();
+    }
+  }, [isActive, autoAnnounce, hasAnnounced, queue, counterName]);
+  
+  // Reset announced state when queue changes
+  useEffect(() => {
+    setHasAnnounced(false);
+  }, [queue.id]);
   
   return (
     <Card className={`overflow-hidden ${isActive ? 'border-2 border-green-500' : ''} ${className}`}>
