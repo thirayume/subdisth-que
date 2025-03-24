@@ -26,13 +26,15 @@ const ActiveQueueSection: React.FC<ActiveQueueSectionProps> = ({
         <div className="space-y-4">
           {activeQueues.map(queue => {
             const patient = findPatient(queue.patient_id);
+            const patientName = patient ? patient.name : "ไม่พบข้อมูลผู้ป่วย";
+            
             return (
               <Card key={queue.id} className="bg-white border-2 border-pharmacy-200 shadow-lg animate-pulse-gentle">
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center">
                     <div className="text-sm font-medium text-pharmacy-700 mb-1">กำลังเรียก</div>
                     <div className="queue-number text-8xl font-bold text-pharmacy-600 mb-4">{queue.number}</div>
-                    <div className="text-lg font-medium text-gray-800 mb-1">{patient?.name}</div>
+                    <div className="text-lg font-medium text-gray-800 mb-1">{patientName}</div>
                     <div className="text-sm text-gray-500">ช่องบริการ: 2</div>
                   </div>
                 </CardContent>

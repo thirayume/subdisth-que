@@ -27,8 +27,8 @@ const QueueList: React.FC<QueueListProps> = ({
   onRecallQueue,
 }) => {
   // Function to find patient by ID
-  const findPatient = (patientId: string): Patient => {
-    return patients.find((p) => p.id === patientId) || patients[0];
+  const findPatient = (patientId: string): Patient | undefined => {
+    return patients.find((p) => p.id === patientId);
   };
 
   return (
@@ -41,22 +41,32 @@ const QueueList: React.FC<QueueListProps> = ({
         </div>
       ) : (
         <div className="space-y-4">
-          {queues.map((queue) => (
-            <div key={queue.id} className="animate-fade-in">
-              <QueueCard
-                queue={queue}
-                patient={findPatient(queue.patient_id)}
-              />
-              <div className="mt-2 ml-1">
-                <QueueControls
+          {queues.map((queue) => {
+            const patient = findPatient(queue.patient_id);
+            
+            // Skip rendering this queue if patient is not found
+            if (!patient) {
+              console.warn(`Patient with ID ${queue.patient_id} not found for queue ${queue.number}`);
+              return null;
+            }
+            
+            return (
+              <div key={queue.id} className="animate-fade-in">
+                <QueueCard
                   queue={queue}
-                  onUpdateStatus={onUpdateStatus}
-                  onCallQueue={onCallQueue}
-                  onRecallQueue={onRecallQueue}
+                  patient={patient}
                 />
+                <div className="mt-2 ml-1">
+                  <QueueControls
+                    queue={queue}
+                    onUpdateStatus={onUpdateStatus}
+                    onCallQueue={onCallQueue}
+                    onRecallQueue={onRecallQueue}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

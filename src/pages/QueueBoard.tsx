@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQueues } from '@/hooks/useQueues';
 import { usePatients } from '@/hooks/usePatients';
-import { QueueStatus } from '@/integrations/supabase/schema';
+import { QueueStatus, Patient } from '@/integrations/supabase/schema';
 import QueueBoardHeader from '@/components/queue/QueueBoardHeader';
 import ActiveQueueSection from '@/components/queue/ActiveQueueSection';
 import WaitingQueueSection from '@/components/queue/WaitingQueueSection';
@@ -58,7 +58,7 @@ const QueueBoard = () => {
   }, [getQueuesByStatus]);
 
   // Find patient by ID
-  const findPatient = (patientId: string) => {
+  const findPatient = (patientId: string): Patient | undefined => {
     return patients.find(p => p.id === patientId);
   };
   

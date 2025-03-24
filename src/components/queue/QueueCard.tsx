@@ -12,6 +12,24 @@ interface QueueCardProps {
 }
 
 const QueueCard: React.FC<QueueCardProps> = ({ queue, patient, className }) => {
+  // Safeguard: If patient is undefined (should never happen due to our filter in QueueList)
+  if (!patient) {
+    console.error('QueueCard received undefined patient for queue:', queue.number);
+    return (
+      <Card className="border-red-200 bg-red-50/50">
+        <CardContent className="p-4">
+          <div className="flex justify-between items-start">
+            <div>
+              <div className="queue-number text-4xl font-bold mb-2 text-pharmacy-700">{queue.number}</div>
+              <div className="font-medium text-gray-900">ข้อมูลผู้ป่วยไม่พบ</div>
+              <div className="text-sm text-red-500">รหัสผู้ป่วย: {queue.patient_id}</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const getStatusIcon = () => {
     switch (queue.status) {
       case 'WAITING':
