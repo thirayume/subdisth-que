@@ -121,7 +121,12 @@ const PatientPortal: React.FC = () => {
   }
 
   if (!isAuthenticated) {
-    return <PatientPortalAuth onLoginSuccess={handleLineLoginSuccess} />;
+    return (
+      <PatientPortalAuth 
+        onLoginSuccess={handleLineLoginSuccess} 
+        onPatientSelect={handlePatientSelect}
+      />
+    );
   }
 
   if (activeQueue && selectedPatient) {

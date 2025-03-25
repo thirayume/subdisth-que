@@ -30,9 +30,10 @@ const Dashboard = () => {
   
   // Handler for recalling queue
   const handleRecallQueue = (queueId: string) => {
+    recallQueue(queueId);
+    // Find the queue for this ID
     const queue = queues.find(q => q.id === queueId);
     if (queue) {
-      recallQueue(queueId);
       // Find the patient for this queue
       const patient = patients.find(p => p.id === queue.patient_id);
       if (patient) {
