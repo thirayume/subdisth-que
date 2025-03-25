@@ -24,7 +24,7 @@ export const useQueues = () => {
     counterName, 
     setCounterName, 
     updateQueueSettings, 
-    recallQueue 
+    recallQueue: baseRecallQueue 
   } = useQueueAnnouncements();
   
   // Wrapper for callQueue to handle both status update and announcement
@@ -50,6 +50,12 @@ export const useQueues = () => {
       return updatedQueue;
     }
     return null;
+  };
+
+  // Wrapper for recallQueue that gets queue by ID first
+  const recallQueue = (queueId: string) => {
+    const getQueueById = (id: string) => queues.find(q => q.id === id);
+    return baseRecallQueue(queueId, getQueueById);
   };
 
   return {

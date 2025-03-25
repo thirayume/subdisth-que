@@ -56,8 +56,25 @@ export const useQueueAnnouncements = () => {
   };
   
   // Recall a queue (announce again)
-  const recallQueue = async (queue: Queue) => {
-    if (voiceEnabled) {
+  // Modified to accept either a Queue object or a queue ID string
+  const recallQueue = async (queueOrId: Queue | string, queueGetter?: (id: string) => Queue | undefined) => {
+    // If queueOrId is a string and we have a queueGetter function, get the Queue object
+    let queue: Queue | undefined;
+    
+    if (typeof queueOrId === 'string' && queueGetter) {
+      queue = queueGetter(queueOrId);
+      if (!queue) {
+        console.error('Queue not found for ID:', queueOrId);
+        return null;
+      }
+    } else if (typeof queueOrId !== 'string') {
+      queue = queueOrId;
+    } else {
+      console.error('Cannot recall queue without Queue object or queue getter function');
+      return null;
+    }
+
+    if (voiceEnabled && queue) {
       try {
         const announcementText = localStorage.getItem('queue_announcement_text') || 
           'ขอเชิญหมายเลข {queueNumber} ที่ช่องบริการ {counter}';
@@ -77,7 +94,7 @@ export const useQueueAnnouncements = () => {
       }
     }
     
-    return queue;
+    return queue || null;
   };
 
   return {

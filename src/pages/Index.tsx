@@ -28,10 +28,12 @@ const Dashboard = () => {
     }
   }, [queues]);
   
-  // Handler for recalling queue
+  // Handler for recalling queue - fixed to correctly use the recallQueue function
   const handleRecallQueue = (queueId: string) => {
+    // We now call recallQueue with the queue ID, as we've modified it to accept an ID
     recallQueue(queueId);
-    // Find the queue for this ID
+    
+    // We still need to find the queue for the toast notification
     const queue = queues.find(q => q.id === queueId);
     if (queue) {
       // Find the patient for this queue
