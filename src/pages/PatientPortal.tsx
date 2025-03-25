@@ -15,6 +15,7 @@ const PatientPortal: React.FC = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [activeQueue, setActiveQueue] = useState<Queue | null>(null);
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
+  const [isStaffMode, setIsStaffMode] = useState<boolean>(false);
 
   useEffect(() => {
     // Check for LINE authentication state on component mount
@@ -97,9 +98,43 @@ const PatientPortal: React.FC = () => {
     localStorage.setItem('userPhone', userPhone);
     setIsAuthenticated(true);
     setPhoneNumber(userPhone);
+    setIsStaffMode(false);
     
     // Reload the page to fetch patient data
     window.location.reload();
+  };
+
+  const handlePatientFound = async (patient: Patient) => {
+    setIsAuthenticated(true);
+    setIsStaffMode(true);
+    setSelectedPatient(patient);
+    setPatients([patient]);
+    
+    // Check if there's an active queue for this patient
+    try {
+      const { data: queueData, error: queueError } = await supabase
+        .from('queues')
+        .select('*')
+        .eq('patient_id', patient.id)
+        .in('status', ['WAITING', 'ACTIVE'])
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      if (queueError) throw queueError;
+      
+      if (queueData && queueData.length > 0) {
+        // Convert string type to QueueType and string status to QueueStatus
+        const typedQueue: Queue = {
+          ...queueData[0],
+          type: queueData[0].type as QueueType,
+          status: queueData[0].status as QueueStatus
+        };
+        
+        setActiveQueue(typedQueue);
+      }
+    } catch (error) {
+      console.error('Error fetching patient queue:', error);
+    }
   };
 
   const handleLogout = () => {
@@ -110,6 +145,7 @@ const PatientPortal: React.FC = () => {
     setPatients([]);
     setActiveQueue(null);
     setPhoneNumber(null);
+    setIsStaffMode(false);
   };
 
   const handleSwitchPatient = () => {
@@ -124,7 +160,7 @@ const PatientPortal: React.FC = () => {
     return (
       <PatientPortalAuth 
         onLoginSuccess={handleLineLoginSuccess} 
-        onPatientSelect={handlePatientSelect}
+        onPatientSelect={handlePatientFound}
       />
     );
   }
