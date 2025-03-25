@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +7,7 @@ import { QrCode, User, PhoneCall, Clock, Pill } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Patient, Queue } from '@/integrations/supabase/schema';
+import { Patient, Queue, QueueStatus, QueueType } from '@/integrations/supabase/schema';
 import PatientProfile from '@/components/patient-portal/PatientProfile';
 import PatientQueueStatus from '@/components/patient-portal/PatientQueueStatus';
 import PatientMedications from '@/components/patient-portal/PatientMedications';
@@ -63,10 +62,17 @@ const PatientPortal: React.FC = () => {
             if (queueError) throw queueError;
             
             if (queueData && queueData.length > 0) {
-              setActiveQueue(queueData[0]);
+              // Convert string type to QueueType and string status to QueueStatus
+              const typedQueue: Queue = {
+                ...queueData[0],
+                type: queueData[0].type as QueueType,
+                status: queueData[0].status as QueueStatus
+              };
+              
+              setActiveQueue(typedQueue);
               
               // Find which patient this queue belongs to
-              const queuePatient = patientData.find(p => p.id === queueData[0].patient_id);
+              const queuePatient = patientData.find(p => p.id === typedQueue.patient_id);
               if (queuePatient) {
                 setSelectedPatient(queuePatient);
               } else {
@@ -157,7 +163,6 @@ const PatientPortal: React.FC = () => {
     );
   }
 
-  // If there's an active queue, show it
   if (activeQueue && selectedPatient) {
     return (
       <div className="flex flex-col min-h-screen bg-gray-50 p-4">
@@ -207,7 +212,6 @@ const PatientPortal: React.FC = () => {
     );
   }
 
-  // If authenticated but no active queue, show patient selector
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-4">
       <div className="flex justify-between items-center mb-4">

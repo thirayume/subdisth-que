@@ -98,7 +98,7 @@ const PatientQueueStatus: React.FC<PatientQueueStatusProps> = ({ queue, patient,
             {statusIcon}
             <span>คิวของคุณ</span>
           </div>
-          <span className="text-2xl font-bold">{formatQueueNumber(queue.number, queue.type)}</span>
+          <span className="text-2xl font-bold">{formatQueueNumber(queue.type, queue.number)}</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -128,7 +128,7 @@ const PatientQueueStatus: React.FC<PatientQueueStatusProps> = ({ queue, patient,
         <div className="text-center">
           <p className="text-sm mb-2">แสกนเพื่อติดตามคิวผ่าน LINE</p>
           <div className="flex justify-center">
-            <LineQRCode queueNumber={queue.number} size={120} />
+            <LineQRCode queueNumber={queue.number} queueType={queue.type} size={120} />
           </div>
         </div>
       </CardContent>

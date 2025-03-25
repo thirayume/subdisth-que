@@ -1,10 +1,11 @@
 
 import React from 'react';
 import { QRCodeSVG } from 'qrcode.react';
+import { QueueType } from '@/integrations/supabase/schema';
 
 interface LineQRCodeProps {
   queueNumber: number;
-  queueType?: string;
+  queueType?: string | QueueType;
   size?: number;
   className?: string;
 }
