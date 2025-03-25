@@ -22,7 +22,8 @@ export const usePatients = () => {
   const {
     searchLoading,
     searchError,
-    searchPatients
+    searchPatients,
+    findPatientByPhone
   } = usePatientsSearch();
 
   return {
@@ -38,6 +39,8 @@ export const usePatients = () => {
     deletePatient,
     
     // Search
-    searchPatients
+    searchPatients,
+    findPatientByPhone,
+    searchLoading
   };
 };

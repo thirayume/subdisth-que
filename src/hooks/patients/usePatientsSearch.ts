@@ -35,9 +35,41 @@ export const usePatientsSearch = () => {
     }
   };
 
+  // Find patient by exact phone number
+  const findPatientByPhone = async (phoneNumber: string) => {
+    try {
+      setSearchLoading(true);
+      setSearchError(null);
+
+      const { data, error } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('phone', phoneNumber)
+        .limit(1)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No rows returned (PGRST116 is the "no rows" error code from PostgREST)
+          return null;
+        }
+        throw error;
+      }
+
+      return data || null;
+    } catch (err: any) {
+      console.error('Error finding patient by phone:', err);
+      setSearchError(err.message || 'Failed to find patient');
+      return null;
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
   return {
     searchLoading,
     searchError,
-    searchPatients
+    searchPatients,
+    findPatientByPhone
   };
 };

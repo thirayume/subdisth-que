@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQueues } from '@/hooks/useQueues';
 import { usePatients } from '@/hooks/usePatients';

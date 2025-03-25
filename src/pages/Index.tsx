@@ -10,7 +10,7 @@ import QueueSummaryCards from '@/components/dashboard/QueueSummaryCards';
 import DashboardContent from '@/components/dashboard/DashboardContent';
 
 const Dashboard = () => {
-  const { queues, loading: loadingQueues, updateQueueStatus, callQueue } = useQueues();
+  const { queues, loading: loadingQueues, updateQueueStatus, callQueue, recallQueue } = useQueues();
   const { patients, loading: loadingPatients } = usePatients();
   
   const [waitingQueues, setWaitingQueues] = useState<Queue[]>([]);
@@ -28,10 +28,11 @@ const Dashboard = () => {
     }
   }, [queues]);
   
-  // Recall queue (announce again)
+  // Handler for recalling queue
   const handleRecallQueue = (queueId: string) => {
     const queue = queues.find(q => q.id === queueId);
     if (queue) {
+      recallQueue(queueId);
       // Find the patient for this queue
       const patient = patients.find(p => p.id === queue.patient_id);
       if (patient) {
