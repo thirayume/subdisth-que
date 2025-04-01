@@ -5,8 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { FormLabel } from '@/components/ui/form';
-import { Globe, Save, RefreshCw, Check } from 'lucide-react';
+import { Globe, Save, RefreshCw, Check, AlertCircle, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const LineSettings: React.FC = () => {
   // State for LINE OA settings
@@ -89,9 +95,43 @@ const LineSettings: React.FC = () => {
             <p className="text-sm text-gray-500 mt-1">เชื่อมต่อระบบกับ LINE เพื่อเพิ่มประสิทธิภาพการสื่อสาร</p>
           </div>
           
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-md mb-4">
+            <div className="flex">
+              <AlertCircle className="h-5 w-5 text-blue-500 mr-2 flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-medium text-blue-800">วิธีการรับข้อมูลสำหรับการตั้งค่า</h4>
+                <p className="text-xs text-blue-600 mt-1">
+                  คุณสามารถค้นหาข้อมูล Channel ID, Channel Secret และ Access Token ได้จาก LINE Developer Console และ LINE Official Account Manager:
+                </p>
+                <ol className="list-decimal text-xs text-blue-600 mt-2 ml-5 space-y-1">
+                  <li>ไปที่ <a href="https://developers.line.biz" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline inline-flex items-center">LINE Developers <ExternalLink className="h-3 w-3 ml-1" /></a></li>
+                  <li>เข้าสู่โปรเจค/Provider ที่มี LINE Official Account ของคุณ</li>
+                  <li>เลือก Channel ของ Messaging API</li>
+                  <li>คุณจะพบ Channel ID และ Channel Secret</li>
+                  <li>สำหรับ Access Token ให้ไปที่ <a href="https://manager.line.biz" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline inline-flex items-center">LINE Official Account Manager <ExternalLink className="h-3 w-3 ml-1" /></a></li>
+                  <li>เลือก Official Account ของคุณ</li>
+                  <li>ไปที่ Settings &gt; Messaging API</li>
+                  <li>ดูที่ส่วน "Channel access token (long-lived)" และสร้างหรือคัดลอก Token</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <FormLabel>Channel ID</FormLabel>
+              <div className="flex items-center">
+                <FormLabel>Channel ID</FormLabel>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <AlertCircle className="h-4 w-4 text-gray-400 ml-2 cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="w-56 text-xs">Channel ID พบได้ใน LINE Developer Console ในส่วน Channel ของ Messaging API</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <Input 
                 value={isEditing ? lineSettings.channelId : lineSettings.channelId.replace(/./g, '•')} 
                 onChange={(e) => handleChange('channelId', e.target.value)}
@@ -101,7 +141,19 @@ const LineSettings: React.FC = () => {
             </div>
             
             <div>
-              <FormLabel>Channel Secret</FormLabel>
+              <div className="flex items-center">
+                <FormLabel>Channel Secret</FormLabel>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <AlertCircle className="h-4 w-4 text-gray-400 ml-2 cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="w-56 text-xs">Channel Secret พบได้ใน LINE Developer Console ในส่วน Basic settings ของ Messaging API</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <Input 
                 value={isEditing ? lineSettings.channelSecret : "••••••••••••••••••••••"} 
                 onChange={(e) => handleChange('channelSecret', e.target.value)}
@@ -113,7 +165,19 @@ const LineSettings: React.FC = () => {
           </div>
           
           <div>
-            <FormLabel>Access Token</FormLabel>
+            <div className="flex items-center">
+              <FormLabel>Access Token</FormLabel>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <AlertCircle className="h-4 w-4 text-gray-400 ml-2 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="w-72 text-xs">Access Token (long-lived) พบได้ใน LINE Official Account Manager ที่ Settings > Messaging API ในส่วน "Channel access token"</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <Input 
               value={isEditing ? lineSettings.accessToken : "••••••••••••••••••••••••••••••••••••••••••••••••••"}
               onChange={(e) => handleChange('accessToken', e.target.value)}
@@ -205,3 +269,4 @@ const LineSettings: React.FC = () => {
 };
 
 export default LineSettings;
+
