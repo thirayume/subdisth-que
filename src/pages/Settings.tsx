@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -50,6 +50,23 @@ const Settings = () => {
     queueTypes, 
     setValue: form.setValue 
   });
+
+  // Load saved LINE settings on mount
+  useEffect(() => {
+    const savedLineSettings = localStorage.getItem('lineSettings');
+    if (!savedLineSettings) {
+      // Initialize default LINE settings if not present
+      const defaultLineSettings = {
+        channelId: "1234567890",
+        channelSecret: "abcdefghijklmnopqrstuvwxyz",
+        accessToken: "12345678901234567890123456789012345678901234567890",
+        welcomeMessage: "ยินดีต้อนรับสู่ระบบคิวห้องยา โรงพยาบาลชุมชนตัวอย่าง",
+        queueReceivedMessage: "คุณได้รับคิวหมายเลข {queueNumber} ประเภท: {queueType}\nระยะเวลารอโดยประมาณ: {estimatedWaitTime} นาที",
+        queueCalledMessage: "เรียนคุณ {patientName}\nถึงคิวของคุณแล้ว! กรุณามาที่ช่องบริการ {counter}\nหมายเลขคิวของคุณคือ: {queueNumber}"
+      };
+      localStorage.setItem('lineSettings', JSON.stringify(defaultLineSettings));
+    }
+  }, []);
   
   const onSubmit = async (data: z.infer<typeof queueSettingsSchema>) => {
     setIsSubmitting(true);
