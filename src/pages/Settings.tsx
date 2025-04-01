@@ -19,6 +19,7 @@ import SettingsFormActions from '@/components/settings/SettingsFormActions';
 import { queueSettingsSchema, formatOptions, initialQueueTypes } from '@/components/settings/schemas';
 import { useQueueTypes, QueueType } from '@/hooks/useQueueTypes';
 import { z } from 'zod';
+import { QueueAlgorithmType } from '@/utils/queueAlgorithms';
 
 const Settings = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,6 +38,7 @@ const Settings = () => {
       queue_announcement_text: 'เชิญหมายเลข {queueNumber} ที่ช่องจ่ายยา {counter}',
       queue_voice_enabled: true,
       line_notification_enabled: true,
+      queue_algorithm: QueueAlgorithmType.MULTILEVEL_FEEDBACK,
       queue_types: initialQueueTypes,
     },
   });
@@ -55,6 +57,13 @@ const Settings = () => {
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     console.log('Settings data submitted:', data);
+    
+    // Save queue algorithm to localStorage for use in other components
+    localStorage.setItem('queue_algorithm', data.queue_algorithm);
+    
+    // Save queue types with algorithms to localStorage
+    localStorage.setItem('queue_types', JSON.stringify(data.queue_types));
+    
     toast.success('บันทึกการตั้งค่าเรียบร้อยแล้ว');
     
     setIsSubmitting(false);

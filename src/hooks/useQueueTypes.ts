@@ -1,6 +1,8 @@
+
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { queueSettingsSchema } from '@/components/settings/schemas';
+import { QueueAlgorithmType } from '@/utils/queueAlgorithms';
 
 export type QueueType = {
   id: string;
@@ -10,6 +12,8 @@ export type QueueType = {
   purpose: string;
   format: '0' | '00' | '000';
   enabled: boolean;
+  algorithm?: QueueAlgorithmType;
+  priority?: number;
 };
 
 export type UseQueueTypesProps = {
@@ -32,6 +36,8 @@ export const useQueueTypes = ({ queueTypes, setValue }: UseQueueTypesProps) => {
       purpose: '',
       format: '0' as const,
       enabled: true,
+      algorithm: QueueAlgorithmType.FIFO,
+      priority: 5,
     };
     
     setValue('queue_types', [...queueTypes, newQueueTypeItem]);

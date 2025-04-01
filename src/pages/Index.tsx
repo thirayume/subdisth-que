@@ -10,7 +10,14 @@ import QueueSummaryCards from '@/components/dashboard/QueueSummaryCards';
 import DashboardContent from '@/components/dashboard/DashboardContent';
 
 const Dashboard = () => {
-  const { queues, loading: loadingQueues, updateQueueStatus, callQueue, recallQueue } = useQueues();
+  const { 
+    queues, 
+    loading: loadingQueues, 
+    updateQueueStatus, 
+    callQueue, 
+    recallQueue, 
+    sortQueues 
+  } = useQueues();
   const { patients, loading: loadingPatients } = usePatients();
   
   const [waitingQueues, setWaitingQueues] = useState<Queue[]>([]);
@@ -21,19 +28,25 @@ const Dashboard = () => {
   // Update filtered queues when the main queues array changes
   useEffect(() => {
     if (queues) {
-      setWaitingQueues(queues.filter(q => q.status === 'WAITING'));
-      setActiveQueues(queues.filter(q => q.status === 'ACTIVE'));
-      setCompletedQueues(queues.filter(q => q.status === 'COMPLETED'));
-      setSkippedQueues(queues.filter(q => q.status === 'SKIPPED'));
+      const waiting = queues.filter(q => q.status === 'WAITING');
+      const active = queues.filter(q => q.status === 'ACTIVE');
+      const completed = queues.filter(q => q.status === 'COMPLETED');
+      const skipped = queues.filter(q => q.status === 'SKIPPED');
+      
+      // Apply sorting algorithm to waiting queues
+      setWaitingQueues(sortQueues(waiting));
+      setActiveQueues(active);
+      setCompletedQueues(completed);
+      setSkippedQueues(skipped);
     }
-  }, [queues]);
+  }, [queues, sortQueues]);
   
-  // Handler for recalling queue - fixed to correctly use the recallQueue function
+  // Handler for recalling queue
   const handleRecallQueue = (queueId: string) => {
-    // We now call recallQueue with the queue ID, as we've modified it to accept an ID
+    // We now call recallQueue with the queue ID
     recallQueue(queueId);
     
-    // We still need to find the queue for the toast notification
+    // Find the queue for the toast notification
     const queue = queues.find(q => q.id === queueId);
     if (queue) {
       // Find the patient for this queue

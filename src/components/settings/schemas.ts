@@ -1,6 +1,7 @@
 
 import * as z from 'zod';
 import { QueueType } from '@/hooks/useQueueTypes';
+import { QueueAlgorithmType } from '@/utils/queueAlgorithms';
 
 // Define the Zod schema to match the QueueType interface
 export const queueTypeConfigSchema = z.object({
@@ -11,6 +12,8 @@ export const queueTypeConfigSchema = z.object({
   purpose: z.string().min(1, 'ต้องระบุจุดประสงค์'),
   format: z.enum(['0', '00', '000']).default('0'),
   enabled: z.boolean().default(true),
+  algorithm: z.nativeEnum(QueueAlgorithmType).default(QueueAlgorithmType.FIFO),
+  priority: z.number().min(1).max(10).default(5),
 });
 
 export const queueSettingsSchema = z.object({
@@ -24,6 +27,7 @@ export const queueSettingsSchema = z.object({
   queue_announcement_text: z.string().min(3, 'ต้องมีอย่างน้อย 3 ตัวอักษร'),
   queue_voice_enabled: z.boolean(),
   line_notification_enabled: z.boolean(),
+  queue_algorithm: z.nativeEnum(QueueAlgorithmType).default(QueueAlgorithmType.FIFO),
   queue_types: z.array(queueTypeConfigSchema),
 });
 
@@ -32,6 +36,35 @@ export type FormatOption = {
   label: string;
   example: string;
 };
+
+export type AlgorithmOption = {
+  value: QueueAlgorithmType;
+  label: string;
+  description: string;
+};
+
+export const algorithmOptions: AlgorithmOption[] = [
+  { 
+    value: QueueAlgorithmType.FIFO, 
+    label: 'First In, First Out (FIFO)', 
+    description: 'เรียกคิวตามลำดับการมาถึง' 
+  },
+  { 
+    value: QueueAlgorithmType.PRIORITY, 
+    label: 'Priority Queue', 
+    description: 'เรียกคิวตามลำดับความสำคัญ' 
+  },
+  { 
+    value: QueueAlgorithmType.MULTILEVEL, 
+    label: 'Multilevel Queue', 
+    description: 'แยกคิวตามประเภท และเรียกตามลำดับความสำคัญ' 
+  },
+  { 
+    value: QueueAlgorithmType.MULTILEVEL_FEEDBACK, 
+    label: 'Multilevel Feedback Queue', 
+    description: 'ปรับความสำคัญตามเวลารอคอย' 
+  },
+];
 
 export const formatOptions: FormatOption[] = [
   { value: '0' as const, label: 'ไม่เติมศูนย์ (1, 2, 3, ...)', example: 'A1, A2, ..., A10, A11' },
@@ -49,6 +82,8 @@ export const initialQueueTypes: QueueType[] = [
     purpose: 'รับยาทั่วไป',
     format: '0' as const,
     enabled: true,
+    algorithm: QueueAlgorithmType.FIFO,
+    priority: 5,
   },
   {
     id: 'PRIORITY',
@@ -58,6 +93,8 @@ export const initialQueueTypes: QueueType[] = [
     purpose: 'กรณีเร่งด่วน',
     format: '0' as const,
     enabled: true,
+    algorithm: QueueAlgorithmType.PRIORITY,
+    priority: 10,
   },
   {
     id: 'ELDERLY',
@@ -67,6 +104,8 @@ export const initialQueueTypes: QueueType[] = [
     purpose: 'รับยาสำหรับผู้สูงอายุ',
     format: '0' as const,
     enabled: true,
+    algorithm: QueueAlgorithmType.MULTILEVEL,
+    priority: 7,
   },
   {
     id: 'FOLLOW_UP',
@@ -76,5 +115,7 @@ export const initialQueueTypes: QueueType[] = [
     purpose: 'ติดตามการรักษา',
     format: '0' as const,
     enabled: true,
+    algorithm: QueueAlgorithmType.MULTILEVEL_FEEDBACK,
+    priority: 6,
   },
 ];

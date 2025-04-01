@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQueues } from '@/hooks/useQueues';
 import { usePatients } from '@/hooks/usePatients';
@@ -7,6 +8,7 @@ import ActiveQueueSection from '@/components/queue/ActiveQueueSection';
 import WaitingQueueSection from '@/components/queue/WaitingQueueSection';
 import CompletedQueueSection from '@/components/queue/CompletedQueueSection';
 import HospitalFooter from '@/components/queue/HospitalFooter';
+import { sortQueuesByAlgorithm, QueueAlgorithmType } from '@/utils/queueAlgorithms';
 
 // Define queue status constants to use as values
 const QUEUE_STATUS = {
@@ -19,9 +21,10 @@ const QUEUE_STATUS = {
 const QueueBoard = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [currentAlgorithm, setCurrentAlgorithm] = useState<QueueAlgorithmType>(QueueAlgorithmType.FIFO);
   
   // Fetch data from Supabase
-  const { getQueuesByStatus } = useQueues();
+  const { getQueuesByStatus, sortQueues } = useQueues();
   const { patients } = usePatients();
   const [activeQueues, setActiveQueues] = useState([]);
   const [waitingQueues, setWaitingQueues] = useState([]);
@@ -36,6 +39,14 @@ const QueueBoard = () => {
     return () => clearInterval(timer);
   }, []);
   
+  // Load algorithm from localStorage
+  useEffect(() => {
+    const savedAlgorithm = localStorage.getItem('queue_algorithm');
+    if (savedAlgorithm) {
+      setCurrentAlgorithm(savedAlgorithm as QueueAlgorithmType);
+    }
+  }, []);
+  
   // Fetch queues data
   useEffect(() => {
     const fetchQueues = async () => {
@@ -43,10 +54,14 @@ const QueueBoard = () => {
       setActiveQueues(active);
       
       const waiting = await getQueuesByStatus(QUEUE_STATUS.WAITING);
-      setWaitingQueues(waiting.sort((a, b) => a.number - b.number).slice(0, 5));
+      // Apply sorting algorithm to waiting queues
+      const sortedWaiting = sortQueues(waiting);
+      setWaitingQueues(sortedWaiting.slice(0, 5));
       
       const completed = await getQueuesByStatus(QUEUE_STATUS.COMPLETED);
-      setCompletedQueues(completed.sort((a, b) => b.number - a.number).slice(0, 5));
+      setCompletedQueues(completed.sort((a, b) => 
+        new Date(b.completed_at || b.updated_at).getTime() - 
+        new Date(a.completed_at || a.updated_at).getTime()).slice(0, 5));
     };
     
     fetchQueues();
@@ -54,11 +69,22 @@ const QueueBoard = () => {
     // Refresh data every 30 seconds
     const refreshTimer = setInterval(fetchQueues, 30000);
     return () => clearInterval(refreshTimer);
-  }, [getQueuesByStatus]);
+  }, [getQueuesByStatus, sortQueues]);
 
   // Find patient by ID
   const findPatient = (patientId: string): Patient | undefined => {
     return patients.find(p => p.id === patientId);
+  };
+  
+  // Get the current algorithm name for display
+  const getCurrentAlgorithmName = () => {
+    switch (currentAlgorithm) {
+      case QueueAlgorithmType.FIFO: return "First In, First Out (FIFO)";
+      case QueueAlgorithmType.PRIORITY: return "ลำดับความสำคัญ (Priority Queue)";
+      case QueueAlgorithmType.MULTILEVEL: return "หลายระดับ (Multilevel Queue)";
+      case QueueAlgorithmType.MULTILEVEL_FEEDBACK: return "ปรับความสำคัญตามเวลารอคอย (Multilevel Feedback)";
+      default: return "อัลกอริทึมเรียกคิว";
+    }
   };
   
   return (
@@ -68,6 +94,15 @@ const QueueBoard = () => {
         soundEnabled={soundEnabled}
         setSoundEnabled={setSoundEnabled}
       />
+      
+      {/* Display current algorithm */}
+      <div className="bg-white shadow-md py-2">
+        <div className="container mx-auto px-6">
+          <p className="text-center text-sm text-gray-600">
+            อัลกอริทึมการเรียกคิว: <span className="font-semibold">{getCurrentAlgorithmName()}</span>
+          </p>
+        </div>
+      </div>
       
       {/* Main content */}
       <main className="container mx-auto p-6">

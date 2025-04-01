@@ -2,9 +2,10 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Edit, Trash2, CopyPlus } from 'lucide-react';
-import { FormatOption } from './schemas';
+import { Pencil, Trash, Copy } from 'lucide-react';
+import { FormatOption, algorithmOptions } from './schemas';
 import { QueueType } from '@/hooks/useQueueTypes';
+import { Badge } from '@/components/ui/badge';
 
 interface QueueTypeDisplayProps {
   queueType: QueueType;
@@ -16,7 +17,7 @@ interface QueueTypeDisplayProps {
   onChange: (index: number, field: keyof QueueType, value: any) => void;
 }
 
-const QueueTypeDisplay = ({
+const QueueTypeDisplay: React.FC<QueueTypeDisplayProps> = ({
   queueType,
   index,
   formatOptions,
@@ -24,67 +25,99 @@ const QueueTypeDisplay = ({
   onRemove,
   onDuplicate,
   onChange,
-}: QueueTypeDisplayProps) => {
+}) => {
+  const getFormatLabel = (format: '0' | '00' | '000') => {
+    const option = formatOptions.find(opt => opt.value === format);
+    return option ? option.label : '';
+  };
+
+  const getAlgorithmLabel = (algorithm?: string) => {
+    if (!algorithm) return 'First In, First Out (FIFO)';
+    const option = algorithmOptions.find(opt => opt.value === algorithm);
+    return option ? option.label : 'First In, First Out (FIFO)';
+  };
+  
+  const getPriorityLabel = (priority?: number) => {
+    const value = priority || 5;
+    if (value >= 8) return 'สูง';
+    if (value >= 4) return 'ปานกลาง';
+    return 'ต่ำ';
+  };
+
+  const getPriorityColorClass = (priority?: number) => {
+    const value = priority || 5;
+    if (value >= 8) return 'bg-red-100 text-red-800';
+    if (value >= 4) return 'bg-amber-100 text-amber-800';
+    return 'bg-blue-100 text-blue-800';
+  };
+
   return (
-    <div className="flex flex-col md:flex-row justify-between">
-      <div className="space-y-1">
-        <div className="flex items-center space-x-2">
-          <h4 className="font-medium text-lg">{queueType.name}</h4>
-          <div className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-            {queueType.code}
+    <div className="space-y-4">
+      <div className="flex flex-col space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-lg">
+              {queueType.name}
+            </span>
+            <Badge variant="outline" className="ml-2">{queueType.code}</Badge>
           </div>
-          <Switch
-            checked={queueType.enabled}
-            onCheckedChange={(checked) => onChange(index, 'enabled', checked)}
-          />
-        </div>
-        <div className="text-sm text-gray-500">
-          จุดประสงค์: {queueType.purpose}
-        </div>
-        <div className="text-sm flex space-x-3">
-          <span className="text-gray-500">
-            <strong>Prefix:</strong> {queueType.prefix}
-          </span>
-          <span className="text-gray-500">
-            <strong>รูปแบบ:</strong> {
-              formatOptions.find(opt => opt.value === queueType.format)?.label.split(' ')[0] || 
-              queueType.format
-            }
-          </span>
-          <span className="text-gray-500">
-            <strong>ตัวอย่าง:</strong> {
-              queueType.prefix + 
-              (queueType.format === '0' ? '1' : 
-                queueType.format === '00' ? '01' : '001')
-            }
-          </span>
+          <div className="flex items-center space-x-2">
+            <Switch
+              checked={queueType.enabled}
+              onCheckedChange={(checked) => onChange(index, 'enabled', checked)}
+              aria-label="Toggle enabled"
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onDuplicate(index)}
+            >
+              <Copy className="h-4 w-4" />
+              <span className="sr-only">Duplicate</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onEdit(queueType.id)}
+            >
+              <Pencil className="h-4 w-4" />
+              <span className="sr-only">Edit</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-red-500 hover:text-red-700"
+              onClick={() => onRemove(index)}
+            >
+              <Trash className="h-4 w-4" />
+              <span className="sr-only">Delete</span>
+            </Button>
+          </div>
         </div>
       </div>
-      <div className="flex space-x-1 mt-3 md:mt-0">
-        <Button 
-          variant="outline" 
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => onDuplicate(index)}
-        >
-          <CopyPlus className="h-4 w-4" />
-        </Button>
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className="h-8 w-8"
-          onClick={() => onEdit(queueType.id)}
-        >
-          <Edit className="h-4 w-4" />
-        </Button>
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-          onClick={() => onRemove(index)}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+        <div>
+          <span className="font-medium text-gray-700">Prefix:</span> {queueType.prefix}
+        </div>
+        <div>
+          <span className="font-medium text-gray-700">รูปแบบ:</span> {getFormatLabel(queueType.format)}
+        </div>
+        <div>
+          <span className="font-medium text-gray-700">จุดประสงค์:</span> {queueType.purpose}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm pt-1 border-t border-gray-100">
+        <div>
+          <span className="font-medium text-gray-700">อัลกอริทึม:</span> {getAlgorithmLabel(queueType.algorithm)}
+        </div>
+        <div>
+          <span className="font-medium text-gray-700">ความสำคัญ:</span> 
+          <Badge className={`ml-2 ${getPriorityColorClass(queueType.priority)}`}>
+            {getPriorityLabel(queueType.priority)}
+          </Badge>
+        </div>
       </div>
     </div>
   );

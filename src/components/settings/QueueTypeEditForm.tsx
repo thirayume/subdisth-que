@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Check, X } from 'lucide-react';
-import { FormatOption } from './schemas';
+import { FormatOption, AlgorithmOption, algorithmOptions } from './schemas';
 import QueueTypeFormats from './QueueTypeFormats';
 import { QueueType } from '@/hooks/useQueueTypes';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 
 interface QueueTypeEditFormProps {
   queueType: QueueType;
@@ -77,6 +79,48 @@ const QueueTypeEditForm = ({
           formatOptions={formatOptions}
           onChange={(value) => onChange(index, 'format', value)}
         />
+      </div>
+      
+      <div>
+        <Label htmlFor={`queueType_${index}_algorithm`}>อัลกอริทึมการเรียกคิว</Label>
+        <Select
+          value={queueType.algorithm || 'FIFO'}
+          onValueChange={(value) => onChange(index, 'algorithm', value)}
+        >
+          <SelectTrigger id={`queueType_${index}_algorithm`} className="w-full">
+            <SelectValue placeholder="เลือกอัลกอริทึม" />
+          </SelectTrigger>
+          <SelectContent>
+            {algorithmOptions.map(option => (
+              <SelectItem key={option.value} value={option.value}>
+                <div>
+                  <div>{option.label}</div>
+                  <div className="text-xs text-gray-500">{option.description}</div>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div>
+        <div className="flex justify-between">
+          <Label htmlFor={`queueType_${index}_priority`}>ความสำคัญ ({queueType.priority || 5}/10)</Label>
+        </div>
+        <Slider
+          id={`queueType_${index}_priority`}
+          min={1}
+          max={10}
+          step={1}
+          value={[queueType.priority || 5]}
+          onValueChange={([value]) => onChange(index, 'priority', value)}
+          className="py-4"
+        />
+        <div className="flex justify-between text-xs text-gray-500">
+          <span>ต่ำ</span>
+          <span>ปานกลาง</span>
+          <span>สูง</span>
+        </div>
       </div>
       
       <div className="flex justify-end space-x-2 pt-2">
