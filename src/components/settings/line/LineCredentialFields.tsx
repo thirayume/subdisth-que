@@ -9,18 +9,20 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { LineSettings } from './types';
+import { LineSettings, LineSettingsErrors } from './types';
 
 interface LineCredentialFieldsProps {
   lineSettings: LineSettings;
   isEditing: boolean;
   handleChange: (field: keyof LineSettings, value: string) => void;
+  errors?: LineSettingsErrors;
 }
 
 const LineCredentialFields: React.FC<LineCredentialFieldsProps> = ({
   lineSettings,
   isEditing,
-  handleChange
+  handleChange,
+  errors = {}
 }) => {
   return (
     <>
@@ -43,8 +45,11 @@ const LineCredentialFields: React.FC<LineCredentialFieldsProps> = ({
             value={isEditing ? lineSettings.channelId : lineSettings.channelId.replace(/./g, '•')} 
             onChange={(e) => handleChange('channelId', e.target.value)}
             disabled={!isEditing} 
-            className={!isEditing ? "bg-gray-50" : ""}
+            className={!isEditing ? "bg-gray-50" : errors.channelId ? "border-red-500" : ""}
           />
+          {isEditing && errors.channelId && (
+            <p className="text-red-500 text-xs mt-1">{errors.channelId}</p>
+          )}
         </div>
         
         <div>
@@ -66,8 +71,11 @@ const LineCredentialFields: React.FC<LineCredentialFieldsProps> = ({
             onChange={(e) => handleChange('channelSecret', e.target.value)}
             type={isEditing ? "text" : "password"}
             disabled={!isEditing} 
-            className={!isEditing ? "bg-gray-50" : ""}
+            className={!isEditing ? "bg-gray-50" : errors.channelSecret ? "border-red-500" : ""}
           />
+          {isEditing && errors.channelSecret && (
+            <p className="text-red-500 text-xs mt-1">{errors.channelSecret}</p>
+          )}
         </div>
       </div>
       
@@ -90,8 +98,11 @@ const LineCredentialFields: React.FC<LineCredentialFieldsProps> = ({
           onChange={(e) => handleChange('accessToken', e.target.value)}
           type={isEditing ? "text" : "password"}
           disabled={!isEditing} 
-          className={!isEditing ? "bg-gray-50" : ""}
+          className={!isEditing ? "bg-gray-50" : errors.accessToken ? "border-red-500" : ""}
         />
+        {isEditing && errors.accessToken && (
+          <p className="text-red-500 text-xs mt-1">{errors.accessToken}</p>
+        )}
       </div>
     </>
   );

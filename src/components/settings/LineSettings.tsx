@@ -13,6 +13,8 @@ const LineSettings: React.FC = () => {
     isEditing,
     isTesting,
     lineSettings,
+    errors,
+    validation,
     handleEdit,
     handleSave,
     handleCancel,
@@ -38,6 +40,7 @@ const LineSettings: React.FC = () => {
             lineSettings={lineSettings}
             isEditing={isEditing}
             handleChange={handleChange}
+            errors={errors}
           />
           
           <LineActionButtons
@@ -47,6 +50,7 @@ const LineSettings: React.FC = () => {
             handleSave={handleSave}
             handleCancel={handleCancel}
             handleTestConnection={handleTestConnection}
+            isFormValid={validation.isFormValid}
           />
         </div>
         

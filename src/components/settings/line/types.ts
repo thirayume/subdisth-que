@@ -7,3 +7,16 @@ export interface LineSettings {
   queueReceivedMessage: string;
   queueCalledMessage: string;
 }
+
+export interface LineSettingsValidation {
+  channelId: boolean;
+  channelSecret: boolean;
+  accessToken: boolean;
+  isFormValid: boolean;
+}
+
+export interface LineSettingsErrors {
+  channelId?: string;
+  channelSecret?: string;
+  accessToken?: string;
+}

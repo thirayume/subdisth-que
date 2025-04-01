@@ -10,6 +10,7 @@ interface LineActionButtonsProps {
   handleSave: () => void;
   handleCancel: () => void;
   handleTestConnection: () => void;
+  isFormValid?: boolean;
 }
 
 const LineActionButtons: React.FC<LineActionButtonsProps> = ({
@@ -18,7 +19,8 @@ const LineActionButtons: React.FC<LineActionButtonsProps> = ({
   handleEdit,
   handleSave,
   handleCancel,
-  handleTestConnection
+  handleTestConnection,
+  isFormValid = true
 }) => {
   return (
     <div className="flex justify-center pt-2 space-x-2">
@@ -47,7 +49,11 @@ const LineActionButtons: React.FC<LineActionButtonsProps> = ({
           <Button variant="outline" onClick={handleCancel}>
             ยกเลิก
           </Button>
-          <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700">
+          <Button 
+            onClick={handleSave} 
+            className="bg-green-600 hover:bg-green-700"
+            disabled={!isFormValid}
+          >
             <Save className="w-4 h-4 mr-2" />
             บันทึกการตั้งค่า
           </Button>
