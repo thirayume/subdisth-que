@@ -111,7 +111,7 @@ const LineSettings: React.FC = () => {
                   <li>สำหรับ Access Token ให้ไปที่ <a href="https://manager.line.biz" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline inline-flex items-center">LINE Official Account Manager <ExternalLink className="h-3 w-3 ml-1" /></a></li>
                   <li>เลือก Official Account ของคุณ</li>
                   <li>ไปที่ Settings &gt; Messaging API</li>
-                  <li>ดูที่ส่วน "Channel access token (long-lived)" และสร้างหรือคัดลอก Token</li>
+                  <li>ดูที่ส่วน &quot;Channel access token (long-lived)&quot; และสร้างหรือคัดลอก Token</li>
                 </ol>
               </div>
             </div>
@@ -173,7 +173,7 @@ const LineSettings: React.FC = () => {
                     <AlertCircle className="h-4 w-4 text-gray-400 ml-2 cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p className="w-72 text-xs">Access Token (long-lived) พบได้ใน LINE Official Account Manager ที่ Settings > Messaging API ในส่วน "Channel access token"</p>
+                    <p className="w-72 text-xs">Access Token (long-lived) พบได้ใน LINE Official Account Manager ที่ Settings &gt; Messaging API ในส่วน &quot;Channel access token&quot;</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -269,4 +269,3 @@ const LineSettings: React.FC = () => {
 };
 
 export default LineSettings;
-
