@@ -33,11 +33,16 @@ const QueueBoardDisplay: React.FC<QueueBoardDisplayProps> = ({
     if (shouldAnnounce) {
       const announceActiveQueue = async () => {
         try {
-          // Get announcement settings from localStorage or use default
-          const announcementText = localStorage.getItem('queue_announcement_text') || 
-            'ขอเชิญหมายเลข {queueNumber} ที่ช่องบริการ {counter}';
-            
-          await announceQueue(queue.number, counterName, queue.type, announcementText);
+          // Check if voice is enabled
+          const voiceEnabled = localStorage.getItem('queue_voice_enabled') !== 'false';
+          
+          if (voiceEnabled) {
+            // Get announcement settings from localStorage or use default
+            const announcementText = localStorage.getItem('queue_announcement_text') || 
+              'ขอเชิญหมายเลข {queueNumber} ที่ช่องบริการ {counter}';
+              
+            await announceQueue(queue.number, counterName, queue.type, announcementText);
+          }
           setHasAnnounced(true);
         } catch (error) {
           console.error('Error auto-announcing queue:', error);

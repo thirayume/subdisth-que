@@ -12,7 +12,7 @@ import {
   Volume2
 } from 'lucide-react';
 import { announceQueue } from '@/utils/textToSpeech';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface QueueControlsProps {
   queue: Queue;
@@ -33,23 +33,18 @@ const QueueControls: React.FC<QueueControlsProps> = ({
   patientName,
   counterName = '1'
 }) => {
-  const { toast } = useToast();
-
   // Function to handle queue announcement
   const handleAnnounceQueue = async () => {
     try {
-      await announceQueue(queue.number, counterName, queue.type);
-      toast({
-        title: "ประกาศเสียงเรียกคิว",
-        description: `ประกาศเสียงเรียกคิวหมายเลข ${queue.number} เรียบร้อยแล้ว`,
-      });
+      // Get announcement text from localStorage or use default
+      const announcementText = localStorage.getItem('queue_announcement_text') || 
+        'ขอเชิญหมายเลข {queueNumber} ที่ช่องบริการ {counter}';
+        
+      await announceQueue(queue.number, counterName, queue.type, announcementText);
+      toast.info(`ประกาศเสียงเรียกคิวหมายเลข ${queue.number} เรียบร้อยแล้ว`);
     } catch (error) {
       console.error('Error announcing queue:', error);
-      toast({
-        title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถประกาศเสียงเรียกคิวได้",
-        variant: "destructive",
-      });
+      toast.error("ไม่สามารถประกาศเสียงเรียกคิวได้");
     }
   };
 

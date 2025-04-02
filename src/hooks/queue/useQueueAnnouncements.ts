@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 export const useQueueAnnouncements = () => {
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [counterName, setCounterName] = useState('1');
+  const [volume, setVolume] = useState(80);
+  const [rate, setRate] = useState(90);
   
   // Load voice settings from localStorage on startup
   useEffect(() => {
@@ -19,12 +21,32 @@ export const useQueueAnnouncements = () => {
     if (savedCounterName) {
       setCounterName(savedCounterName);
     }
+    
+    const savedVolume = localStorage.getItem('queue_voice_volume');
+    if (savedVolume) {
+      setVolume(parseInt(savedVolume));
+    }
+    
+    const savedRate = localStorage.getItem('queue_voice_rate');
+    if (savedRate) {
+      setRate(parseInt(savedRate));
+    }
   }, []);
 
   // Update queue settings
-  const updateQueueSettings = (enabled: boolean, counter: string) => {
+  const updateQueueSettings = (enabled: boolean, counter: string, newVolume?: number, newRate?: number) => {
     setVoiceEnabled(enabled);
     setCounterName(counter);
+    
+    if (newVolume !== undefined) {
+      setVolume(newVolume);
+      localStorage.setItem('queue_voice_volume', String(newVolume));
+    }
+    
+    if (newRate !== undefined) {
+      setRate(newRate);
+      localStorage.setItem('queue_voice_rate', String(newRate));
+    }
     
     // Save to localStorage
     localStorage.setItem('queue_voice_enabled', String(enabled));
@@ -56,7 +78,6 @@ export const useQueueAnnouncements = () => {
   };
   
   // Recall a queue (announce again)
-  // Modified to accept either a Queue object or a queue ID string
   const recallQueue = async (queueOrId: Queue | string, queueGetter?: (id: string) => Queue | undefined) => {
     // If queueOrId is a string and we have a queueGetter function, get the Queue object
     let queue: Queue | undefined;
@@ -102,6 +123,8 @@ export const useQueueAnnouncements = () => {
     setVoiceEnabled,
     counterName,
     setCounterName,
+    volume,
+    rate,
     updateQueueSettings,
     callQueue,
     recallQueue

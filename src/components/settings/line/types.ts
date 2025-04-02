@@ -20,3 +20,10 @@ export interface LineSettingsErrors {
   channelSecret?: string;
   accessToken?: string;
 }
+
+export interface TextToSpeechConfig {
+  enabled: boolean;
+  volume: number;
+  rate: number;
+  language: string;
+}

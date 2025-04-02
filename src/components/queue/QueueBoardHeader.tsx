@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Volume2, VolumeX } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface QueueBoardHeaderProps {
   currentTime: Date;
@@ -35,6 +36,23 @@ const QueueBoardHeader: React.FC<QueueBoardHeaderProps> = ({
     });
   };
 
+  // Toggle sound and save to localStorage
+  const toggleSound = () => {
+    const newSoundEnabled = !soundEnabled;
+    setSoundEnabled(newSoundEnabled);
+    localStorage.setItem('queue_voice_enabled', String(newSoundEnabled));
+    
+    toast.info(newSoundEnabled ? 'เปิดเสียงเรียกคิว' : 'ปิดเสียงเรียกคิว');
+  };
+  
+  // Load sound setting from localStorage on component mount
+  useEffect(() => {
+    const savedSoundEnabled = localStorage.getItem('queue_voice_enabled');
+    if (savedSoundEnabled !== null) {
+      setSoundEnabled(savedSoundEnabled === 'true');
+    }
+  }, [setSoundEnabled]);
+
   return (
     <header className="bg-white border-b border-gray-200 shadow-sm">
       <div className="container mx-auto p-4">
@@ -57,7 +75,7 @@ const QueueBoardHeader: React.FC<QueueBoardHeaderProps> = ({
             <Button 
               variant="ghost" 
               size="icon"
-              onClick={() => setSoundEnabled(!soundEnabled)}
+              onClick={toggleSound}
               className="ml-2"
             >
               {soundEnabled ? (

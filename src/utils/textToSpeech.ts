@@ -12,14 +12,14 @@ interface TextToSpeechOptions {
 // Default options optimized for Thai language
 const defaultOptions: TextToSpeechOptions = {
   voice: 'th-TH',
-  rate: 0.9,
+  rate: 0.9,  // Slightly slower rate for better Thai pronunciation
   pitch: 1,
   volume: 1,
   language: 'th-TH'
 };
 
 /**
- * Speak text using the Web Speech API
+ * Speak text using the Web Speech API with optimized settings for Thai language
  */
 export const speakText = (text: string, options: TextToSpeechOptions = {}): Promise<void> => {
   return new Promise((resolve, reject) => {
@@ -40,8 +40,10 @@ export const speakText = (text: string, options: TextToSpeechOptions = {}): Prom
     utterance.pitch = mergedOptions.pitch || 1;
     utterance.volume = mergedOptions.volume || 1;
     
-    // Select a Thai voice if available
+    // Get available voices
     const voices = window.speechSynthesis.getVoices();
+    
+    // Select a Thai voice if available
     const thaiVoices = voices.filter(voice => voice.lang.includes('th'));
     
     if (thaiVoices.length > 0) {
@@ -70,6 +72,14 @@ export const speakText = (text: string, options: TextToSpeechOptions = {}): Prom
  * Format and speak queue announcement
  */
 export const announceQueue = (queueNumber: number, counter: string, queueType?: string, customText?: string): Promise<void> => {
+  // Get volume from localStorage if available
+  const volumeStr = localStorage.getItem('queue_voice_volume');
+  const volume = volumeStr ? parseInt(volumeStr) / 100 : 1; // Convert percentage to decimal
+  
+  // Get rate from localStorage if available
+  const rateStr = localStorage.getItem('queue_voice_rate');
+  const rate = rateStr ? parseInt(rateStr) / 100 : 0.9; // Convert percentage to decimal
+  
   // Default announcement text in Thai
   const defaultText = `ขอเชิญหมายเลข ${queueNumber} ${queueType ? `${queueType}` : ''} ที่ช่องบริการ ${counter}`;
   
@@ -84,5 +94,5 @@ export const announceQueue = (queueNumber: number, counter: string, queueType?: 
     text = text.replace('{queueType}', queueType);
   }
   
-  return speakText(text);
+  return speakText(text, { volume, rate });
 };
