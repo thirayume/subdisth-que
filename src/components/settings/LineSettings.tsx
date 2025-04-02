@@ -7,7 +7,7 @@ import LineCredentialFields from './line/LineCredentialFields';
 import LineActionButtons from './line/LineActionButtons';
 import LineMessageTemplates from './line/LineMessageTemplates';
 import TextToSpeechSettings from './line/TextToSpeechSettings';
-import { useLineSettings } from './line/useLineSettings';
+import { useLineSettings } from './line/hooks/useLineSettings';
 
 const LineSettings: React.FC = () => {
   const {
