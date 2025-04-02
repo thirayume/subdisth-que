@@ -27,3 +27,8 @@ export interface TextToSpeechConfig {
   rate: number;
   language: string;
 }
+
+export interface LineTestMessageResult {
+  success: boolean;
+  message: string;
+}

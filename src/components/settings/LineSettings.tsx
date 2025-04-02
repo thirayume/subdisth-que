@@ -6,20 +6,25 @@ import LineSettingsHelpSection from './line/LineSettingsHelpSection';
 import LineCredentialFields from './line/LineCredentialFields';
 import LineActionButtons from './line/LineActionButtons';
 import LineMessageTemplates from './line/LineMessageTemplates';
+import TextToSpeechSettings from './line/TextToSpeechSettings';
 import { useLineSettings } from './line/useLineSettings';
 
 const LineSettings: React.FC = () => {
   const {
     isEditing,
     isTesting,
+    isTestingMessage,
     lineSettings,
+    ttsConfig,
     errors,
     validation,
     handleEdit,
     handleSave,
     handleCancel,
     handleTestConnection,
+    handleTestMessage,
     handleChange,
+    handleTtsConfigChange,
   } = useLineSettings();
 
   return (
@@ -61,8 +66,16 @@ const LineSettings: React.FC = () => {
             lineSettings={lineSettings}
             isEditing={isEditing}
             handleChange={handleChange}
+            handleTestMessage={handleTestMessage}
+            isTesting={isTestingMessage}
           />
         </div>
+        
+        <TextToSpeechSettings
+          ttsConfig={ttsConfig}
+          isEditing={isEditing}
+          handleTtsConfigChange={handleTtsConfigChange}
+        />
       </CardContent>
     </Card>
   );
