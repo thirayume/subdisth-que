@@ -61,7 +61,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
     }
   }, [open]);
 
-  const shouldShowQueueDetails = patientId || (showNewPatientForm && newPatientName);
+  const shouldShowQueueDetails = Boolean(patientId) || (showNewPatientForm && Boolean(newPatientName));
 
   return (
     <>
