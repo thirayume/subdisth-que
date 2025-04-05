@@ -7,6 +7,7 @@ import PatientPortalLoading from '@/components/patient-portal/PatientPortalLoadi
 import PatientPortalAuth from '@/components/patient-portal/PatientPortalAuth';
 import ActiveQueueView from '@/components/patient-portal/ActiveQueueView';
 import PatientSelectionView from '@/components/patient-portal/PatientSelectionView';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const PatientPortal: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -16,6 +17,7 @@ const PatientPortal: React.FC = () => {
   const [activeQueue, setActiveQueue] = useState<Queue | null>(null);
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const [isStaffMode, setIsStaffMode] = useState<boolean>(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     // Check for LINE authentication state on component mount
@@ -140,6 +142,7 @@ const PatientPortal: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('lineToken');
     localStorage.removeItem('userPhone');
+    localStorage.removeItem('stepOutData'); // Also clear step out data
     setIsAuthenticated(false);
     setSelectedPatient(null);
     setPatients([]);

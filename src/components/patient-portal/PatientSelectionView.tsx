@@ -1,14 +1,10 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Patient } from '@/integrations/supabase/schema';
-import PatientSelector from '@/components/patient-portal/PatientSelector';
-import PatientProfile from '@/components/patient-portal/PatientProfile';
-import PatientMedications from '@/components/patient-portal/PatientMedications';
 import { useNavigate } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface PatientSelectionViewProps {
   patients: Patient[];
@@ -17,78 +13,75 @@ interface PatientSelectionViewProps {
   onLogout: () => void;
 }
 
-const PatientSelectionView: React.FC<PatientSelectionViewProps> = ({ 
-  patients, 
-  selectedPatient, 
-  onSelectPatient, 
-  onLogout 
+const PatientSelectionView: React.FC<PatientSelectionViewProps> = ({
+  patients,
+  selectedPatient,
+  onSelectPatient,
+  onLogout
 }) => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold text-pharmacy-700">ระบบติดตามคิวผู้ป่วย</h1>
-        <Button variant="outline" size="sm" onClick={onLogout}>
+    <div className="flex flex-col min-h-screen bg-gray-50 p-2 sm:p-4">
+      <div className="flex justify-between items-center mb-3 sm:mb-4">
+        <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-pharmacy-700`}>
+          ระบบติดตามคิวผู้ป่วย
+        </h1>
+        <Button variant="outline" size={isMobile ? "sm" : "default"} onClick={onLogout}>
           ออกจากระบบ
         </Button>
       </div>
       
-      <Card className="mb-4">
-        <CardHeader>
+      <Card className="mb-3 sm:mb-4">
+        <CardHeader className="pb-2">
           <CardTitle>เลือกผู้ป่วย</CardTitle>
         </CardHeader>
         <CardContent>
-          {patients.length > 0 ? (
-            <PatientSelector 
-              patients={patients} 
-              selectedPatientId={selectedPatient?.id}
-              onSelectPatient={onSelectPatient} 
-            />
+          {patients.length === 0 ? (
+            <p className="text-center text-gray-500 py-4">ไม่พบข้อมูลผู้ป่วย</p>
           ) : (
-            <div className="text-center py-6">
-              <User className="mx-auto h-12 w-12 text-gray-400 mb-2" />
-              <p className="text-gray-600">ไม่พบข้อมูลผู้ป่วยที่เชื่อมโยงกับเบอร์โทรศัพท์นี้</p>
-              <Button
-                variant="outline"
-                className="mt-4"
-                onClick={() => navigate('/')}
-              >
-                กลับไปหน้าหลัก
-              </Button>
+            <div className="grid gap-2">
+              {patients.map(patient => (
+                <Button
+                  key={patient.id}
+                  variant={selectedPatient?.id === patient.id ? "default" : "outline"}
+                  className="w-full justify-start text-left"
+                  onClick={() => onSelectPatient(patient)}
+                >
+                  <div className="truncate">
+                    <span className="font-medium">{patient.name}</span>
+                    {patient.phone && (
+                      <span className="ml-2 text-sm text-gray-500">{patient.phone}</span>
+                    )}
+                  </div>
+                </Button>
+              ))}
             </div>
           )}
         </CardContent>
       </Card>
       
-      {selectedPatient && (
-        <>
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">ข้อมูลผู้ป่วย: {selectedPatient.name}</h2>
-          </div>
+      <Card className="flex-1">
+        <CardHeader className="pb-2">
+          <CardTitle>ไม่มีคิวที่รอดำเนินการ</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-center text-gray-500 py-6">
+            คุณไม่มีคิวที่รอดำเนินการอยู่ในขณะนี้
+          </p>
           
-          <Tabs defaultValue="profile">
-            <TabsList className="mb-4">
-              <TabsTrigger value="profile">ข้อมูลส่วนตัว</TabsTrigger>
-              <TabsTrigger value="medications">รายการยา</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="profile">
-              <PatientProfile patient={selectedPatient} />
-            </TabsContent>
-            
-            <TabsContent value="medications">
-              <PatientMedications patientId={selectedPatient.id} />
-            </TabsContent>
-          </Tabs>
-        </>
-      )}
-      
-      <div className="mt-6 text-center">
-        <Button variant="outline" onClick={() => navigate('/')}>
-          กลับไปหน้าหลัก
-        </Button>
-      </div>
+          <div className="text-center mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/')}
+              className={isMobile ? "text-sm" : ""}
+            >
+              กลับไปหน้าหลัก
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
