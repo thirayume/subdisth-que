@@ -40,7 +40,7 @@ const StepOutTimer: React.FC<StepOutTimerProps> = ({
       if (diffMinutes <= 0) {
         // Time to return
         setTimeLeft(0);
-        toast.warning('ได้เวลากลับมารอคิวแล้ว!', { 
+        toast.error('ได้เวลากลับมารอคิวแล้ว!', { 
           description: 'คุณควรกลับมาที่โรงพยาบาลเพื่อไม่พลาดคิวของคุณ' 
         });
       } else {
