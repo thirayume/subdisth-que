@@ -2,6 +2,7 @@ import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 import {
   FormField,
   FormItem,
@@ -198,7 +199,7 @@ const NotificationSettings: React.FC<{ form: UseFormReturn<any> }> = ({ form }) 
                     <div className="space-y-0.5">
                       <FormLabel className="text-base">แจ้งเตือนตามตำแหน่งคิว</FormLabel>
                       <FormDescription>
-                        แจ้งเตือนเมื่อเหลืออีก 3 คิวก่อนถึงคิวของผู้ป���วย
+                        แจ้งเตือนเมื่อเหลืออีก 3 คิวก่อนถึงคิวของผู้ป่วย
                       </FormDescription>
                     </div>
                     <FormControl>
