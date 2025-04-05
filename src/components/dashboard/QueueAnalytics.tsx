@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -31,22 +30,17 @@ const QueueAnalytics: React.FC<QueueAnalyticsProps> = ({
     localStorage.getItem('queue_algorithm') as QueueAlgorithmType || QueueAlgorithmType.FIFO
   );
   
-  // Calculate analytics metrics
   useEffect(() => {
-    // Generate wait time data
     const generateWaitTimeData = () => {
       const today = new Date();
       const data = [];
       
-      // Generate sample data points
       for (let i = 0; i < (timeFrame === 'day' ? 24 : timeFrame === 'week' ? 7 : 30); i++) {
         const date = timeFrame === 'day' 
           ? new Date(today.getFullYear(), today.getMonth(), today.getDate(), i) 
           : subDays(today, i);
         
-        // Calculate average wait time from completed queues
-        // In a real app, this would use actual historical data
-        const waitTime = Math.round(5 + Math.random() * 20); // Random wait time between 5-25 minutes
+        const waitTime = Math.round(5 + Math.random() * 20);
         
         data.push({
           time: timeFrame === 'day' 
@@ -56,24 +50,19 @@ const QueueAnalytics: React.FC<QueueAnalyticsProps> = ({
         });
       }
       
-      // Return data in chronological order
       return timeFrame === 'day' ? data : data.reverse();
     };
     
-    // Generate throughput data
     const generateThroughputData = () => {
       const today = new Date();
       const data = [];
       
-      // Generate sample data points
       for (let i = 0; i < (timeFrame === 'day' ? 24 : timeFrame === 'week' ? 7 : 30); i++) {
         const date = timeFrame === 'day' 
           ? new Date(today.getFullYear(), today.getMonth(), today.getDate(), i) 
           : subDays(today, i);
         
-        // Calculate patient count from completed queues
-        // In a real app, this would use actual historical data
-        const patientCount = Math.round(Math.random() * 15); // Random count between 0-15
+        const patientCount = Math.round(Math.random() * 15);
         
         data.push({
           time: timeFrame === 'day' 
@@ -83,7 +72,6 @@ const QueueAnalytics: React.FC<QueueAnalyticsProps> = ({
         });
       }
       
-      // Return data in chronological order
       return timeFrame === 'day' ? data : data.reverse();
     };
     
@@ -91,13 +79,12 @@ const QueueAnalytics: React.FC<QueueAnalyticsProps> = ({
     setThroughputData(generateThroughputData());
   }, [timeFrame, completedQueues]);
   
-  // Calculate metrics
   const totalPatients = completedQueues.length + waitingQueues.length + activeQueues.length;
   const averageWaitTime = completedQueues.length > 0 
     ? completedQueues.reduce((sum, queue) => {
         if (queue.called_at && queue.created_at) {
           const waitMs = new Date(queue.called_at).getTime() - new Date(queue.created_at).getTime();
-          return sum + (waitMs / 60000); // Convert to minutes
+          return sum + (waitMs / 60000);
         }
         return sum;
       }, 0) / completedQueues.length
@@ -107,14 +94,13 @@ const QueueAnalytics: React.FC<QueueAnalyticsProps> = ({
     ? completedQueues.reduce((sum, queue) => {
         if (queue.completed_at && queue.called_at) {
           const serviceMs = new Date(queue.completed_at).getTime() - new Date(queue.called_at).getTime();
-          return sum + (serviceMs / 60000); // Convert to minutes
+          return sum + (serviceMs / 60000);
         }
         return sum;
       }, 0) / completedQueues.length
     : 0;
   
-  // Get recommended algorithm based on current queue composition
-  const urgentCount = waitingQueues.filter(q => q.type === 'URGENT').length;
+  const urgentCount = waitingQueues.filter(q => q.type === 'PRIORITY').length;
   const elderlyCount = waitingQueues.filter(q => q.type === 'ELDERLY').length;
   const recommendedAlgorithm = getOptimalAlgorithmForPharmacy(
     waitingQueues.length,
@@ -122,10 +108,8 @@ const QueueAnalytics: React.FC<QueueAnalyticsProps> = ({
     elderlyCount
   );
   
-  // Check if algorithm needs changing
   const shouldChangeAlgorithm = recommendedAlgorithm !== currentAlgorithm;
   
-  // Get algorithm name for display
   const getAlgorithmName = (algorithm: QueueAlgorithmType) => {
     switch (algorithm) {
       case QueueAlgorithmType.FIFO: return "First In, First Out (FIFO)";
@@ -139,7 +123,7 @@ const QueueAnalytics: React.FC<QueueAnalyticsProps> = ({
   const handleChangeAlgorithm = () => {
     setCurrentAlgorithm(recommendedAlgorithm);
     localStorage.setItem('queue_algorithm', recommendedAlgorithm);
-    window.location.reload(); // Reload to apply new algorithm
+    window.location.reload();
   };
   
   return (
@@ -333,10 +317,10 @@ const QueueAnalytics: React.FC<QueueAnalyticsProps> = ({
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={[
-                      { type: 'ทั่วไป', count: waitingQueues.filter(q => q.type === 'REGULAR').length },
+                      { type: 'ทั่วไป', count: waitingQueues.filter(q => q.type === 'GENERAL').length },
                       { type: 'ผู้สูงอายุ', count: waitingQueues.filter(q => q.type === 'ELDERLY').length },
-                      { type: 'เร่งด่วน', count: waitingQueues.filter(q => q.type === 'URGENT').length },
-                      { type: 'ยาพิเศษ', count: waitingQueues.filter(q => q.type === 'SPECIAL').length },
+                      { type: 'เร่งด่วน', count: waitingQueues.filter(q => q.type === 'PRIORITY').length },
+                      { type: 'ยาพิเศษ', count: waitingQueues.filter(q => q.type === 'FOLLOW_UP').length },
                     ]}
                     margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                     layout="vertical"

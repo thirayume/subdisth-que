@@ -8,13 +8,19 @@ export interface FormatOption {
   example: string;
 }
 
+export interface AlgorithmOption {
+  value: QueueAlgorithmType;
+  label: string;
+  description: string;
+}
+
 export const formatOptions: FormatOption[] = [
   { value: '0', label: 'ไม่เติมเลข 0', example: '1, 2, 3...' },
   { value: '00', label: 'เติมเลข 0 (2 หลัก)', example: '01, 02, 03...' },
   { value: '000', label: 'เติมเลข 0 (3 หลัก)', example: '001, 002, 003...' },
 ];
 
-export const algorithmOptions = [
+export const algorithmOptions: AlgorithmOption[] = [
   { 
     value: QueueAlgorithmType.FIFO, 
     label: 'First In, First Out (FIFO)', 
@@ -37,13 +43,17 @@ export const algorithmOptions = [
   },
 ];
 
-export const settingsFormSchema = z.object({
+// Add the missing queue settings schema
+export const queueSettingsSchema = z.object({
   hospital_name: z.string().min(2, {
     message: "ชื่อโรงพยาบาลต้องมีอย่างน้อย 2 ตัวอักษร",
   }),
   hospital_address: z.string().optional(),
   hospital_phone: z.string().optional(),
   hospital_website: z.string().url().optional().or(z.literal('')),
+  pharmacy_name: z.string().optional(),
+  pharmacy_phone: z.string().optional(),
+  pharmacy_email: z.string().email().optional().or(z.literal('')),
   
   queue_types: z.array(
     z.object({
@@ -66,8 +76,67 @@ export const settingsFormSchema = z.object({
   
   queue_announcement_enabled: z.boolean().default(true),
   queue_announcement_text: z.string().min(5).default('ขอเชิญหมายเลข {queueNumber} ที่ช่องบริการ {counter}'),
+  queue_voice_enabled: z.boolean().default(true),
   queue_voice_speed: z.coerce.number().min(0.5).max(2).default(0.8),
   queue_voice_pitch: z.coerce.number().min(0.5).max(2).default(1),
+  
+  line_notification_enabled: z.boolean().default(true),
+  sms_notification_enabled: z.boolean().default(false),
+  appointment_notifications_enabled: z.boolean().default(true),
+  voice_notifications_enabled: z.boolean().default(true),
+  notify_day_before: z.boolean().default(true),
+  notify_hours_before: z.boolean().default(true),
+  notify_hour_before: z.boolean().default(false),
+  notify_queue_position: z.boolean().default(true),
+  notify_queue_waiting_time: z.boolean().default(true),
 });
 
-export type SettingsFormValues = z.infer<typeof settingsFormSchema>;
+// Add the missing initial queue types
+export const initialQueueTypes = [
+  {
+    id: 'REGULAR',
+    code: 'GENERAL',
+    name: 'ทั่วไป',
+    prefix: 'A',
+    purpose: 'สำหรับผู้ป่วยทั่วไป',
+    format: '00' as const,
+    enabled: true,
+    algorithm: QueueAlgorithmType.FIFO,
+    priority: 5
+  },
+  {
+    id: 'ELDERLY',
+    code: 'ELDERLY',
+    name: 'ผู้สูงอายุ',
+    prefix: 'E',
+    purpose: 'สำหรับผู้สูงอายุ 60 ปีขึ้นไป',
+    format: '00' as const,
+    enabled: true,
+    algorithm: QueueAlgorithmType.PRIORITY,
+    priority: 7
+  },
+  {
+    id: 'URGENT',
+    code: 'URGENT',
+    name: 'ด่วน',
+    prefix: 'U',
+    purpose: 'สำหรับกรณีเร่งด่วน',
+    format: '00' as const,
+    enabled: true,
+    algorithm: QueueAlgorithmType.PRIORITY,
+    priority: 10
+  },
+  {
+    id: 'SPECIAL',
+    code: 'SPECIAL',
+    name: 'ยาพิเศษ',
+    prefix: 'S',
+    purpose: 'ยาที่ต้องเตรียมพิเศษ',
+    format: '00' as const,
+    enabled: true,
+    algorithm: QueueAlgorithmType.MULTILEVEL,
+    priority: 8
+  }
+];
+
+export type SettingsFormValues = z.infer<typeof queueSettingsSchema>;
