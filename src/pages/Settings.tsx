@@ -38,6 +38,14 @@ const Settings = () => {
       queue_announcement_text: 'เชิญหมายเลข {queueNumber} ที่ช่องจ่ายยา {counter}',
       queue_voice_enabled: true,
       line_notification_enabled: true,
+      sms_notification_enabled: false,
+      appointment_notifications_enabled: true,
+      voice_notifications_enabled: true,
+      notify_day_before: true,
+      notify_hours_before: true,
+      notify_hour_before: false,
+      notify_queue_position: true,
+      notify_queue_waiting_time: true,
       queue_algorithm: QueueAlgorithmType.MULTILEVEL_FEEDBACK,
       queue_types: initialQueueTypes,
     },
@@ -80,6 +88,19 @@ const Settings = () => {
     
     // Save queue types with algorithms to localStorage
     localStorage.setItem('queue_types', JSON.stringify(data.queue_types));
+    
+    // Save notification settings
+    localStorage.setItem('notification_settings', JSON.stringify({
+      line_notification_enabled: data.line_notification_enabled,
+      sms_notification_enabled: data.sms_notification_enabled,
+      appointment_notifications_enabled: data.appointment_notifications_enabled,
+      voice_notifications_enabled: data.voice_notifications_enabled,
+      notify_day_before: data.notify_day_before,
+      notify_hours_before: data.notify_hours_before,
+      notify_hour_before: data.notify_hour_before,
+      notify_queue_position: data.notify_queue_position,
+      notify_queue_waiting_time: data.notify_queue_waiting_time,
+    }));
     
     toast.success('บันทึกการตั้งค่าเรียบร้อยแล้ว');
     
@@ -127,4 +148,3 @@ const Settings = () => {
 };
 
 export default Settings;
-
