@@ -134,7 +134,7 @@ const StepOutTimer: React.FC<StepOutTimerProps> = ({
   // If position is too close to call, or already stepped out
   if (isTooCloseToCall && !isSteppedOut) {
     return (
-      <Alert variant="warning" className={`${className}`}>
+      <Alert variant="destructive" className={`${className}`}>
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>ใกล้ถึงคิวของคุณแล้ว</AlertTitle>
         <AlertDescription>
