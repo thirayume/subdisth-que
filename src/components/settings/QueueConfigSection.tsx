@@ -76,7 +76,11 @@ const QueueConfigSection: React.FC<QueueConfigSectionProps> = ({ form }) => {
             <FormItem>
               <FormLabel>อัลกอริทึมการเรียกคิวหลัก</FormLabel>
               <Select 
-                onValueChange={field.onChange} 
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  // Save algorithm selection to localStorage for use across app
+                  localStorage.setItem('queue_algorithm', value);
+                }} 
                 defaultValue={field.value}
               >
                 <FormControl>
@@ -103,6 +107,31 @@ const QueueConfigSection: React.FC<QueueConfigSectionProps> = ({ form }) => {
           )}
         />
       </div>
+
+      <FormField
+        control={form.control}
+        name="enable_wait_time_prediction"
+        render={({ field }) => (
+          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+            <div className="space-y-0.5">
+              <FormLabel className="text-base">การคาดการณ์เวลารอคิว</FormLabel>
+              <FormDescription>
+                ระบบจะแสดงการคาดการณ์เวลารอคิวให้ผู้ป่วยทราบ
+              </FormDescription>
+            </div>
+            <FormControl>
+              <Switch
+                checked={field.value}
+                onCheckedChange={(value) => {
+                  field.onChange(value);
+                  // Save setting to localStorage
+                  localStorage.setItem('enable_wait_time_prediction', value ? 'true' : 'false');
+                }}
+              />
+            </FormControl>
+          </FormItem>
+        )}
+      />
     </div>
   );
 };

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Clock, List, Users } from 'lucide-react';
+import { Clock, List, Users, BarChart4 } from 'lucide-react';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 
@@ -11,6 +11,11 @@ interface QueueStatCardProps {
   icon: React.ReactNode;
   footer?: React.ReactNode;
   className?: string;
+  trend?: { 
+    value: number; 
+    label: string;
+    positive?: boolean; 
+  };
 }
 
 const QueueStatCard: React.FC<QueueStatCardProps> = ({ 
@@ -18,7 +23,8 @@ const QueueStatCard: React.FC<QueueStatCardProps> = ({
   value, 
   icon, 
   footer,
-  className 
+  className,
+  trend
 }) => (
   <Card className={className}>
     <CardContent className="p-6">
@@ -26,6 +32,12 @@ const QueueStatCard: React.FC<QueueStatCardProps> = ({
         <div>
           <p className="text-sm font-medium text-gray-500">{title}</p>
           <h3 className="text-3xl font-bold text-gray-900 mt-1">{value}</h3>
+          
+          {trend && (
+            <div className={`mt-1 text-xs ${trend.positive ? 'text-green-600' : 'text-red-600'}`}>
+              <span className="font-medium">{trend.positive ? '↑' : '↓'} {trend.value}%</span> {trend.label}
+            </div>
+          )}
         </div>
         {icon}
       </div>
@@ -46,17 +58,29 @@ interface QueueStatsProps {
   avgWaitingTime?: number;
   avgServiceTime?: number;
   className?: string;
+  queueDistribution?: {
+    regular: number;
+    urgent: number;
+    elderly: number;
+    special: number;
+  };
+  predictedWaitTime?: number;
 }
 
 const QueueStats: React.FC<QueueStatsProps> = ({ 
   totalQueues, 
   totalPatients, 
   avgWaitingTime = 15,
-  avgServiceTime, 
-  className 
+  avgServiceTime = 8, 
+  className,
+  queueDistribution = { regular: 70, urgent: 10, elderly: 15, special: 5 },
+  predictedWaitTime
 }) => {
+  // Only show predicted wait time if wait time prediction is enabled
+  const showPrediction = localStorage.getItem('enable_wait_time_prediction') !== 'false';
+  
   return (
-    <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 ${className}`}>
+    <div className={`grid grid-cols-1 md:grid-cols-${showPrediction ? '4' : '3'} gap-6 ${className}`}>
       <QueueStatCard
         title="ให้บริการทั้งหมด"
         value={totalQueues}
@@ -64,6 +88,7 @@ const QueueStats: React.FC<QueueStatsProps> = ({
           <List className="w-6 h-6 text-blue-600" />
         </div>}
         footer={<>อัพเดทล่าสุด <span className="font-medium">{format(new Date(), 'dd MMM HH:mm น.', { locale: th })}</span></>}
+        trend={{ value: 12, label: "จากสัปดาห์ที่แล้ว", positive: true }}
       />
       
       <QueueStatCard
@@ -73,6 +98,7 @@ const QueueStats: React.FC<QueueStatsProps> = ({
           <Clock className="w-6 h-6 text-amber-600" />
         </div>}
         footer={<>เปรียบเทียบรายสัปดาห์ <span className="font-medium text-green-600">-12%</span></>}
+        trend={{ value: 12, label: "ลดลงจากสัปดาห์ที่แล้ว", positive: true }}
       />
       
       <QueueStatCard
@@ -83,6 +109,21 @@ const QueueStats: React.FC<QueueStatsProps> = ({
         </div>}
         footer={<>เฉลี่ย <span className="font-medium">{Math.round((totalQueues / totalPatients) * 10) / 10 || 0}</span> คิว/คน</>}
       />
+      
+      {showPrediction && predictedWaitTime !== undefined && (
+        <QueueStatCard
+          title="คาดการณ์เวลารอ (คิวต่อไป)"
+          value={`${predictedWaitTime || avgWaitingTime} นาที`}
+          icon={<div className="bg-purple-100 p-3 rounded-full">
+            <BarChart4 className="w-6 h-6 text-purple-600" />
+          </div>}
+          footer={<>ขึ้นอยู่กับปริมาณผู้รับบริการปัจจุบัน</>}
+          trend={avgWaitingTime > predictedWaitTime ? 
+            { value: Math.round((avgWaitingTime - predictedWaitTime) / avgWaitingTime * 100), label: "เร็วกว่าค่าเฉลี่ย", positive: true } : 
+            { value: Math.round((predictedWaitTime - avgWaitingTime) / avgWaitingTime * 100), label: "ช้ากว่าค่าเฉลี่ย", positive: false }
+          }
+        />
+      )}
     </div>
   );
 };
