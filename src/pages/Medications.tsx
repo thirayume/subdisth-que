@@ -1,15 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
 import Layout from '@/components/layout/Layout';
 import { useMedications } from '@/hooks/useMedications';
-import { toast } from 'sonner';
-import { Search, Pill, PlusCircle, AlertCircle, Check } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PlusCircle } from 'lucide-react';
+import MedicationsSummaryCards from '@/components/medications/MedicationsSummaryCards';
+import MedicationsTabs from '@/components/medications/MedicationsTabs';
 
 const Medications = () => {
   const { medications, loading, error, fetchMedications } = useMedications();
@@ -18,23 +14,6 @@ const Medications = () => {
   useEffect(() => {
     fetchMedications();
   }, []);
-
-  const filteredMedications = medications.filter(med => 
-    med.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    med.code.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  
-  const getStockStatusClass = (stock: number, minStock: number) => {
-    if (stock <= 0) return "text-red-600 bg-red-50";
-    if (stock < minStock) return "text-amber-600 bg-amber-50";
-    return "text-green-600 bg-green-50";
-  };
-  
-  const getStockStatusText = (stock: number, minStock: number) => {
-    if (stock <= 0) return "หมดสต๊อก";
-    if (stock < minStock) return "ใกล้หมด";
-    return "พร้อมจ่าย";
-  };
 
   return (
     <Layout>
@@ -58,235 +37,12 @@ const Medications = () => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <Card className="dashboard-card">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">รายการยาทั้งหมด</p>
-                    <h3 className="text-3xl font-bold text-gray-900 mt-1">{medications.length}</h3>
-                  </div>
-                  <div className="bg-blue-100 p-3 rounded-full">
-                    <Pill className="w-6 h-6 text-blue-600" />
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <div className="text-xs text-gray-500">
-                    อัพเดทล่าสุด <span className="font-medium">วันนี้ {new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute: '2-digit'})}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="dashboard-card">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">ยาที่ใกล้หมดสต๊อก</p>
-                    <h3 className="text-3xl font-bold text-gray-900 mt-1">
-                      {medications.filter(med => med.stock < med.min_stock && med.stock > 0).length}
-                    </h3>
-                  </div>
-                  <div className="bg-amber-100 p-3 rounded-full">
-                    <AlertCircle className="w-6 h-6 text-amber-600" />
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <div className="text-xs text-gray-500">
-                    ต้องสั่งซื้อภายใน <span className="font-medium text-amber-600">7 วัน</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="dashboard-card">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">ยาที่พร้อมจ่าย</p>
-                    <h3 className="text-3xl font-bold text-gray-900 mt-1">
-                      {medications.filter(med => med.stock >= med.min_stock).length}
-                    </h3>
-                  </div>
-                  <div className="bg-green-100 p-3 rounded-full">
-                    <Check className="w-6 h-6 text-green-600" />
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <div className="text-xs text-gray-500">
-                    คิดเป็น <span className="font-medium text-green-600">
-                      {medications.length > 0 
-                        ? Math.round((medications.filter(med => med.stock >= med.min_stock).length / medications.length) * 100)
-                        : 0}%
-                    </span> ของรายการทั้งหมด
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          
-          <Tabs defaultValue="all" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="all">ทั้งหมด ({medications.length})</TabsTrigger>
-              <TabsTrigger value="low-stock">ใกล้หมดสต๊อก ({medications.filter(med => med.stock < med.min_stock && med.stock > 0).length})</TabsTrigger>
-              <TabsTrigger value="out-of-stock">หมดสต๊อก ({medications.filter(med => med.stock <= 0).length})</TabsTrigger>
-            </TabsList>
-            
-            <div className="flex mb-4">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <Input
-                  placeholder="ค้นหายาและเวชภัณฑ์..." 
-                  className="pl-10"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-            
-            <TabsContent value="all" className="animate-fade-in">
-              <Card>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>รหัสยา</TableHead>
-                        <TableHead>ชื่อยา</TableHead>
-                        <TableHead>หน่วย</TableHead>
-                        <TableHead>คงเหลือ</TableHead>
-                        <TableHead>สถานะ</TableHead>
-                        <TableHead>การจัดการ</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredMedications.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center py-6">ไม่พบรายการยาตามที่ค้นหา</TableCell>
-                        </TableRow>
-                      ) : (
-                        filteredMedications.map((med) => (
-                          <TableRow key={med.id}>
-                            <TableCell className="font-medium">{med.code}</TableCell>
-                            <TableCell>{med.name}</TableCell>
-                            <TableCell>{med.unit}</TableCell>
-                            <TableCell>{med.stock} {med.unit}</TableCell>
-                            <TableCell>
-                              <Badge className={getStockStatusClass(med.stock, med.min_stock)}>
-                                {getStockStatusText(med.stock, med.min_stock)}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Button variant="outline" size="sm" className="h-8 px-2 text-xs">
-                                แก้ไข
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="low-stock" className="animate-fade-in">
-              <Card>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>รหัสยา</TableHead>
-                        <TableHead>ชื่อยา</TableHead>
-                        <TableHead>หน่วย</TableHead>
-                        <TableHead>คงเหลือ</TableHead>
-                        <TableHead>สถานะ</TableHead>
-                        <TableHead>การจัดการ</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredMedications
-                        .filter(med => med.stock < med.min_stock && med.stock > 0)
-                        .length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center py-6">ไม่พบรายการยาที่ใกล้หมดสต๊อก</TableCell>
-                        </TableRow>
-                      ) : (
-                        filteredMedications
-                          .filter(med => med.stock < med.min_stock && med.stock > 0)
-                          .map((med) => (
-                            <TableRow key={med.id}>
-                              <TableCell className="font-medium">{med.code}</TableCell>
-                              <TableCell>{med.name}</TableCell>
-                              <TableCell>{med.unit}</TableCell>
-                              <TableCell>{med.stock} {med.unit}</TableCell>
-                              <TableCell>
-                                <Badge className="text-amber-600 bg-amber-50">
-                                  ใกล้หมด
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <Button variant="outline" size="sm" className="h-8 px-2 text-xs">
-                                  แก้ไข
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="out-of-stock" className="animate-fade-in">
-              <Card>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>รหัสยา</TableHead>
-                        <TableHead>ชื่อยา</TableHead>
-                        <TableHead>หน่วย</TableHead>
-                        <TableHead>คงเหลือ</TableHead>
-                        <TableHead>สถานะ</TableHead>
-                        <TableHead>การจัดการ</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredMedications
-                        .filter(med => med.stock <= 0)
-                        .length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center py-6">ไม่พบรายการยาที่หมดสต๊อก</TableCell>
-                        </TableRow>
-                      ) : (
-                        filteredMedications
-                          .filter(med => med.stock <= 0)
-                          .map((med) => (
-                            <TableRow key={med.id}>
-                              <TableCell className="font-medium">{med.code}</TableCell>
-                              <TableCell>{med.name}</TableCell>
-                              <TableCell>{med.unit}</TableCell>
-                              <TableCell>{med.stock} {med.unit}</TableCell>
-                              <TableCell>
-                                <Badge className="text-red-600 bg-red-50">
-                                  หมดสต๊อก
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <Button variant="outline" size="sm" className="h-8 px-2 text-xs">
-                                  แก้ไข
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+          <MedicationsSummaryCards medications={medications} />
+          <MedicationsTabs 
+            medications={medications} 
+            searchTerm={searchTerm} 
+            setSearchTerm={setSearchTerm} 
+          />
         </>
       )}
     </Layout>
