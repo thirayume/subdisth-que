@@ -15,6 +15,8 @@ import QueueHistory from "./pages/QueueHistory";
 import Settings from "./pages/Settings";
 import QueueTicket from "./pages/QueueTicket";
 import PatientPortal from "./pages/PatientPortal";
+import QueueManagement from "./pages/QueueManagement";
+import Analytics from "./pages/Analytics";
 
 // Configure the query client with offline support
 const queryClient = new QueryClient({
@@ -47,6 +49,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/queue-management" element={<QueueManagement />} />
+          <Route path="/analytics" element={<Analytics />} />
           <Route path="/queue-board" element={<QueueBoard />} />
           <Route path="/patients" element={<Patients />} />
           <Route path="/medications" element={<Medications />} />

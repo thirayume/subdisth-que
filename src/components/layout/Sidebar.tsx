@@ -14,7 +14,9 @@ import {
   PlusCircle,
   Clock,
   ClipboardList,
-  Pill
+  Pill,
+  ListChecks,
+  BarChart
 } from 'lucide-react';
 import CreateQueueDialog from '@/components/queue/CreateQueueDialog';
 import { mockQueues } from '@/lib/mockData';
@@ -46,6 +48,8 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
 
   const navItems = [
     { to: '/', label: 'แดชบอร์ด', icon: <LayoutGrid className="h-5 w-5" /> },
+    { to: '/queue-management', label: 'จัดการคิว', icon: <ListChecks className="h-5 w-5" /> },
+    { to: '/analytics', label: 'การวิเคราะห์', icon: <BarChart className="h-5 w-5" /> },
     { to: '/queue-board', label: 'หน้าจอแสดงคิว', icon: <ClipboardList className="h-5 w-5" /> },
     { to: '/patients', label: 'ผู้ป่วย', icon: <Users className="h-5 w-5" /> },
     { to: '/medications', label: 'ยาและเวชภัณฑ์', icon: <Pill className="h-5 w-5" /> },
