@@ -2,6 +2,9 @@
 // This service worker can be customized:
 // https://developers.google.com/web/tools/workbox/modules/workbox-precaching
 
+// Declare service worker specific globals
+declare const self: ServiceWorkerGlobalScope;
+
 type ExtendableEvent = Event & {
   waitUntil(fn: Promise<any>): void;
 };
@@ -40,7 +43,7 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
     (async () => {
       // Enable navigation preload if it's supported
       if ('navigationPreload' in self.registration) {
-        await (self.registration as any).navigationPreload.enable();
+        await self.registration.navigationPreload.enable();
       }
       
       // Clean up old cache versions

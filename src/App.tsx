@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,8 +24,8 @@ const queryClient = new QueryClient({
       staleTime: 5 * 60 * 1000,
       // Retry failed requests 3 times
       retry: 3,
-      // Cache successful responses for 10 minutes
-      cacheTime: 10 * 60 * 1000,
+      // Cache successful responses for 10 minutes (using gcTime instead of cacheTime)
+      gcTime: 10 * 60 * 1000,
       // Use stale data while revalidating
       refetchOnWindowFocus: true,
       // Don't refetch on reconnect if the data is still fresh
