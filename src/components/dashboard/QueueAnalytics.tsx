@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from 'react';
+
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { CalendarClock, Clock, TrendingUp, UserCheck, Users } from 'lucide-react';
-import { format, subDays } from 'date-fns';
-import { th } from 'date-fns/locale';
-import { Queue, QueueStatus } from '@/integrations/supabase/schema';
-import { QueueAlgorithmType, getOptimalAlgorithmForPharmacy } from '@/utils/queueAlgorithms';
+import { TrendingUp } from 'lucide-react';
+import { Queue } from '@/integrations/supabase/schema';
+import SummaryCards from './analytics/SummaryCards';
+import AlgorithmRecommendation from './analytics/AlgorithmRecommendation';
+import WaitTimeChart from './analytics/WaitTimeChart';
+import ThroughputChart from './analytics/ThroughputChart';
+import QueueCompositionChart from './analytics/QueueCompositionChart';
+import TabSelector from './analytics/TabSelector';
+import { useAnalyticsData } from './analytics/useAnalyticsData';
 
 interface QueueAnalyticsProps {
   completedQueues: Queue[];
@@ -23,108 +27,20 @@ const QueueAnalytics: React.FC<QueueAnalyticsProps> = ({
   skippedQueues,
   className
 }) => {
-  const [timeFrame, setTimeFrame] = useState<'day' | 'week' | 'month'>('day');
-  const [waitTimeData, setWaitTimeData] = useState<any[]>([]);
-  const [throughputData, setThroughputData] = useState<any[]>([]);
-  const [currentAlgorithm, setCurrentAlgorithm] = useState<QueueAlgorithmType>(
-    localStorage.getItem('queue_algorithm') as QueueAlgorithmType || QueueAlgorithmType.FIFO
-  );
-  
-  useEffect(() => {
-    const generateWaitTimeData = () => {
-      const today = new Date();
-      const data = [];
-      
-      for (let i = 0; i < (timeFrame === 'day' ? 24 : timeFrame === 'week' ? 7 : 30); i++) {
-        const date = timeFrame === 'day' 
-          ? new Date(today.getFullYear(), today.getMonth(), today.getDate(), i) 
-          : subDays(today, i);
-        
-        const waitTime = Math.round(5 + Math.random() * 20);
-        
-        data.push({
-          time: timeFrame === 'day' 
-            ? format(date, 'HH:mm', { locale: th })
-            : format(date, 'dd MMM', { locale: th }),
-          waitTime: waitTime
-        });
-      }
-      
-      return timeFrame === 'day' ? data : data.reverse();
-    };
-    
-    const generateThroughputData = () => {
-      const today = new Date();
-      const data = [];
-      
-      for (let i = 0; i < (timeFrame === 'day' ? 24 : timeFrame === 'week' ? 7 : 30); i++) {
-        const date = timeFrame === 'day' 
-          ? new Date(today.getFullYear(), today.getMonth(), today.getDate(), i) 
-          : subDays(today, i);
-        
-        const patientCount = Math.round(Math.random() * 15);
-        
-        data.push({
-          time: timeFrame === 'day' 
-            ? format(date, 'HH:mm', { locale: th })
-            : format(date, 'dd MMM', { locale: th }),
-          count: patientCount
-        });
-      }
-      
-      return timeFrame === 'day' ? data : data.reverse();
-    };
-    
-    setWaitTimeData(generateWaitTimeData());
-    setThroughputData(generateThroughputData());
-  }, [timeFrame, completedQueues]);
-  
-  const totalPatients = completedQueues.length + waitingQueues.length + activeQueues.length;
-  const averageWaitTime = completedQueues.length > 0 
-    ? completedQueues.reduce((sum, queue) => {
-        if (queue.called_at && queue.created_at) {
-          const waitMs = new Date(queue.called_at).getTime() - new Date(queue.created_at).getTime();
-          return sum + (waitMs / 60000);
-        }
-        return sum;
-      }, 0) / completedQueues.length
-    : 0;
-    
-  const averageServiceTime = completedQueues.length > 0 
-    ? completedQueues.reduce((sum, queue) => {
-        if (queue.completed_at && queue.called_at) {
-          const serviceMs = new Date(queue.completed_at).getTime() - new Date(queue.called_at).getTime();
-          return sum + (serviceMs / 60000);
-        }
-        return sum;
-      }, 0) / completedQueues.length
-    : 0;
-  
-  const urgentCount = waitingQueues.filter(q => q.type === 'PRIORITY').length;
-  const elderlyCount = waitingQueues.filter(q => q.type === 'ELDERLY').length;
-  const recommendedAlgorithm = getOptimalAlgorithmForPharmacy(
-    waitingQueues.length,
+  const {
+    timeFrame,
+    setTimeFrame,
+    waitTimeData,
+    throughputData,
+    averageWaitTime,
+    averageServiceTime,
+    currentAlgorithm,
+    recommendedAlgorithm,
+    shouldChangeAlgorithm,
     urgentCount,
-    elderlyCount
-  );
-  
-  const shouldChangeAlgorithm = recommendedAlgorithm !== currentAlgorithm;
-  
-  const getAlgorithmName = (algorithm: QueueAlgorithmType) => {
-    switch (algorithm) {
-      case QueueAlgorithmType.FIFO: return "First In, First Out (FIFO)";
-      case QueueAlgorithmType.PRIORITY: return "ลำดับความสำคัญ (Priority Queue)";
-      case QueueAlgorithmType.MULTILEVEL: return "หลายระดับ (Multilevel Queue)";
-      case QueueAlgorithmType.MULTILEVEL_FEEDBACK: return "ปรับตามเวลารอ (Feedback Queue)";
-      default: return "อัลกอริทึมพื้นฐาน";
-    }
-  };
-  
-  const handleChangeAlgorithm = () => {
-    setCurrentAlgorithm(recommendedAlgorithm);
-    localStorage.setItem('queue_algorithm', recommendedAlgorithm);
-    window.location.reload();
-  };
+    elderlyCount,
+    handleChangeAlgorithm
+  } = useAnalyticsData(completedQueues, waitingQueues);
   
   return (
     <div className={`space-y-6 ${className}`}>
@@ -136,80 +52,22 @@ const QueueAnalytics: React.FC<QueueAnalyticsProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <Card className="shadow-sm bg-card">
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">คิวที่รอ</p>
-                    <h3 className="text-2xl font-bold">{waitingQueues.length}</h3>
-                  </div>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="shadow-sm bg-card">
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">เวลารอเฉลี่ย</p>
-                    <h3 className="text-2xl font-bold">{Math.round(averageWaitTime)} นาที</h3>
-                  </div>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="shadow-sm bg-card">
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">เวลาให้บริการเฉลี่ย</p>
-                    <h3 className="text-2xl font-bold">{Math.round(averageServiceTime)} นาที</h3>
-                  </div>
-                  <CalendarClock className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="shadow-sm bg-card">
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">ผู้รับบริการวันนี้</p>
-                    <h3 className="text-2xl font-bold">{completedQueues.length}</h3>
-                  </div>
-                  <UserCheck className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <SummaryCards 
+            waitingQueueCount={waitingQueues.length}
+            averageWaitTime={averageWaitTime}
+            averageServiceTime={averageServiceTime}
+            completedQueueCount={completedQueues.length}
+          />
           
-          {shouldChangeAlgorithm && (
-            <Card className="shadow-sm bg-yellow-50 border-yellow-200 mb-6">
-              <CardContent className="p-4">
-                <div className="flex flex-col gap-2">
-                  <p className="text-sm text-yellow-800">
-                    <strong>คำแนะนำ:</strong> อัลกอริทึมปัจจุบัน {getAlgorithmName(currentAlgorithm)} 
-                    อาจไม่เหมาะสมกับสถานการณ์ปัจจุบัน
-                  </p>
-                  <p className="text-sm text-yellow-800">
-                    ระบบแนะนำให้ใช้ {getAlgorithmName(recommendedAlgorithm)} เนื่องจากมี
-                    {urgentCount > 0 ? ` ${urgentCount} คิวเร่งด่วน ` : ''}
-                    {elderlyCount > 0 ? ` ${elderlyCount} คิวผู้สูงอายุ ` : ''}
-                    จากทั้งหมด {waitingQueues.length} คิว
-                  </p>
-                  <button 
-                    className="bg-yellow-200 hover:bg-yellow-300 text-yellow-800 py-1 px-2 rounded text-sm"
-                    onClick={handleChangeAlgorithm}
-                  >
-                    เปลี่ยนเป็น {getAlgorithmName(recommendedAlgorithm)}
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          <AlgorithmRecommendation 
+            shouldChangeAlgorithm={shouldChangeAlgorithm}
+            currentAlgorithm={currentAlgorithm}
+            recommendedAlgorithm={recommendedAlgorithm}
+            urgentCount={urgentCount}
+            elderlyCount={elderlyCount}
+            waitingQueueCount={waitingQueues.length}
+            handleChangeAlgorithm={handleChangeAlgorithm}
+          />
           
           <Tabs defaultValue="wait-time" className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-4">
@@ -219,121 +77,17 @@ const QueueAnalytics: React.FC<QueueAnalyticsProps> = ({
             </TabsList>
             
             <TabsContent value="wait-time">
-              <div className="flex justify-end mb-2">
-                <TabsList>
-                  <TabsTrigger 
-                    value="day" 
-                    className={timeFrame === 'day' ? 'bg-blue-100' : ''}
-                    onClick={() => setTimeFrame('day')}
-                  >
-                    วันนี้
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="week" 
-                    className={timeFrame === 'week' ? 'bg-blue-100' : ''}
-                    onClick={() => setTimeFrame('week')}
-                  >
-                    7 วัน
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="month" 
-                    className={timeFrame === 'month' ? 'bg-blue-100' : ''}
-                    onClick={() => setTimeFrame('month')}
-                  >
-                    30 วัน
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-              
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={waitTimeData}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="time" 
-                      label={{ value: timeFrame === 'day' ? 'เวลา' : 'วันที่', position: 'insideBottom', offset: -5 }} 
-                    />
-                    <YAxis label={{ value: 'เวลารอ (นาที)', angle: -90, position: 'insideLeft' }} />
-                    <Tooltip labelFormatter={(value) => `เวลา: ${value}`} />
-                    <Legend />
-                    <Line type="monotone" dataKey="waitTime" name="เวลารอ (นาที)" stroke="#3b82f6" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+              <TabSelector timeFrame={timeFrame} setTimeFrame={setTimeFrame} />
+              <WaitTimeChart data={waitTimeData} timeFrame={timeFrame} />
             </TabsContent>
             
             <TabsContent value="throughput">
-              <div className="flex justify-end mb-2">
-                <TabsList>
-                  <TabsTrigger 
-                    value="day" 
-                    className={timeFrame === 'day' ? 'bg-blue-100' : ''}
-                    onClick={() => setTimeFrame('day')}
-                  >
-                    วันนี้
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="week" 
-                    className={timeFrame === 'week' ? 'bg-blue-100' : ''}
-                    onClick={() => setTimeFrame('week')}
-                  >
-                    7 วัน
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="month" 
-                    className={timeFrame === 'month' ? 'bg-blue-100' : ''}
-                    onClick={() => setTimeFrame('month')}
-                  >
-                    30 วัน
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-              
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={throughputData}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="time" 
-                      label={{ value: timeFrame === 'day' ? 'เวลา' : 'วันที่', position: 'insideBottom', offset: -5 }} 
-                    />
-                    <YAxis label={{ value: 'จำนวนผู้รับบริการ', angle: -90, position: 'insideLeft' }} />
-                    <Tooltip labelFormatter={(value) => `เวลา: ${value}`} />
-                    <Legend />
-                    <Bar dataKey="count" name="จำนวนผู้รับบริการ" fill="#10b981" barSize={30} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              <TabSelector timeFrame={timeFrame} setTimeFrame={setTimeFrame} />
+              <ThroughputChart data={throughputData} timeFrame={timeFrame} />
             </TabsContent>
             
             <TabsContent value="queue-composition">
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={[
-                      { type: 'ทั่วไป', count: waitingQueues.filter(q => q.type === 'GENERAL').length },
-                      { type: 'ผู้สูงอายุ', count: waitingQueues.filter(q => q.type === 'ELDERLY').length },
-                      { type: 'เร่งด่วน', count: waitingQueues.filter(q => q.type === 'PRIORITY').length },
-                      { type: 'ยาพิเศษ', count: waitingQueues.filter(q => q.type === 'FOLLOW_UP').length },
-                    ]}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                    layout="vertical"
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis dataKey="type" type="category" />
-                    <Tooltip labelFormatter={(value) => `ประเภท: ${value}`} />
-                    <Legend />
-                    <Bar dataKey="count" name="จำนวนคิว" fill="#8884d8" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              <QueueCompositionChart waitingQueues={waitingQueues} />
             </TabsContent>
           </Tabs>
         </CardContent>
