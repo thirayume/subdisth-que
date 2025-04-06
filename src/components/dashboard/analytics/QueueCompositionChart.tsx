@@ -8,11 +8,17 @@ interface QueueCompositionChartProps {
 }
 
 const QueueCompositionChart: React.FC<QueueCompositionChartProps> = ({ waitingQueues }) => {
+  // Count the queues by type using the actual data
+  const generalCount = waitingQueues.filter(q => q.type === 'GENERAL').length;
+  const elderlyCount = waitingQueues.filter(q => q.type === 'ELDERLY').length;
+  const priorityCount = waitingQueues.filter(q => q.type === 'PRIORITY').length;
+  const followUpCount = waitingQueues.filter(q => q.type === 'FOLLOW_UP').length;
+
   const data = [
-    { type: 'ทั่วไป', count: waitingQueues.filter(q => q.type === 'GENERAL').length },
-    { type: 'ผู้สูงอายุ', count: waitingQueues.filter(q => q.type === 'ELDERLY').length },
-    { type: 'เร่งด่วน', count: waitingQueues.filter(q => q.type === 'PRIORITY').length },
-    { type: 'ยาพิเศษ', count: waitingQueues.filter(q => q.type === 'FOLLOW_UP').length },
+    { type: 'ทั่วไป', count: generalCount },
+    { type: 'ผู้สูงอายุ', count: elderlyCount },
+    { type: 'เร่งด่วน', count: priorityCount },
+    { type: 'ยาพิเศษ', count: followUpCount },
   ];
 
   return (

@@ -8,6 +8,7 @@ import { usePatients } from '@/hooks/usePatients';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import QueueSummaryCards from '@/components/dashboard/QueueSummaryCards';
 import DashboardContent from '@/components/dashboard/DashboardContent';
+import { supabase } from '@/integrations/supabase/client'; 
 
 const Dashboard = () => {
   const { 
@@ -24,6 +25,10 @@ const Dashboard = () => {
   const [activeQueues, setActiveQueues] = useState<Queue[]>([]);
   const [completedQueues, setCompletedQueues] = useState<Queue[]>([]);
   const [skippedQueues, setSkippedQueues] = useState<Queue[]>([]);
+  const [todayStats, setTodayStats] = useState({
+    avgWaitTime: 0,
+    avgServiceTime: 0
+  });
 
   // Update filtered queues when the main queues array changes
   useEffect(() => {
@@ -40,6 +45,56 @@ const Dashboard = () => {
       setSkippedQueues(skipped);
     }
   }, [queues, sortQueues]);
+  
+  // Fetch today's statistics
+  useEffect(() => {
+    const fetchTodayStats = async () => {
+      try {
+        // Get today's date at midnight
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        // Fetch completed queues for today
+        const { data, error } = await supabase
+          .from('queues')
+          .select('*')
+          .eq('status', 'COMPLETED')
+          .gte('created_at', today.toISOString())
+          .order('created_at', { ascending: false });
+          
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          // Calculate average wait time (from created to called)
+          const totalWaitTime = data.reduce((sum, queue) => {
+            if (queue.called_at && queue.created_at) {
+              const waitMs = new Date(queue.called_at).getTime() - new Date(queue.created_at).getTime();
+              return sum + (waitMs / 60000); // Convert to minutes
+            }
+            return sum;
+          }, 0);
+          
+          // Calculate average service time (from called to completed)
+          const totalServiceTime = data.reduce((sum, queue) => {
+            if (queue.completed_at && queue.called_at) {
+              const serviceMs = new Date(queue.completed_at).getTime() - new Date(queue.called_at).getTime();
+              return sum + (serviceMs / 60000); // Convert to minutes
+            }
+            return sum;
+          }, 0);
+          
+          setTodayStats({
+            avgWaitTime: data.length > 0 ? totalWaitTime / data.length : 0,
+            avgServiceTime: data.length > 0 ? totalServiceTime / data.length : 0
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching today stats:', err);
+      }
+    };
+    
+    fetchTodayStats();
+  }, []);
   
   // Handler for recalling queue
   const handleRecallQueue = (queueId: string) => {
@@ -68,6 +123,8 @@ const Dashboard = () => {
         activeQueues={activeQueues}
         completedQueues={completedQueues}
         queues={queues}
+        avgWaitTime={todayStats.avgWaitTime}
+        avgServiceTime={todayStats.avgServiceTime}
       />
       
       <DashboardContent

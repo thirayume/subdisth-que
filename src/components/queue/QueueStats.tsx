@@ -79,6 +79,10 @@ const QueueStats: React.FC<QueueStatsProps> = ({
   // Only show predicted wait time if wait time prediction is enabled
   const showPrediction = localStorage.getItem('enable_wait_time_prediction') !== 'false';
   
+  // Calculate current averages in minutes and round to nearest integer
+  const roundedAvgWaitingTime = Math.round(avgWaitingTime);
+  const roundedAvgServiceTime = Math.round(avgServiceTime);
+  
   return (
     <div className={`grid grid-cols-1 md:grid-cols-${showPrediction ? '4' : '3'} gap-6 ${className}`}>
       <QueueStatCard
@@ -93,7 +97,7 @@ const QueueStats: React.FC<QueueStatsProps> = ({
       
       <QueueStatCard
         title="เวลารอเฉลี่ย"
-        value={`${avgWaitingTime} นาที`}
+        value={`${roundedAvgWaitingTime} นาที`}
         icon={<div className="bg-amber-100 p-3 rounded-full">
           <Clock className="w-6 h-6 text-amber-600" />
         </div>}
@@ -113,7 +117,7 @@ const QueueStats: React.FC<QueueStatsProps> = ({
       {showPrediction && predictedWaitTime !== undefined && (
         <QueueStatCard
           title="คาดการณ์เวลารอ (คิวต่อไป)"
-          value={`${predictedWaitTime || avgWaitingTime} นาที`}
+          value={`${predictedWaitTime || roundedAvgWaitingTime} นาที`}
           icon={<div className="bg-purple-100 p-3 rounded-full">
             <BarChart4 className="w-6 h-6 text-purple-600" />
           </div>}
