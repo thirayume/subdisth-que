@@ -2,22 +2,22 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import Layout from '@/components/layout/Layout';
-import { Queue, QueueStatus } from '@/integrations/supabase/schema';
+import { Queue } from '@/integrations/supabase/schema';
 import { useQueues } from '@/hooks/useQueues';
 import { usePatients } from '@/hooks/usePatients';
-import QueueTabs from '@/components/dashboard/QueueTabs';
-import ActiveQueueSection from '@/components/queue/ActiveQueueSection';
+import QueueManagementHeader from '@/components/queue/management/QueueManagementHeader';
+import ActiveQueuesDisplay from '@/components/queue/management/ActiveQueuesDisplay';
+import QueueTabsContainer from '@/components/queue/management/QueueTabsContainer';
 
 const QueueManagement = () => {
   const { 
     queues, 
-    loading: loadingQueues, 
     updateQueueStatus, 
     callQueue, 
     recallQueue, 
     sortQueues 
   } = useQueues();
-  const { patients, loading: loadingPatients } = usePatients();
+  const { patients } = usePatients();
   
   const [waitingQueues, setWaitingQueues] = useState<Queue[]>([]);
   const [activeQueues, setActiveQueues] = useState<Queue[]>([]);
@@ -64,44 +64,23 @@ const QueueManagement = () => {
 
   return (
     <Layout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">การจัดการคิว</h1>
-        <p className="text-gray-500">จัดการคิวรอดำเนินการ คิวกำลังให้บริการ และคิวเสร็จสิ้น</p>
-      </div>
+      <QueueManagementHeader />
       
-      {/* Active Queue Display */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">กำลังให้บริการ</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {activeQueues.length === 0 ? (
-            <p className="text-gray-500 p-6 bg-gray-50 rounded-lg border border-gray-100">
-              ไม่มีคิวที่กำลังให้บริการในขณะนี้
-            </p>
-          ) : (
-            activeQueues.map(queue => (
-              <ActiveQueueSection
-                key={queue.id}
-                activeQueues={[queue]}
-                findPatient={findPatient}
-              />
-            ))
-          )}
-        </div>
-      </div>
+      <ActiveQueuesDisplay 
+        activeQueues={activeQueues}
+        findPatient={findPatient}
+      />
       
-      {/* Queue Tabs for management */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-        <QueueTabs
-          waitingQueues={waitingQueues}
-          activeQueues={activeQueues}
-          completedQueues={completedQueues}
-          skippedQueues={skippedQueues}
-          patients={patients}
-          onUpdateStatus={updateQueueStatus}
-          onCallQueue={callQueue}
-          onRecallQueue={handleRecallQueue}
-        />
-      </div>
+      <QueueTabsContainer
+        waitingQueues={waitingQueues}
+        activeQueues={activeQueues}
+        completedQueues={completedQueues}
+        skippedQueues={skippedQueues}
+        patients={patients}
+        onUpdateStatus={updateQueueStatus}
+        onCallQueue={callQueue}
+        onRecallQueue={handleRecallQueue}
+      />
     </Layout>
   );
 };
