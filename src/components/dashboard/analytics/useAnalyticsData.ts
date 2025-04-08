@@ -59,26 +59,18 @@ export const useAnalyticsData = (
       try {
         let startDate: Date;
         let endDate = new Date();
-        let timeFormat: string;
-        let groupByFormat: string;
         
-        // Set time range and format based on timeFrame
+        // Set time range based on timeFrame
         if (timeFrame === 'day') {
           startDate = startOfDay(new Date());
-          timeFormat = 'HH:mm';
-          groupByFormat = 'hour';
         } else if (timeFrame === 'week') {
           startDate = startOfWeek(new Date(), { weekStartsOn: 1 });
-          timeFormat = 'dd MMM';
-          groupByFormat = 'day';
         } else { // month
           startDate = startOfMonth(new Date());
-          timeFormat = 'dd MMM';
-          groupByFormat = 'day';
         }
         
-        // Fetch wait time data from completed queues
-        let { data: waitTimeQueryData, error: waitTimeError } = await supabase
+        // Fetch wait time data from completed queues directly from Supabase
+        const { data: waitTimeQueryData, error: waitTimeError } = await supabase
           .from('queues')
           .select('created_at, called_at')
           .not('called_at', 'is', null)
@@ -145,16 +137,14 @@ export const useAnalyticsData = (
               waitTime: data ? Math.round(data.total / data.count) : 0
             });
             
-            currentDate = timeFrame === 'week' 
-              ? new Date(currentDate.setDate(currentDate.getDate() + 1))
-              : new Date(currentDate.setDate(currentDate.getDate() + 1));
+            currentDate = new Date(currentDate.setDate(currentDate.getDate() + 1));
           }
         }
         
         setWaitTimeData(waitTimeChartData);
         
-        // Fetch throughput data (completed queues count)
-        let { data: throughputQueryData, error: throughputError } = await supabase
+        // Fetch throughput data (completed queues count) directly from Supabase
+        const { data: throughputQueryData, error: throughputError } = await supabase
           .from('queues')
           .select('completed_at, status')
           .eq('status', 'COMPLETED')
@@ -212,9 +202,7 @@ export const useAnalyticsData = (
               count: throughputMap.get(timeKey) || 0
             });
             
-            currentDate = timeFrame === 'week' 
-              ? new Date(currentDate.setDate(currentDate.getDate() + 1))
-              : new Date(currentDate.setDate(currentDate.getDate() + 1));
+            currentDate = new Date(currentDate.setDate(currentDate.getDate() + 1));
           }
         }
         
@@ -226,7 +214,7 @@ export const useAnalyticsData = (
     };
     
     fetchAnalyticsData();
-  }, [timeFrame, completedQueues]);
+  }, [timeFrame]);
 
   return {
     timeFrame,

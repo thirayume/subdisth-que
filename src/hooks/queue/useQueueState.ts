@@ -30,6 +30,8 @@ export const useQueueState = () => {
         type: item.type as QueueType,
         status: item.status as QueueStatus
       })));
+      
+      console.log(`Fetched ${data?.length || 0} queues from database`);
     } catch (err: any) {
       console.error('Error fetching queues:', err);
       setError(err.message || 'Failed to fetch queues');
@@ -42,7 +44,6 @@ export const useQueueState = () => {
   // Get queues by status
   const getQueuesByStatus = async (status: QueueStatus | QueueStatus[]) => {
     try {
-      setLoading(true);
       setError(null);
       
       let query = supabase
@@ -62,18 +63,20 @@ export const useQueueState = () => {
       }
 
       // Cast the data to ensure proper type conversion
-      return (data || []).map(item => ({
+      const typedData = (data || []).map(item => ({
         ...item,
         type: item.type as QueueType,
         status: item.status as QueueStatus
       }));
+      
+      console.log(`Fetched ${typedData.length} queues with status ${Array.isArray(status) ? status.join(', ') : status}`);
+      
+      return typedData;
     } catch (err: any) {
       console.error('Error fetching queues by status:', err);
       setError(err.message || 'Failed to fetch queues');
       toast.error('ไม่สามารถดึงข้อมูลคิวได้');
       return [];
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -128,9 +131,25 @@ export const useQueueState = () => {
     );
   }, []);
 
-  // Initial data fetch
+  // Initial data fetch and set up real-time subscription
   useEffect(() => {
     fetchQueues();
+    
+    // Set up real-time subscription for queues
+    const channel = supabase
+      .channel('queue-state-changes')
+      .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'queues' },
+          (payload) => {
+            console.log('Queue state change detected:', payload);
+            fetchQueues(); // Refresh all queues when changes occur
+          }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return {

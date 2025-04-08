@@ -6,10 +6,9 @@ import { toast } from 'sonner';
 
 export const usePatientsState = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch all patients
   const fetchPatients = async () => {
     try {
       setLoading(true);
@@ -18,30 +17,46 @@ export const usePatientsState = () => {
       const { data, error } = await supabase
         .from('patients')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('name', { ascending: true });
 
       if (error) {
         throw error;
       }
 
       setPatients(data || []);
+      console.log(`Fetched ${data?.length || 0} patients from database`);
     } catch (err: any) {
       console.error('Error fetching patients:', err);
       setError(err.message || 'Failed to fetch patients');
-      toast.error('ไม่สามารถดึงข้อมูลผู้ป่วยได้');
+      toast.error('ไม่สามารถโหลดข้อมูลผู้ป่วยได้');
     } finally {
       setLoading(false);
     }
   };
 
-  // Update patients state
-  const updatePatientsState = (updatedPatients: Patient[]) => {
-    setPatients(updatedPatients);
+  const updatePatientsState = (newPatients: Patient[]) => {
+    setPatients(newPatients);
   };
 
-  // Initial data fetch
+  // Initial data fetch and set up real-time subscription
   useEffect(() => {
     fetchPatients();
+    
+    // Set up real-time subscription for patients
+    const channel = supabase
+      .channel('patients-state-changes')
+      .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'patients' },
+          (payload) => {
+            console.log('Patient data change detected:', payload);
+            fetchPatients(); // Refresh all patients when changes occur
+          }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return {

@@ -8,6 +8,8 @@ import QueueBoardHeader from '@/components/queue/QueueBoardHeader';
 import QueueBoardAlgorithmInfo from './QueueBoardAlgorithmInfo';
 import QueueBoardContent from './QueueBoardContent';
 import HospitalFooter from '@/components/queue/HospitalFooter';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 // Define queue status constants to use as values
 const QUEUE_STATUS = {
@@ -46,28 +48,49 @@ const QueueBoardContainer = () => {
     }
   }, []);
   
-  // Fetch queues data
+  // Fetch queues data and set up real-time subscription
   useEffect(() => {
     const fetchQueues = async () => {
-      const active = await getQueuesByStatus(QUEUE_STATUS.ACTIVE);
-      setActiveQueues(active);
-      
-      const waiting = await getQueuesByStatus(QUEUE_STATUS.WAITING);
-      // Apply sorting algorithm to waiting queues
-      const sortedWaiting = sortQueues(waiting);
-      setWaitingQueues(sortedWaiting.slice(0, 5));
-      
-      const completed = await getQueuesByStatus(QUEUE_STATUS.COMPLETED);
-      setCompletedQueues(completed.sort((a, b) => 
-        new Date(b.completed_at || b.updated_at).getTime() - 
-        new Date(a.completed_at || a.updated_at).getTime()).slice(0, 5));
+      try {
+        const active = await getQueuesByStatus(QUEUE_STATUS.ACTIVE);
+        setActiveQueues(active);
+        
+        const waiting = await getQueuesByStatus(QUEUE_STATUS.WAITING);
+        // Apply sorting algorithm to waiting queues
+        const sortedWaiting = sortQueues(waiting);
+        setWaitingQueues(sortedWaiting.slice(0, 5));
+        
+        const completed = await getQueuesByStatus(QUEUE_STATUS.COMPLETED);
+        setCompletedQueues(completed.sort((a, b) => 
+          new Date(b.completed_at || b.updated_at).getTime() - 
+          new Date(a.completed_at || a.updated_at).getTime()).slice(0, 5));
+      } catch (error) {
+        console.error('Error fetching queues:', error);
+        toast.error('ไม่สามารถดึงข้อมูลคิวได้');
+      }
     };
     
     fetchQueues();
     
-    // Refresh data every 30 seconds
+    // Set up real-time subscription for queues
+    const channel = supabase
+      .channel('queue-changes')
+      .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'queues' },
+          (payload) => {
+            console.log('Queue change detected:', payload);
+            fetchQueues(); // Refresh data when changes occur
+          }
+      )
+      .subscribe();
+    
+    // Refresh data every 30 seconds as a fallback
     const refreshTimer = setInterval(fetchQueues, 30000);
-    return () => clearInterval(refreshTimer);
+    
+    return () => {
+      clearInterval(refreshTimer);
+      supabase.removeChannel(channel);
+    };
   }, [getQueuesByStatus, sortQueues]);
 
   // Find patient by ID

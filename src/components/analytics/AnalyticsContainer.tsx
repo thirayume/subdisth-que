@@ -4,6 +4,7 @@ import { Queue } from '@/integrations/supabase/schema';
 import { supabase } from '@/integrations/supabase/client';
 import QueueAnalytics from '@/components/dashboard/QueueAnalytics';
 import QueueSummaryCards from '@/components/dashboard/QueueSummaryCards';
+import { toast } from 'sonner';
 
 interface AnalyticsContainerProps {
   queues: Queue[];
@@ -35,7 +36,7 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
     }
   }, [queues, sortQueues]);
   
-  // Fetch today's statistics
+  // Fetch today's statistics directly from Supabase
   useEffect(() => {
     const fetchTodayStats = async () => {
       try {
@@ -51,7 +52,11 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
           .gte('created_at', today.toISOString())
           .order('created_at', { ascending: false });
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching today stats:', error);
+          toast.error('ไม่สามารถดึงข้อมูลสถิติได้');
+          return;
+        }
         
         if (data && data.length > 0) {
           // Calculate average wait time (from created to called)
@@ -76,6 +81,12 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
             avgWaitTime: data.length > 0 ? totalWaitTime / data.length : 0,
             avgServiceTime: data.length > 0 ? totalServiceTime / data.length : 0
           });
+          
+          console.log('Fetched today stats:', {
+            count: data.length,
+            avgWaitTime: totalWaitTime / data.length,
+            avgServiceTime: totalServiceTime / data.length
+          });
         }
       } catch (err) {
         console.error('Error fetching today stats:', err);
@@ -83,6 +94,22 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
     };
     
     fetchTodayStats();
+    
+    // Set up real-time subscription for queues
+    const channel = supabase
+      .channel('analytics-queue-changes')
+      .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'queues' },
+          (payload) => {
+            console.log('Queue change detected in analytics:', payload);
+            fetchTodayStats(); // Refresh stats when changes occur
+          }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (
