@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => ({
     sourcemap: true,
     // Optimize chunk size
     chunkSizeWarningLimit: 1000,
-    // Minify the output
+    // Minify configuration
     minify: 'terser',
     terserOptions: {
       compress: {
