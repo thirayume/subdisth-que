@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { FormatOption } from './schemas';
 import { QueueType } from '@/hooks/useQueueTypes';
 
 interface QueueTypeItemProps {
