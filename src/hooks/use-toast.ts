@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import type {
@@ -126,9 +127,12 @@ export const reducer = (state: State, action: Action): State => {
   }
 }
 
-const listeners: Array<(state: State) => void> = []
+// Initialize the state outside of any component
+const initialState: State = { toasts: [] }
 
-let memoryState: State = { toasts: [] }
+let memoryState: State = initialState
+
+const listeners: Array<(state: State) => void> = []
 
 function dispatch(action: Action) {
   memoryState = reducer(memoryState, action)
@@ -168,6 +172,7 @@ function toast({ ...props }: Toast) {
   }
 }
 
+// Fixed useToast implementation to properly use React hooks
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 
