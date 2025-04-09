@@ -14,19 +14,21 @@ interface QueueTypeEditFormProps {
   queueType: QueueType;
   index: number;
   formatOptions: FormatOption[];
-  onSave: (index: number) => void;
-  onCancel: (index: number) => void;
-  onChange: (index: number, field: keyof QueueType, value: any) => void;
+  onSaveQueueType: () => Promise<void>;
+  onCancelEdit: () => void;
+  onQueueTypeChange: (index: number, field: keyof QueueType, value: any) => void;
+  isProcessing: boolean;
 }
 
-const QueueTypeEditForm = ({ 
+const QueueTypeEditForm: React.FC<QueueTypeEditFormProps> = ({ 
   queueType, 
   index, 
   formatOptions, 
-  onSave, 
-  onCancel, 
-  onChange 
-}: QueueTypeEditFormProps) => {
+  onSaveQueueType, 
+  onCancelEdit, 
+  onQueueTypeChange,
+  isProcessing
+}) => {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -35,7 +37,7 @@ const QueueTypeEditForm = ({
           <Input
             id={`queueType_${index}_code`}
             value={queueType.code}
-            onChange={(e) => onChange(index, 'code', e.target.value)}
+            onChange={(e) => onQueueTypeChange(index, 'code', e.target.value)}
             placeholder="เช่น GENERAL, PRIORITY"
           />
         </div>
@@ -44,7 +46,7 @@ const QueueTypeEditForm = ({
           <Input
             id={`queueType_${index}_name`}
             value={queueType.name}
-            onChange={(e) => onChange(index, 'name', e.target.value)}
+            onChange={(e) => onQueueTypeChange(index, 'name', e.target.value)}
             placeholder="เช่น ทั่วไป, ด่วน"
           />
         </div>
@@ -56,7 +58,7 @@ const QueueTypeEditForm = ({
           <Input
             id={`queueType_${index}_prefix`}
             value={queueType.prefix}
-            onChange={(e) => onChange(index, 'prefix', e.target.value)}
+            onChange={(e) => onQueueTypeChange(index, 'prefix', e.target.value)}
             placeholder="เช่น A, B, C"
           />
         </div>
@@ -65,7 +67,7 @@ const QueueTypeEditForm = ({
           <Input
             id={`queueType_${index}_purpose`}
             value={queueType.purpose}
-            onChange={(e) => onChange(index, 'purpose', e.target.value)}
+            onChange={(e) => onQueueTypeChange(index, 'purpose', e.target.value)}
             placeholder="เช่น รับยาทั่วไป, กรณีเร่งด่วน"
           />
         </div>
@@ -77,7 +79,7 @@ const QueueTypeEditForm = ({
           index={index}
           format={queueType.format}
           formatOptions={formatOptions}
-          onChange={(value) => onChange(index, 'format', value)}
+          onChange={(value) => onQueueTypeChange(index, 'format', value)}
         />
       </div>
       
@@ -85,7 +87,7 @@ const QueueTypeEditForm = ({
         <Label htmlFor={`queueType_${index}_algorithm`}>อัลกอริทึมการเรียกคิว</Label>
         <Select
           value={queueType.algorithm || 'FIFO'}
-          onValueChange={(value) => onChange(index, 'algorithm', value)}
+          onValueChange={(value) => onQueueTypeChange(index, 'algorithm', value)}
         >
           <SelectTrigger id={`queueType_${index}_algorithm`} className="w-full">
             <SelectValue placeholder="เลือกอัลกอริทึม" />
@@ -113,7 +115,7 @@ const QueueTypeEditForm = ({
           max={10}
           step={1}
           value={[queueType.priority || 5]}
-          onValueChange={([value]) => onChange(index, 'priority', value)}
+          onValueChange={([value]) => onQueueTypeChange(index, 'priority', value)}
           className="py-4"
         />
         <div className="flex justify-between text-xs text-gray-500">
@@ -127,7 +129,8 @@ const QueueTypeEditForm = ({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onCancel(index)}
+          onClick={onCancelEdit}
+          disabled={isProcessing}
         >
           <X className="h-4 w-4 mr-1" />
           ยกเลิก
@@ -135,7 +138,8 @@ const QueueTypeEditForm = ({
         <Button
           size="sm"
           className="bg-pharmacy-600 hover:bg-pharmacy-700"
-          onClick={() => onSave(index)}
+          onClick={onSaveQueueType}
+          disabled={isProcessing}
         >
           <Check className="h-4 w-4 mr-1" />
           บันทึก

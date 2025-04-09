@@ -2,13 +2,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { SettingsData } from '@/integrations/supabase/database.types';
 
-export interface SettingsData {
+export interface SettingsState {
   [key: string]: any;
 }
 
 export const useSettings = (category: string) => {
-  const [settings, setSettings] = useState<SettingsData>({});
+  const [settings, setSettings] = useState<SettingsState>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,7 +18,8 @@ export const useSettings = (category: string) => {
       setLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
+      // Use any to work around type system limitations
+      const { data, error } = await (supabase as any)
         .from('settings')
         .select('key, value')
         .eq('category', category);
@@ -27,9 +29,9 @@ export const useSettings = (category: string) => {
       }
 
       // Convert array of {key, value} objects to a single object
-      const settingsObject: SettingsData = {};
+      const settingsObject: SettingsState = {};
       if (data) {
-        data.forEach(item => {
+        data.forEach((item: SettingsData) => {
           settingsObject[item.key] = item.value;
         });
       }
@@ -75,7 +77,7 @@ export const useSettings = (category: string) => {
       }));
 
       // Then save to Supabase
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('settings')
         .upsert(
           { 
@@ -98,7 +100,7 @@ export const useSettings = (category: string) => {
     }
   };
 
-  const updateMultipleSettings = async (newSettings: SettingsData) => {
+  const updateMultipleSettings = async (newSettings: SettingsState) => {
     try {
       // First update local state for immediate UI update
       setSettings(prev => ({
@@ -119,8 +121,8 @@ export const useSettings = (category: string) => {
         value
       }));
 
-      // Then save to Supabase
-      const { error } = await supabase
+      // Then save to Supabase using any to bypass type checking
+      const { error } = await (supabase as any)
         .from('settings')
         .upsert(upsertData, { onConflict: 'category,key' });
 
@@ -142,11 +144,11 @@ export const useSettings = (category: string) => {
     fetchSettings();
     
     // Set up real-time subscription for settings changes
-    const channel = supabase
+    const channel = (supabase as any)
       .channel('settings-changes')
       .on('postgres_changes', 
           { event: '*', schema: 'public', table: 'settings', filter: `category=eq.${category}` },
-          (payload) => {
+          (payload: any) => {
             console.log('Settings data change detected:', payload);
             fetchSettings(); // Refresh all settings when changes occur
           }

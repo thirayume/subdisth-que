@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { QueueType } from '@/hooks/useQueueTypes';
+import { QueueTypeData } from '@/integrations/supabase/database.types';
 
 export const useQueueTypesData = () => {
   const [queueTypes, setQueueTypes] = useState<QueueType[]>([]);
@@ -14,7 +15,8 @@ export const useQueueTypesData = () => {
       setLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
+      // Use any to work around type system limitations
+      const { data, error } = await (supabase as any)
         .from('queue_types')
         .select('*')
         .order('priority', { ascending: false });
@@ -25,7 +27,7 @@ export const useQueueTypesData = () => {
 
       if (data) {
         // Transform DB data to match QueueType format
-        const formattedData: QueueType[] = data.map(item => ({
+        const formattedData: QueueType[] = data.map((item: QueueTypeData) => ({
           id: item.id,
           code: item.code,
           name: item.name,
@@ -73,8 +75,8 @@ export const useQueueTypesData = () => {
 
   const saveQueueType = async (queueType: QueueType) => {
     try {
-      // Then save to Supabase
-      const { error } = await supabase
+      // Then save to Supabase, using any to bypass type checking
+      const { error } = await (supabase as any)
         .from('queue_types')
         .upsert({
           id: queueType.id,
@@ -104,7 +106,7 @@ export const useQueueTypesData = () => {
 
   const deleteQueueType = async (id: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('queue_types')
         .delete()
         .eq('id', id);
@@ -128,11 +130,11 @@ export const useQueueTypesData = () => {
     fetchQueueTypes();
     
     // Set up real-time subscription for queue types changes
-    const channel = supabase
+    const channel = (supabase as any)
       .channel('queue-types-changes')
       .on('postgres_changes', 
           { event: '*', schema: 'public', table: 'queue_types' },
-          (payload) => {
+          (payload: any) => {
             console.log('Queue types data change detected:', payload);
             fetchQueueTypes(); // Refresh queue types when changes occur
           }

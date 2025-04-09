@@ -3,32 +3,32 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Pencil, Trash, Copy } from 'lucide-react';
-import { FormatOption, algorithmOptions } from './schemas';
 import { QueueType } from '@/hooks/useQueueTypes';
 import { Badge } from '@/components/ui/badge';
+import { algorithmOptions } from './schemas';
 
 interface QueueTypeDisplayProps {
   queueType: QueueType;
-  index: number;
-  formatOptions: FormatOption[];
-  onEdit: (id: string) => void;
-  onRemove: (index: number) => void;
-  onDuplicate: (index: number) => void;
-  onChange: (index: number, field: keyof QueueType, value: any) => void;
+  onEditQueueType: () => void;
+  onRemoveQueueType: () => Promise<void>;
+  onDuplicateQueueType: () => Promise<void>;
+  isProcessing: boolean;
 }
 
 const QueueTypeDisplay: React.FC<QueueTypeDisplayProps> = ({
   queueType,
-  index,
-  formatOptions,
-  onEdit,
-  onRemove,
-  onDuplicate,
-  onChange,
+  onEditQueueType,
+  onRemoveQueueType,
+  onDuplicateQueueType,
+  isProcessing,
 }) => {
   const getFormatLabel = (format: '0' | '00' | '000') => {
-    const option = formatOptions.find(opt => opt.value === format);
-    return option ? option.label : '';
+    const formatDescriptions = {
+      '0': 'หลักเดียว (0-9)',
+      '00': 'สองหลัก (00-99)',
+      '000': 'สามหลัก (000-999)'
+    };
+    return formatDescriptions[format] || format;
   };
 
   const getAlgorithmLabel = (algorithm?: string) => {
@@ -62,15 +62,11 @@ const QueueTypeDisplay: React.FC<QueueTypeDisplayProps> = ({
             <Badge variant="outline" className="ml-2">{queueType.code}</Badge>
           </div>
           <div className="flex items-center space-x-2">
-            <Switch
-              checked={queueType.enabled}
-              onCheckedChange={(checked) => onChange(index, 'enabled', checked)}
-              aria-label="Toggle enabled"
-            />
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => onDuplicate(index)}
+              onClick={onDuplicateQueueType}
+              disabled={isProcessing}
             >
               <Copy className="h-4 w-4" />
               <span className="sr-only">Duplicate</span>
@@ -78,7 +74,8 @@ const QueueTypeDisplay: React.FC<QueueTypeDisplayProps> = ({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => onEdit(queueType.id)}
+              onClick={onEditQueueType}
+              disabled={isProcessing}
             >
               <Pencil className="h-4 w-4" />
               <span className="sr-only">Edit</span>
@@ -87,7 +84,8 @@ const QueueTypeDisplay: React.FC<QueueTypeDisplayProps> = ({
               variant="ghost"
               size="icon"
               className="text-red-500 hover:text-red-700"
-              onClick={() => onRemove(index)}
+              onClick={onRemoveQueueType}
+              disabled={isProcessing}
             >
               <Trash className="h-4 w-4" />
               <span className="sr-only">Delete</span>
