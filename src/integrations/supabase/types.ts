@@ -50,6 +50,45 @@ export type Database = {
           },
         ]
       }
+      line_settings: {
+        Row: {
+          access_token: string
+          channel_id: string
+          channel_secret: string
+          created_at: string
+          id: string
+          queue_called_message: string
+          queue_received_message: string
+          tts_config: Json
+          updated_at: string
+          welcome_message: string
+        }
+        Insert: {
+          access_token: string
+          channel_id: string
+          channel_secret: string
+          created_at?: string
+          id?: string
+          queue_called_message: string
+          queue_received_message: string
+          tts_config?: Json
+          updated_at?: string
+          welcome_message: string
+        }
+        Update: {
+          access_token?: string
+          channel_id?: string
+          channel_secret?: string
+          created_at?: string
+          id?: string
+          queue_called_message?: string
+          queue_received_message?: string
+          tts_config?: Json
+          updated_at?: string
+          welcome_message?: string
+        }
+        Relationships: []
+      }
       medications: {
         Row: {
           code: string
@@ -131,6 +170,48 @@ export type Database = {
         }
         Relationships: []
       }
+      queue_types: {
+        Row: {
+          algorithm: string
+          code: string
+          created_at: string
+          enabled: boolean
+          format: string
+          id: string
+          name: string
+          prefix: string
+          priority: number
+          purpose: string | null
+          updated_at: string
+        }
+        Insert: {
+          algorithm: string
+          code: string
+          created_at?: string
+          enabled?: boolean
+          format: string
+          id?: string
+          name: string
+          prefix: string
+          priority?: number
+          purpose?: string | null
+          updated_at?: string
+        }
+        Update: {
+          algorithm?: string
+          code?: string
+          created_at?: string
+          enabled?: boolean
+          format?: string
+          id?: string
+          name?: string
+          prefix?: string
+          priority?: number
+          purpose?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       queues: {
         Row: {
           called_at: string | null
@@ -177,6 +258,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      settings: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
       }
     }
     Views: {
