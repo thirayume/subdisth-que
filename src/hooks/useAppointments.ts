@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Appointment, AppointmentStatus } from '@/integrations/supabase/schema';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 
 export const useAppointments = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -32,7 +32,11 @@ export const useAppointments = () => {
     } catch (err: any) {
       console.error('Error fetching appointments:', err);
       setError(err.message || 'Failed to fetch appointments');
-      toast.error('ไม่สามารถดึงข้อมูลการนัดหมายได้');
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: 'ไม่สามารถดึงข้อมูลการนัดหมายได้',
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
     }
@@ -72,13 +76,22 @@ export const useAppointments = () => {
         setAppointments(prev => [...prev, newAppointment].sort((a, b) => 
           new Date(a.date).getTime() - new Date(b.date).getTime()
         ));
-        toast.success('เพิ่มการนัดหมายเรียบร้อยแล้ว');
+        
+        toast({
+          title: 'สำเร็จ',
+          description: 'เพิ่มการนัดหมายเรียบร้อยแล้ว'
+        });
+        
         return newAppointment;
       }
     } catch (err: any) {
       console.error('Error adding appointment:', err);
       setError(err.message || 'Failed to add appointment');
-      toast.error('ไม่สามารถเพิ่มการนัดหมายได้');
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: 'ไม่สามารถเพิ่มการนัดหมายได้',
+        variant: 'destructive'
+      });
       return null;
     }
   };
@@ -111,13 +124,22 @@ export const useAppointments = () => {
         setAppointments(prev => prev.map(appointment => 
           appointment.id === id ? updatedAppointment : appointment
         ));
-        toast.success('อัปเดตการนัดหมายเรียบร้อยแล้ว');
+        
+        toast({
+          title: 'สำเร็จ',
+          description: 'อัปเดตการนัดหมายเรียบร้อยแล้ว'
+        });
+        
         return updatedAppointment;
       }
     } catch (err: any) {
       console.error('Error updating appointment:', err);
       setError(err.message || 'Failed to update appointment');
-      toast.error('ไม่สามารถอัปเดตการนัดหมายได้');
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: 'ไม่สามารถอัปเดตการนัดหมายได้',
+        variant: 'destructive'
+      });
       return null;
     }
   };
@@ -137,12 +159,21 @@ export const useAppointments = () => {
       }
 
       setAppointments(prev => prev.filter(appointment => appointment.id !== id));
-      toast.success('ลบการนัดหมายเรียบร้อยแล้ว');
+      
+      toast({
+        title: 'สำเร็จ',
+        description: 'ลบการนัดหมายเรียบร้อยแล้ว'
+      });
+      
       return true;
     } catch (err: any) {
       console.error('Error deleting appointment:', err);
       setError(err.message || 'Failed to delete appointment');
-      toast.error('ไม่สามารถลบการนัดหมายได้');
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: 'ไม่สามารถลบการนัดหมายได้',
+        variant: 'destructive'
+      });
       return false;
     }
   };
@@ -172,7 +203,11 @@ export const useAppointments = () => {
     } catch (err: any) {
       console.error('Error fetching appointments by date range:', err);
       setError(err.message || 'Failed to fetch appointments');
-      toast.error('ไม่สามารถดึงข้อมูลการนัดหมายได้');
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: 'ไม่สามารถดึงข้อมูลการนัดหมายได้',
+        variant: 'destructive'
+      });
       return [];
     } finally {
       setLoading(false);
