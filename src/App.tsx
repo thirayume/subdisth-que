@@ -39,7 +39,7 @@ const queryClient = new QueryClient({
 const App: React.FC = () => {
   return (
     <React.StrictMode>
-      <ThemeProvider defaultTheme="light" attribute="class">
+      <ThemeProvider>
         <BrowserRouter>
           <QueryClientProvider client={queryClient}>
             <TooltipProvider>
