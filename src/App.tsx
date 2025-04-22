@@ -38,8 +38,8 @@ const queryClient = new QueryClient({
 
 const App: React.FC = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+    <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="light">
           <TooltipProvider>
             <Routes>
@@ -61,8 +61,8 @@ const App: React.FC = () => {
             <OfflineIndicator />
           </TooltipProvider>
         </ThemeProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </BrowserRouter>
   );
 };
 
