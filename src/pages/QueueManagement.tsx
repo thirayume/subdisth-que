@@ -6,7 +6,6 @@ import { Queue } from '@/integrations/supabase/schema';
 import { useQueues } from '@/hooks/useQueues';
 import { usePatients } from '@/hooks/usePatients';
 import QueueManagementHeader from '@/components/queue/management/QueueManagementHeader';
-import ActiveQueuesDisplay from '@/components/queue/management/ActiveQueuesDisplay';
 import QueueTabsContainer from '@/components/queue/management/QueueTabsContainer';
 
 const QueueManagement = () => {
@@ -57,20 +56,10 @@ const QueueManagement = () => {
     }
   };
 
-  // Find patient by ID helper function
-  const findPatient = (patientId: string) => {
-    return patients.find(p => p.id === patientId);
-  };
-
   return (
     <Layout className="overflow-hidden">
       <div className="flex flex-col h-[calc(100vh-2rem)]">
         <QueueManagementHeader />
-        
-        <ActiveQueuesDisplay 
-          activeQueues={activeQueues}
-          findPatient={findPatient}
-        />
         
         <div className="flex-1 overflow-hidden">
           <QueueTabsContainer
