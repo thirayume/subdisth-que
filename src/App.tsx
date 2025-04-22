@@ -45,8 +45,8 @@ const queryClient = new QueryClient({
 const App = () => (
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <ThemeProvider>
+      <ThemeProvider>
+        <BrowserRouter>
           <TooltipProvider>
             <Routes>
               <Route path="/" element={<Index />} />
@@ -67,8 +67,8 @@ const App = () => (
             <Sonner />
             <OfflineIndicator />
           </TooltipProvider>
-        </ThemeProvider>
-      </BrowserRouter>
+        </BrowserRouter>
+      </ThemeProvider>
     </QueryClientProvider>
   </React.StrictMode>
 );

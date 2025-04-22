@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { Patient } from '@/integrations/supabase/schema';
 import { supabase } from '@/integrations/supabase/client';
