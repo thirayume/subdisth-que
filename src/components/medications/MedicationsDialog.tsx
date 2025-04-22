@@ -12,7 +12,13 @@ import * as z from 'zod';
 import { useMedications } from '@/hooks/useMedications';
 import { Medication } from '@/integrations/supabase/schema';
 import { Check, ChevronsUpDown, Plus } from 'lucide-react';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { 
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem
+} from '@/components/ui/command';
 import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
@@ -187,7 +193,8 @@ const MedicationsDialog: React.FC<MedicationsDialogProps> = ({
                     </PopoverTrigger>
                     <PopoverContent className="w-full p-0">
                       <Command>
-                        <CommandInput placeholder="ค้นหาหรือเพิ่มหน่วยใหม่..." 
+                        <CommandInput 
+                          placeholder="ค้นหาหรือเพิ่มหน่วยใหม่..." 
                           value={newUnitInput}
                           onValueChange={setNewUnitInput}
                         />
