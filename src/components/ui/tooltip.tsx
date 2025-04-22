@@ -5,8 +5,12 @@ import * as React from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { cn } from "@/lib/utils";
 
-// Directly re-export TooltipPrimitive.Provider as TooltipProvider, do not wrap it.
-const TooltipProvider = TooltipPrimitive.Provider;
+// Ensure TooltipProvider is a valid React functional component.
+const TooltipProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <TooltipPrimitive.Provider>
+    {children}
+  </TooltipPrimitive.Provider>
+);
 
 const Tooltip = TooltipPrimitive.Root;
 const TooltipTrigger = TooltipPrimitive.Trigger;
