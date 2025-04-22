@@ -1,5 +1,6 @@
 
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { toast } from 'sonner';
 import { usePatientSearch } from './patient/usePatientSearch';
 import { usePatientSelection } from './patient/usePatientSelection';
 import { useQueueCreation } from './queue/useQueueCreation';
@@ -134,6 +135,3 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     resetState
   };
 };
-
-// Fix missing import
-import { toast } from 'sonner';
