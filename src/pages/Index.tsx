@@ -9,6 +9,7 @@ import { useDashboardQueues } from '@/components/dashboard/useDashboardQueues';
 import { useDashboardStats } from '@/components/dashboard/useDashboardStats';
 
 const Dashboard = () => {
+  // Get patients and queue data
   const { patients } = usePatients();
   const { waitingQueues, activeQueues, completedQueues } = useDashboardQueues();
   const todayStats = useDashboardStats(completedQueues);
