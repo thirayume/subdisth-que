@@ -1,4 +1,3 @@
-"use client";
 
 import * as React from "react";
 import {
@@ -11,8 +10,7 @@ import {
   navigationMenuTriggerStyle
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
-import { usePathname } from 'next/navigation';
-import Link from "next/link";
+import { useLocation, Link } from "react-router-dom";
 
 interface SidebarProps {
   className?: string;
@@ -44,24 +42,25 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
 };
 
 const SidebarItem: React.FC<SidebarItemProps> = ({ title, href, icon, className }) => {
-  const pathname = usePathname();
-  const isActive = pathname === href;
+  const location = useLocation();
+  const isActive = location.pathname === href;
 
   return (
     <NavigationMenuItem>
-      <Link href={href} legacyBehavior passHref>
-        <NavigationMenuLink
-          className={cn(
-            navigationMenuTriggerStyle(),
-            "data-[active]:text-foreground data-[active]:bg-muted",
-            isActive ? "bg-muted text-foreground" : "text-muted-foreground",
-            className
-          )}
-        >
+      <NavigationMenuLink
+        asChild
+        className={cn(
+          navigationMenuTriggerStyle(),
+          "data-[active]:text-foreground data-[active]:bg-muted",
+          isActive ? "bg-muted text-foreground" : "text-muted-foreground",
+          className
+        )}
+      >
+        <Link to={href}>
           {icon && <span className="mr-2">{icon}</span>}
           {title}
-        </NavigationMenuLink>
-      </Link>
+        </Link>
+      </NavigationMenuLink>
     </NavigationMenuItem>
   );
 };
