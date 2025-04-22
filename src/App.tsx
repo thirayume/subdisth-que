@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -44,8 +45,8 @@ const queryClient = new QueryClient({
 const App = () => (
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <BrowserRouter>
+      <BrowserRouter>
+        <ThemeProvider>
           <TooltipProvider>
             <Routes>
               <Route path="/" element={<Index />} />
@@ -66,8 +67,8 @@ const App = () => (
             <Sonner />
             <OfflineIndicator />
           </TooltipProvider>
-        </BrowserRouter>
-      </ThemeProvider>
+        </ThemeProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   </React.StrictMode>
 );
