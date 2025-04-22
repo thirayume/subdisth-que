@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Queue, Patient, QueueStatus } from '@/integrations/supabase/schema';
 import QueueCard from './QueueCard';
 import QueueControls from './QueueControls';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface QueueListProps {
   queues: Queue[];
@@ -33,7 +34,7 @@ const QueueList: React.FC<QueueListProps> = ({
 
   return (
     <div className={cn("space-y-4", className)}>
-      <h3 className="font-semibold text-gray-900">{title}</h3>
+      <h3 className="font-semibold text-gray-900 sticky top-0 bg-white py-2 z-10">{title}</h3>
       
       {queues.length === 0 ? (
         <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-100">

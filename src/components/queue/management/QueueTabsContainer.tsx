@@ -2,6 +2,7 @@
 import React from 'react';
 import { Queue, QueueStatus, Patient } from '@/integrations/supabase/schema';
 import QueueTabs from '@/components/dashboard/QueueTabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface QueueTabsContainerProps {
   waitingQueues: Queue[];
@@ -26,16 +27,20 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
 }) => {
   return (
     <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-      <QueueTabs
-        waitingQueues={waitingQueues}
-        activeQueues={activeQueues}
-        completedQueues={completedQueues}
-        skippedQueues={skippedQueues}
-        patients={patients}
-        onUpdateStatus={onUpdateStatus}
-        onCallQueue={onCallQueue}
-        onRecallQueue={onRecallQueue}
-      />
+      <ScrollArea className="h-[calc(100vh-320px)]">
+        <div className="pr-4">
+          <QueueTabs
+            waitingQueues={waitingQueues}
+            activeQueues={activeQueues}
+            completedQueues={completedQueues}
+            skippedQueues={skippedQueues}
+            patients={patients}
+            onUpdateStatus={onUpdateStatus}
+            onCallQueue={onCallQueue}
+            onRecallQueue={onRecallQueue}
+          />
+        </div>
+      </ScrollArea>
     </div>
   );
 };

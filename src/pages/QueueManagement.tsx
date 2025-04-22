@@ -63,24 +63,28 @@ const QueueManagement = () => {
   };
 
   return (
-    <Layout>
-      <QueueManagementHeader />
-      
-      <ActiveQueuesDisplay 
-        activeQueues={activeQueues}
-        findPatient={findPatient}
-      />
-      
-      <QueueTabsContainer
-        waitingQueues={waitingQueues}
-        activeQueues={activeQueues}
-        completedQueues={completedQueues}
-        skippedQueues={skippedQueues}
-        patients={patients}
-        onUpdateStatus={updateQueueStatus}
-        onCallQueue={callQueue}
-        onRecallQueue={handleRecallQueue}
-      />
+    <Layout className="overflow-hidden">
+      <div className="flex flex-col h-[calc(100vh-2rem)]">
+        <QueueManagementHeader />
+        
+        <ActiveQueuesDisplay 
+          activeQueues={activeQueues}
+          findPatient={findPatient}
+        />
+        
+        <div className="flex-1 overflow-hidden">
+          <QueueTabsContainer
+            waitingQueues={waitingQueues}
+            activeQueues={activeQueues}
+            completedQueues={completedQueues}
+            skippedQueues={skippedQueues}
+            patients={patients}
+            onUpdateStatus={updateQueueStatus}
+            onCallQueue={callQueue}
+            onRecallQueue={handleRecallQueue}
+          />
+        </div>
+      </div>
     </Layout>
   );
 };
