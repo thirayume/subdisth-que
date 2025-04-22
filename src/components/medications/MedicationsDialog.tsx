@@ -1,15 +1,19 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useMedications } from '@/hooks/useMedications';
 import { Medication } from '@/integrations/supabase/schema';
+import { Check, ChevronsUpDown, Plus } from 'lucide-react';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   code: z.string().min(1, { message: 'กรุณาระบุรหัสยา' }),
@@ -33,8 +37,19 @@ const MedicationsDialog: React.FC<MedicationsDialogProps> = ({
   onOpenChange,
   medication 
 }) => {
-  const { addMedication, updateMedication } = useMedications();
+  const { medications, addMedication, updateMedication } = useMedications();
   const isEditing = !!medication;
+  const [newUnitInput, setNewUnitInput] = useState('');
+  const [openUnitPopover, setOpenUnitPopover] = useState(false);
+  
+  // Extract unique unit values from medications
+  const unitOptions = React.useMemo(() => {
+    const units = new Set(medications.map(med => med.unit));
+    return Array.from(units).map(unit => ({
+      value: unit,
+      label: unit
+    }));
+  }, [medications]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -70,6 +85,7 @@ const MedicationsDialog: React.FC<MedicationsDialogProps> = ({
           min_stock: 0,
         });
       }
+      setNewUnitInput('');
     }
   }, [open, medication, form]);
 
@@ -83,6 +99,13 @@ const MedicationsDialog: React.FC<MedicationsDialogProps> = ({
       onOpenChange(false);
     } catch (error) {
       console.error('Error saving medication:', error);
+    }
+  };
+
+  const handleAddNewUnit = () => {
+    if (newUnitInput.trim() !== '') {
+      form.setValue('unit', newUnitInput.trim());
+      setOpenUnitPopover(false);
     }
   };
 
@@ -143,11 +166,69 @@ const MedicationsDialog: React.FC<MedicationsDialogProps> = ({
               control={form.control}
               name="unit"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel>หน่วย</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
+                  <Popover open={openUnitPopover} onOpenChange={setOpenUnitPopover}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openUnitPopover}
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value || "เลือกหน่วย..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0">
+                      <Command>
+                        <CommandInput placeholder="ค้นหาหรือเพิ่มหน่วยใหม่..." 
+                          value={newUnitInput}
+                          onValueChange={setNewUnitInput}
+                        />
+                        <CommandEmpty>
+                          {newUnitInput ? (
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              className="flex items-center justify-start w-full px-2 py-1.5"
+                              onClick={handleAddNewUnit}
+                            >
+                              <Plus className="mr-2 h-4 w-4" />
+                              เพิ่ม "{newUnitInput}"
+                            </Button>
+                          ) : (
+                            "ไม่พบหน่วยที่ค้นหา"
+                          )}
+                        </CommandEmpty>
+                        <CommandGroup>
+                          {unitOptions.map((unit) => (
+                            <CommandItem
+                              key={unit.value}
+                              value={unit.value}
+                              onSelect={() => {
+                                form.setValue('unit', unit.value);
+                                setOpenUnitPopover(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  field.value === unit.value ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {unit.label}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
