@@ -39,9 +39,9 @@ const queryClient = new QueryClient({
 const App: React.FC = () => {
   return (
     <React.StrictMode>
-      <BrowserRouter>
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider defaultTheme="light">
+      <ThemeProvider defaultTheme="light" attribute="class">
+        <BrowserRouter>
+          <QueryClientProvider client={queryClient}>
             <TooltipProvider>
               <Routes>
                 <Route path="/" element={<Index />} />
@@ -61,9 +61,9 @@ const App: React.FC = () => {
               <Sonner />
               <OfflineIndicator />
             </TooltipProvider>
-          </ThemeProvider>
-        </QueryClientProvider>
-      </BrowserRouter>
+          </QueryClientProvider>
+        </BrowserRouter>
+      </ThemeProvider>
     </React.StrictMode>
   );
 };
