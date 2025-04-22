@@ -64,6 +64,7 @@ export const useMedications = () => {
         toast.success(`เพิ่มข้อมูลยา ${medicationData.name} เรียบร้อยแล้ว`);
         return data[0];
       }
+      return null;
     } catch (err: any) {
       console.error('Error adding medication:', err);
       setError(err.message || 'Failed to add medication');
@@ -97,6 +98,7 @@ export const useMedications = () => {
         toast.success(`อัปเดตข้อมูลยา ${data[0].name} เรียบร้อยแล้ว`);
         return data[0];
       }
+      return null;
     } catch (err: any) {
       console.error('Error updating medication:', err);
       setError(err.message || 'Failed to update medication');
@@ -130,6 +132,7 @@ export const useMedications = () => {
         toast.success(`อัปเดตจำนวนยา ${data[0].name} เรียบร้อยแล้ว`);
         return data[0];
       }
+      return null;
     } catch (err: any) {
       console.error('Error updating medication stock:', err);
       setError(err.message || 'Failed to update medication stock');

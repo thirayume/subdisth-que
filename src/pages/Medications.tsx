@@ -3,17 +3,31 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/layout/Layout';
 import { useMedications } from '@/hooks/useMedications';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Search } from 'lucide-react';
 import MedicationsSummaryCards from '@/components/medications/MedicationsSummaryCards';
 import MedicationsTabs from '@/components/medications/MedicationsTabs';
+import MedicationsDialog from '@/components/medications/MedicationsDialog';
+import { Input } from '@/components/ui/input';
 
 const Medications = () => {
   const { medications, loading, error, fetchMedications } = useMedications();
   const [searchTerm, setSearchTerm] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedMedication, setSelectedMedication] = useState(null);
 
   useEffect(() => {
     fetchMedications();
   }, []);
+
+  const handleCreateMedication = () => {
+    setSelectedMedication(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleEditMedication = (medication) => {
+    setSelectedMedication(medication);
+    setIsDialogOpen(true);
+  };
 
   return (
     <Layout>
@@ -24,7 +38,10 @@ const Medications = () => {
         </div>
         
         <div className="flex items-center gap-2">
-          <Button className="bg-pharmacy-600 hover:bg-pharmacy-700 text-white">
+          <Button 
+            className="bg-pharmacy-600 hover:bg-pharmacy-700 text-white"
+            onClick={handleCreateMedication}
+          >
             <PlusCircle className="w-4 h-4 mr-2" />
             เพิ่มรายการยาใหม่
           </Button>
@@ -38,13 +55,31 @@ const Medications = () => {
       ) : (
         <>
           <MedicationsSummaryCards medications={medications} />
+          <div className="flex mb-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Input
+                placeholder="ค้นหายาและเวชภัณฑ์..." 
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
           <MedicationsTabs 
             medications={medications} 
             searchTerm={searchTerm} 
-            setSearchTerm={setSearchTerm} 
+            setSearchTerm={setSearchTerm}
+            onEditMedication={handleEditMedication}
           />
         </>
       )}
+
+      <MedicationsDialog 
+        open={isDialogOpen} 
+        onOpenChange={setIsDialogOpen}
+        medication={selectedMedication}
+      />
     </Layout>
   );
 };

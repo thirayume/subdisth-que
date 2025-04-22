@@ -11,12 +11,14 @@ interface MedicationsTabsProps {
   medications: Medication[];
   searchTerm: string;
   setSearchTerm: (value: string) => void;
+  onEditMedication: (medication: Medication) => void;
 }
 
 const MedicationsTabs: React.FC<MedicationsTabsProps> = ({ 
   medications, 
   searchTerm, 
-  setSearchTerm 
+  setSearchTerm,
+  onEditMedication
 }) => {
   return (
     <Tabs defaultValue="all" className="space-y-4">
@@ -30,24 +32,13 @@ const MedicationsTabs: React.FC<MedicationsTabsProps> = ({
         </TabsTrigger>
       </TabsList>
       
-      <div className="flex mb-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <Input
-            placeholder="ค้นหายาและเวชภัณฑ์..." 
-            className="pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
-      
       <TabsContent value="all" className="animate-fade-in">
         <Card>
           <CardContent className="p-0">
             <MedicationsTable 
               medications={medications} 
-              filterText={searchTerm} 
+              filterText={searchTerm}
+              onEditMedication={onEditMedication}
             />
           </CardContent>
         </Card>
@@ -59,7 +50,8 @@ const MedicationsTabs: React.FC<MedicationsTabsProps> = ({
             <MedicationsTable 
               medications={medications} 
               filterText={searchTerm}
-              filterFunction={(med) => med.stock < med.min_stock && med.stock > 0} 
+              filterFunction={(med) => med.stock < med.min_stock && med.stock > 0}
+              onEditMedication={onEditMedication}
             />
           </CardContent>
         </Card>
@@ -71,7 +63,8 @@ const MedicationsTabs: React.FC<MedicationsTabsProps> = ({
             <MedicationsTable 
               medications={medications} 
               filterText={searchTerm}
-              filterFunction={(med) => med.stock <= 0} 
+              filterFunction={(med) => med.stock <= 0}
+              onEditMedication={onEditMedication}
             />
           </CardContent>
         </Card>
