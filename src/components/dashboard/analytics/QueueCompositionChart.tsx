@@ -2,6 +2,11 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Queue } from '@/integrations/supabase/schema';
+import { 
+  ChartContainer, 
+  ChartTooltip, 
+  ChartTooltipContent
+} from '@/components/ui/chart';
 
 interface QueueCompositionChartProps {
   waitingQueues: Queue[];
@@ -23,7 +28,7 @@ const QueueCompositionChart: React.FC<QueueCompositionChartProps> = ({ waitingQu
 
   return (
     <div className="h-80">
-      <ResponsiveContainer width="100%" height="100%">
+      <ChartContainer config={{}}>
         <BarChart
           data={data}
           margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
@@ -32,11 +37,11 @@ const QueueCompositionChart: React.FC<QueueCompositionChartProps> = ({ waitingQu
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis type="number" />
           <YAxis dataKey="type" type="category" />
-          <Tooltip labelFormatter={(value) => `ประเภท: ${value}`} />
+          <ChartTooltip content={<ChartTooltipContent labelFormatter={(value) => `ประเภท: ${value}`} />} />
           <Legend />
           <Bar dataKey="count" name="จำนวนคิว" fill="#8884d8" />
         </BarChart>
-      </ResponsiveContainer>
+      </ChartContainer>
     </div>
   );
 };
