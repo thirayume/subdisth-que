@@ -14,7 +14,8 @@ const PatientDashboard = () => {
     loading, 
     error, 
     addPatient, 
-    updatePatient 
+    updatePatient,
+    searchPatients 
   } = usePatients();
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,14 +30,13 @@ const PatientDashboard = () => {
       if (searchTerm.trim() === '') {
         setFilteredPatients(patients);
       } else {
-        const { searchPatients } = usePatients();
         const results = await searchPatients(searchTerm);
         setFilteredPatients(results);
       }
     };
     
     handleSearch();
-  }, [searchTerm, patients]);
+  }, [searchTerm, patients, searchPatients]);
 
   const handleAddPatient = async (newPatient: Partial<Patient>) => {
     const result = await addPatient(newPatient);

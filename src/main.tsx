@@ -23,7 +23,5 @@ if (!rootElement) throw new Error('Root element not found');
 // Create a root and render the app
 const root = ReactDOM.createRoot(rootElement);
 root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+  <App />
 );
