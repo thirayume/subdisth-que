@@ -1,10 +1,11 @@
 
+// Purely client-only Sonner Toaster. No references to next-themes.
+
 "use client";
 
 import * as React from "react";
 import { Toaster as Sonner } from "sonner";
 
-// Explicitly set theme to 'light' (or 'auto' if you want system)
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
 const Toaster = (props: ToasterProps) => {
