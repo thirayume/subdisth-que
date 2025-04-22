@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils';
 import { Queue, Patient, QueueStatus } from '@/integrations/supabase/schema';
 import QueueCard from './QueueCard';
 import QueueControls from './QueueControls';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface QueueListProps {
   queues: Queue[];
