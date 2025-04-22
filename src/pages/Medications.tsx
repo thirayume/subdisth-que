@@ -8,12 +8,13 @@ import MedicationsSummaryCards from '@/components/medications/MedicationsSummary
 import MedicationsTabs from '@/components/medications/MedicationsTabs';
 import MedicationsDialog from '@/components/medications/MedicationsDialog';
 import { Input } from '@/components/ui/input';
+import { Medication } from '@/integrations/supabase/schema';
 
 const Medications = () => {
   const { medications, loading, error, fetchMedications } = useMedications();
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedMedication, setSelectedMedication] = useState(null);
+  const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
 
   useEffect(() => {
     fetchMedications();
@@ -24,7 +25,7 @@ const Medications = () => {
     setIsDialogOpen(true);
   };
 
-  const handleEditMedication = (medication) => {
+  const handleEditMedication = (medication: Medication) => {
     setSelectedMedication(medication);
     setIsDialogOpen(true);
   };

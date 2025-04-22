@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Medication } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
@@ -165,11 +165,6 @@ export const useMedications = () => {
       return false;
     }
   };
-  
-  // Initial data fetch
-  useEffect(() => {
-    fetchMedications();
-  }, []);
 
   return {
     medications,
