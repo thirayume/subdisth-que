@@ -26,9 +26,9 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
   onRecallQueue
 }) => {
   return (
-    <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-      <ScrollArea className="h-[calc(100vh-320px)]">
-        <div className="pr-4">
+    <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm h-full overflow-hidden flex flex-col">
+      <ScrollArea className="flex-1 overflow-auto">
+        <div className="pr-4 pb-4">
           <QueueTabs
             waitingQueues={waitingQueues}
             activeQueues={activeQueues}
