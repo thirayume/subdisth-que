@@ -38,31 +38,33 @@ const queryClient = new QueryClient({
 
 const App: React.FC = () => {
   return (
-    <BrowserRouter>
+    <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <TooltipProvider>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/queue-management" element={<QueueManagement />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/queue-board" element={<QueueBoard />} />
-              <Route path="/patients" element={<Patients />} />
-              <Route path="/medications" element={<Medications />} />
-              <Route path="/appointments" element={<Appointments />} />
-              <Route path="/history" element={<QueueHistory />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/queue-ticket/:id" element={<QueueTicket />} />
-              <Route path="/patient-portal" element={<PatientPortal />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Toaster />
-            <Sonner />
-            <OfflineIndicator />
-          </TooltipProvider>
+          <BrowserRouter>
+            <TooltipProvider>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/queue-management" element={<QueueManagement />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/queue-board" element={<QueueBoard />} />
+                <Route path="/patients" element={<Patients />} />
+                <Route path="/medications" element={<Medications />} />
+                <Route path="/appointments" element={<Appointments />} />
+                <Route path="/history" element={<QueueHistory />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/queue-ticket/:id" element={<QueueTicket />} />
+                <Route path="/patient-portal" element={<PatientPortal />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <Toaster />
+              <Sonner />
+              <OfflineIndicator />
+            </TooltipProvider>
+          </BrowserRouter>
         </ThemeProvider>
       </QueryClientProvider>
-    </BrowserRouter>
+    </React.StrictMode>
   );
 };
 
