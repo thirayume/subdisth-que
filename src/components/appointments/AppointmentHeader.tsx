@@ -12,6 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useAppointments } from '@/hooks/useAppointments';
 import { usePatients } from '@/hooks/usePatients';
+import { AppointmentStatus } from '@/integrations/supabase/schema';
 
 const formSchema = z.object({
   patient_id: z.string().min(1, { message: 'กรุณาเลือกผู้ป่วย' }),
@@ -48,6 +49,7 @@ const AppointmentHeader: React.FC = () => {
     const appointment = await addAppointment({
       ...rest,
       date: combinedDate.toISOString(),
+      status: 'SCHEDULED' as AppointmentStatus,
     });
     
     if (appointment) {

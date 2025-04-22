@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { ChevronRight, Calendar, Edit, Trash2 } from 'lucide-react';
-import { Appointment } from '@/integrations/supabase/schema';
+import { Appointment, AppointmentStatus } from '@/integrations/supabase/schema';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,7 +52,7 @@ const formSchema = z.object({
   time: z.string().min(1, { message: 'กรุณาระบุเวลานัดหมาย' }),
   purpose: z.string().min(1, { message: 'กรุณาระบุวัตถุประสงค์' }),
   notes: z.string().optional(),
-  status: z.string(),
+  status: z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -118,6 +117,7 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({
     const updated = await updateAppointment(editingAppointment.id, {
       ...rest,
       date: combinedDate.toISOString(),
+      status: rest.status as AppointmentStatus // Explicitly cast to ensure correct typing
     });
     
     if (updated) {
