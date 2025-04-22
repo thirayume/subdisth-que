@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -24,19 +23,13 @@ import Analytics from "./pages/Analytics";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Keep data fresh for 5 minutes
       staleTime: 5 * 60 * 1000,
-      // Retry failed requests 3 times
       retry: 3,
-      // Cache successful responses for 10 minutes (using gcTime instead of cacheTime)
       gcTime: 10 * 60 * 1000,
-      // Use stale data while revalidating
       refetchOnWindowFocus: true,
-      // Don't refetch on reconnect if the data is still fresh
       refetchOnReconnect: "always"
     },
     mutations: {
-      // Retry failed mutations 2 times
       retry: 2
     }
   }
@@ -44,9 +37,9 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <BrowserRouter>
+    <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
           <TooltipProvider>
             <Routes>
               <Route path="/" element={<Index />} />
@@ -60,16 +53,15 @@ const App = () => (
               <Route path="/settings" element={<Settings />} />
               <Route path="/queue-ticket/:id" element={<QueueTicket />} />
               <Route path="/patient-portal" element={<PatientPortal />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Toaster />
             <Sonner />
             <OfflineIndicator />
           </TooltipProvider>
-        </BrowserRouter>
-      </ThemeProvider>
-    </QueryClientProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </BrowserRouter>
   </React.StrictMode>
 );
 
