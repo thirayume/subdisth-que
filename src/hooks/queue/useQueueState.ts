@@ -4,6 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Queue, QueueStatus, QueueType } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
 
+// Add debug logging
+console.log("[DEBUG] useQueueState importing React:", React);
+
 export const useQueueState = () => {
   const [queues, setQueues] = useState<Queue[]>([]);
   const [loading, setLoading] = useState(true);

@@ -1,10 +1,14 @@
 
-import * as React from 'react';
+import React from 'react';
 import { usePatientsState } from './patients/usePatientsState';
 import { usePatientsActions } from './patients/usePatientsActions';
 import { usePatientsSearch } from './patients/usePatientsSearch';
 
+console.log("[DEBUG] usePatients.ts React:", React);
+
 export const usePatients = () => {
+  console.log("[DEBUG] usePatients hook is being called");
+  
   const {
     patients,
     loading,

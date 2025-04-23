@@ -7,6 +7,9 @@ import { useQueueAnnouncements } from './queue/useQueueAnnouncements';
 import { announceQueue } from '@/utils/textToSpeech';
 import { QueueAlgorithmType, sortQueuesByAlgorithm, QueueTypeWithAlgorithm } from '@/utils/queueAlgorithms';
 
+// Add debug logging
+console.log("[DEBUG] useQueues importing React:", React);
+
 export const useQueues = () => {
   console.log('[useQueues] Hook initialized');
   

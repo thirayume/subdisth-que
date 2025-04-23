@@ -8,6 +8,9 @@ import DashboardCards from '@/components/dashboard/DashboardCards';
 import { useDashboardQueues } from '@/components/dashboard/useDashboardQueues';
 import { useDashboardStats } from '@/components/dashboard/useDashboardStats';
 
+// Add debug logging
+console.log("[DEBUG] Dashboard component importing React:", React);
+
 const Dashboard = () => {
   console.log('[Dashboard] Component rendering');
   
