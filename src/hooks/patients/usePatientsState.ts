@@ -4,6 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
 
+// DEBUG: Log the React version and object reference in a hook as well
+console.log("[DEBUG] usePatientsState.ts React version:", React.version, React);
+
 export const usePatientsState = () => {
   const [patients, setPatients] = React.useState<Patient[]>([]);
   const [loading, setLoading] = React.useState<boolean>(true);

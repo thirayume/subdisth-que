@@ -1,10 +1,8 @@
 
 import * as React from "react";
 import { Toaster } from "@/components/ui/toaster";
-// import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-// All next-themes and ThemeProvider references have been removed for compatibility.
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import OfflineIndicator from "@/components/ui/OfflineIndicator";
 import Index from "./pages/Index";
@@ -20,8 +18,8 @@ import PatientPortal from "./pages/PatientPortal";
 import QueueManagement from "./pages/QueueManagement";
 import Analytics from "./pages/Analytics";
 
-// IMPORTANT: Do NOT use next-themes! Tailwind's dark mode via "class" is the only way dark mode should be handled.
-// We are using only Tailwind dark mode with "class" strategy.
+// DEBUG: Log the React version and object reference
+console.log("[DEBUG] App.tsx React version:", React.version, React);
 
 const queryClient = new QueryClient({
   defaultOptions: {
