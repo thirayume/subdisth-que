@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 // import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-// import { ThemeProvider } from "@/components/theme/ThemeProvider"; // Make sure next-themes is NOT used anywhere!
+// All next-themes and ThemeProvider references have been removed for compatibility.
 import OfflineIndicator from "@/components/ui/OfflineIndicator";
 import Index from "./pages/Index";
 import QueueBoard from "./pages/QueueBoard";
@@ -20,7 +20,6 @@ import QueueManagement from "./pages/QueueManagement";
 import Analytics from "./pages/Analytics";
 
 // IMPORTANT: Do NOT use next-themes! Tailwind's dark mode via "class" is the only way dark mode should be handled.
-// If you see any import or usage of next-themes in this project, REMOVE IT IMMEDIATELY.
 // We are using only Tailwind dark mode with "class" strategy.
 
 const queryClient = new QueryClient({
@@ -41,7 +40,7 @@ const queryClient = new QueryClient({
 const App: React.FC = () => {
   return (
     <React.StrictMode>
-      {/* Remove ThemeProvider and TooltipProvider here */}
+      {/* ThemeProvider and TooltipProvider have been removed */}
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
           <Routes>
@@ -67,4 +66,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-
