@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +9,11 @@ import { Textarea } from '@/components/ui/textarea';
 import MedicationsUnitPopover from './MedicationsUnitPopover';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Medication } from '@/integrations/supabase/schema';
+import MedicationCodeField from './dialog-form/MedicationCodeField';
+import MedicationNameField from './dialog-form/MedicationNameField';
+import MedicationDescriptionField from './dialog-form/MedicationDescriptionField';
+import MedicationUnitField from './dialog-form/MedicationUnitField';
+import MedicationStockFields from './dialog-form/MedicationStockFields';
 
 const formSchema = z.object({
   code: z.string().min(1, { message: 'กรุณาระบุรหัสยา' }),
@@ -40,10 +44,8 @@ const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
   const [newUnitInput, setNewUnitInput] = useState('');
   const [openUnitPopover, setOpenUnitPopover] = useState(false);
 
-  // Fallback medications to empty array if undefined or not actually an array type
   const safeMedications: Medication[] = Array.isArray(medications) ? medications : [];
 
-  // Safely create unitOptions even if medications is undefined
   const unitOptions = useMemo(() => {
     if (!Array.isArray(safeMedications)) return [];
     const nonEmptyUnits = safeMedications
@@ -104,101 +106,21 @@ const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
+        <MedicationCodeField control={form.control} />
+        <MedicationNameField control={form.control} />
+        <MedicationDescriptionField control={form.control} />
+        <MedicationUnitField
           control={form.control}
-          name="code"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>รหัสยา</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          value={form.watch('unit')}
+          open={openUnitPopover}
+          newUnitInput={newUnitInput}
+          setOpen={setOpenUnitPopover}
+          setValue={val => form.setValue('unit', val)}
+          setNewUnitInput={setNewUnitInput}
+          unitOptions={unitOptions}
+          handleAddNewUnit={handleAddNewUnit}
         />
-
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>ชื่อยา</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>คำอธิบาย</FormLabel>
-              <FormControl>
-                <Textarea {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="unit"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>หน่วย</FormLabel>
-              <FormControl>
-                <MedicationsUnitPopover
-                  unitOptions={unitOptions}
-                  value={field.value}
-                  open={openUnitPopover}
-                  newUnitInput={newUnitInput}
-                  setOpen={setOpenUnitPopover}
-                  setValue={val => form.setValue('unit', val)}
-                  setNewUnitInput={setNewUnitInput}
-                  handleAddNewUnit={handleAddNewUnit}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="stock"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>จำนวนคงเหลือ</FormLabel>
-                <FormControl>
-                  <Input type="number" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="min_stock"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>จำนวนขั้นต่ำ</FormLabel>
-                <FormControl>
-                  <Input type="number" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
+        <MedicationStockFields control={form.control} />
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onCancel}>
             ยกเลิก
@@ -212,5 +134,4 @@ const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
 
 export default MedicationsDialogForm;
 
-// NOTE: This file is growing quite long (over 200 lines). 
-// For maintainability, consider asking me to refactor this file into smaller components after the current issue is resolved.
+// NOTE: This file was refactored to improve maintainability. The logic, validation, and UI remain unchanged.
