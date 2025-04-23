@@ -22,7 +22,7 @@ const formSchema = z.object({
 
 export type MedicationsDialogFormProps = {
   medication: Medication | null;
-  medications: Medication[];
+  medications: Medication[] | undefined; // can be undefined
   isEditing: boolean;
   open: boolean;
   onSubmit: (values: z.infer<typeof formSchema>) => Promise<void>;
@@ -40,14 +40,17 @@ const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
   const [newUnitInput, setNewUnitInput] = useState('');
   const [openUnitPopover, setOpenUnitPopover] = useState(false);
 
+  // Fallback medications to empty array if undefined
+  const safeMedications = Array.isArray(medications) ? medications : [];
+
   // Extract unique unit values from medications
   const unitOptions = useMemo(() => {
-    const units = new Set(medications.map(med => med.unit));
+    const units = new Set(safeMedications.map(med => med.unit));
     return Array.from(units).map(unit => ({
       value: unit,
       label: unit
     }));
-  }, [medications]);
+  }, [safeMedications]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -61,7 +64,6 @@ const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
     },
   });
 
-  // Reset form when dialog opens/closes or medication changes
   React.useEffect(() => {
     if (open) {
       if (medication) {
@@ -205,3 +207,4 @@ const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
 };
 
 export default MedicationsDialogForm;
+
