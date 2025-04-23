@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 // import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-// import { ThemeProvider } from "@/components/theme/ThemeProvider"; // Removed for compatibility
+// import { ThemeProvider } from "@/components/theme/ThemeProvider"; // Make sure next-themes is NOT used anywhere!
 import OfflineIndicator from "@/components/ui/OfflineIndicator";
 import Index from "./pages/Index";
 import QueueBoard from "./pages/QueueBoard";
@@ -21,7 +21,8 @@ import Analytics from "./pages/Analytics";
 
 // IMPORTANT: Do NOT use next-themes! Tailwind's dark mode via "class" is the only way dark mode should be handled.
 // If you see any import or usage of next-themes in this project, REMOVE IT IMMEDIATELY.
-// Configure the query client with offline support
+// We are using only Tailwind dark mode with "class" strategy.
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
