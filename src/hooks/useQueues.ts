@@ -1,13 +1,15 @@
 
+import React, { useState, useEffect } from 'react';
 import { Queue, QueueStatus } from '@/integrations/supabase/schema';
 import { useQueueState } from './queue/useQueueState';
 import { useQueueStatusUpdates } from './queue/useQueueStatusUpdates';
 import { useQueueAnnouncements } from './queue/useQueueAnnouncements';
 import { announceQueue } from '@/utils/textToSpeech';
 import { QueueAlgorithmType, sortQueuesByAlgorithm, QueueTypeWithAlgorithm } from '@/utils/queueAlgorithms';
-import { useState, useEffect } from 'react';
 
 export const useQueues = () => {
+  console.log('[useQueues] Hook initialized');
+  
   const { 
     queues, 
     loading, 
@@ -34,6 +36,7 @@ export const useQueues = () => {
   const [queueTypes, setQueueTypes] = useState<QueueTypeWithAlgorithm[]>([]);
   
   useEffect(() => {
+    console.log('[useQueues] Loading queue algorithm and types');
     // Load algorithm from localStorage
     const savedAlgorithm = localStorage.getItem('queue_algorithm') as QueueAlgorithmType | null;
     if (savedAlgorithm) {

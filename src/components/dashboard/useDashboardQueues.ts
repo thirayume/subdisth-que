@@ -1,8 +1,9 @@
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQueues } from '@/hooks/useQueues';
 
 export const useDashboardQueues = () => {
+  console.log('[useDashboardQueues] Hook initialized');
   const { queues, sortQueues } = useQueues();
   
   const [waitingQueues, setWaitingQueues] = useState([]);
@@ -10,6 +11,7 @@ export const useDashboardQueues = () => {
   const [completedQueues, setCompletedQueues] = useState([]);
 
   useEffect(() => {
+    console.log('[useDashboardQueues] Queues updated, filtering by status');
     if (queues) {
       const waiting = queues.filter(q => q.status === 'WAITING');
       const active = queues.filter(q => q.status === 'ACTIVE');

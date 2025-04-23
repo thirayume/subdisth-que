@@ -1,6 +1,4 @@
 
-"use client";
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Queue, QueueStatus, QueueType } from '@/integrations/supabase/schema';
@@ -140,6 +138,7 @@ export const useQueueState = () => {
 
   // Initial data fetch and set up real-time subscription
   useEffect(() => {
+    console.log('[useQueueState] Initial mount, fetching queues');
     fetchQueues();
     
     // Set up real-time subscription for queues
@@ -155,6 +154,7 @@ export const useQueueState = () => {
       .subscribe();
       
     return () => {
+      console.log('[useQueueState] Unmounting, cleaning up subscription');
       supabase.removeChannel(channel);
     };
   }, []);
