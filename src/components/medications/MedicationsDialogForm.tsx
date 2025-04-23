@@ -1,12 +1,10 @@
+
 import React, { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import MedicationsUnitPopover from './MedicationsUnitPopover';
+import { Form } from '@/components/ui/form';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Medication } from '@/integrations/supabase/schema';
 import MedicationCodeField from './dialog-form/MedicationCodeField';
@@ -20,13 +18,13 @@ const formSchema = z.object({
   name: z.string().min(1, { message: 'กรุณาระบุชื่อยา' }),
   description: z.string().optional(),
   unit: z.string().min(1, { message: 'กรุณาระบุหน่วย' }),
-  stock: z.coerce.number().min(0, { message: 'จำนวนต้องไม่น้อยกว่า 0' }),
-  min_stock: z.coerce.number().min(0, { message: 'จำนวนต้องไม่น้อยกว่า 0' }),
+  stock: z.preprocess((v) => Number(v ?? 0), z.number().min(0, { message: 'จำนวนต้องไม่น้อยกว่า 0' })),
+  min_stock: z.preprocess((v) => Number(v ?? 0), z.number().min(0, { message: 'จำนวนต้องไม่น้อยกว่า 0' })),
 });
 
 export type MedicationsDialogFormProps = {
   medication: Medication | null;
-  medications: Medication[] | undefined; // can be undefined
+  medications: Medication[] | undefined;
   isEditing: boolean;
   open: boolean;
   onSubmit: (values: z.infer<typeof formSchema>) => Promise<void>;
@@ -45,9 +43,7 @@ const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
   const [openUnitPopover, setOpenUnitPopover] = useState(false);
 
   const safeMedications: Medication[] = Array.isArray(medications) ? medications : [];
-
   const unitOptions = useMemo(() => {
-    if (!Array.isArray(safeMedications)) return [];
     const nonEmptyUnits = safeMedications
       .map(med => med && med.unit)
       .filter(unit => typeof unit === 'string' && unit.length > 0);
@@ -103,9 +99,19 @@ const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
     }
   };
 
+  const submitHandler = async (data: any) => {
+    // Ensure numbers are numbers, not strings
+    const payload = {
+      ...data,
+      stock: Number(data.stock) || 0,
+      min_stock: Number(data.min_stock) || 0,
+    };
+    await onSubmit(payload);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(submitHandler)} className="space-y-4">
         <MedicationCodeField control={form.control} />
         <MedicationNameField control={form.control} />
         <MedicationDescriptionField control={form.control} />
@@ -133,5 +139,3 @@ const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
 };
 
 export default MedicationsDialogForm;
-
-// NOTE: This file was refactored to improve maintainability. The logic, validation, and UI remain unchanged.
