@@ -11,7 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Medication } from '@/integrations/supabase/schema';
 
 const Medications = () => {
-  const { medications, loading, error, fetchMedications } = useMedications();
+  // LIFT useMedications to the top level, pass all handlers as props
+  const { medications, loading, error, fetchMedications, addMedication, updateMedication } = useMedications();
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
@@ -37,7 +38,6 @@ const Medications = () => {
           <h1 className="text-3xl font-bold text-gray-900">ยาและเวชภัณฑ์</h1>
           <p className="text-gray-500">จัดการคลังยาและเวชภัณฑ์</p>
         </div>
-        
         <div className="flex items-center gap-2">
           <Button 
             className="bg-pharmacy-600 hover:bg-pharmacy-700 text-white"
@@ -48,7 +48,6 @@ const Medications = () => {
           </Button>
         </div>
       </div>
-      
       {loading ? (
         <div className="flex justify-center py-8">
           <p>กำลังโหลดข้อมูล...</p>
@@ -75,11 +74,13 @@ const Medications = () => {
           />
         </>
       )}
-
       <MedicationsDialog 
         open={isDialogOpen} 
         onOpenChange={setIsDialogOpen}
         medication={selectedMedication}
+        medications={medications}
+        addMedication={addMedication}
+        updateMedication={updateMedication}
       />
     </Layout>
   );

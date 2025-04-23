@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { useMedications } from '@/hooks/useMedications';
 import MedicationsDialogController from './MedicationsDialogController';
 import { Medication } from '@/integrations/supabase/schema';
 
@@ -9,10 +8,19 @@ interface MedicationsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   medication: Medication | null;
+  medications: Medication[];
+  addMedication: (data: any) => Promise<any>;
+  updateMedication: (id: string, data: any) => Promise<any>;
 }
 
-const MedicationsDialog: React.FC<MedicationsDialogProps> = ({ open, onOpenChange, medication }) => {
-  const { medications, addMedication, updateMedication } = useMedications();
+const MedicationsDialog: React.FC<MedicationsDialogProps> = ({
+  open,
+  onOpenChange,
+  medication,
+  medications,
+  addMedication,
+  updateMedication
+}) => {
   const isEditing = !!medication;
 
   return (
