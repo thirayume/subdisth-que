@@ -24,7 +24,7 @@ const formSchema = z.object({
 
 export type MedicationsDialogFormProps = {
   medication: Medication | null;
-  medications: Medication[] | undefined;
+  medications: Medication[];
   isEditing: boolean;
   open: boolean;
   onSubmit: (values: z.infer<typeof formSchema>) => Promise<void>;
@@ -42,8 +42,11 @@ const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
   const [newUnitInput, setNewUnitInput] = useState('');
   const [openUnitPopover, setOpenUnitPopover] = useState(false);
 
-  const safeMedications: Medication[] = Array.isArray(medications) ? medications : [];
+  // Ensure medications is always an array
+  const safeMedications = Array.isArray(medications) ? medications : [];
+  
   const unitOptions = useMemo(() => {
+    // Use safeMedications instead of medications directly
     const nonEmptyUnits = safeMedications
       .map(med => med && med.unit)
       .filter(unit => typeof unit === 'string' && unit.length > 0);

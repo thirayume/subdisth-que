@@ -41,7 +41,7 @@ const MedicationsDialogController: React.FC<MedicationsDialogControllerProps> = 
       <MedicationsDialogHeader isEditing={isEditing} />
       <MedicationsDialogForm
         medication={medication}
-        medications={medications}
+        medications={medications || []} {/* Ensure medications is never undefined */}
         isEditing={isEditing}
         open={open}
         onSubmit={handleSubmit}

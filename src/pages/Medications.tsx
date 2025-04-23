@@ -54,7 +54,7 @@ const Medications = () => {
         </div>
       ) : (
         <>
-          <MedicationsSummaryCards medications={medications} />
+          <MedicationsSummaryCards medications={medications || []} />
           <div className="flex mb-4">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -67,7 +67,7 @@ const Medications = () => {
             </div>
           </div>
           <MedicationsTabs 
-            medications={medications} 
+            medications={medications || []} 
             searchTerm={searchTerm} 
             setSearchTerm={setSearchTerm}
             onEditMedication={handleEditMedication}
@@ -78,7 +78,7 @@ const Medications = () => {
         open={isDialogOpen} 
         onOpenChange={setIsDialogOpen}
         medication={selectedMedication}
-        medications={medications}
+        medications={medications || []}
         addMedication={addMedication}
         updateMedication={updateMedication}
       />
