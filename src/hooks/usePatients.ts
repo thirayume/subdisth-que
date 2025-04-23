@@ -1,5 +1,5 @@
 
-import React from 'react';
+import * as React from 'react';
 import { usePatientsState } from './patients/usePatientsState';
 import { usePatientsActions } from './patients/usePatientsActions';
 import { usePatientsSearch } from './patients/usePatientsSearch';
