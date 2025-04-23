@@ -11,6 +11,9 @@ import { Input } from '@/components/ui/input';
 import { Medication } from '@/integrations/supabase/schema';
 import { useTheme } from '@/components/theme/ThemeProvider';
 
+// Debug log for React
+console.log("[Medications Page] React instance:", React);
+
 const Medications = () => {
   // Use our custom theme hook
   const { theme } = useTheme();
@@ -38,6 +41,11 @@ const Medications = () => {
     setSelectedMedication(medication);
     setIsDialogOpen(true);
   };
+
+  // Debug log to verify the dialog state
+  React.useEffect(() => {
+    console.log("[Medications] Dialog state changed:", isDialogOpen);
+  }, [isDialogOpen]);
 
   return (
     <Layout>

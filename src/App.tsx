@@ -44,6 +44,10 @@ const App: React.FC = () => {
     };
   }, []);
 
+  // Check if React hooks are working
+  const [testState, setTestState] = React.useState("Working");
+  console.log("[DEBUG] React hooks test:", testState);
+
   return (
     <React.StrictMode>
       <ThemeProvider>
