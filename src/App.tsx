@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,6 +18,8 @@ import PatientPortal from "./pages/PatientPortal";
 import QueueManagement from "./pages/QueueManagement";
 import Analytics from "./pages/Analytics";
 
+// IMPORTANT: Do NOT use next-themes! Tailwind's dark mode via "class" is the only way dark mode should be handled.
+// If you see any import or usage of next-themes in this project, REMOVE IT IMMEDIATELY.
 // Configure the query client with offline support
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,4 +67,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-
