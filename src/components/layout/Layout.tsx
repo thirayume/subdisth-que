@@ -1,10 +1,10 @@
 
-import React, { ReactNode } from 'react';
+import * as React from 'react';
 import { cn } from '@/lib/utils';
 import Sidebar from './Sidebar';
 
 interface LayoutProps {
-  children: ReactNode;
+  children: React.ReactNode;
   className?: string;
 }
 

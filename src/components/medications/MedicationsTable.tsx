@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Medication } from '@/integrations/supabase/schema';
@@ -30,7 +30,7 @@ const MedicationsTable: React.FC<MedicationsTableProps> = ({
   filterFunction,
   onEditMedication
 }) => {
-  const [medicationToDelete, setMedicationToDelete] = useState<string | null>(null);
+  const [medicationToDelete, setMedicationToDelete] = React.useState<string | null>(null);
   const { deleteMedication } = useMedications();
 
   // Apply custom filter function if provided, otherwise use all medications

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import * as React from 'react';
 import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const MedicationsDialogHeader: React.FC<{ isEditing: boolean }> = ({ isEditing }) => (

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import * as React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Medication } from '@/integrations/supabase/schema';
 import { Pill, AlertCircle, Check } from 'lucide-react';

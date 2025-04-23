@@ -1,5 +1,4 @@
-
-import React, { useState, useMemo } from 'react';
+import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -39,13 +38,13 @@ const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
   onSubmit,
   onCancel
 }) => {
-  const [newUnitInput, setNewUnitInput] = useState('');
-  const [openUnitPopover, setOpenUnitPopover] = useState(false);
+  const [newUnitInput, setNewUnitInput] = React.useState('');
+  const [openUnitPopover, setOpenUnitPopover] = React.useState(false);
 
   // Ensure medications is always an array
   const safeMedications = Array.isArray(medications) ? medications : [];
   
-  const unitOptions = useMemo(() => {
+  const unitOptions = React.useMemo(() => {
     // Use safeMedications instead of medications directly
     const nonEmptyUnits = safeMedications
       .map(med => med && med.unit)
