@@ -40,12 +40,16 @@ const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
   const [newUnitInput, setNewUnitInput] = useState('');
   const [openUnitPopover, setOpenUnitPopover] = useState(false);
 
-  // Fallback medications to empty array if undefined
-  const safeMedications = Array.isArray(medications) ? medications : [];
+  // Fallback medications to empty array if undefined or not actually an array type
+  const safeMedications: Medication[] = Array.isArray(medications) ? medications : [];
 
-  // Extract unique unit values from medications
+  // Safely create unitOptions even if medications is undefined
   const unitOptions = useMemo(() => {
-    const units = new Set(safeMedications.map(med => med.unit));
+    if (!Array.isArray(safeMedications)) return [];
+    const nonEmptyUnits = safeMedications
+      .map(med => med && med.unit)
+      .filter(unit => typeof unit === 'string' && unit.length > 0);
+    const units = new Set(nonEmptyUnits);
     return Array.from(units).map(unit => ({
       value: unit,
       label: unit
@@ -208,3 +212,5 @@ const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
 
 export default MedicationsDialogForm;
 
+// NOTE: This file is growing quite long (over 200 lines). 
+// For maintainability, consider asking me to refactor this file into smaller components after the current issue is resolved.
