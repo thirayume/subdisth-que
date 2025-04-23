@@ -1,9 +1,13 @@
+
 import * as React from "react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+
+// Debug log for React reference 
+console.log("[DEBUG] In toast.tsx, React is:", React);
 
 const ToastProvider = ToastPrimitives.Provider
 
