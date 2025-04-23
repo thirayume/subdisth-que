@@ -1,10 +1,13 @@
 
-import React, { useEffect } from 'react';
+import * as React from 'react';
 import { toast } from 'sonner';
 import { usePatientSearch } from './patient/usePatientSearch';
 import { usePatientSelection } from './patient/usePatientSelection';
 import { useQueueCreation } from './queue/useQueueCreation';
 import { useNewPatientCreation } from './patient/useNewPatientCreation';
+
+// Add debug logging
+console.log("[DEBUG] useCreateQueue importing React:", React);
 
 export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQueue: (queue: any) => void) => {
   const {

@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import * as React from 'react';
 import { 
   Dialog,
   DialogContent,
@@ -14,6 +14,9 @@ import PatientResultsList from './dialogs/PatientResultsList';
 import NewPatientForm from './dialogs/NewPatientForm';
 import QueueDetailsForm from './dialogs/QueueDetailsForm';
 import { useCreateQueue } from './dialogs/hooks/useCreateQueue';
+
+// Add debug logging
+console.log("[DEBUG] CreateQueueDialog importing React:", React);
 
 interface CreateQueueDialogProps {
   open: boolean;
@@ -55,7 +58,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
   } = useCreateQueue(onOpenChange, onCreateQueue);
 
   // Reset state when dialog is closed
-  useEffect(() => {
+  React.useEffect(() => {
     if (!open) {
       resetState();
     }

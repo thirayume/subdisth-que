@@ -1,14 +1,17 @@
 
-import React, { useState } from 'react';
+import * as React from 'react';
 import { toast } from 'sonner';
 import { Patient } from '@/integrations/supabase/schema';
 import { supabase } from '@/integrations/supabase/client';
 
+// Add debug logging
+console.log("[DEBUG] usePatientSearch importing React:", React);
+
 export const usePatientSearch = () => {
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
-  const [matchedPatients, setMatchedPatients] = useState<Patient[]>([]);
-  const [showNewPatientForm, setShowNewPatientForm] = useState(false);
+  const [phoneNumber, setPhoneNumber] = React.useState('');
+  const [isSearching, setIsSearching] = React.useState(false);
+  const [matchedPatients, setMatchedPatients] = React.useState<Patient[]>([]);
+  const [showNewPatientForm, setShowNewPatientForm] = React.useState(false);
   
   const resetPatientSearch = () => {
     setPhoneNumber('');
