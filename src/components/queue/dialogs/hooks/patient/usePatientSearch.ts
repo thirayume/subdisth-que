@@ -23,7 +23,7 @@ export const usePatientSearch = () => {
   const handlePhoneSearch = async () => {
     if (!phoneNumber) {
       toast.error('กรุณากรอกเบอร์โทรศัพท์');
-      return;
+      return [];
     }
 
     setIsSearching(true);
@@ -38,16 +38,20 @@ export const usePatientSearch = () => {
         throw error;
       }
       
-      setMatchedPatients(data || []);
+      const patients = data || [];
+      setMatchedPatients(patients);
       
-      if (data.length === 0) {
+      if (patients.length === 0) {
         setShowNewPatientForm(true);
       } else {
         setShowNewPatientForm(false);
       }
+      
+      return patients;
     } catch (err: any) {
       console.error('Error searching for patients:', err);
       toast.error('ไม่สามารถค้นหาข้อมูลผู้ป่วยได้');
+      return [];
     } finally {
       setIsSearching(false);
     }

@@ -13,7 +13,13 @@ export const useCreateQueue = (
   onCreateQueue: (queue: any) => void
 ) => {
   // Get patient search functionality
-  const { phoneNumber, setPhoneNumber, isSearching, searchPatients } = usePatientSearch();
+  const { 
+    phoneNumber, 
+    setPhoneNumber, 
+    isSearching, 
+    handlePhoneSearch: searchPatientsByPhone 
+  } = usePatientSearch();
+  
   const [matchedPatients, setMatchedPatients] = React.useState<any[]>([]);
   const [showNewPatientForm, setShowNewPatientForm] = React.useState(false);
 
@@ -27,7 +33,7 @@ export const useCreateQueue = (
     selectedPatientPhone,
     finalPatientName,
     finalPatientPhone,
-    handleSelectPatient,
+    handleSelectPatient: selectPatientFromList,
     updateFinalPatientInfo,
     resetPatientSelection
   } = usePatientSelection();
@@ -63,8 +69,9 @@ export const useCreateQueue = (
   // Handle phone search
   const handlePhoneSearch = async () => {
     if (phoneNumber) {
-      const patients = await searchPatients(phoneNumber);
-      setMatchedPatients(patients);
+      // Use the hook's function but fetch patient data from the API
+      const patients = await searchPatientsByPhone();
+      setMatchedPatients(patients || []);
       
       // If no patients found, show new patient form
       if (patients.length === 0) {
@@ -85,7 +92,7 @@ export const useCreateQueue = (
   const handleSelectPatient = (id: string) => {
     setShowNewPatientForm(false);
     setPatientId(id);
-    handleSelectPatient(id, matchedPatients);
+    selectPatientFromList(id, matchedPatients);
   };
 
   // Handle creating a queue
