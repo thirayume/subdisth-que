@@ -1,8 +1,11 @@
 
-import { useState } from 'react';
+import * as React from 'react';
 import { toast } from 'sonner';
 import { QueueType, QueueStatus } from '@/integrations/supabase/schema';
 import { supabase } from '@/integrations/supabase/client';
+
+// Add debug logging
+console.log("[DEBUG] useQueueCreation importing React:", React);
 
 // Define the queue type purpose mapping
 export const queueTypePurposes = {
@@ -13,12 +16,12 @@ export const queueTypePurposes = {
 };
 
 export const useQueueCreation = () => {
-  const [queueType, setQueueType] = useState<QueueType>('GENERAL');
-  const [notes, setNotes] = useState('');
-  const [qrDialogOpen, setQrDialogOpen] = useState(false);
-  const [createdQueueNumber, setCreatedQueueNumber] = useState<number | null>(null);
-  const [createdQueueType, setCreatedQueueType] = useState<QueueType>('GENERAL');
-  const [createdPurpose, setCreatedPurpose] = useState('');
+  const [queueType, setQueueType] = React.useState<QueueType>('GENERAL');
+  const [notes, setNotes] = React.useState('');
+  const [qrDialogOpen, setQrDialogOpen] = React.useState(false);
+  const [createdQueueNumber, setCreatedQueueNumber] = React.useState<number | null>(null);
+  const [createdQueueType, setCreatedQueueType] = React.useState<QueueType>('GENERAL');
+  const [createdPurpose, setCreatedPurpose] = React.useState('');
 
   const resetQueueCreation = () => {
     setQueueType('GENERAL');
