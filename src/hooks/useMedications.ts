@@ -14,6 +14,8 @@ export const useMedications = () => {
     try {
       setLoading(true);
       setError(null);
+      
+      console.log("[useMedications] Fetching medications from Supabase...");
 
       const { data, error } = await supabase
         .from('medications')
@@ -24,6 +26,7 @@ export const useMedications = () => {
         throw error;
       }
 
+      console.log("[useMedications] Fetched medications:", data?.length || 0);
       setMedications(data || []);
     } catch (err: any) {
       console.error('Error fetching medications:', err);

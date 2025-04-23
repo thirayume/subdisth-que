@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import CreateQueueDialog from '@/components/queue/CreateQueueDialog';
 import { mockQueues } from '@/lib/mockData';
+import { useTheme } from '@/components/theme/ThemeProvider';
 
 // Add debug logging
 console.log("[DEBUG] Sidebar.tsx importing React:", React);
@@ -34,6 +35,9 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const [expanded, setExpanded] = React.useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
   const [createQueueDialogOpen, setCreateQueueDialogOpen] = React.useState(false);
+  
+  // Use our custom theme hook here
+  const { theme } = useTheme();
 
   const toggleSidebar = () => {
     setExpanded(!expanded);

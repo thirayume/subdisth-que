@@ -9,8 +9,12 @@ import MedicationsTabs from '@/components/medications/MedicationsTabs';
 import MedicationsDialog from '@/components/medications/MedicationsDialog';
 import { Input } from '@/components/ui/input';
 import { Medication } from '@/integrations/supabase/schema';
+import { useTheme } from '@/components/theme/ThemeProvider';
 
 const Medications = () => {
+  // Use our custom theme hook
+  const { theme } = useTheme();
+  
   // LIFT useMedications to the top level, pass all handlers as props
   const { medications, loading, error, fetchMedications, addMedication, updateMedication } = useMedications();
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -18,6 +22,7 @@ const Medications = () => {
   const [selectedMedication, setSelectedMedication] = React.useState<Medication | null>(null);
 
   React.useEffect(() => {
+    console.log("[Medications] Fetching medications data...");
     fetchMedications();
   }, []);
 

@@ -11,13 +11,13 @@ export const ThemeContext = React.createContext<{
 });
 
 /**
- * Custom theme provider that doesn't rely on next-themes.
+ * Custom theme provider that handles theme switching internally
  */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = React.useState<'dark' | 'light' | 'system'>('system');
   
   React.useEffect(() => {
-    console.log('[ThemeProvider]: Initializing custom theme provider');
+    console.log('[ThemeProvider]: Initializing theme provider');
     
     // Check if theme preference exists in localStorage
     const savedTheme = localStorage.getItem('theme') as 'dark' | 'light' | 'system' | null;
