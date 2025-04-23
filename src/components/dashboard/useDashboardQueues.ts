@@ -9,13 +9,12 @@ export const useDashboardQueues = () => {
   const [activeQueues, setActiveQueues] = useState([]);
   const [completedQueues, setCompletedQueues] = useState([]);
 
-  // Update filtered queues when the main queues array changes
   useEffect(() => {
     if (queues) {
       const waiting = queues.filter(q => q.status === 'WAITING');
       const active = queues.filter(q => q.status === 'ACTIVE');
       const completed = queues.filter(q => q.status === 'COMPLETED');
-      
+
       setWaitingQueues(sortQueues(waiting));
       setActiveQueues(active);
       setCompletedQueues(completed);

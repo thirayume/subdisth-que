@@ -44,9 +44,11 @@ export const useQueueCreation = () => {
     updateFinalPatientInfo(patientName, patientPhone);
 
     const purpose = queueTypePurposes[queueType];
-    
     const queueNumber = Math.floor(Math.random() * 100) + 1;
-    
+
+    // Ensure queue_date is today
+    const today = new Date().toISOString().slice(0, 10); // yyyy-mm-dd
+
     try {
       const { data, error } = await supabase
         .from('queues')
@@ -55,7 +57,8 @@ export const useQueueCreation = () => {
           patient_id: patientId,
           type: queueType,
           status: 'WAITING' as QueueStatus,
-          notes: notes
+          notes: notes,
+          queue_date: today
         }])
         .select();
         

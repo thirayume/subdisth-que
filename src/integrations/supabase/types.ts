@@ -221,6 +221,7 @@ export type Database = {
           notes: string | null
           number: number
           patient_id: string
+          queue_date: string
           status: string
           type: string
           updated_at: string
@@ -233,6 +234,7 @@ export type Database = {
           notes?: string | null
           number: number
           patient_id: string
+          queue_date?: string
           status: string
           type: string
           updated_at?: string
@@ -245,6 +247,7 @@ export type Database = {
           notes?: string | null
           number?: number
           patient_id?: string
+          queue_date?: string
           status?: string
           type?: string
           updated_at?: string

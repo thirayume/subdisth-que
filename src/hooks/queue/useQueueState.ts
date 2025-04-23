@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -10,7 +11,10 @@ export const useQueueState = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch all queues
+  // Helper: Get today's date in yyyy-mm-dd
+  const getTodayDate = () => new Date().toISOString().slice(0,10);
+
+  // Fetch all queues for today
   const fetchQueues = async () => {
     try {
       setLoading(true);
@@ -19,20 +23,20 @@ export const useQueueState = () => {
       const { data, error } = await supabase
         .from('queues')
         .select('*')
+        .eq('queue_date', getTodayDate())
         .order('created_at', { ascending: false });
 
       if (error) {
         throw error;
       }
 
-      // Cast the data to ensure proper type conversion
       setQueues((data || []).map(item => ({
         ...item,
         type: item.type as QueueType,
         status: item.status as QueueStatus
       })));
       
-      console.log(`Fetched ${data?.length || 0} queues from database`);
+      console.log(`Fetched ${data?.length || 0} queues for ${getTodayDate()} from database`);
     } catch (err: any) {
       console.error('Error fetching queues:', err);
       setError(err.message || 'Failed to fetch queues');
@@ -42,35 +46,37 @@ export const useQueueState = () => {
     }
   };
 
-  // Get queues by status
+  // Get queues by status for today
   const getQueuesByStatus = async (status: QueueStatus | QueueStatus[]) => {
     try {
       setError(null);
-      
+
       let query = supabase
         .from('queues')
-        .select('*');
+        .select('*')
+        .eq('queue_date', getTodayDate());
         
       if (Array.isArray(status)) {
         query = query.in('status', status);
       } else {
         query = query.eq('status', status);
       }
-      
+
       const { data, error } = await query.order('created_at', { ascending: true });
 
       if (error) {
         throw error;
       }
 
-      // Cast the data to ensure proper type conversion
       const typedData = (data || []).map(item => ({
         ...item,
         type: item.type as QueueType,
         status: item.status as QueueStatus
       }));
       
-      console.log(`Fetched ${typedData.length} queues with status ${Array.isArray(status) ? status.join(', ') : status}`);
+      console.log(
+        `Fetched ${typedData.length} queues for ${getTodayDate()} with status ${Array.isArray(status) ? status.join(', ') : status}`
+      );
       
       return typedData;
     } catch (err: any) {
