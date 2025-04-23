@@ -37,8 +37,14 @@ const queryClient = new QueryClient({
 });
 
 const App: React.FC = () => {
+  React.useEffect(() => {
+    console.log("[DEBUG] App component mounted");
+    return () => {
+      console.log("[DEBUG] App component unmounted");
+    };
+  }, []);
+
   return (
-    // Removed StrictMode temporarily to help diagnose context issues
     <ThemeProvider>
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>

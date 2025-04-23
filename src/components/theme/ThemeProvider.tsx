@@ -1,35 +1,50 @@
 
 import * as React from "react";
 
+// Create a context for theme management
+export const ThemeContext = React.createContext<{
+  theme: 'dark' | 'light' | 'system';
+  setTheme: (theme: 'dark' | 'light' | 'system') => void;
+}>({
+  theme: 'system',
+  setTheme: () => null
+});
+
 /**
  * Custom theme provider that doesn't rely on next-themes.
- * This prevents the "Cannot read properties of null (reading 'useContext')" error.
  */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Simple implementation that doesn't depend on any external context
-  React.useEffect(() => {
-    console.log('[ThemeProvider]: Using custom theme provider.');
-    
-    // You can implement actual theme switching logic here if needed
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    if (prefersDark) {
-      document.documentElement.classList.add('dark');
-    }
-    
-    return () => {
-      // Cleanup if needed
-    };
-  }, []);
-  
-  return <>{children}</>;
-}
-
-// If you need theme-related utilities, you can add them here
-export const useTheme = () => {
   const [theme, setTheme] = React.useState<'dark' | 'light' | 'system'>('system');
   
-  const setThemeValue = React.useCallback((newTheme: 'dark' | 'light' | 'system') => {
+  React.useEffect(() => {
+    console.log('[ThemeProvider]: Initializing custom theme provider');
+    
+    // Check if theme preference exists in localStorage
+    const savedTheme = localStorage.getItem('theme') as 'dark' | 'light' | 'system' | null;
+    
+    if (savedTheme) {
+      handleThemeChange(savedTheme);
+    } else {
+      // Default to system preference
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      handleThemeChange(prefersDark ? 'dark' : 'light');
+    }
+    
+    // Listen for system preference changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemThemeChange = (e: MediaQueryListEvent) => {
+      if (theme === 'system') {
+        document.documentElement.classList.toggle('dark', e.matches);
+      }
+    };
+    
+    mediaQuery.addEventListener('change', handleSystemThemeChange);
+    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
+  }, [theme]);
+  
+  const handleThemeChange = React.useCallback((newTheme: 'dark' | 'light' | 'system') => {
     setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
     
     if (newTheme === 'dark' || (newTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       document.documentElement.classList.add('dark');
@@ -38,5 +53,27 @@ export const useTheme = () => {
     }
   }, []);
   
-  return { theme, setTheme: setThemeValue };
+  const contextValue = React.useMemo(() => {
+    return {
+      theme,
+      setTheme: handleThemeChange
+    };
+  }, [theme, handleThemeChange]);
+  
+  return (
+    <ThemeContext.Provider value={contextValue}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
+// Custom hook to use the theme
+export const useTheme = () => {
+  const context = React.useContext(ThemeContext);
+  
+  if (context === undefined) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  
+  return context;
 };
