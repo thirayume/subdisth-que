@@ -1,13 +1,16 @@
 
-import { useState } from 'react';
+import * as React from 'react';
+
+// Add debug logging
+console.log("[DEBUG] usePatientSelection importing React:", React);
 
 export const usePatientSelection = () => {
-  const [patientId, setPatientId] = useState('');
-  const [newPatientName, setNewPatientName] = useState('');
-  const [selectedPatientName, setSelectedPatientName] = useState('');
-  const [selectedPatientPhone, setSelectedPatientPhone] = useState('');
-  const [finalPatientName, setFinalPatientName] = useState('');
-  const [finalPatientPhone, setFinalPatientPhone] = useState('');
+  const [patientId, setPatientId] = React.useState('');
+  const [newPatientName, setNewPatientName] = React.useState('');
+  const [selectedPatientName, setSelectedPatientName] = React.useState('');
+  const [selectedPatientPhone, setSelectedPatientPhone] = React.useState('');
+  const [finalPatientName, setFinalPatientName] = React.useState('');
+  const [finalPatientPhone, setFinalPatientPhone] = React.useState('');
 
   const resetPatientSelection = () => {
     setPatientId('');
