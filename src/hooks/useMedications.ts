@@ -1,13 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Medication } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
 
 export const useMedications = () => {
-  const [medications, setMedications] = useState<Medication[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [medications, setMedications] = React.useState<Medication[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   // Fetch all medications
   const fetchMedications = async () => {

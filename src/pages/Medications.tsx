@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/layout/Layout';
 import { useMedications } from '@/hooks/useMedications';
@@ -13,11 +13,11 @@ import { Medication } from '@/integrations/supabase/schema';
 const Medications = () => {
   // LIFT useMedications to the top level, pass all handlers as props
   const { medications, loading, error, fetchMedications, addMedication, updateMedication } = useMedications();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [selectedMedication, setSelectedMedication] = React.useState<Medication | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     fetchMedications();
   }, []);
 
