@@ -22,6 +22,9 @@ const MedicationsDialog: React.FC<MedicationsDialogProps> = ({
   updateMedication
 }) => {
   const isEditing = !!medication;
+  
+  // Add debug log
+  console.log("MedicationsDialog rendered with open:", open);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -39,4 +42,5 @@ const MedicationsDialog: React.FC<MedicationsDialogProps> = ({
     </Dialog>
   );
 };
+
 export default MedicationsDialog;

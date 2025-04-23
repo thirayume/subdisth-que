@@ -23,8 +23,11 @@ const MedicationsDialogController: React.FC<MedicationsDialogControllerProps> = 
   addMedication,
   updateMedication,
 }) => {
+  console.log("MedicationsDialogController rendered with open:", open, "isEditing:", isEditing);
+  
   const handleSubmit = async (values: any) => {
     try {
+      console.log("Submitting medication form with values:", values);
       if (isEditing && medication) {
         await updateMedication(medication.id, values);
       } else {
@@ -41,7 +44,7 @@ const MedicationsDialogController: React.FC<MedicationsDialogControllerProps> = 
       <MedicationsDialogHeader isEditing={isEditing} />
       <MedicationsDialogForm
         medication={medication}
-        medications={medications || []} /* Ensure medications is never undefined */
+        medications={medications} 
         isEditing={isEditing}
         open={open}
         onSubmit={handleSubmit}

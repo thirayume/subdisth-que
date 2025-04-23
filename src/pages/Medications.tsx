@@ -21,12 +21,15 @@ const Medications = () => {
     fetchMedications();
   }, []);
 
+  // Ensure this function properly sets the dialog state
   const handleCreateMedication = () => {
+    console.log("Opening medication dialog for new medication");
     setSelectedMedication(null);
     setIsDialogOpen(true);
   };
 
   const handleEditMedication = (medication: Medication) => {
+    console.log("Opening medication dialog for editing", medication);
     setSelectedMedication(medication);
     setIsDialogOpen(true);
   };
