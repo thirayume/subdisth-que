@@ -1,10 +1,4 @@
 
-/**
- * ThemeProvider for Vite+React with Tailwind CSS dark mode.
- * This is a **no-op**.
- * There should be NO references to next-themes in this file or elsewhere.
- */
-
 import * as React from "react";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -14,5 +8,3 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
   return <>{children}</>;
 }
-
-// No re-exports, no next-themes usage.
