@@ -1,13 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
+import * as React from "react";
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
 
 export const usePatientsState = () => {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [patients, setPatients] = React.useState<Patient[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   const fetchPatients = async () => {
     try {
@@ -103,9 +103,9 @@ export const usePatientsState = () => {
   };
 
   // Initial data fetch and set up real-time subscription
-  useEffect(() => {
+  React.useEffect(() => {
     fetchPatients();
-    
+
     // Set up real-time subscription for patients
     const channel = supabase
       .channel('patients-state-changes')

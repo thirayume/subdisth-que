@@ -1,12 +1,12 @@
 
-import React, { useState } from 'react';
+import * as React from "react";
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
 
 export const usePatientsSearch = () => {
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchLoading, setSearchLoading] = React.useState(false);
+  const [searchError, setSearchError] = React.useState<string | null>(null);
 
   // Search patients by name, patient_id, or phone
   const searchPatients = async (searchTerm: string) => {
@@ -46,7 +46,7 @@ export const usePatientsSearch = () => {
         .select('*')
         .eq('phone', phoneNumber)
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) {
         if (error.code === 'PGRST116') {
