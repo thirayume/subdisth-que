@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
@@ -8,7 +8,7 @@ export const usePatientsActions = (
   patients: Patient[],
   updatePatientsState: (patients: Patient[]) => void
 ) => {
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionError, setActionError] = React.useState<string | null>(null);
 
   // Add a new patient
   const addPatient = async (patientData: Partial<Patient>) => {
