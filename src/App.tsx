@@ -39,7 +39,7 @@ const queryClient = new QueryClient({
 const App: React.FC = () => {
   return (
     <React.StrictMode>
-      {/* Wrapping everything in the local ThemeProvider (noop) */}
+      {/* Wrapping everything in our custom ThemeProvider */}
       <ThemeProvider>
         <BrowserRouter>
           <QueryClientProvider client={queryClient}>
