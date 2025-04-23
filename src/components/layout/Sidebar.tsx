@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import * as React from 'react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -21,14 +21,19 @@ import {
 import CreateQueueDialog from '@/components/queue/CreateQueueDialog';
 import { mockQueues } from '@/lib/mockData';
 
+// Add debug logging
+console.log("[DEBUG] Sidebar.tsx importing React:", React);
+
 interface SidebarProps {
   className?: string;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ className }) => {
-  const [expanded, setExpanded] = useState(true);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [createQueueDialogOpen, setCreateQueueDialogOpen] = useState(false);
+  console.log('[Sidebar] Component rendering');
+  
+  const [expanded, setExpanded] = React.useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
+  const [createQueueDialogOpen, setCreateQueueDialogOpen] = React.useState(false);
 
   const toggleSidebar = () => {
     setExpanded(!expanded);
