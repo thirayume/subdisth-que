@@ -172,6 +172,9 @@ function toast({ ...props }: Toast) {
   }
 }
 
+// Debug log for React reference
+console.log("[DEBUG] In use-toast.ts, React is:", React);
+
 // Fixed useToast implementation to properly use React hooks
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)

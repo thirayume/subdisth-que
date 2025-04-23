@@ -1,5 +1,5 @@
 
-import React from "react"
+import * as React from "react"
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
@@ -9,6 +9,9 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
+
+// Debug log for React reference
+console.log("[DEBUG] In toaster.tsx, React is:", React);
 
 export function Toaster() {
   const { toasts } = useToast()

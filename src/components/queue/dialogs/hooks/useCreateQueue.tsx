@@ -1,26 +1,23 @@
 
 import * as React from 'react';
-import { toast } from 'sonner';
 import { usePatientSearch } from './patient/usePatientSearch';
 import { usePatientSelection } from './patient/usePatientSelection';
-import { useQueueCreation } from './queue/useQueueCreation';
 import { useNewPatientCreation } from './patient/useNewPatientCreation';
+import { useQueueCreation } from './queue/useQueueCreation';
 
-// Add debug logging
-console.log("[DEBUG] useCreateQueue importing React:", React);
+// Debug log for React reference
+console.log("[DEBUG] In useCreateQueue.tsx, React is:", React);
 
-export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQueue: (queue: any) => void) => {
-  const {
-    phoneNumber,
-    setPhoneNumber,
-    isSearching,
-    matchedPatients,
-    showNewPatientForm,
-    handlePhoneSearch,
-    handleAddNewPatient,
-    resetPatientSearch
-  } = usePatientSearch();
+export const useCreateQueue = (
+  onOpenChange: (open: boolean) => void,
+  onCreateQueue: (queue: any) => void
+) => {
+  // Get patient search functionality
+  const { phoneNumber, setPhoneNumber, isSearching, searchPatients } = usePatientSearch();
+  const [matchedPatients, setMatchedPatients] = React.useState<any[]>([]);
+  const [showNewPatientForm, setShowNewPatientForm] = React.useState(false);
 
+  // Get patient selection functionality
   const {
     patientId,
     setPatientId,
@@ -35,6 +32,10 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     resetPatientSelection
   } = usePatientSelection();
 
+  // Get new patient creation functionality
+  const { createNewPatient } = useNewPatientCreation();
+
+  // Get queue creation functionality
   const {
     queueType,
     setQueueType,
@@ -50,67 +51,81 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     resetQueueCreation
   } = useQueueCreation();
 
-  const { createNewPatient } = useNewPatientCreation();
-
-  // Reset state when dialog is closed
+  // Reset all state
   const resetState = () => {
-    resetPatientSearch();
+    setPhoneNumber('');
+    setMatchedPatients([]);
+    setShowNewPatientForm(false);
     resetPatientSelection();
     resetQueueCreation();
   };
 
-  // Handle patient selection
-  const handleSelectPatientWrapper = (id: string) => {
+  // Handle phone search
+  const handlePhoneSearch = async () => {
+    if (phoneNumber) {
+      const patients = await searchPatients(phoneNumber);
+      setMatchedPatients(patients);
+      
+      // If no patients found, show new patient form
+      if (patients.length === 0) {
+        setShowNewPatientForm(true);
+      } else {
+        setShowNewPatientForm(false);
+      }
+    }
+  };
+
+  // Handle adding a new patient
+  const handleAddNewPatient = () => {
+    setShowNewPatientForm(true);
+    setPatientId('');  // Clear any selected patient
+  };
+
+  // Handle selecting a patient
+  const handleSelectPatient = (id: string) => {
+    setShowNewPatientForm(false);
+    setPatientId(id);
     handleSelectPatient(id, matchedPatients);
   };
 
-  // Handle queue creation
+  // Handle creating a queue
   const handleCreateQueue = async () => {
-    if (!patientId && !newPatientName) {
-      toast.error('กรุณาเลือกผู้ป่วยหรือกรอกชื่อผู้ป่วยใหม่');
-      return;
-    }
-
-    let selectedPatientId = patientId;
-    let patientNameToUse = selectedPatientName;
-    let patientPhoneToUse = selectedPatientPhone;
-
     if (showNewPatientForm && newPatientName) {
+      // Create new patient first
       const newPatient = await createNewPatient(newPatientName, phoneNumber);
-      
       if (newPatient) {
-        selectedPatientId = newPatient.id;
-        patientNameToUse = newPatientName;
-        patientPhoneToUse = phoneNumber;
-      } else {
-        return; // Don't proceed if patient creation failed
+        // Create queue for new patient
+        await createQueue(
+          newPatient.id,
+          newPatient.name,
+          phoneNumber,
+          updateFinalPatientInfo,
+          onCreateQueue,
+          onOpenChange
+        );
       }
+    } else if (patientId) {
+      // Create queue for existing patient
+      await createQueue(
+        patientId,
+        selectedPatientName,
+        selectedPatientPhone,
+        updateFinalPatientInfo,
+        onCreateQueue,
+        onOpenChange
+      );
     }
-
-    await createQueue(
-      selectedPatientId, 
-      patientNameToUse, 
-      patientPhoneToUse,
-      updateFinalPatientInfo,
-      onCreateQueue,
-      onOpenChange
-    );
   };
 
   return {
-    // Patient search
     phoneNumber,
     setPhoneNumber,
     isSearching,
     matchedPatients,
     showNewPatientForm,
-    
-    // Patient selection
     newPatientName,
     setNewPatientName,
     patientId,
-    
-    // Queue creation
     queueType,
     setQueueType,
     notes,
@@ -120,21 +135,13 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     createdQueueNumber,
     createdQueueType,
     createdPurpose,
-    
-    // Patient information
     finalPatientName,
     finalPatientPhone,
-    
-    // Constants
     queueTypePurposes,
-    
-    // Handlers
     handlePhoneSearch,
     handleAddNewPatient,
-    handleSelectPatient: handleSelectPatientWrapper,
+    handleSelectPatient,
     handleCreateQueue,
-    
-    // State management
     resetState
   };
 };

@@ -45,7 +45,7 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <React.StrictMode>
+    <React.Fragment>
       <ThemeProvider>
         <BrowserRouter>
           <QueryClientProvider client={queryClient}>
@@ -68,7 +68,7 @@ const App: React.FC = () => {
           </QueryClientProvider>
         </BrowserRouter>
       </ThemeProvider>
-    </React.StrictMode>
+    </React.Fragment>
   );
 };
 
