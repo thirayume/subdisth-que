@@ -1,7 +1,10 @@
 
-import { useState, useEffect } from 'react';
+import * as React from 'react';
 import { toast } from 'sonner';
 import { useOfflineStatus } from './useOfflineStatus';
+
+// Debug log for React reference
+console.log("[DEBUG] In useSyncedStorage.ts, React is:", React);
 
 type StorageType = 'localStorage' | 'sessionStorage';
 
@@ -30,7 +33,7 @@ export function useSyncedStorage<T>(
   
   const storage = window[storageType];
   const isOffline = useOfflineStatus();
-  const [value, setValue] = useState<T>(() => {
+  const [value, setValue] = React.useState<T>(() => {
     try {
       const item = storage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
@@ -40,10 +43,10 @@ export function useSyncedStorage<T>(
     }
   });
   
-  const [pendingSync, setPendingSync] = useState<boolean>(false);
+  const [pendingSync, setPendingSync] = React.useState<boolean>(false);
   
   // Save to storage whenever value changes
-  useEffect(() => {
+  React.useEffect(() => {
     try {
       storage.setItem(key, JSON.stringify(value));
       
@@ -56,7 +59,7 @@ export function useSyncedStorage<T>(
   }, [key, value, storage, isOffline, initialValue]);
   
   // Sync with server when coming back online
-  useEffect(() => {
+  React.useEffect(() => {
     if (!isOffline && pendingSync && onSync) {
       const syncData = async () => {
         try {
@@ -78,7 +81,7 @@ export function useSyncedStorage<T>(
   }, [isOffline, pendingSync, onSync, value, showToasts]);
   
   // Setup periodic sync attempts when offline
-  useEffect(() => {
+  React.useEffect(() => {
     if (onSync && pendingSync) {
       const interval = setInterval(() => {
         if (!isOffline) {

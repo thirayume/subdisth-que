@@ -1,5 +1,5 @@
 
-import React from 'react';
+import * as React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
@@ -26,7 +26,8 @@ if (!rootElement) throw new Error('Root element not found');
 // Create a root and render the app
 const root = ReactDOM.createRoot(rootElement);
 root.render(
-  <React.StrictMode>
+  // Using Fragment instead of StrictMode to avoid potential issues
+  <React.Fragment>
     <App />
-  </React.StrictMode>
+  </React.Fragment>
 );

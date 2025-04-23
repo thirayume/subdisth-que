@@ -1,11 +1,11 @@
 
-import { useState, useEffect } from 'react';
+import * as React from 'react';
 import { toast } from 'sonner';
 
 export const useOfflineStatus = () => {
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [isOffline, setIsOffline] = React.useState(!navigator.onLine);
   
-  useEffect(() => {
+  React.useEffect(() => {
     const handleOnline = () => {
       setIsOffline(false);
       toast.success('การเชื่อมต่อกลับมาแล้ว คุณออนไลน์อยู่');
