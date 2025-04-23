@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 // All next-themes and ThemeProvider references have been removed for compatibility.
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import OfflineIndicator from "@/components/ui/OfflineIndicator";
 import Index from "./pages/Index";
 import QueueBoard from "./pages/QueueBoard";
@@ -40,27 +41,29 @@ const queryClient = new QueryClient({
 const App: React.FC = () => {
   return (
     <React.StrictMode>
-      {/* ThemeProvider and TooltipProvider have been removed */}
-      <BrowserRouter>
-        <QueryClientProvider client={queryClient}>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/queue-management" element={<QueueManagement />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/queue-board" element={<QueueBoard />} />
-            <Route path="/patients" element={<Patients />} />
-            <Route path="/medications" element={<Medications />} />
-            <Route path="/appointments" element={<Appointments />} />
-            <Route path="/history" element={<QueueHistory />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/queue-ticket/:id" element={<QueueTicket />} />
-            <Route path="/patient-portal" element={<PatientPortal />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Toaster />
-          <OfflineIndicator />
-        </QueryClientProvider>
-      </BrowserRouter>
+      {/* Wrapping everything in the local ThemeProvider (noop) */}
+      <ThemeProvider>
+        <BrowserRouter>
+          <QueryClientProvider client={queryClient}>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/queue-management" element={<QueueManagement />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/queue-board" element={<QueueBoard />} />
+              <Route path="/patients" element={<Patients />} />
+              <Route path="/medications" element={<Medications />} />
+              <Route path="/appointments" element={<Appointments />} />
+              <Route path="/history" element={<QueueHistory />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/queue-ticket/:id" element={<QueueTicket />} />
+              <Route path="/patient-portal" element={<PatientPortal />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Toaster />
+            <OfflineIndicator />
+          </QueryClientProvider>
+        </BrowserRouter>
+      </ThemeProvider>
     </React.StrictMode>
   );
 };
