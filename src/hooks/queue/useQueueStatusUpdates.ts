@@ -1,8 +1,11 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Queue, QueueStatus, QueueType } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
+
+// Add debug logging
+console.log("[DEBUG] useQueueStatusUpdates importing React:", React);
 
 export const useQueueStatusUpdates = (updateQueues: (newQueue: Queue) => void) => {
   const [error, setError] = useState<string | null>(null);
