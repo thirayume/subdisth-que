@@ -1,13 +1,10 @@
 
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { format } from 'date-fns';
 import { Appointment, Patient } from '@/integrations/supabase/schema';
-import { appointmentFormSchema } from './schema';
 import { AppointmentFormValues } from './types';
 import { AppointmentForm } from './AppointmentForm';
+import { useAppointmentForm } from '@/hooks/appointments/useAppointmentForm';
 
 interface EditAppointmentDialogProps {
   open: boolean;
@@ -22,31 +19,7 @@ const EditAppointmentDialog = ({
   appointment,
   onSubmit,
 }: EditAppointmentDialogProps) => {
-  const form = useForm<AppointmentFormValues>({
-    resolver: zodResolver(appointmentFormSchema),
-    defaultValues: {
-      patient_id: '',
-      date: '',
-      time: '',
-      purpose: '',
-      notes: '',
-      status: 'SCHEDULED',
-    },
-  });
-
-  React.useEffect(() => {
-    if (appointment) {
-      const appointmentDate = new Date(appointment.date);
-      form.reset({
-        patient_id: appointment.patient_id,
-        date: format(appointmentDate, 'yyyy-MM-dd'),
-        time: format(appointmentDate, 'HH:mm'),
-        purpose: appointment.purpose,
-        notes: appointment.notes || '',
-        status: appointment.status,
-      });
-    }
-  }, [appointment, form]);
+  const form = useAppointmentForm(appointment);
 
   const handlePatientSelect = (patient: Patient) => {
     form.setValue('patient_id', patient.id);
