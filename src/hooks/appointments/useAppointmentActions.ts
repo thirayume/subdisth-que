@@ -1,52 +1,13 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { Appointment, AppointmentStatus } from '@/integrations/supabase/schema';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
-export const useAppointments = () => {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Fetch all appointments
-  const fetchAppointments = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { data, error } = await supabase
-        .from('appointments')
-        .select('*')
-        .order('date', { ascending: true });
-
-      if (error) {
-        throw error;
-      }
-
-      // Cast the data to ensure proper type conversion
-      setAppointments((data || []).map(item => ({
-        ...item,
-        status: item.status as AppointmentStatus
-      })));
-    } catch (err: any) {
-      console.error('Error fetching appointments:', err);
-      setError(err.message || 'Failed to fetch appointments');
-      toast({
-        title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถดึงข้อมูลการนัดหมายได้',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Add a new appointment
+export const useAppointmentActions = (
+  setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>
+) => {
   const addAppointment = async (appointmentData: Partial<Appointment>) => {
     try {
-      setError(null);
-      
       if (!appointmentData.patient_id || !appointmentData.date || !appointmentData.purpose) {
         throw new Error('Missing required appointment data');
       }
@@ -67,7 +28,6 @@ export const useAppointments = () => {
       }
 
       if (data && data.length > 0) {
-        // Cast the returned data to ensure proper type conversion
         const newAppointment: Appointment = {
           ...data[0],
           status: data[0].status as AppointmentStatus
@@ -84,9 +44,9 @@ export const useAppointments = () => {
         
         return newAppointment;
       }
+      return null;
     } catch (err: any) {
       console.error('Error adding appointment:', err);
-      setError(err.message || 'Failed to add appointment');
       toast({
         title: 'เกิดข้อผิดพลาด',
         description: 'ไม่สามารถเพิ่มการนัดหมายได้',
@@ -96,11 +56,8 @@ export const useAppointments = () => {
     }
   };
 
-  // Update appointment
   const updateAppointment = async (id: string, appointmentData: Partial<Appointment>) => {
     try {
-      setError(null);
-      
       const { data, error } = await supabase
         .from('appointments')
         .update({
@@ -115,7 +72,6 @@ export const useAppointments = () => {
       }
 
       if (data && data.length > 0) {
-        // Cast the returned data to ensure proper type conversion
         const updatedAppointment: Appointment = {
           ...data[0],
           status: data[0].status as AppointmentStatus
@@ -132,9 +88,9 @@ export const useAppointments = () => {
         
         return updatedAppointment;
       }
+      return null;
     } catch (err: any) {
       console.error('Error updating appointment:', err);
-      setError(err.message || 'Failed to update appointment');
       toast({
         title: 'เกิดข้อผิดพลาด',
         description: 'ไม่สามารถอัปเดตการนัดหมายได้',
@@ -143,12 +99,9 @@ export const useAppointments = () => {
       return null;
     }
   };
-  
-  // Delete appointment
+
   const deleteAppointment = async (id: string) => {
     try {
-      setError(null);
-      
       const { error } = await supabase
         .from('appointments')
         .delete()
@@ -168,7 +121,6 @@ export const useAppointments = () => {
       return true;
     } catch (err: any) {
       console.error('Error deleting appointment:', err);
-      setError(err.message || 'Failed to delete appointment');
       toast({
         title: 'เกิดข้อผิดพลาด',
         description: 'ไม่สามารถลบการนัดหมายได้',
@@ -177,56 +129,10 @@ export const useAppointments = () => {
       return false;
     }
   };
-  
-  // Get appointments by date range
-  const getAppointmentsByDateRange = async (startDate: Date, endDate: Date) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const { data, error } = await supabase
-        .from('appointments')
-        .select('*')
-        .gte('date', startDate.toISOString())
-        .lte('date', endDate.toISOString())
-        .order('date', { ascending: true });
-
-      if (error) {
-        throw error;
-      }
-
-      // Cast the data to ensure proper type conversion
-      return (data || []).map(item => ({
-        ...item,
-        status: item.status as AppointmentStatus
-      }));
-    } catch (err: any) {
-      console.error('Error fetching appointments by date range:', err);
-      setError(err.message || 'Failed to fetch appointments');
-      toast({
-        title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถดึงข้อมูลการนัดหมายได้',
-        variant: 'destructive'
-      });
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Initial data fetch
-  useEffect(() => {
-    fetchAppointments();
-  }, []);
 
   return {
-    appointments,
-    loading,
-    error,
-    fetchAppointments,
     addAppointment,
     updateAppointment,
-    deleteAppointment,
-    getAppointmentsByDateRange
+    deleteAppointment
   };
 };
