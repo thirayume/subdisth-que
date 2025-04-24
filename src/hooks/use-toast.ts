@@ -1,4 +1,3 @@
-
 import * as React from "react"
 
 import type {
@@ -175,8 +174,8 @@ function toast({ ...props }: Toast) {
   }
 }
 
-// Fixed useToast implementation to properly use React hooks
 function useToast() {
+  // Explicitly use React.useState to avoid any ambiguity
   const [state, setState] = React.useState<State>(memoryState)
 
   React.useEffect(() => {
@@ -187,7 +186,7 @@ function useToast() {
         listeners.splice(index, 1)
       }
     }
-  }, [state])
+  }, [])
 
   return {
     ...state,

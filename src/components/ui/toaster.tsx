@@ -1,4 +1,6 @@
 
+"use client"
+
 import * as React from "react"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -15,9 +17,11 @@ console.log("[DEBUG] In toaster.tsx, React is:", React);
 
 export function Toaster() {
   const { toasts } = useToast()
+  
+  console.log("[DEBUG] Toaster rendering with toasts:", toasts);
 
   return (
-    <ToastProvider>
+    <ToastProvider swipeDirection="right">
       {toasts.map(function ({ id, title, description, action, ...props }) {
         return (
           <Toast key={id} {...props}>

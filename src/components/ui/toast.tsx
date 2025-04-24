@@ -1,4 +1,6 @@
 
+"use client"
+
 import * as React from "react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -9,7 +11,16 @@ import { cn } from "@/lib/utils"
 // Debug log for React reference 
 console.log("[DEBUG] In toast.tsx, React is:", React);
 
-const ToastProvider = ToastPrimitives.Provider
+// Explicitly create ToastProvider with React reference
+const ToastProvider = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Provider>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Provider>
+>(({ children, ...props }, ref) => (
+  <ToastPrimitives.Provider ref={ref} {...props}>
+    {children}
+  </ToastPrimitives.Provider>
+))
+ToastProvider.displayName = "ToastProvider"
 
 const ToastViewport = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Viewport>,
