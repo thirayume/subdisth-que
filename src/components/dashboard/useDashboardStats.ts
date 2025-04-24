@@ -1,16 +1,16 @@
 
-import { useState, useEffect } from 'react';
+import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Queue } from '@/integrations/supabase/schema';
 
 export const useDashboardStats = (completedQueues: Queue[]) => {
-  const [todayStats, setTodayStats] = useState({
+  const [todayStats, setTodayStats] = React.useState({
     avgWaitTime: 0,
     avgServiceTime: 0
   });
   
   // Fetch today's statistics
-  useEffect(() => {
+  React.useEffect(() => {
     const fetchTodayStats = async () => {
       try {
         // Get today's date at midnight
