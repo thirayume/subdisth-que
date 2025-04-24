@@ -39,14 +39,15 @@ const MedicationsDialogContent: React.FC<MedicationsDialogContentProps> = ({
 
   return (
     <>
-      <MedicationsDialogHeader isEditing={isEditing} />
+      <MedicationsDialogHeader isEditing={isEditing} medication={medication} />
       <MedicationsDialogForm
         medication={medication}
         medications={medications} 
         isEditing={isEditing}
         open={open}
-        onSubmit={handleSubmit}
-        onCancel={() => onOpenChange(false)}
+        onOpenChange={onOpenChange}
+        addMedication={addMedication}
+        updateMedication={updateMedication}
       />
     </>
   );

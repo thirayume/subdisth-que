@@ -12,13 +12,8 @@ import {
   ToastViewport,
 } from "@/components/ui/toast"
 
-// Debug log for React reference
-console.log("[DEBUG] In toaster.tsx, React is:", React);
-
 export function Toaster() {
   const { toasts } = useToast() || { toasts: [] };
-  
-  console.log("[DEBUG] Toaster rendering with toasts:", toasts);
 
   return (
     <ToastProvider swipeDirection="right">

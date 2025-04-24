@@ -18,9 +18,6 @@ import PatientPortal from "./pages/PatientPortal";
 import QueueManagement from "./pages/QueueManagement";
 import Analytics from "./pages/Analytics";
 
-// DEBUG: Log the React version and object reference
-console.log("[DEBUG] App.tsx React version:", React.version, React);
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -43,10 +40,6 @@ const App: React.FC = () => {
       console.log("[DEBUG] App component unmounted");
     };
   }, []);
-
-  // Check if React hooks are working
-  const [testState, setTestState] = React.useState("Working");
-  console.log("[DEBUG] React hooks test:", testState);
 
   return (
     <React.StrictMode>

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import * as React from 'react';
 import { Medication } from '@/integrations/supabase/schema';
 import MedicationsDialogHeader from './MedicationsDialogHeader';
 import MedicationsDialogForm from './MedicationsDialogForm';
