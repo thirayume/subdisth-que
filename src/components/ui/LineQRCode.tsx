@@ -2,6 +2,7 @@
 import React from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { QueueType } from '@/integrations/supabase/schema';
+import { BASE_URL } from '@/config/constants';
 
 interface LineQRCodeProps {
   queueNumber: number;
@@ -16,9 +17,7 @@ const LineQRCode: React.FC<LineQRCodeProps> = ({
   size = 150,
   className 
 }) => {
-  // In a real implementation, this would be a LINE Bot deep link
-  // For now, we'll use a link to our patient portal
-  const patientPortalUrl = `${window.location.origin}/patient-portal?queue=${queueNumber}${queueType ? `&type=${queueType}` : ''}`;
+  const patientPortalUrl = `${BASE_URL}/patient-portal?queue=${queueNumber}${queueType ? `&type=${queueType}` : ''}`;
   
   return (
     <div className={`flex flex-col items-center ${className || ''}`}>
