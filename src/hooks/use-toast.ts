@@ -6,6 +6,9 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
+// Debug log for React reference
+console.log("[DEBUG] In use-toast.ts, React is:", React);
+
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
 
@@ -171,9 +174,6 @@ function toast({ ...props }: Toast) {
     update,
   }
 }
-
-// Debug log for React reference
-console.log("[DEBUG] In use-toast.ts, React is:", React);
 
 // Fixed useToast implementation to properly use React hooks
 function useToast() {

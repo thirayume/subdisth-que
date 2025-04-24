@@ -24,11 +24,11 @@ export const useCreateQueue = (
   } = usePatientSearch();
   
   const [matchedPatients, setMatchedPatients] = React.useState<any[]>([]);
-  const [showNewPatientForm, setShowNewPatientFormLocal] = React.useState(false);
+  const [localShowNewPatientForm, setLocalShowNewPatientForm] = React.useState(false);
 
   React.useEffect(() => {
     setMatchedPatients(foundPatients || []);
-    setShowNewPatientFormLocal(showNewForm);
+    setLocalShowNewPatientForm(showNewForm);
   }, [foundPatients, showNewForm]);
 
   // Get patient selection functionality
@@ -69,7 +69,7 @@ export const useCreateQueue = (
   const resetState = () => {
     setPhoneNumber('');
     setMatchedPatients([]);
-    setShowNewPatientFormLocal(false);
+    setLocalShowNewPatientForm(false);
     setShowNewPatientForm(false);
     resetPatientSelection();
     resetQueueCreation();
@@ -84,10 +84,10 @@ export const useCreateQueue = (
       
       // If no patients found, show new patient form
       if (patients.length === 0) {
-        setShowNewPatientFormLocal(true);
+        setLocalShowNewPatientForm(true);
         setShowNewPatientForm(true);
       } else {
-        setShowNewPatientFormLocal(false);
+        setLocalShowNewPatientForm(false);
         setShowNewPatientForm(false);
       }
     }
@@ -95,14 +95,14 @@ export const useCreateQueue = (
 
   // Handle adding a new patient
   const handleAddNewPatient = () => {
-    setShowNewPatientFormLocal(true);
+    setLocalShowNewPatientForm(true);
     setShowNewPatientForm(true);
     setPatientId('');  // Clear any selected patient
   };
 
   // Handle selecting a patient
   const handleSelectPatient = (id: string) => {
-    setShowNewPatientFormLocal(false);
+    setLocalShowNewPatientForm(false);
     setShowNewPatientForm(false);
     setPatientId(id);
     selectPatientFromList(id, matchedPatients);
@@ -110,7 +110,7 @@ export const useCreateQueue = (
 
   // Handle creating a queue
   const handleCreateQueue = async () => {
-    if (showNewPatientForm && newPatientName) {
+    if (localShowNewPatientForm && newPatientName) {
       // Create new patient first
       const newPatient = await createNewPatient(newPatientName, phoneNumber);
       if (newPatient) {
@@ -142,7 +142,7 @@ export const useCreateQueue = (
     setPhoneNumber,
     isSearching,
     matchedPatients,
-    showNewPatientForm: showNewPatientFormLocal,
+    showNewPatientForm: localShowNewPatientForm,
     newPatientName,
     setNewPatientName,
     patientId,
