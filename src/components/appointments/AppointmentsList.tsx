@@ -1,11 +1,11 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Appointment, AppointmentStatus } from '@/integrations/supabase/schema';
 import { useAppointments } from '@/hooks/appointments/useAppointments';
 import { usePatients } from '@/hooks/usePatients';
 import AppointmentItem from './AppointmentItem';
-import EditAppointmentDialog, { AppointmentFormValues } from './EditAppointmentDialog';
+import EditAppointmentDialog from './edit-dialog/EditAppointmentDialog';
+import { AppointmentFormValues } from './edit-dialog/types';
 import DeleteAppointmentDialog from './DeleteAppointmentDialog';
 
 interface AppointmentsListProps {
