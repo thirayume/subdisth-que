@@ -63,14 +63,14 @@ export const useCreateQueue = (
   } = useQueueCreation();
 
   // Reset all state
-  const resetState = () => {
+  const resetState = React.useCallback(() => {
     setPhoneNumber('');
     setMatchedPatients([]);
     setLocalShowNewPatientForm(false);
     setShowNewPatientForm(false);
     resetPatientSelection();
     resetQueueCreation();
-  };
+  }, [setPhoneNumber, setShowNewPatientForm, resetPatientSelection, resetQueueCreation]);
 
   // Handle phone search
   const handlePhoneSearch = async () => {
