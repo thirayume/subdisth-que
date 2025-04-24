@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Medication } from '@/integrations/supabase/schema';
 import MedicationsDialogHeader from './MedicationsDialogHeader';
 import MedicationsDialogForm from './MedicationsDialogForm';
@@ -37,6 +37,7 @@ const MedicationsDialogController: React.FC<MedicationsDialogControllerProps> = 
         medication={medication}
         isEditing={isEditing}
         medications={medications || []}
+        open={open}
         onOpenChange={onOpenChange}
         addMedication={addMedication}
         updateMedication={updateMedication}

@@ -1,12 +1,14 @@
 
 import * as React from 'react';
 import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Medication } from '@/integrations/supabase/schema';
 
 interface MedicationsDialogHeaderProps {
   isEditing: boolean;
+  medication: Medication | null;
 }
 
-const MedicationsDialogHeader: React.FC<MedicationsDialogHeaderProps> = ({ isEditing }) => (
+const MedicationsDialogHeader: React.FC<MedicationsDialogHeaderProps> = ({ isEditing, medication }) => (
   <DialogHeader>
     <DialogTitle>
       {isEditing ? 'แก้ไขรายการยา' : 'เพิ่มรายการยาใหม่'}

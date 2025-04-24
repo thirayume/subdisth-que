@@ -20,8 +20,9 @@ interface MedicationsDialogFormProps {
   medications: Medication[];
   isEditing: boolean;
   open: boolean;
-  onSubmit: (values: MedicationFormValues) => Promise<void>;
-  onCancel: () => void;
+  onOpenChange: (open: boolean) => void;
+  addMedication: (data: any) => Promise<any>;
+  updateMedication: (id: string, data: any) => Promise<any>;
 }
 
 const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
@@ -29,8 +30,9 @@ const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
   medications,
   isEditing,
   open,
-  onSubmit,
-  onCancel
+  onOpenChange,
+  addMedication,
+  updateMedication
 }) => {
   const { 
     newUnitInput,
@@ -41,9 +43,26 @@ const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
     handleAddNewUnit 
   } = useUnitOptions(medications);
 
-  const { form, submitHandler } = useMedicationForm(medication, onSubmit, open);
+  const handleSubmit = async (values: MedicationFormValues) => {
+    try {
+      if (isEditing && medication) {
+        await updateMedication(medication.id, values);
+      } else {
+        await addMedication(values);
+      }
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error saving medication:', error);
+    }
+  };
+
+  const { form, submitHandler } = useMedicationForm(medication, handleSubmit, open);
 
   const handleAddUnit = () => handleAddNewUnit(value => form.setValue('unit', value));
+
+  const handleCancel = () => {
+    onOpenChange(false);
+  };
 
   return (
     <Form {...form}>
@@ -64,7 +83,7 @@ const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
         />
         <StockFields control={form.control} />
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" onClick={handleCancel}>
             ยกเลิก
           </Button>
           <Button type="submit">บันทึก</Button>
