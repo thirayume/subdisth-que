@@ -14,6 +14,8 @@ interface OfflineIndicatorProps {
 const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({ className }) => {
   const isOffline = useOfflineStatus();
   
+  console.log("[DEBUG] OfflineIndicator - isOffline:", isOffline);
+  
   if (!isOffline) return null;
   
   return (

@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -11,16 +10,7 @@ import { cn } from "@/lib/utils"
 // Debug log for React reference 
 console.log("[DEBUG] In toast.tsx, React is:", React);
 
-// Explicitly create ToastProvider with React reference
-const ToastProvider = React.forwardRef<
-  React.ElementRef<typeof ToastPrimitives.Provider>,
-  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Provider>
->(({ children, ...props }, ref) => (
-  <ToastPrimitives.Provider ref={ref} {...props}>
-    {children}
-  </ToastPrimitives.Provider>
-))
-ToastProvider.displayName = "ToastProvider"
+const ToastProvider = ToastPrimitives.Provider
 
 const ToastViewport = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Viewport>,

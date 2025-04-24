@@ -3,6 +3,7 @@ import * as React from 'react';
 import { toast } from 'sonner';
 
 export const useOfflineStatus = () => {
+  // Explicitly using React.useState to prevent any ambiguity
   const [isOffline, setIsOffline] = React.useState(!navigator.onLine);
   
   React.useEffect(() => {

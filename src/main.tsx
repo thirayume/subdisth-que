@@ -6,7 +6,7 @@ import './index.css';
 
 // Debug log
 console.log("[DEBUG] In main.tsx, React is:", React);
-console.log("[DEBUG] ReactDOM version:", ReactDOM.version);
+console.log("[DEBUG] ReactDOM:", ReactDOM);
 
 // Register service worker for offline support
 if ('serviceWorker' in navigator) {
