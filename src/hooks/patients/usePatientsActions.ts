@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/integrations/supabase/schema';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 export const usePatientsActions = (
   patients: Patient[],
@@ -40,13 +40,20 @@ export const usePatientsActions = (
 
       if (data && data.length > 0) {
         updatePatientsState([data[0], ...patients]);
-        toast.success(`เพิ่มข้อมูลผู้ป่วย ${patientData.name} เรียบร้อยแล้ว`);
+        toast({
+          title: "Success",
+          description: `เพิ่มข้อมูลผู้ป่วย ${patientData.name} เรียบร้อยแล้ว`
+        });
         return data[0];
       }
     } catch (err: any) {
       console.error('Error adding patient:', err);
       setActionError(err.message || 'Failed to add patient');
-      toast.error('ไม่สามารถเพิ่มข้อมูลผู้ป่วยได้');
+      toast({
+        title: "Error",
+        description: 'ไม่สามารถเพิ่มข้อมูลผู้ป่วยได้',
+        variant: "destructive"
+      });
       return null;
     }
   };
@@ -71,13 +78,20 @@ export const usePatientsActions = (
           patient.id === id ? { ...patient, ...data[0] } : patient
         );
         updatePatientsState(updatedPatients);
-        toast.success(`อัปเดตข้อมูลผู้ป่วย ${patientData.name} เรียบร้อยแล้ว`);
+        toast({
+          title: "Success",
+          description: `อัปเดตข้อมูลผู้ป่วย ${patientData.name} เรียบร้อยแล้ว`
+        });
         return data[0];
       }
     } catch (err: any) {
       console.error('Error updating patient:', err);
       setActionError(err.message || 'Failed to update patient');
-      toast.error('ไม่สามารถอัปเดตข้อมูลผู้ป่วยได้');
+      toast({
+        title: "Error",
+        description: 'ไม่สามารถอัปเดตข้อมูลผู้ป่วยได้',
+        variant: "destructive"
+      });
       return null;
     }
   };
@@ -98,12 +112,19 @@ export const usePatientsActions = (
 
       const filteredPatients = patients.filter(patient => patient.id !== id);
       updatePatientsState(filteredPatients);
-      toast.success('ลบข้อมูลผู้ป่วยเรียบร้อยแล้ว');
+      toast({
+        title: "Success",
+        description: 'ลบข้อมูลผู้ป่วยเรียบร้อยแล้ว'
+      });
       return true;
     } catch (err: any) {
       console.error('Error deleting patient:', err);
       setActionError(err.message || 'Failed to delete patient');
-      toast.error('ไม่สามารถลบข้อมูลผู้ป่วยได้');
+      toast({
+        title: "Error",
+        description: 'ไม่สามารถลบข้อมูลผู้ป่วยได้',
+        variant: "destructive"
+      });
       return false;
     }
   };
