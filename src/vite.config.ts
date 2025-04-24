@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => ({
       "react": path.resolve(__dirname, "node_modules/react"),
       "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
     },
-    dedupe: ['react', 'react-dom'] // Ensure React is deduped
+    dedupe: ['react', 'react-dom', '@radix-ui/react-toast', 'next-themes'] // Add next-themes to deduped list
   },
   build: {
     sourcemap: true,
@@ -66,4 +66,8 @@ export default defineConfig(({ mode }) => ({
       }
     }
   },
+  optimizeDeps: {
+    include: ['react', 'react-dom'],
+    force: true // Force dependency pre-bundling
+  }
 }));
