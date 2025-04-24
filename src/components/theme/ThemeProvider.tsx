@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { ThemeProvider as NextThemesProvider, useTheme as useNextTheme } from "next-themes";
 import type { ThemeProviderProps } from "next-themes";
 
 export type Theme = 'dark' | 'light' | 'system';
@@ -22,15 +22,16 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
 }
 
 export const useTheme = () => {
-  const context = React.useContext(NextThemesProvider);
+  // Use the built-in hook from next-themes
+  const { theme, setTheme } = useNextTheme();
   
-  if (!context) {
+  if (!theme) {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   
   return {
-    theme: context.theme as Theme,
-    setTheme: context.setTheme as (theme: Theme) => void
+    theme: theme as Theme,
+    setTheme: (newTheme: Theme) => setTheme(newTheme)
   };
 };
 
