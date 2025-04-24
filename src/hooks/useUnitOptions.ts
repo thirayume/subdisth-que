@@ -4,6 +4,9 @@ import { Medication } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
 
 export const useUnitOptions = (medications: Medication[] | null | undefined) => {
+  const [searchQuery, setSearchQuery] = React.useState('');
+
+  // Get unique units from medications
   const unitOptions = React.useMemo(() => {
     try {
       if (!medications || !Array.isArray(medications)) {
@@ -26,27 +29,40 @@ export const useUnitOptions = (medications: Medication[] | null | undefined) => 
     }
   }, [medications]);
 
+  // Filter units based on search query
+  const filteredUnits = React.useMemo(() => {
+    if (!searchQuery) return unitOptions;
+    return unitOptions.filter(unit => 
+      unit.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [unitOptions, searchQuery]);
+
   const handleAddNewUnit = (newUnit: string) => {
     try {
       if (!newUnit || newUnit.trim() === '') {
         toast.error('กรุณาระบุหน่วยยา');
-        return;
+        return false;
       }
 
       if (unitOptions.includes(newUnit.trim())) {
         toast.error('มีหน่วยยานี้อยู่แล้ว');
-        return;
+        return false;
       }
 
       toast.success(`เพิ่มหน่วยยา "${newUnit}" เรียบร้อยแล้ว`);
+      return true;
     } catch (error) {
       console.error('Error adding new unit:', error);
       toast.error('ไม่สามารถเพิ่มหน่วยยาได้');
+      return false;
     }
   };
 
   return {
     unitOptions,
-    handleAddNewUnit
+    filteredUnits,
+    searchQuery,
+    setSearchQuery,
+    handleAddNewUnit,
   };
 };
