@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { DirectionProvider } from '@radix-ui/react-direction';
 import Layout from '@/components/layout/Layout';
 import { useQueues } from '@/hooks/useQueues';
 import AnalyticsHeader from '@/components/analytics/AnalyticsHeader';
@@ -10,8 +11,10 @@ const Analytics = () => {
 
   return (
     <Layout>
-      <AnalyticsHeader />
-      <AnalyticsContainer queues={queues} sortQueues={sortQueues} />
+      <DirectionProvider dir="ltr">
+        <AnalyticsHeader />
+        <AnalyticsContainer queues={queues} sortQueues={sortQueues} />
+      </DirectionProvider>
     </Layout>
   );
 };

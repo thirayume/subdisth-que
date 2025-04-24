@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { DirectionProvider } from '@radix-ui/react-direction';
 import { Queue } from '@/integrations/supabase/schema';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -43,61 +44,63 @@ const QueueAnalytics: React.FC<QueueAnalyticsProps> = ({
   } = useAnalyticsData(completedQueues, waitingQueues);
 
   return (
-    <div className={cn("space-y-6", className)}>
-      <SummaryCards
-        waitingQueueCount={waitingQueues.length}
-        averageWaitTime={averageWaitTime}
-        averageServiceTime={averageServiceTime}
-        completedQueueCount={completedQueues.length}
-      />
-      
-      {shouldChangeAlgorithm && (
-        <AlgorithmRecommendation
-          shouldChangeAlgorithm={shouldChangeAlgorithm}
-          currentAlgorithm={currentAlgorithm}
-          recommendedAlgorithm={recommendedAlgorithm}
-          urgentCount={urgentCount}
-          elderlyCount={elderlyCount}
+    <DirectionProvider dir="ltr">
+      <div className={cn("space-y-6", className)}>
+        <SummaryCards
           waitingQueueCount={waitingQueues.length}
-          handleChangeAlgorithm={handleChangeAlgorithm}
+          averageWaitTime={averageWaitTime}
+          averageServiceTime={averageServiceTime}
+          completedQueueCount={completedQueues.length}
         />
-      )}
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>เวลารอเฉลี่ย</CardTitle>
-            <TabSelector timeFrame={timeFrame} setTimeFrame={setTimeFrame} />
-          </CardHeader>
-          <CardContent>
-            <WaitTimeChart data={waitTimeData} timeFrame={timeFrame} />
-          </CardContent>
-        </Card>
         
-        <Card>
-          <CardHeader>
-            <CardTitle>ปริมาณผู้มารับบริการ</CardTitle>
-            <TabSelector timeFrame={timeFrame} setTimeFrame={setTimeFrame} />
-          </CardHeader>
-          <CardContent>
-            <ThroughputChart data={throughputData} timeFrame={timeFrame} />
-          </CardContent>
-        </Card>
+        {shouldChangeAlgorithm && (
+          <AlgorithmRecommendation
+            shouldChangeAlgorithm={shouldChangeAlgorithm}
+            currentAlgorithm={currentAlgorithm}
+            recommendedAlgorithm={recommendedAlgorithm}
+            urgentCount={urgentCount}
+            elderlyCount={elderlyCount}
+            waitingQueueCount={waitingQueues.length}
+            handleChangeAlgorithm={handleChangeAlgorithm}
+          />
+        )}
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>เวลารอเฉลี่ย</CardTitle>
+              <TabSelector timeFrame={timeFrame} setTimeFrame={setTimeFrame} />
+            </CardHeader>
+            <CardContent>
+              <WaitTimeChart data={waitTimeData} timeFrame={timeFrame} />
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>ปริมาณผู้มารับบริการ</CardTitle>
+              <TabSelector timeFrame={timeFrame} setTimeFrame={setTimeFrame} />
+            </CardHeader>
+            <CardContent>
+              <ThroughputChart data={throughputData} timeFrame={timeFrame} />
+            </CardContent>
+          </Card>
+        </div>
+        
+        <Tabs defaultValue="composition" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>ลักษณะของคิว</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TabsContent value="composition" className="mt-0">
+                <QueueCompositionChart waitingQueues={waitingQueues} />
+              </TabsContent>
+            </CardContent>
+          </Card>
+        </Tabs>
       </div>
-      
-      <Tabs defaultValue="composition" className="space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>ลักษณะของคิว</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TabsContent value="composition" className="mt-0">
-              <QueueCompositionChart waitingQueues={waitingQueues} />
-            </TabsContent>
-          </CardContent>
-        </Card>
-      </Tabs>
-    </div>
+    </DirectionProvider>
   );
 };
 
