@@ -1,6 +1,6 @@
 
 import * as React from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 export const useOfflineStatus = () => {
   // Explicitly using React.useState to prevent any ambiguity
@@ -9,12 +9,19 @@ export const useOfflineStatus = () => {
   React.useEffect(() => {
     const handleOnline = () => {
       setIsOffline(false);
-      toast.success('การเชื่อมต่อกลับมาแล้ว คุณออนไลน์อยู่');
+      toast({
+        title: "Connected",
+        description: "การเชื่อมต่อกลับมาแล้ว คุณออนไลน์อยู่",
+      });
     };
     
     const handleOffline = () => {
       setIsOffline(true);
-      toast.error('คุณกำลังออฟไลน์ บางฟีเจอร์อาจไม่ทำงาน');
+      toast({
+        title: "Disconnected",
+        description: "คุณกำลังออฟไลน์ บางฟีเจอร์อาจไม่ทำงาน",
+        variant: "destructive"
+      });
     };
     
     window.addEventListener('online', handleOnline);

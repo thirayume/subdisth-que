@@ -1,86 +1,53 @@
 
+"use client";
+
 import * as React from "react";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { type ThemeProviderProps } from "next-themes/dist/types";
 
-type Theme = 'dark' | 'light' | 'system';
-
-// Create a proper context with default values
-export const ThemeContext = React.createContext<{
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-}>({
-  theme: 'system',
-  setTheme: () => null
-});
-
-/**
- * Custom theme provider that handles theme switching internally
- */
-export function ThemeProvider({ 
-  children 
-}: { 
-  children: React.ReactNode 
-}) {
-  const [theme, setTheme] = React.useState<Theme>('system');
-  
-  // Effect for initializing the theme
-  React.useEffect(() => {
-    // Check if theme preference exists in localStorage
-    const savedTheme = localStorage.getItem('theme') as Theme | null;
-    
-    if (savedTheme) {
-      handleThemeChange(savedTheme);
-    } else {
-      // Default to system preference
-      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      handleThemeChange(prefersDark ? 'dark' : 'light');
-    }
-    
-    // Listen for system preference changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleSystemThemeChange = (e: MediaQueryListEvent) => {
-      if (theme === 'system') {
-        document.documentElement.classList.toggle('dark', e.matches);
-      }
-    };
-    
-    mediaQuery.addEventListener('change', handleSystemThemeChange);
-    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
-  }, [theme]);
-  
-  // Function to handle theme changes
-  const handleThemeChange = React.useCallback((newTheme: Theme) => {
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    
-    if (newTheme === 'dark' || (newTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
-  
-  // Create the context value object only when dependencies change
-  const contextValue = React.useMemo(() => {
-    return {
-      theme,
-      setTheme: handleThemeChange
-    };
-  }, [theme, handleThemeChange]);
-  
+export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
+  // Export our own provider that uses NextThemesProvider internally
   return (
-    <ThemeContext.Provider value={contextValue}>
+    <NextThemesProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      {...props}
+    >
       {children}
-    </ThemeContext.Provider>
+    </NextThemesProvider>
   );
 }
 
 // Custom hook to use the theme
 export const useTheme = () => {
-  const context = React.useContext(ThemeContext);
-  
-  if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  
-  return context;
+  // We recreate the same API our original useTheme hook had
+  const { theme, setTheme } = React.useMemo(() => {
+    try {
+      // Dynamic import to avoid SSR issues
+      const { useTheme: useNextThemes } = require("next-themes");
+      const { theme, setTheme } = useNextThemes();
+      return { 
+        theme: theme as 'dark' | 'light' | 'system', 
+        setTheme: (t: 'dark' | 'light' | 'system') => setTheme(t) 
+      };
+    } catch (e) {
+      console.error("Error using next-themes:", e);
+      return { 
+        theme: 'system' as const, 
+        setTheme: () => null 
+      };
+    }
+  }, []);
+
+  return { theme, setTheme };
 };
+
+// Create a context for backwards compatibility
+export const ThemeContext = React.createContext<{
+  theme: 'dark' | 'light' | 'system';
+  setTheme: (theme: 'dark' | 'light' | 'system') => void;
+}>({
+  theme: 'system',
+  setTheme: () => null
+});

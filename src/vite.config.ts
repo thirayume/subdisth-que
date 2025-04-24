@@ -24,19 +24,27 @@ export default defineConfig(({ mode }) => ({
       // Force all React imports to resolve to the single root instance
       "react": path.resolve(__dirname, "node_modules/react"),
       "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+      // Also alias next-themes to ensure it uses the same React
+      "next-themes": path.resolve(__dirname, "node_modules/next-themes")
     },
     dedupe: ['react', 'react-dom', '@radix-ui/react-toast', 'next-themes'] // Add next-themes to deduped list
   },
   build: {
+    // Generate source maps for production
     sourcemap: true,
+    // Optimize chunk size
     chunkSizeWarningLimit: 1000,
+    // Minify configuration
     minify: 'terser',
     terserOptions: {
       compress: {
+        // Remove console logs in production
         drop_console: true,
+        // Remove debugger statements in production
         drop_debugger: true,
       },
     },
+    // Split chunks for better caching
     rollupOptions: {
       output: {
         manualChunks: {
@@ -44,7 +52,8 @@ export default defineConfig(({ mode }) => ({
             'react', 
             'react-dom', 
             'react-router-dom',
-            '@tanstack/react-query'
+            '@tanstack/react-query',
+            'next-themes'  // Add next-themes here
           ],
           ui: [
             '@radix-ui/react-accordion',
@@ -67,7 +76,7 @@ export default defineConfig(({ mode }) => ({
     }
   },
   optimizeDeps: {
-    include: ['react', 'react-dom'],
+    include: ['react', 'react-dom', 'next-themes'],
     force: true // Force dependency pre-bundling
   }
 }));
