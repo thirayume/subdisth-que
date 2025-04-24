@@ -24,8 +24,12 @@ export default defineConfig(({ mode }) => ({
       // Force all React imports to resolve to the single root instance
       "react": path.resolve(__dirname, "node_modules/react"),
       "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+      // Also alias next-themes to ensure it uses the same React
+      "next-themes": path.resolve(__dirname, "node_modules/next-themes"),
+      // Ensure sonner uses the same React
+      "sonner": path.resolve(__dirname, "node_modules/sonner")
     },
-    dedupe: ['react', 'react-dom'] // Ensure React is deduped
+    dedupe: ['react', 'react-dom', '@radix-ui/react-toast', 'next-themes', 'sonner'] // Ensure React is deduped
   },
   build: {
     // Generate source maps for production
@@ -50,7 +54,9 @@ export default defineConfig(({ mode }) => ({
             'react', 
             'react-dom', 
             'react-router-dom',
-            '@tanstack/react-query'
+            '@tanstack/react-query',
+            'next-themes',  // Add next-themes here
+            'sonner'        // Add sonner here
           ],
           ui: [
             '@radix-ui/react-accordion',
@@ -72,4 +78,8 @@ export default defineConfig(({ mode }) => ({
       }
     }
   },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'next-themes', 'sonner'],
+    force: true // Force dependency pre-bundling
+  }
 }));
