@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 
 // Add debug logging
 console.log("[DEBUG] usePatientSelection importing React:", React);

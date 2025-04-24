@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { usePatientSearch } from './patient/usePatientSearch';
 import { usePatientSelection } from './patient/usePatientSelection';
 import { useNewPatientCreation } from './patient/useNewPatientCreation';
@@ -17,11 +17,19 @@ export const useCreateQueue = (
     phoneNumber, 
     setPhoneNumber, 
     isSearching, 
-    handlePhoneSearch: searchPatientsByPhone 
+    handlePhoneSearch: searchPatientsByPhone,
+    matchedPatients: foundPatients,
+    showNewPatientForm: showNewForm,
+    setShowNewPatientForm
   } = usePatientSearch();
   
   const [matchedPatients, setMatchedPatients] = React.useState<any[]>([]);
-  const [showNewPatientForm, setShowNewPatientForm] = React.useState(false);
+  const [showNewPatientForm, setShowNewPatientFormLocal] = React.useState(false);
+
+  React.useEffect(() => {
+    setMatchedPatients(foundPatients || []);
+    setShowNewPatientFormLocal(showNewForm);
+  }, [foundPatients, showNewForm]);
 
   // Get patient selection functionality
   const {
@@ -61,6 +69,7 @@ export const useCreateQueue = (
   const resetState = () => {
     setPhoneNumber('');
     setMatchedPatients([]);
+    setShowNewPatientFormLocal(false);
     setShowNewPatientForm(false);
     resetPatientSelection();
     resetQueueCreation();
@@ -75,8 +84,10 @@ export const useCreateQueue = (
       
       // If no patients found, show new patient form
       if (patients.length === 0) {
+        setShowNewPatientFormLocal(true);
         setShowNewPatientForm(true);
       } else {
+        setShowNewPatientFormLocal(false);
         setShowNewPatientForm(false);
       }
     }
@@ -84,12 +95,14 @@ export const useCreateQueue = (
 
   // Handle adding a new patient
   const handleAddNewPatient = () => {
+    setShowNewPatientFormLocal(true);
     setShowNewPatientForm(true);
     setPatientId('');  // Clear any selected patient
   };
 
   // Handle selecting a patient
   const handleSelectPatient = (id: string) => {
+    setShowNewPatientFormLocal(false);
     setShowNewPatientForm(false);
     setPatientId(id);
     selectPatientFromList(id, matchedPatients);
@@ -129,7 +142,7 @@ export const useCreateQueue = (
     setPhoneNumber,
     isSearching,
     matchedPatients,
-    showNewPatientForm,
+    showNewPatientForm: showNewPatientFormLocal,
     newPatientName,
     setNewPatientName,
     patientId,
