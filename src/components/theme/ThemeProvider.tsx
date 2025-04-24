@@ -1,10 +1,12 @@
 
 import * as React from "react";
 
-// Create a context for theme management
+type Theme = 'dark' | 'light' | 'system';
+
+// Create a proper context with default values
 export const ThemeContext = React.createContext<{
-  theme: 'dark' | 'light' | 'system';
-  setTheme: (theme: 'dark' | 'light' | 'system') => void;
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
 }>({
   theme: 'system',
   setTheme: () => null
@@ -13,14 +15,19 @@ export const ThemeContext = React.createContext<{
 /**
  * Custom theme provider that handles theme switching internally
  */
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = React.useState<'dark' | 'light' | 'system'>('system');
+export function ThemeProvider({ 
+  children 
+}: { 
+  children: React.ReactNode 
+}) {
+  const [theme, setTheme] = React.useState<Theme>('system');
   
+  // Effect for initializing the theme
   React.useEffect(() => {
     console.log('[ThemeProvider]: Initializing theme provider');
     
     // Check if theme preference exists in localStorage
-    const savedTheme = localStorage.getItem('theme') as 'dark' | 'light' | 'system' | null;
+    const savedTheme = localStorage.getItem('theme') as Theme | null;
     
     if (savedTheme) {
       handleThemeChange(savedTheme);
@@ -42,7 +49,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
   }, [theme]);
   
-  const handleThemeChange = React.useCallback((newTheme: 'dark' | 'light' | 'system') => {
+  // Function to handle theme changes
+  const handleThemeChange = React.useCallback((newTheme: Theme) => {
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
     
@@ -53,6 +61,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
   
+  // Create the context value object only when dependencies change
   const contextValue = React.useMemo(() => {
     return {
       theme,
