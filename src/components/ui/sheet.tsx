@@ -1,7 +1,11 @@
+
 import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
 import * as React from "react"
+
+// Debug log for React reference
+console.log("[DEBUG] In sheet.tsx, React is:", React);
 
 import { cn } from "@/lib/utils"
 
@@ -128,4 +132,3 @@ export {
   Sheet, SheetClose,
   SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetOverlay, SheetPortal, SheetTitle, SheetTrigger
 }
-

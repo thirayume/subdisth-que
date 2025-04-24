@@ -7,6 +7,9 @@ import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
+// Debug log for React reference
+console.log("[DEBUG] In dialog.tsx, React is:", React);
+
 const Dialog = DialogPrimitive.Root
 
 const DialogTrigger = DialogPrimitive.Trigger

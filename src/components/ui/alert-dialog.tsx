@@ -1,5 +1,9 @@
+
 import * as React from "react"
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
+
+// Debug log for React reference
+console.log("[DEBUG] In alert-dialog.tsx, React is:", React);
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"

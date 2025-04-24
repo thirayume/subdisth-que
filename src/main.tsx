@@ -20,10 +20,11 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// Use createRoot API
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error('Root element not found');
 
-// Create a root and render the app
+// This is the crucial part - we ensure we're using React 18's createRoot API correctly
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
