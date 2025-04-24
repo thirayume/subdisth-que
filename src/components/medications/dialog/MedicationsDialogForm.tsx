@@ -15,7 +15,7 @@ import {
   StockFields 
 } from '../form-fields';
 
-interface MedicationsDialogFormProps {
+export interface MedicationsDialogFormProps {
   medication: Medication | null;
   medications: Medication[];
   isEditing: boolean;

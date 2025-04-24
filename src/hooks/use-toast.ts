@@ -1,9 +1,6 @@
 
 import * as React from "react";
 
-// Debug log for React reference
-console.log("[DEBUG] In hooks/use-toast.ts, React is:", React);
-
 const TOAST_LIMIT = 5;
 const TOAST_REMOVE_DELAY = 1000000;
 
@@ -155,7 +152,7 @@ function toast({ ...props }: Toast) {
   };
 }
 
-function useToast() {
+export function useToast() {
   const [state, setState] = React.useState<State>(memoryState);
 
   React.useEffect(() => {
@@ -185,4 +182,4 @@ toast.error = (title: string, options?: Toast) => {
 
 toast.dismiss = (toastId?: string) => dispatch({ type: actionTypes.DISMISS_TOAST, toastId });
 
-export { useToast, toast };
+export { toast };

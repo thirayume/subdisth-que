@@ -24,8 +24,6 @@ export function ThemeProvider({
   
   // Effect for initializing the theme
   React.useEffect(() => {
-    console.log('[ThemeProvider]: Initializing theme provider');
-    
     // Check if theme preference exists in localStorage
     const savedTheme = localStorage.getItem('theme') as Theme | null;
     

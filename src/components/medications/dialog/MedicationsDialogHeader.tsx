@@ -3,7 +3,7 @@ import * as React from 'react';
 import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Medication } from '@/integrations/supabase/schema';
 
-interface MedicationsDialogHeaderProps {
+export interface MedicationsDialogHeaderProps {
   isEditing: boolean;
   medication: Medication | null;
 }
