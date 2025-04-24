@@ -118,7 +118,7 @@ export const useQueueState = () => {
         };
         
         setQueues(prev => [newQueue, ...prev]);
-        toast.success(`เพิ่มคิวหมายเลข ${queueData.number} เรียบร้อยแ��้ว`);
+        toast.success(`เพิ่มคิวหมายเลข ${queueData.number} เรียบร้อยแล้ว`);
         return newQueue;
       }
     } catch (err: any) {
@@ -147,7 +147,7 @@ export const useQueueState = () => {
       .on('postgres_changes', 
           { event: '*', schema: 'public', table: 'queues' },
           (payload) => {
-            console.log('Queue state change detected:', payload);
+            console.log('Queue change detected:', payload);
             fetchQueues(); // Refresh all queues when changes occur
           }
       )
