@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useAppointments } from '@/hooks/useAppointments';
+import { useAppointments } from '@/hooks/appointments/useAppointments';
 import { usePatients } from '@/hooks/usePatients';
 import { AppointmentStatus } from '@/integrations/supabase/schema';
 

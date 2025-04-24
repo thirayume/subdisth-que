@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
-import { useAppointments } from '@/hooks/useAppointments';
+import { useAppointments } from '@/hooks/appointments/useAppointments';
 import { usePatients } from '@/hooks/usePatients';
 import AppointmentHeader from '@/components/appointments/AppointmentHeader';
 import AppointmentStats from '@/components/appointments/AppointmentStats';

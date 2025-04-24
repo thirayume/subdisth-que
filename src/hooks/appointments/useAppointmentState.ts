@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Appointment } from '@/integrations/supabase/schema';
+import { Appointment, AppointmentStatus } from '@/integrations/supabase/schema';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
@@ -25,7 +25,7 @@ export const useAppointmentState = () => {
 
       setAppointments((data || []).map(item => ({
         ...item,
-        status: item.status
+        status: item.status as AppointmentStatus
       })));
     } catch (err: any) {
       console.error('Error fetching appointments:', err);
