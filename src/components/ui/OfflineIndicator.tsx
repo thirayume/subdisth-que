@@ -1,11 +1,8 @@
 
-import * as React from 'react';
+import React from 'react';
 import { Wifi, WifiOff } from 'lucide-react';
 import { useOfflineStatus } from '@/hooks/useOfflineStatus';
 import { cn } from '@/lib/utils';
-
-// Debug log for React reference
-console.log("[DEBUG] In OfflineIndicator.tsx, React is:", React);
 
 interface OfflineIndicatorProps {
   className?: string;

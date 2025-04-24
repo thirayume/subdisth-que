@@ -19,20 +19,11 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
-      "react": path.resolve(__dirname, "node_modules/react"),
-      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
-      "next-themes": path.resolve(__dirname, "node_modules/next-themes"),
-      "sonner": path.resolve(__dirname, "node_modules/sonner")
     },
-    dedupe: ['react', 'react-dom', '@radix-ui/react-toast', 'next-themes', 'sonner']
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'next-themes', 'sonner'],
     force: true,
-    esbuildOptions: {
-      mainFields: ['module', 'main'],
-      resolveExtensions: ['.js', '.jsx', '.ts', '.tsx'],
-    }
   },
   build: {
     sourcemap: true,
@@ -45,7 +36,6 @@ export default defineConfig(({ mode }) => ({
       },
     },
     rollupOptions: {
-      external: [],
       output: {
         manualChunks: {
           vendor: [

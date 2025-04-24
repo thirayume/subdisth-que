@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -41,30 +42,28 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/queue-management" element={<QueueManagement />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/queue-board" element={<QueueBoard />} />
-              <Route path="/patients" element={<Patients />} />
-              <Route path="/medications" element={<Medications />} />
-              <Route path="/appointments" element={<Appointments />} />
-              <Route path="/history" element={<QueueHistory />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/queue-ticket/:id" element={<QueueTicket />} />
-              <Route path="/patient-portal" element={<PatientPortal />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Toaster />
-            <OfflineIndicator />
-          </BrowserRouter>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/queue-management" element={<QueueManagement />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/queue-board" element={<QueueBoard />} />
+            <Route path="/patients" element={<Patients />} />
+            <Route path="/medications" element={<Medications />} />
+            <Route path="/appointments" element={<Appointments />} />
+            <Route path="/history" element={<QueueHistory />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/queue-ticket/:id" element={<QueueTicket />} />
+            <Route path="/patient-portal" element={<PatientPortal />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster />
+          <OfflineIndicator />
+        </BrowserRouter>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 };
 

@@ -2,10 +2,10 @@
 "use client";
 
 import * as React from "react";
-import { ThemeProvider as NextThemesProvider, useTheme as useNextTheme } from "next-themes";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 import type { ThemeProviderProps } from "next-themes";
 
-type Theme = 'dark' | 'light' | 'system';
+export type Theme = 'dark' | 'light' | 'system';
 
 interface ThemeContextType {
   theme: Theme;
@@ -18,40 +18,43 @@ export const ThemeContext = React.createContext<ThemeContextType>({
 });
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  return (
-    <NextThemesProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-      {...props}
-    >
-      <ThemeProviderContent>
-        {children}
-      </ThemeProviderContent>
-    </NextThemesProvider>
-  );
-}
-
-const ThemeProviderContent: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { theme = 'system', setTheme } = useNextTheme();
+  const [mounted, setMounted] = React.useState(false);
+  const [currentTheme, setCurrentTheme] = React.useState<Theme>('system');
   
+  // Fix for hydration mismatch
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const value = React.useMemo(() => ({
-    theme: theme as Theme,
-    setTheme: (newTheme: Theme) => setTheme(newTheme),
-  }), [theme, setTheme]);
+    theme: currentTheme,
+    setTheme: (newTheme: Theme) => {
+      setCurrentTheme(newTheme);
+    }
+  }), [currentTheme]);
 
   return (
     <ThemeContext.Provider value={value}>
-      {children}
+      <NextThemesProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+        onValueChange={(theme) => setCurrentTheme(theme as Theme)}
+        {...props}
+      >
+        {children}
+      </NextThemesProvider>
     </ThemeContext.Provider>
   );
-};
+}
 
-export const useTheme = () => {
+export const useTheme = (): ThemeContextType => {
   const context = React.useContext(ThemeContext);
-  if (!context) {
+  
+  if (context === null || context === undefined) {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
+  
   return context;
 };
