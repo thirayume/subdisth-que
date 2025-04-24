@@ -20,10 +20,10 @@ export default defineConfig(({ mode }) => ({
   ].filter(Boolean),
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./"),
+      "@": path.resolve(__dirname, "./src"),
       // Force all React imports to resolve to the single root instance
-      "react": path.resolve(__dirname, "../node_modules/react"),
-      "react-dom": path.resolve(__dirname, "../node_modules/react-dom"),
+      "react": path.resolve(__dirname, "node_modules/react"),
+      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
     },
     dedupe: ['react', 'react-dom'] // Ensure React is deduped
   },
