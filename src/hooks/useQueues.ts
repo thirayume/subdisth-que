@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { Queue, QueueStatus } from '@/integrations/supabase/schema';
+import * as React from 'react';
+import { Queue, QueueStatus, QueueType } from '@/integrations/supabase/schema';
 import { useQueueState } from './queue/useQueueState';
 import { useQueueStatusUpdates } from './queue/useQueueStatusUpdates';
 import { useQueueAnnouncements } from './queue/useQueueAnnouncements';
@@ -35,10 +35,10 @@ export const useQueues = () => {
   } = useQueueAnnouncements();
   
   // Load algorithm and queue types from localStorage
-  const [queueAlgorithm, setQueueAlgorithm] = useState<QueueAlgorithmType>(QueueAlgorithmType.FIFO);
-  const [queueTypes, setQueueTypes] = useState<QueueTypeWithAlgorithm[]>([]);
+  const [queueAlgorithm, setQueueAlgorithm] = React.useState<QueueAlgorithmType>(QueueAlgorithmType.FIFO);
+  const [queueTypes, setQueueTypes] = React.useState<QueueTypeWithAlgorithm[]>([]);
   
-  useEffect(() => {
+  React.useEffect(() => {
     console.log('[useQueues] Loading queue algorithm and types');
     // Load algorithm from localStorage
     const savedAlgorithm = localStorage.getItem('queue_algorithm') as QueueAlgorithmType | null;

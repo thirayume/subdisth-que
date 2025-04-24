@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Queue, QueueStatus, QueueType } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
@@ -8,9 +8,9 @@ import { toast } from 'sonner';
 console.log("[DEBUG] useQueueState importing React:", React);
 
 export const useQueueState = () => {
-  const [queues, setQueues] = useState<Queue[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [queues, setQueues] = React.useState<Queue[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   // Helper: Get today's date in yyyy-mm-dd
   const getTodayDate = () => new Date().toISOString().slice(0,10);
@@ -133,14 +133,14 @@ export const useQueueState = () => {
   };
 
   // Update a queue in state
-  const updateQueueInState = useCallback((updatedQueue: Queue) => {
+  const updateQueueInState = React.useCallback((updatedQueue: Queue) => {
     setQueues(prevQueues => 
       prevQueues.map(queue => queue.id === updatedQueue.id ? updatedQueue : queue)
     );
   }, []);
 
   // Initial data fetch and set up real-time subscription
-  useEffect(() => {
+  React.useEffect(() => {
     console.log('[useQueueState] Initial mount, fetching queues');
     fetchQueues();
     

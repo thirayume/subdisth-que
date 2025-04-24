@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Queue, QueueStatus, QueueType } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 console.log("[DEBUG] useQueueStatusUpdates importing React:", React);
 
 export const useQueueStatusUpdates = (updateQueues: (newQueue: Queue) => void) => {
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
   
   // Update queue status
   const updateQueueStatus = async (id: string, status: QueueStatus) => {
