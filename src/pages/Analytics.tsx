@@ -1,5 +1,5 @@
 
-import React from 'react';
+import * as React from 'react';
 import { DirectionProvider } from '@radix-ui/react-direction';
 import Layout from '@/components/layout/Layout';
 import { useQueues } from '@/hooks/useQueues';

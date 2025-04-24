@@ -1,5 +1,5 @@
 
-import React from 'react';
+import * as React from 'react';
 import { DirectionProvider } from '@radix-ui/react-direction';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
