@@ -58,7 +58,11 @@ const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
 
   const { form, submitHandler } = useMedicationForm(medication, handleSubmit, open);
 
-  const handleAddUnit = () => handleAddNewUnit(value => form.setValue('unit', value));
+  const handleAddUnit = () => {
+    handleAddNewUnit(() => {
+      form.setValue('unit', newUnitInput.trim());
+    });
+  };
 
   const handleCancel = () => {
     onOpenChange(false);

@@ -31,7 +31,7 @@ const UnitField: React.FC<Props> = ({
   <FormField
     control={control}
     name="unit"
-    render={() => (
+    render={({ field }) => (
       <FormItem className="flex flex-col">
         <FormLabel>หน่วย</FormLabel>
         <FormControl>

@@ -31,16 +31,27 @@ export const usePatientMedications = (patientId: string) => {
       setLoading(true);
       setError(null);
 
-      // Use RPC function to get patient medications with type assertion
-      const { data, error: queryError } = await supabase.functions.invoke<any[]>("get_patient_medications", {
+      // Call the Supabase function with proper typing
+      const { data, error: queryError } = await supabase.functions.invoke<any>("get_patient_medications", {
         body: { p_patient_id: patientId }
       });
 
       if (queryError) throw queryError;
       
-      // Parse and set medications
-      const parsedData = Array.isArray(data) && data.length > 0 ? (data[0] || []) : [];
-      setMedications(parsedData as PatientMedication[] || []);
+      // Parse and set medications - safely handle the response structure
+      let parsedData: PatientMedication[] = [];
+      if (data && Array.isArray(data)) {
+        // If data is directly an array of medications
+        if (data.length > 0 && typeof data[0] === 'object' && 'id' in data[0]) {
+          parsedData = data as PatientMedication[];
+        } 
+        // If data is an array with a single item that contains the medications array
+        else if (data.length > 0 && Array.isArray(data[0])) {
+          parsedData = data[0] as PatientMedication[];
+        }
+      }
+      
+      setMedications(parsedData);
     } catch (err: any) {
       console.error('Error fetching patient medications:', err);
       setError(err.message);
@@ -52,8 +63,7 @@ export const usePatientMedications = (patientId: string) => {
 
   const addPatientMedication = async (medicationData: Omit<PatientMedication, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      // Use RPC function to add patient medication with type assertion
-      const { data, error } = await supabase.functions.invoke<string>("add_patient_medication", {
+      const { data, error } = await supabase.functions.invoke<any>("add_patient_medication", {
         body: { 
           p_patient_id: patientId,
           p_medication_id: medicationData.medication_id,
@@ -83,8 +93,7 @@ export const usePatientMedications = (patientId: string) => {
     medicationData: Partial<PatientMedication>
   ) => {
     try {
-      // Use RPC function to update patient medication with type assertion
-      const { data, error } = await supabase.functions.invoke<string>("update_patient_medication", {
+      const { data, error } = await supabase.functions.invoke<any>("update_patient_medication", {
         body: {
           p_id: id,
           p_medication_id: medicationData.medication_id,
@@ -111,8 +120,7 @@ export const usePatientMedications = (patientId: string) => {
 
   const deletePatientMedication = async (id: string) => {
     try {
-      // Use RPC function to delete patient medication with type assertion
-      const { error } = await supabase.functions.invoke<boolean>("delete_patient_medication", {
+      const { error } = await supabase.functions.invoke<any>("delete_patient_medication", {
         body: { p_id: id }
       });
 
@@ -131,7 +139,9 @@ export const usePatientMedications = (patientId: string) => {
 
   // Initial fetch on component mount
   useEffect(() => {
-    fetchPatientMedications();
+    if (patientId) {
+      fetchPatientMedications();
+    }
   }, [patientId]);
 
   return {

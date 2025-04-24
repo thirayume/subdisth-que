@@ -44,12 +44,13 @@ const UnitPopover: React.FC<UnitPopoverProps> = ({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
+      <PopoverContent className="w-full p-0" align="start">
         <Command>
           <CommandInput
             placeholder="ค้นหาหรือเพิ่มหน่วยใหม่..."
             value={newUnitInput}
             onValueChange={setNewUnitInput}
+            autoFocus={true}
           />
           <CommandEmpty>
             {newUnitInput ? (
@@ -66,7 +67,7 @@ const UnitPopover: React.FC<UnitPopoverProps> = ({
               "ไม่พบหน่วยที่ค้นหา"
             )}
           </CommandEmpty>
-          <CommandGroup>
+          <CommandGroup className="max-h-52 overflow-y-auto">
             {unitOptions.map((unit) => (
               <CommandItem
                 key={unit.value}
