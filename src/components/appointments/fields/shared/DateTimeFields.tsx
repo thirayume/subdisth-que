@@ -2,18 +2,24 @@
 import React from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { UseFormReturn } from 'react-hook-form';
+import { UseFormReturn, Path } from 'react-hook-form';
 
 interface DateTimeFieldsProps<T extends { date: string; time: string }> {
   form: UseFormReturn<T>;
+  dateField?: Path<T>;
+  timeField?: Path<T>;
 }
 
-export const DateTimeFields = <T extends { date: string; time: string }>({ form }: DateTimeFieldsProps<T>) => {
+export const DateTimeFields = <T extends { date: string; time: string }>({ 
+  form, 
+  dateField = 'date' as Path<T>, 
+  timeField = 'time' as Path<T> 
+}: DateTimeFieldsProps<T>) => {
   return (
     <>
       <FormField
         control={form.control}
-        name="date" as={"date"}
+        name={dateField}
         render={({ field }) => (
           <FormItem>
             <FormLabel>วันที่นัด</FormLabel>
@@ -27,7 +33,7 @@ export const DateTimeFields = <T extends { date: string; time: string }>({ form 
       
       <FormField
         control={form.control}
-        name="time" as={"time"}
+        name={timeField}
         render={({ field }) => (
           <FormItem>
             <FormLabel>เวลานัด</FormLabel>
