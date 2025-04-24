@@ -1,17 +1,20 @@
 
-import { useState, useEffect } from 'react';
+import * as React from 'react';
 import { Queue } from '@/integrations/supabase/schema';
 import { announceQueue } from '@/utils/textToSpeech';
 import { toast } from 'sonner';
 
+// Add debug logging
+console.log("[DEBUG] useQueueAnnouncements importing React:", React);
+
 export const useQueueAnnouncements = () => {
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [counterName, setCounterName] = useState('1');
-  const [volume, setVolume] = useState(80);
-  const [rate, setRate] = useState(90);
+  const [voiceEnabled, setVoiceEnabled] = React.useState(true);
+  const [counterName, setCounterName] = React.useState('1');
+  const [volume, setVolume] = React.useState(80);
+  const [rate, setRate] = React.useState(90);
   
   // Load voice settings from localStorage on startup
-  useEffect(() => {
+  React.useEffect(() => {
     const savedVoiceEnabled = localStorage.getItem('queue_voice_enabled');
     if (savedVoiceEnabled !== null) {
       setVoiceEnabled(savedVoiceEnabled === 'true');
