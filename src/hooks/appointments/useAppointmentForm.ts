@@ -1,4 +1,5 @@
 
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
@@ -19,7 +20,7 @@ export const useAppointmentForm = (appointment: Appointment | null) => {
     },
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (appointment) {
       const appointmentDate = new Date(appointment.date);
       form.reset({
@@ -31,7 +32,7 @@ export const useAppointmentForm = (appointment: Appointment | null) => {
         status: appointment.status,
       });
     }
-  }, [appointment]);
+  }, [appointment, form]);
 
   return form;
 };
