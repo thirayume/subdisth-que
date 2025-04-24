@@ -49,30 +49,28 @@ const App: React.FC = () => {
   console.log("[DEBUG] React hooks test:", testState);
 
   return (
-    <React.StrictMode>
-      <ThemeProvider>
-        <BrowserRouter>
-          <QueryClientProvider client={queryClient}>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/queue-management" element={<QueueManagement />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/queue-board" element={<QueueBoard />} />
-              <Route path="/patients" element={<Patients />} />
-              <Route path="/medications" element={<Medications />} />
-              <Route path="/appointments" element={<Appointments />} />
-              <Route path="/history" element={<QueueHistory />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/queue-ticket/:id" element={<QueueTicket />} />
-              <Route path="/patient-portal" element={<PatientPortal />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Toaster />
-            <OfflineIndicator />
-          </QueryClientProvider>
-        </BrowserRouter>
-      </ThemeProvider>
-    </React.StrictMode>
+    <ThemeProvider>
+      <BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/queue-management" element={<QueueManagement />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/queue-board" element={<QueueBoard />} />
+            <Route path="/patients" element={<Patients />} />
+            <Route path="/medications" element={<Medications />} />
+            <Route path="/appointments" element={<Appointments />} />
+            <Route path="/history" element={<QueueHistory />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/queue-ticket/:id" element={<QueueTicket />} />
+            <Route path="/patient-portal" element={<PatientPortal />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster />
+          <OfflineIndicator />
+        </QueryClientProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 };
 
