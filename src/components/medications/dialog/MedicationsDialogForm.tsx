@@ -5,7 +5,7 @@ import { DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Medication } from '@/integrations/supabase/schema';
 import { useMedicationForm } from '../hooks/useMedicationForm';
-import { useUnitOptions } from '../hooks/useUnitOptions';
+import { useUnitOptions } from '@/hooks/useUnitOptions';
 import { MedicationFormValues } from '../schemas/medicationSchema';
 import { 
   CodeField, 
@@ -34,14 +34,7 @@ const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
   addMedication,
   updateMedication
 }) => {
-  const { 
-    newUnitInput,
-    setNewUnitInput,
-    openUnitPopover,
-    setOpenUnitPopover,
-    unitOptions,
-    handleAddNewUnit 
-  } = useUnitOptions(medications);
+  const { unitOptions, handleAddNewUnit } = useUnitOptions(medications);
 
   const handleSubmit = async (values: MedicationFormValues) => {
     try {
@@ -58,12 +51,6 @@ const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
 
   const { form, submitHandler } = useMedicationForm(medication, handleSubmit, open);
 
-  const handleAddUnit = () => {
-    handleAddNewUnit(() => {
-      form.setValue('unit', newUnitInput.trim());
-    });
-  };
-
   const handleCancel = () => {
     onOpenChange(false);
   };
@@ -76,14 +63,8 @@ const MedicationsDialogForm: React.FC<MedicationsDialogFormProps> = ({
         <DescriptionField control={form.control} />
         <UnitField 
           control={form.control}
-          value={form.watch('unit')}
-          open={openUnitPopover}
-          newUnitInput={newUnitInput}
-          setOpen={setOpenUnitPopover}
-          setValue={value => form.setValue('unit', value)}
-          setNewUnitInput={setNewUnitInput}
           unitOptions={unitOptions}
-          handleAddNewUnit={handleAddUnit}
+          onAddNewUnit={handleAddNewUnit}
         />
         <StockFields control={form.control} />
         <DialogFooter>

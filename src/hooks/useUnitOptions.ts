@@ -4,17 +4,13 @@ import { Medication } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
 
 export const useUnitOptions = (medications: Medication[] | null | undefined) => {
-  const [newUnitInput, setNewUnitInput] = React.useState('');
-  const [openUnitPopover, setOpenUnitPopover] = React.useState(false);
-  
   const unitOptions = React.useMemo(() => {
     try {
-      // Ensure medications is an array, if not return empty array
       if (!medications || !Array.isArray(medications)) {
         return [];
       }
 
-      // Filter out invalid units and create unique set
+      // Get unique units using Set
       const uniqueUnits = new Set(
         medications
           .filter(med => med && typeof med.unit === 'string')
@@ -22,28 +18,27 @@ export const useUnitOptions = (medications: Medication[] | null | undefined) => 
           .filter(unit => unit && unit.length > 0)
       );
 
-      // Convert set to array of option objects
-      return Array.from(uniqueUnits).map(unit => ({
-        value: unit,
-        label: unit
-      }));
+      // Convert Set back to sorted array
+      return Array.from(uniqueUnits).sort();
     } catch (error) {
       console.error('Error processing medication units:', error);
       return [];
     }
   }, [medications]);
 
-  const handleAddNewUnit = (setValue: (value: string) => void) => {
+  const handleAddNewUnit = (newUnit: string) => {
     try {
-      if (!newUnitInput || newUnitInput.trim() === '') {
+      if (!newUnit || newUnit.trim() === '') {
         toast.error('กรุณาระบุหน่วยยา');
         return;
       }
 
-      const trimmedUnit = newUnitInput.trim();
-      setValue(trimmedUnit);
-      setOpenUnitPopover(false);
-      setNewUnitInput('');
+      if (unitOptions.includes(newUnit.trim())) {
+        toast.error('มีหน่วยยานี้อยู่แล้ว');
+        return;
+      }
+
+      toast.success(`เพิ่มหน่วยยา "${newUnit}" เรียบร้อยแล้ว`);
     } catch (error) {
       console.error('Error adding new unit:', error);
       toast.error('ไม่สามารถเพิ่มหน่วยยาได้');
@@ -51,10 +46,6 @@ export const useUnitOptions = (medications: Medication[] | null | undefined) => 
   };
 
   return {
-    newUnitInput,
-    setNewUnitInput,
-    openUnitPopover,
-    setOpenUnitPopover,
     unitOptions,
     handleAddNewUnit
   };
