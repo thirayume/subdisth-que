@@ -33,12 +33,15 @@ export const usePatientMedications = (patientId: string) => {
 
       // Use RPC function to get patient medications
       const { data, error: queryError } = await supabase
-        .rpc('get_patient_medications', { p_patient_id: patientId });
+        .rpc('get_patient_medications', { p_patient_id: patientId }) as {
+          data: any;
+          error: any;
+        };
 
       if (queryError) throw queryError;
       
       // Since our function returns a JSON array inside a single JSON object, we need to handle it
-      const parsedData = Array.isArray(data) && data.length > 0 ? data[0] : [];
+      const parsedData = Array.isArray(data) && data.length > 0 ? (data[0] || []) : [];
       setMedications(parsedData || []);
     } catch (err: any) {
       console.error('Error fetching patient medications:', err);
@@ -61,7 +64,10 @@ export const usePatientMedications = (patientId: string) => {
           p_start_date: medicationData.start_date,
           p_end_date: medicationData.end_date || null,
           p_notes: medicationData.notes || null
-        });
+        }) as {
+          data: any;
+          error: any;
+        };
 
       if (error) throw error;
       
@@ -91,7 +97,10 @@ export const usePatientMedications = (patientId: string) => {
           p_start_date: medicationData.start_date,
           p_end_date: medicationData.end_date,
           p_notes: medicationData.notes
-        });
+        }) as {
+          data: any;
+          error: any;
+        };
 
       if (error) throw error;
       
@@ -110,7 +119,10 @@ export const usePatientMedications = (patientId: string) => {
     try {
       // Use RPC function to delete patient medication
       const { error } = await supabase
-        .rpc('delete_patient_medication', { p_id: id });
+        .rpc('delete_patient_medication', { p_id: id }) as {
+          data: any;
+          error: any;
+        };
 
       if (error) throw error;
 
