@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => ({
   ].filter(Boolean),
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./"),
+      "@": path.resolve(__dirname, "./src"),
       // Force all React imports to resolve to the single root instance
       "react": path.resolve(__dirname, "node_modules/react"),
       "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
@@ -29,7 +29,7 @@ export default defineConfig(({ mode }) => ({
       // Ensure sonner uses the same React
       "sonner": path.resolve(__dirname, "node_modules/sonner")
     },
-    dedupe: ['react', 'react-dom', '@radix-ui/react-toast', 'next-themes', 'sonner'] // Add sonner to deduped list
+    dedupe: ['react', 'react-dom', '@radix-ui/react-toast', 'next-themes', 'sonner'] // Ensure React is deduped
   },
   build: {
     // Generate source maps for production
