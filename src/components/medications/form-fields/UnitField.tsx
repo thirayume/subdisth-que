@@ -31,63 +31,72 @@ const UnitField: React.FC<Props> = ({
     <FormField
       control={control}
       name="unit"
-      render={({ field }) => (
-        <FormItem className="flex flex-col relative">
-          <FormLabel>หน่วย</FormLabel>
-          <FormControl>
-            <Input
-              placeholder="พิมพ์หรือเลือกหน่วยยา..."
-              value={searchValue}
-              onChange={(e) => {
-                const value = e.target.value;
-                setSearchValue(value);
-                field.onChange(value);
-                setShowSuggestions(true);
-              }}
-              onFocus={() => setShowSuggestions(true)}
-              className="w-full"
-            />
-          </FormControl>
-          {showSuggestions && (
-            <div className="absolute z-50 top-full left-0 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
-              {filteredUnits.length > 0 ? (
-                <ul className="py-1">
-                  {filteredUnits.map((unit) => (
-                    <li
-                      key={unit}
-                      className={cn(
-                        "px-3 py-2 cursor-pointer hover:bg-gray-100",
-                        field.value === unit && "bg-gray-100"
-                      )}
-                      onClick={() => {
-                        field.onChange(unit);
-                        setSearchValue(unit);
-                        setShowSuggestions(false);
-                      }}
-                    >
-                      {unit}
-                    </li>
-                  ))}
-                </ul>
-              ) : searchValue ? (
-                <div 
-                  className="px-3 py-2 cursor-pointer hover:bg-gray-100"
-                  onClick={() => {
-                    onAddNewUnit(searchValue);
-                    field.onChange(searchValue);
-                    setShowSuggestions(false);
-                  }}
-                >
-                  เพิ่มหน่วย "{searchValue}"
-                </div>
-              ) : (
-                <div className="px-3 py-2 text-gray-500">ไม่พบหน่วยยา</div>
-              )}
-            </div>
-          )}
-          <FormMessage />
-        </FormItem>
-      )}
+      render={({ field }) => {
+        // Sync searchValue with field value when the field value changes
+        React.useEffect(() => {
+          if (field.value) {
+            setSearchValue(field.value);
+          }
+        }, [field.value]);
+
+        return (
+          <FormItem className="flex flex-col relative">
+            <FormLabel>หน่วย</FormLabel>
+            <FormControl>
+              <Input
+                placeholder="พิมพ์หรือเลือกหน่วยยา..."
+                value={searchValue}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSearchValue(value);
+                  field.onChange(value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                className="w-full"
+              />
+            </FormControl>
+            {showSuggestions && (
+              <div className="absolute z-50 top-full left-0 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                {filteredUnits.length > 0 ? (
+                  <ul className="py-1">
+                    {filteredUnits.map((unit) => (
+                      <li
+                        key={unit}
+                        className={cn(
+                          "px-3 py-2 cursor-pointer hover:bg-gray-100",
+                          field.value === unit && "bg-gray-100"
+                        )}
+                        onClick={() => {
+                          field.onChange(unit);
+                          setSearchValue(unit);
+                          setShowSuggestions(false);
+                        }}
+                      >
+                        {unit}
+                      </li>
+                    ))}
+                  </ul>
+                ) : searchValue ? (
+                  <div 
+                    className="px-3 py-2 cursor-pointer hover:bg-gray-100"
+                    onClick={() => {
+                      onAddNewUnit(searchValue);
+                      field.onChange(searchValue);
+                      setShowSuggestions(false);
+                    }}
+                  >
+                    เพิ่มหน่วย "{searchValue}"
+                  </div>
+                ) : (
+                  <div className="px-3 py-2 text-gray-500">ไม่พบหน่วยยา</div>
+                )}
+              </div>
+            )}
+            <FormMessage />
+          </FormItem>
+        );
+      }}
     />
   );
 };
