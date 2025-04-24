@@ -3,7 +3,6 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Pill, Info } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { usePatientMedications } from '@/hooks/usePatientMedications';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 
@@ -11,8 +10,11 @@ interface PatientMedicationsProps {
   patientId: string;
 }
 
+// Temporarily use a mock implementation until the database functions are created
 const PatientMedications: React.FC<PatientMedicationsProps> = ({ patientId }) => {
-  const { medications, loading } = usePatientMedications(patientId);
+  // Using mock data temporarily
+  const loading = false;
+  const medications = [];
 
   if (loading) {
     return (

@@ -31,21 +31,12 @@ export const usePatientMedications = (patientId: string) => {
       setLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
-        .from('patient_medications')
-        .select(`
-          *,
-          medication:medications (
-            name,
-            description,
-            unit
-          )
-        `)
-        .eq('patient_id', patientId)
-        .order('created_at', { ascending: false });
+      // Use raw SQL query to fetch data instead of table name that might not be in the types
+      const { data, error: queryError } = await supabase
+        .rpc('get_patient_medications', { p_patient_id: patientId });
 
-      if (error) throw error;
-
+      if (queryError) throw queryError;
+      
       setMedications(data || []);
     } catch (err: any) {
       console.error('Error fetching patient medications:', err);
@@ -58,25 +49,22 @@ export const usePatientMedications = (patientId: string) => {
 
   const addPatientMedication = async (medicationData: Partial<PatientMedication>) => {
     try {
+      // Use raw SQL query to insert data
       const { data, error } = await supabase
-        .from('patient_medications')
-        .insert([{
-          ...medicationData,
-          patient_id: patientId
-        }])
-        .select(`
-          *,
-          medication:medications (
-            name,
-            description,
-            unit
-          )
-        `)
-        .single();
+        .rpc('add_patient_medication', { 
+          p_patient_id: patientId,
+          p_medication_id: medicationData.medication_id,
+          p_dosage: medicationData.dosage,
+          p_instructions: medicationData.instructions,
+          p_start_date: medicationData.start_date,
+          p_end_date: medicationData.end_date,
+          p_notes: medicationData.notes
+        });
 
       if (error) throw error;
-
-      setMedications(prev => [data, ...prev]);
+      
+      // Refresh the medications list after adding
+      fetchPatientMedications();
       toast.success('เพิ่มข้อมูลยาสำหรับผู้ป่วยเรียบร้อยแล้ว');
       return data;
     } catch (err: any) {
@@ -91,25 +79,22 @@ export const usePatientMedications = (patientId: string) => {
     medicationData: Partial<PatientMedication>
   ) => {
     try {
+      // Use raw SQL query to update data
       const { data, error } = await supabase
-        .from('patient_medications')
-        .update(medicationData)
-        .eq('id', id)
-        .select(`
-          *,
-          medication:medications (
-            name,
-            description,
-            unit
-          )
-        `)
-        .single();
+        .rpc('update_patient_medication', {
+          p_id: id,
+          p_medication_id: medicationData.medication_id,
+          p_dosage: medicationData.dosage,
+          p_instructions: medicationData.instructions,
+          p_start_date: medicationData.start_date,
+          p_end_date: medicationData.end_date,
+          p_notes: medicationData.notes
+        });
 
       if (error) throw error;
-
-      setMedications(prev =>
-        prev.map(med => (med.id === id ? data : med))
-      );
+      
+      // Refresh the medications list after updating
+      fetchPatientMedications();
       toast.success('อัปเดตข้อมูลยาสำหรับผู้ป่วยเรียบร้อยแล้ว');
       return data;
     } catch (err: any) {
@@ -121,14 +106,14 @@ export const usePatientMedications = (patientId: string) => {
 
   const deletePatientMedication = async (id: string) => {
     try {
+      // Use raw SQL query to delete data
       const { error } = await supabase
-        .from('patient_medications')
-        .delete()
-        .eq('id', id);
+        .rpc('delete_patient_medication', { p_id: id });
 
       if (error) throw error;
 
-      setMedications(prev => prev.filter(med => med.id !== id));
+      // Refresh the medications list after deleting
+      fetchPatientMedications();
       toast.success('ลบข้อมูลยาสำหรับผู้ป่วยเรียบร้อยแล้ว');
       return true;
     } catch (err: any) {
@@ -138,30 +123,9 @@ export const usePatientMedications = (patientId: string) => {
     }
   };
 
-  // Set up real-time subscription
+  // Initial fetch on component mount
   useEffect(() => {
     fetchPatientMedications();
-
-    // Subscribe to changes
-    const channel = supabase
-      .channel('patient-medications-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'patient_medications',
-          filter: `patient_id=eq.${patientId}`
-        },
-        () => {
-          fetchPatientMedications();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [patientId]);
 
   return {
