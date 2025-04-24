@@ -5,43 +5,60 @@ import { usePatientsActions } from './patients/usePatientsActions';
 import { usePatientsSearch } from './patients/usePatientsSearch';
 
 export const usePatients = () => {
-  const {
-    patients,
-    loading,
-    error,
-    fetchPatients,
-    updatePatientsState
-  } = usePatientsState();
+  try {
+    const {
+      patients = [],
+      loading = false,
+      error = null,
+      fetchPatients = async () => {},
+      updatePatientsState = () => {}
+    } = usePatientsState() || {};
 
-  const {
-    actionError,
-    addPatient,
-    updatePatient,
-    deletePatient
-  } = usePatientsActions(patients, updatePatientsState);
+    const {
+      actionError = null,
+      addPatient = async () => null,
+      updatePatient = async () => null,
+      deletePatient = async () => false
+    } = usePatientsActions(patients, updatePatientsState) || {};
 
-  const {
-    searchLoading,
-    searchError,
-    searchPatients,
-    findPatientByPhone
-  } = usePatientsSearch();
+    const {
+      searchLoading = false,
+      searchError = null,
+      searchPatients = async () => [],
+      findPatientByPhone = async () => null
+    } = usePatientsSearch() || {};
 
-  return {
-    // State
-    patients,
-    loading,
-    error: error || actionError || searchError,
-    
-    // Actions
-    fetchPatients,
-    addPatient,
-    updatePatient,
-    deletePatient,
-    
-    // Search
-    searchPatients,
-    findPatientByPhone,
-    searchLoading
-  };
+    return {
+      // State
+      patients,
+      loading,
+      error: error || actionError || searchError,
+      
+      // Actions
+      fetchPatients,
+      addPatient,
+      updatePatient,
+      deletePatient,
+      
+      // Search
+      searchPatients,
+      findPatientByPhone,
+      searchLoading
+    };
+  } catch (err) {
+    console.error("Error in usePatients hook:", err);
+    // Return safe defaults to prevent crashes
+    return {
+      patients: [],
+      loading: false,
+      error: String(err),
+      fetchPatients: async () => {},
+      addPatient: async () => null,
+      updatePatient: async () => null,
+      deletePatient: async () => false,
+      searchPatients: async () => [],
+      findPatientByPhone: async () => null,
+      searchLoading: false
+    };
+  }
 };

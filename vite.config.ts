@@ -11,7 +11,9 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react({
-      jsxImportSource: 'react'
+      jsxImportSource: 'react',
+      // Ensure React is properly initialized
+      jsxRuntime: 'automatic'
     }),
     mode === 'development' &&
     componentTagger(),
@@ -20,8 +22,10 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "src"),
       "react": path.resolve(__dirname, "node_modules/react"),
-      "react-dom": path.resolve(__dirname, "node_modules/react-dom")
+      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+      "next-themes": path.resolve(__dirname, "node_modules/next-themes")
     },
+    dedupe: ['react', 'react-dom', 'next-themes']
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'next-themes'],

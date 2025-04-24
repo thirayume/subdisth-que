@@ -3,10 +3,17 @@ import * as React from 'react';
 import { toast } from '@/hooks/use-toast';
 
 export const useOfflineStatus = () => {
-  // Explicitly using React.useState to prevent any ambiguity
-  const [isOffline, setIsOffline] = React.useState(!navigator.onLine);
+  const [isOffline, setIsOffline] = React.useState(() => {
+    // Safe check for browser environment
+    if (typeof navigator !== 'undefined') {
+      return !navigator.onLine;
+    }
+    return false;
+  });
   
   React.useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    
     const handleOnline = () => {
       setIsOffline(false);
       toast({

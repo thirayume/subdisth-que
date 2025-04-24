@@ -3,9 +3,6 @@ import * as React from 'react';
 import { toast } from 'sonner';
 import { useOfflineStatus } from './useOfflineStatus';
 
-// Debug log for React reference
-console.log("[DEBUG] In useSyncedStorage.ts, React is:", React);
-
 type StorageType = 'localStorage' | 'sessionStorage';
 
 interface SyncOptions<T> {
@@ -100,6 +97,8 @@ export function useSyncedStorage<T>(
       
       return () => clearInterval(interval);
     }
+    
+    return undefined;
   }, [onSync, pendingSync, value, syncInterval, isOffline, showToasts]);
   
   return [value, setValue, pendingSync] as const;
