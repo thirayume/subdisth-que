@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
 import { Queue } from '@/integrations/supabase/schema';
 import { supabase } from '@/integrations/supabase/client';
 import QueueAnalytics from '@/components/dashboard/QueueAnalytics';
@@ -12,17 +12,17 @@ interface AnalyticsContainerProps {
 }
 
 const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQueues }) => {
-  const [waitingQueues, setWaitingQueues] = useState<Queue[]>([]);
-  const [activeQueues, setActiveQueues] = useState<Queue[]>([]);
-  const [completedQueues, setCompletedQueues] = useState<Queue[]>([]);
-  const [skippedQueues, setSkippedQueues] = useState<Queue[]>([]);
-  const [todayStats, setTodayStats] = useState({
+  const [waitingQueues, setWaitingQueues] = React.useState<Queue[]>([]);
+  const [activeQueues, setActiveQueues] = React.useState<Queue[]>([]);
+  const [completedQueues, setCompletedQueues] = React.useState<Queue[]>([]);
+  const [skippedQueues, setSkippedQueues] = React.useState<Queue[]>([]);
+  const [todayStats, setTodayStats] = React.useState({
     avgWaitTime: 0,
     avgServiceTime: 0
   });
 
   // Update filtered queues when the main queues array changes
-  useEffect(() => {
+  React.useEffect(() => {
     if (queues) {
       const waiting = queues.filter(q => q.status === 'WAITING');
       const active = queues.filter(q => q.status === 'ACTIVE');
@@ -37,7 +37,7 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
   }, [queues, sortQueues]);
   
   // Fetch today's statistics directly from Supabase
-  useEffect(() => {
+  React.useEffect(() => {
     const fetchTodayStats = async () => {
       try {
         // Get today's date at midnight
