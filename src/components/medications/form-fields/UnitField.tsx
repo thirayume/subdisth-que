@@ -73,10 +73,9 @@ const UnitField: React.FC<Props> = ({
                 <div 
                   className="px-3 py-2 cursor-pointer hover:bg-gray-100"
                   onClick={() => {
-                    if (onAddNewUnit(searchValue)) {
-                      field.onChange(searchValue);
-                      setShowSuggestions(false);
-                    }
+                    onAddNewUnit(searchValue);
+                    field.onChange(searchValue);
+                    setShowSuggestions(false);
                   }}
                 >
                   เพิ่มหน่วย "{searchValue}"
