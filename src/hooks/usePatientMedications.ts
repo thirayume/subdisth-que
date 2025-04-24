@@ -31,13 +31,15 @@ export const usePatientMedications = (patientId: string) => {
       setLoading(true);
       setError(null);
 
-      // Use raw SQL query to fetch data instead of table name that might not be in the types
+      // Use RPC function to get patient medications
       const { data, error: queryError } = await supabase
         .rpc('get_patient_medications', { p_patient_id: patientId });
 
       if (queryError) throw queryError;
       
-      setMedications(data || []);
+      // Since our function returns a JSON array inside a single JSON object, we need to handle it
+      const parsedData = Array.isArray(data) && data.length > 0 ? data[0] : [];
+      setMedications(parsedData || []);
     } catch (err: any) {
       console.error('Error fetching patient medications:', err);
       setError(err.message);
@@ -47,18 +49,18 @@ export const usePatientMedications = (patientId: string) => {
     }
   };
 
-  const addPatientMedication = async (medicationData: Partial<PatientMedication>) => {
+  const addPatientMedication = async (medicationData: Omit<PatientMedication, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      // Use raw SQL query to insert data
+      // Use RPC function to add patient medication
       const { data, error } = await supabase
         .rpc('add_patient_medication', { 
           p_patient_id: patientId,
           p_medication_id: medicationData.medication_id,
           p_dosage: medicationData.dosage,
-          p_instructions: medicationData.instructions,
+          p_instructions: medicationData.instructions || null,
           p_start_date: medicationData.start_date,
-          p_end_date: medicationData.end_date,
-          p_notes: medicationData.notes
+          p_end_date: medicationData.end_date || null,
+          p_notes: medicationData.notes || null
         });
 
       if (error) throw error;
@@ -79,7 +81,7 @@ export const usePatientMedications = (patientId: string) => {
     medicationData: Partial<PatientMedication>
   ) => {
     try {
-      // Use raw SQL query to update data
+      // Use RPC function to update patient medication
       const { data, error } = await supabase
         .rpc('update_patient_medication', {
           p_id: id,
@@ -106,7 +108,7 @@ export const usePatientMedications = (patientId: string) => {
 
   const deletePatientMedication = async (id: string) => {
     try {
-      // Use raw SQL query to delete data
+      // Use RPC function to delete patient medication
       const { error } = await supabase
         .rpc('delete_patient_medication', { p_id: id });
 

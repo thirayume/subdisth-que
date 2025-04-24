@@ -5,16 +5,14 @@ import { Pill, Info } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
+import { usePatientMedications } from '@/hooks/usePatientMedications';
 
 interface PatientMedicationsProps {
   patientId: string;
 }
 
-// Temporarily use a mock implementation until the database functions are created
 const PatientMedications: React.FC<PatientMedicationsProps> = ({ patientId }) => {
-  // Using mock data temporarily
-  const loading = false;
-  const medications = [];
+  const { medications, loading } = usePatientMedications(patientId);
 
   if (loading) {
     return (
@@ -34,7 +32,7 @@ const PatientMedications: React.FC<PatientMedicationsProps> = ({ patientId }) =>
     );
   }
 
-  if (medications.length === 0) {
+  if (!medications || medications.length === 0) {
     return (
       <Card>
         <CardHeader>
