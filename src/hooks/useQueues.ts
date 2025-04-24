@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { Queue, QueueStatus, QueueType } from '@/integrations/supabase/schema';
 import { useQueueState } from './queue/useQueueState';
