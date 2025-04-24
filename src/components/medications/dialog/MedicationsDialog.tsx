@@ -1,8 +1,8 @@
 
 import * as React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import MedicationsDialogController from './MedicationsDialogController';
 import { Medication } from '@/integrations/supabase/schema';
-import MedicationsDialogContent from './MedicationsDialogContent';
 
 interface MedicationsDialogProps {
   open: boolean;
@@ -23,11 +23,14 @@ const MedicationsDialog: React.FC<MedicationsDialogProps> = ({
 }) => {
   const isEditing = !!medication;
   
+  // Ensure medications is an array, even if it's undefined
+  const medicationItems = medications || [];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
-        <MedicationsDialogContent
-          medications={medications}
+        <MedicationsDialogController
+          medications={medicationItems}
           medication={medication}
           isEditing={isEditing}
           open={open}

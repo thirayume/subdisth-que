@@ -33,10 +33,13 @@ const MedicationsTable: React.FC<MedicationsTableProps> = ({
   const [medicationToDelete, setMedicationToDelete] = React.useState<string | null>(null);
   const { deleteMedication } = useMedicationsContext();
 
+  // Ensure medications is an array even if undefined
+  const medicationItems = medications || [];
+  
   // Apply custom filter function if provided, otherwise use all medications
   const filteredMedications = filterFunction 
-    ? medications.filter(filterFunction) 
-    : medications.filter(med => 
+    ? medicationItems.filter(filterFunction) 
+    : medicationItems.filter(med => 
         med.name.toLowerCase().includes(filterText.toLowerCase()) ||
         med.code.toLowerCase().includes(filterText.toLowerCase())
       );
@@ -49,7 +52,7 @@ const MedicationsTable: React.FC<MedicationsTableProps> = ({
   };
 
   const getMedicationById = (id: string) => {
-    return medications.find(med => med.id === id);
+    return medicationItems.find(med => med.id === id);
   };
 
   return (

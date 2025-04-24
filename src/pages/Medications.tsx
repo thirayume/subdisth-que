@@ -23,6 +23,9 @@ const MedicationsContent = () => {
   
   const [searchTerm, setSearchTerm] = React.useState('');
 
+  // Ensure medications is an array even if it's undefined
+  const medicationItems = medications || [];
+
   const handleCreateMedication = () => {
     setSelectedMedication(null);
     setIsDialogOpen(true);
@@ -59,7 +62,7 @@ const MedicationsContent = () => {
         </div>
       </div>
       
-      <MedicationsSummaryCards medications={medications || []} />
+      <MedicationsSummaryCards medications={medicationItems} />
       
       <div className="flex mb-4">
         <SearchInput 
@@ -70,7 +73,7 @@ const MedicationsContent = () => {
       </div>
       
       <MedicationsTabs 
-        medications={medications || []} 
+        medications={medicationItems} 
         searchTerm={searchTerm} 
         setSearchTerm={setSearchTerm}
         onEditMedication={handleEditMedication}
@@ -80,7 +83,7 @@ const MedicationsContent = () => {
         open={isDialogOpen} 
         onOpenChange={setIsDialogOpen}
         medication={selectedMedication}
-        medications={medications || []}
+        medications={medicationItems}
         addMedication={addMedication}
         updateMedication={updateMedication}
       />
