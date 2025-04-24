@@ -4,7 +4,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/comp
 import { Input } from '@/components/ui/input';
 import { UseFormReturn } from 'react-hook-form';
 
-interface DateTimeFieldsProps<T> {
+interface DateTimeFieldsProps<T extends { date: string; time: string }> {
   form: UseFormReturn<T>;
 }
 
@@ -13,7 +13,7 @@ export const DateTimeFields = <T extends { date: string; time: string }>({ form 
     <>
       <FormField
         control={form.control}
-        name="date"
+        name="date" as={"date"}
         render={({ field }) => (
           <FormItem>
             <FormLabel>วันที่นัด</FormLabel>
@@ -27,7 +27,7 @@ export const DateTimeFields = <T extends { date: string; time: string }>({ form 
       
       <FormField
         control={form.control}
-        name="time"
+        name="time" as={"time"}
         render={({ field }) => (
           <FormItem>
             <FormLabel>เวลานัด</FormLabel>

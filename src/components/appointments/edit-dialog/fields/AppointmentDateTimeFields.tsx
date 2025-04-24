@@ -9,5 +9,7 @@ interface AppointmentDateTimeFieldsProps {
 }
 
 export const AppointmentDateTimeFields = ({ form }: AppointmentDateTimeFieldsProps) => {
-  return <DateTimeFields form={form} />;
+  // Since our DateTimeFields component requires form values to have date and time properties,
+  // we can safely cast our form to match that constraint as AppointmentFormValues includes these fields
+  return <DateTimeFields form={form as UseFormReturn<AppointmentFormValues & { date: string; time: string }>} />;
 };

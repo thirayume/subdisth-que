@@ -10,6 +10,7 @@ interface EditAppointmentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   appointment: Appointment | null;
+  patients: Patient[];
   onSubmit: (values: AppointmentFormValues) => Promise<void>;
 }
 
@@ -17,6 +18,7 @@ const EditAppointmentDialog = ({
   open,
   onOpenChange,
   appointment,
+  patients,
   onSubmit,
 }: EditAppointmentDialogProps) => {
   const form = useAppointmentForm(appointment);
