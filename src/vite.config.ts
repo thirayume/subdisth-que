@@ -20,14 +20,14 @@ export default defineConfig(({ mode }) => ({
   ].filter(Boolean),
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(__dirname, "."),
       // Force all React imports to resolve to the single root instance
-      "react": path.resolve(__dirname, "node_modules/react"),
-      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+      "react": path.resolve(__dirname, "../node_modules/react"),
+      "react-dom": path.resolve(__dirname, "../node_modules/react-dom"),
       // Also alias next-themes to ensure it uses the same React
-      "next-themes": path.resolve(__dirname, "node_modules/next-themes"),
+      "next-themes": path.resolve(__dirname, "../node_modules/next-themes"),
       // Ensure sonner uses the same React
-      "sonner": path.resolve(__dirname, "node_modules/sonner")
+      "sonner": path.resolve(__dirname, "../node_modules/sonner")
     },
     dedupe: ['react', 'react-dom', '@radix-ui/react-toast', 'next-themes', 'sonner'] // Ensure React is deduped
   },
