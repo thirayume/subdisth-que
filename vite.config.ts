@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -27,7 +28,11 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'next-themes', 'sonner'],
-    force: true
+    force: true,
+    esbuildOptions: {
+      mainFields: ['module', 'main'],
+      resolveExtensions: ['.js', '.jsx', '.ts', '.tsx'],
+    }
   },
   build: {
     sourcemap: true,
@@ -40,6 +45,7 @@ export default defineConfig(({ mode }) => ({
       },
     },
     rollupOptions: {
+      external: [],
       output: {
         manualChunks: {
           vendor: [

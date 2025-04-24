@@ -2,8 +2,20 @@
 "use client";
 
 import * as React from "react";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { ThemeProvider as NextThemesProvider, useTheme as useNextTheme } from "next-themes";
 import type { ThemeProviderProps } from "next-themes";
+
+type Theme = 'dark' | 'light' | 'system';
+
+interface ThemeContextType {
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+}
+
+export const ThemeContext = React.createContext<ThemeContextType>({
+  theme: 'system',
+  setTheme: () => null,
+});
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   return (
@@ -14,38 +26,32 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
       disableTransitionOnChange
       {...props}
     >
-      {children}
+      <ThemeProviderContent>
+        {children}
+      </ThemeProviderContent>
     </NextThemesProvider>
   );
 }
 
-// Custom hook to use the theme
-export const useTheme = () => {
-  const { theme, setTheme } = React.useMemo(() => {
-    try {
-      // Dynamic import to avoid SSR issues
-      const { useTheme: useNextThemes } = require("next-themes");
-      return { 
-        theme: useNextThemes().theme as 'dark' | 'light' | 'system', 
-        setTheme: useNextThemes().setTheme as (theme: 'dark' | 'light' | 'system') => void
-      };
-    } catch (e) {
-      console.error("Error using next-themes:", e);
-      return { 
-        theme: 'system' as const, 
-        setTheme: () => null 
-      };
-    }
-  }, []);
+const ThemeProviderContent: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { theme = 'system', setTheme } = useNextTheme();
+  
+  const value = React.useMemo(() => ({
+    theme: theme as Theme,
+    setTheme: (newTheme: Theme) => setTheme(newTheme),
+  }), [theme, setTheme]);
 
-  return { theme, setTheme };
+  return (
+    <ThemeContext.Provider value={value}>
+      {children}
+    </ThemeContext.Provider>
+  );
 };
 
-// Create a context for backwards compatibility
-export const ThemeContext = React.createContext<{
-  theme: 'dark' | 'light' | 'system';
-  setTheme: (theme: 'dark' | 'light' | 'system') => void;
-}>({
-  theme: 'system',
-  setTheme: () => null
-});
+export const useTheme = () => {
+  const context = React.useContext(ThemeContext);
+  if (!context) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  return context;
+};
