@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -6,13 +5,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useAppointments } from '@/hooks/appointments/useAppointments';
 import { usePatients } from '@/hooks/usePatients';
-import { AppointmentStatus } from '@/integrations/supabase/schema';
+import { AppointmentStatus, Patient } from '@/integrations/supabase/schema';
+import { PatientSearchSection } from './patient-search/PatientSearchSection';
 
 const formSchema = z.object({
   patient_id: z.string().min(1, { message: 'กรุณาเลือกผู้ป่วย' }),
@@ -39,6 +38,10 @@ const AppointmentHeader: React.FC = () => {
       notes: '',
     },
   });
+
+  const handlePatientSelect = (patient: Patient) => {
+    form.setValue('patient_id', patient.id);
+  };
 
   const onSubmit = async (values: FormValues) => {
     const { date, time, ...rest } = values;
@@ -89,20 +92,10 @@ const AppointmentHeader: React.FC = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>ผู้ป่วย</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="เลือกผู้ป่วย" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {patients.map((patient) => (
-                          <SelectItem key={patient.id} value={patient.id}>
-                            {patient.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <PatientSearchSection 
+                      onPatientSelect={handlePatientSelect}
+                      selectedPatientId={field.value}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}

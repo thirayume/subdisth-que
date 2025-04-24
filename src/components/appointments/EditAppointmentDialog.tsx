@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Dialog,
@@ -28,8 +27,9 @@ import {
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Appointment, AppointmentStatus } from '@/integrations/supabase/schema';
-import { Patient } from '@/integrations/supabase/schema';
+import { Appointment, AppointmentStatus, Patient } from '@/integrations/supabase/schema';
+import { PatientSearchSection } from './patient-search/PatientSearchSection';
+import { format } from 'date-fns';
 
 export const appointmentFormSchema = z.object({
   patient_id: z.string().min(1, { message: 'กรุณาเลือกผู้ป่วย' }),
@@ -73,7 +73,6 @@ const EditAppointmentDialog: React.FC<EditAppointmentDialogProps> = ({
   React.useEffect(() => {
     if (appointment) {
       const appointmentDate = new Date(appointment.date);
-      
       form.reset({
         patient_id: appointment.patient_id,
         date: format(appointmentDate, 'yyyy-MM-dd'),
@@ -84,6 +83,10 @@ const EditAppointmentDialog: React.FC<EditAppointmentDialogProps> = ({
       });
     }
   }, [appointment, form]);
+
+  const handlePatientSelect = (patient: Patient) => {
+    form.setValue('patient_id', patient.id);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -100,20 +103,10 @@ const EditAppointmentDialog: React.FC<EditAppointmentDialogProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>ผู้ป่วย</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="เลือกผู้ป่วย" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {patients.map((patient) => (
-                        <SelectItem key={patient.id} value={patient.id}>
-                          {patient.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <PatientSearchSection 
+                    onPatientSelect={handlePatientSelect}
+                    selectedPatientId={field.value}
+                  />
                   <FormMessage />
                 </FormItem>
               )}
@@ -210,8 +203,5 @@ const EditAppointmentDialog: React.FC<EditAppointmentDialogProps> = ({
     </Dialog>
   );
 };
-
-// Add missing import
-import { format } from 'date-fns';
 
 export default EditAppointmentDialog;
