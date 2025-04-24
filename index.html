@@ -12,6 +12,11 @@
 
   <body>
     <div id="root"></div>
+    <!-- Ensure React is properly initialized by loading it first -->
+    <script>
+      // Initialize React global variable to prevent null context issues
+      window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = window.__REACT_DEVTOOLS_GLOBAL_HOOK__ || {};
+    </script>
     <!-- The React application script must be loaded first to ensure proper initialization -->
     <script type="module" src="/src/main.tsx"></script>
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
