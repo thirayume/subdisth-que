@@ -1,19 +1,18 @@
 
 import React from 'react';
-import { Dialog } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { Appointment, Patient } from '@/integrations/supabase/schema';
-import { AppointmentDialogContent } from './AppointmentDialogContent';
 import { appointmentFormSchema } from './schema';
 import { AppointmentFormValues } from './types';
+import { AppointmentForm } from './AppointmentForm';
 
 interface EditAppointmentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   appointment: Appointment | null;
-  patients: Patient[];
   onSubmit: (values: AppointmentFormValues) => Promise<void>;
 }
 
@@ -21,7 +20,6 @@ const EditAppointmentDialog = ({
   open,
   onOpenChange,
   appointment,
-  patients,
   onSubmit,
 }: EditAppointmentDialogProps) => {
   const form = useForm<AppointmentFormValues>({
@@ -56,13 +54,18 @@ const EditAppointmentDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <AppointmentDialogContent
-        form={form}
-        onSubmit={onSubmit}
-        onOpenChange={onOpenChange}
-        selectedPatientId={form.getValues('patient_id')}
-        onPatientSelect={handlePatientSelect}
-      />
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>แก้ไขการนัดหมาย</DialogTitle>
+        </DialogHeader>
+        
+        <AppointmentForm
+          form={form}
+          onSubmit={onSubmit}
+          onCancel={() => onOpenChange(false)}
+          onPatientSelect={handlePatientSelect}
+        />
+      </DialogContent>
     </Dialog>
   );
 };
