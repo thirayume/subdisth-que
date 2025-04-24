@@ -1,13 +1,15 @@
 
-import React from "react";
+import * as React from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Control } from "react-hook-form";
+import { MedicationFormValues } from "../schemas/medicationSchema";
 
 type Props = {
-  control: any; // react-hook-form control
+  control: Control<MedicationFormValues>;
 };
 
-const MedicationNameField: React.FC<Props> = ({ control }) => (
+const NameField: React.FC<Props> = ({ control }) => (
   <FormField
     control={control}
     name="name"
@@ -23,4 +25,4 @@ const MedicationNameField: React.FC<Props> = ({ control }) => (
   />
 );
 
-export default MedicationNameField;
+export default NameField;

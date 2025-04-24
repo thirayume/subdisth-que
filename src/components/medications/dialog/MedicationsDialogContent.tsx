@@ -1,10 +1,11 @@
 
 import * as React from 'react';
+import { Medication } from '@/integrations/supabase/schema';
 import MedicationsDialogHeader from './MedicationsDialogHeader';
 import MedicationsDialogForm from './MedicationsDialogForm';
-import { Medication } from '@/integrations/supabase/schema';
+import { MedicationFormValues } from '../schemas/medicationSchema';
 
-interface MedicationsDialogControllerProps {
+interface MedicationsDialogContentProps {
   medications: Medication[];
   medication: Medication | null;
   isEditing: boolean;
@@ -14,7 +15,7 @@ interface MedicationsDialogControllerProps {
   updateMedication: (id: string, data: any) => Promise<any>;
 }
 
-const MedicationsDialogController: React.FC<MedicationsDialogControllerProps> = ({
+const MedicationsDialogContent: React.FC<MedicationsDialogContentProps> = ({
   medications,
   medication,
   isEditing,
@@ -23,11 +24,8 @@ const MedicationsDialogController: React.FC<MedicationsDialogControllerProps> = 
   addMedication,
   updateMedication,
 }) => {
-  console.log("MedicationsDialogController rendered with open:", open, "isEditing:", isEditing);
-  
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: MedicationFormValues) => {
     try {
-      console.log("Submitting medication form with values:", values);
       if (isEditing && medication) {
         await updateMedication(medication.id, values);
       } else {
@@ -54,4 +52,4 @@ const MedicationsDialogController: React.FC<MedicationsDialogControllerProps> = 
   );
 };
 
-export default MedicationsDialogController;
+export default MedicationsDialogContent;

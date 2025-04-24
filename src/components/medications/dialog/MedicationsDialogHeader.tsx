@@ -2,7 +2,11 @@
 import * as React from 'react';
 import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-const MedicationsDialogHeader: React.FC<{ isEditing: boolean }> = ({ isEditing }) => (
+interface MedicationsDialogHeaderProps {
+  isEditing: boolean;
+}
+
+const MedicationsDialogHeader: React.FC<MedicationsDialogHeaderProps> = ({ isEditing }) => (
   <DialogHeader>
     <DialogTitle>
       {isEditing ? 'แก้ไขรายการยา' : 'เพิ่มรายการยาใหม่'}

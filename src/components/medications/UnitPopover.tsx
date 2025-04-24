@@ -6,7 +6,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '
 import { Check, ChevronsUpDown, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface MedicationsUnitPopoverProps {
+interface UnitPopoverProps {
   unitOptions: { value: string, label: string }[];
   value: string;
   open: boolean;
@@ -17,7 +17,7 @@ interface MedicationsUnitPopoverProps {
   handleAddNewUnit: () => void;
 }
 
-const MedicationsUnitPopover: React.FC<MedicationsUnitPopoverProps> = ({
+const UnitPopover: React.FC<UnitPopoverProps> = ({
   unitOptions,
   value,
   open,
@@ -86,7 +86,7 @@ const MedicationsUnitPopover: React.FC<MedicationsUnitPopoverProps> = ({
         </Command>
       </PopoverContent>
     </Popover>
-  )
-}
+  );
+};
 
-export default MedicationsUnitPopover;
+export default UnitPopover;

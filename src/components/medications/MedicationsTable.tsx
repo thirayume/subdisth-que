@@ -5,7 +5,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Medication } from '@/integrations/supabase/schema';
 import MedicationStatusBadge from './MedicationStatusBadge';
 import { Edit, Trash2 } from 'lucide-react';
-import { useMedications } from '@/hooks/useMedications';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { useMedicationsContext } from './context/MedicationsContext';
 
 interface MedicationsTableProps {
   medications: Medication[];
@@ -31,7 +31,7 @@ const MedicationsTable: React.FC<MedicationsTableProps> = ({
   onEditMedication
 }) => {
   const [medicationToDelete, setMedicationToDelete] = React.useState<string | null>(null);
-  const { deleteMedication } = useMedications();
+  const { deleteMedication } = useMedicationsContext();
 
   // Apply custom filter function if provided, otherwise use all medications
   const filteredMedications = filterFunction 

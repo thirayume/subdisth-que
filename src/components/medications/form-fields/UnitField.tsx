@@ -1,10 +1,12 @@
 
-import React from "react";
+import * as React from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import MedicationsUnitPopover from "../MedicationsUnitPopover";
+import { Control } from "react-hook-form";
+import { MedicationFormValues } from "../schemas/medicationSchema";
+import UnitPopover from "../UnitPopover";
 
 type Props = {
-  control: any;
+  control: Control<MedicationFormValues>;
   value: string;
   open: boolean;
   newUnitInput: string;
@@ -15,7 +17,7 @@ type Props = {
   handleAddNewUnit: () => void;
 };
 
-const MedicationUnitField: React.FC<Props> = ({
+const UnitField: React.FC<Props> = ({
   control,
   value,
   open,
@@ -33,7 +35,7 @@ const MedicationUnitField: React.FC<Props> = ({
       <FormItem className="flex flex-col">
         <FormLabel>หน่วย</FormLabel>
         <FormControl>
-          <MedicationsUnitPopover
+          <UnitPopover
             unitOptions={unitOptions}
             value={value}
             open={open}
@@ -50,4 +52,4 @@ const MedicationUnitField: React.FC<Props> = ({
   />
 );
 
-export default MedicationUnitField;
+export default UnitField;
