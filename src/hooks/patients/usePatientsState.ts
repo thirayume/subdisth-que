@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/integrations/supabase/schema';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 export const usePatientsState = () => {
   const [patients, setPatients] = React.useState<Patient[]>([]);
@@ -28,7 +28,11 @@ export const usePatientsState = () => {
     } catch (err: any) {
       console.error('Error fetching patients:', err);
       setError(err.message || 'Failed to fetch patients');
-      toast.error('ไม่สามารถโหลดข้อมูลผู้ป่วยได้');
+      toast({
+        title: "Error",
+        description: 'ไม่สามารถโหลดข้อมูลผู้ป่วยได้',
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
