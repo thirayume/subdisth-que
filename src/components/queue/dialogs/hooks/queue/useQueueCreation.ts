@@ -1,11 +1,8 @@
 
-import React from 'react';
+import * as React from 'react';
 import { toast } from 'sonner';
 import { QueueType, QueueStatus } from '@/integrations/supabase/schema';
 import { supabase } from '@/integrations/supabase/client';
-
-// Add debug logging
-console.log("[DEBUG] useQueueCreation importing React:", React);
 
 // Define the queue type purpose mapping
 export const queueTypePurposes = {

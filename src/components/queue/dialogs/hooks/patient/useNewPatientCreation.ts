@@ -1,10 +1,7 @@
 
-import React from 'react';
+import * as React from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-
-// Add debug logging
-console.log("[DEBUG] useNewPatientCreation importing React:", React);
 
 export const useNewPatientCreation = () => {
   const createNewPatient = async (

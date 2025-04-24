@@ -1,11 +1,8 @@
 
-import React from 'react';
+import * as React from 'react';
 import { toast } from 'sonner';
 import { Patient } from '@/integrations/supabase/schema';
 import { supabase } from '@/integrations/supabase/client';
-
-// Add debug logging
-console.log("[DEBUG] usePatientSearch importing React:", React);
 
 export const usePatientSearch = () => {
   const [phoneNumber, setPhoneNumber] = React.useState('');

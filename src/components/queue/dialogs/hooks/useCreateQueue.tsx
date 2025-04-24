@@ -1,12 +1,9 @@
 
-import React from 'react';
+import * as React from 'react';
 import { usePatientSearch } from './patient/usePatientSearch';
 import { usePatientSelection } from './patient/usePatientSelection';
 import { useNewPatientCreation } from './patient/useNewPatientCreation';
 import { useQueueCreation } from './queue/useQueueCreation';
-
-// Debug log for React reference
-console.log("[DEBUG] In useCreateQueue.tsx, React is:", React);
 
 export const useCreateQueue = (
   onOpenChange: (open: boolean) => void,
