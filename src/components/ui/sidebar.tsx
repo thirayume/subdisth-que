@@ -13,9 +13,6 @@ import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
-// Add debug logging
-console.log("[DEBUG] UI Sidebar.tsx importing React:", React);
-
 interface SidebarProps {
   className?: string;
 }

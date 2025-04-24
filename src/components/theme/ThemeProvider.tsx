@@ -6,12 +6,12 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 import type { ThemeProviderProps } from "next-themes";
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  // Export our own provider that uses NextThemesProvider internally
   return (
     <NextThemesProvider
       attribute="class"
       defaultTheme="system"
       enableSystem
+      disableTransitionOnChange
       {...props}
     >
       {children}
@@ -21,15 +21,13 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
 
 // Custom hook to use the theme
 export const useTheme = () => {
-  // We recreate the same API our original useTheme hook had
   const { theme, setTheme } = React.useMemo(() => {
     try {
       // Dynamic import to avoid SSR issues
       const { useTheme: useNextThemes } = require("next-themes");
-      const { theme, setTheme } = useNextThemes();
       return { 
-        theme: theme as 'dark' | 'light' | 'system', 
-        setTheme: (t: 'dark' | 'light' | 'system') => setTheme(t) 
+        theme: useNextThemes().theme as 'dark' | 'light' | 'system', 
+        setTheme: useNextThemes().setTheme as (theme: 'dark' | 'light' | 'system') => void
       };
     } catch (e) {
       console.error("Error using next-themes:", e);

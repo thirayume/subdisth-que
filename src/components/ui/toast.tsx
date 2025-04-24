@@ -8,9 +8,6 @@ import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-// Debug log for React reference 
-console.log("[DEBUG] In toast.tsx, React is:", React);
-
 const ToastProvider = ToastPrimitives.Provider
 
 const ToastViewport = React.forwardRef<
