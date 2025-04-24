@@ -1,79 +1,18 @@
 
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Pill, Info } from 'lucide-react';
-import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
+import { usePatientMedications } from '@/hooks/usePatientMedications';
+import { format } from 'date-fns';
+import { th } from 'date-fns/locale';
 
 interface PatientMedicationsProps {
   patientId: string;
 }
 
-interface PatientMedication {
-  id: string;
-  medication_id: string;
-  patient_id: string;
-  dosage: string;
-  instructions: string;
-  start_date: string;
-  end_date?: string;
-  medication: {
-    name: string;
-    description: string;
-    unit: string;
-  };
-}
-
 const PatientMedications: React.FC<PatientMedicationsProps> = ({ patientId }) => {
-  const [medications, setMedications] = useState<PatientMedication[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    const fetchMedications = async () => {
-      try {
-        setLoading(true);
-        
-        // For now, we'll mock this data since we don't have a patient_medications table yet
-        // In a real implementation, we would fetch from a patient_medications table
-        
-        // Fetch all medications for now
-        const { data, error } = await supabase
-          .from('medications')
-          .select('*')
-          .limit(5);
-        
-        if (error) throw error;
-        
-        if (data) {
-          // Mock some patient medications data
-          const mockPatientMeds = data.map((med, index) => ({
-            id: `mock-${index}`,
-            medication_id: med.id,
-            patient_id: patientId,
-            dosage: index % 2 === 0 ? '1 เม็ด วันละ 3 ครั้ง หลังอาหาร' : '1 เม็ด วันละ 2 ครั้ง ก่อนอาหาร',
-            instructions: 'รับประทานต่อเนื่อง',
-            start_date: new Date().toISOString(),
-            end_date: index % 3 === 0 ? undefined : new Date(Date.now() + 30*24*60*60*1000).toISOString(),
-            medication: {
-              name: med.name,
-              description: med.description || '',
-              unit: med.unit
-            }
-          }));
-          
-          setMedications(mockPatientMeds);
-        }
-      } catch (error) {
-        console.error('Error fetching medications:', error);
-        toast.error('ไม่สามารถดึงข้อมูลยาได้');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchMedications();
-  }, [patientId]);
+  const { medications, loading } = usePatientMedications(patientId);
 
   if (loading) {
     return (
@@ -129,24 +68,38 @@ const PatientMedications: React.FC<PatientMedicationsProps> = ({ patientId }) =>
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="font-medium text-pharmacy-700">{med.medication.name}</h3>
+                  <h3 className="font-medium text-pharmacy-700">
+                    {med.medication?.name}
+                  </h3>
                   <p className="text-sm text-gray-600 mt-1">{med.dosage}</p>
                 </div>
                 <div className="text-right">
                   <span className="text-xs font-medium px-2 py-1 rounded-full bg-pharmacy-100 text-pharmacy-700">
-                    {med.medication.unit}
+                    {med.medication?.unit}
                   </span>
                 </div>
               </div>
               
-              {med.medication.description && (
-                <p className="text-sm text-gray-500 mt-2">{med.medication.description}</p>
+              {med.medication?.description && (
+                <p className="text-sm text-gray-500 mt-2">
+                  {med.medication.description}
+                </p>
+              )}
+
+              {med.instructions && (
+                <p className="text-sm text-gray-600 mt-2">
+                  {med.instructions}
+                </p>
               )}
               
               <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
-                <span>เริ่ม: {new Date(med.start_date).toLocaleDateString('th-TH')}</span>
+                <span>
+                  เริ่ม: {format(new Date(med.start_date), 'PP', { locale: th })}
+                </span>
                 {med.end_date && (
-                  <span>สิ้นสุด: {new Date(med.end_date).toLocaleDateString('th-TH')}</span>
+                  <span>
+                    สิ้นสุด: {format(new Date(med.end_date), 'PP', { locale: th })}
+                  </span>
                 )}
               </div>
             </div>
