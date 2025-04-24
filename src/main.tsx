@@ -1,7 +1,7 @@
 
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
-import App from './App.tsx';
+import App from './App';
 import './index.css';
 
 // Register service worker for offline support
@@ -17,7 +17,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Use createRoot API
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error('Root element not found');
 
