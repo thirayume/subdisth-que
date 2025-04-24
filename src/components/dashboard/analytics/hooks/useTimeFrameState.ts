@@ -1,10 +1,10 @@
 
-import { useState } from 'react';
+import * as React from 'react';
 
 export type TimeFrame = 'day' | 'week' | 'month';
 
 export const useTimeFrameState = () => {
-  const [timeFrame, setTimeFrame] = useState<TimeFrame>('day');
+  const [timeFrame, setTimeFrame] = React.useState<TimeFrame>('day');
   
   return {
     timeFrame,

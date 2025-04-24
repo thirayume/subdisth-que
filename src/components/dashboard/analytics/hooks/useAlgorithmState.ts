@@ -1,10 +1,10 @@
 
-import { useState, useEffect } from 'react';
+import * as React from 'react';
 import { QueueAlgorithmType, getOptimalAlgorithmForPharmacy } from '@/utils/queueAlgorithms';
 import { Queue } from '@/integrations/supabase/schema';
 
 export const useAlgorithmState = (waitingQueues: Queue[]) => {
-  const [currentAlgorithm, setCurrentAlgorithm] = useState<QueueAlgorithmType>(
+  const [currentAlgorithm, setCurrentAlgorithm] = React.useState<QueueAlgorithmType>(
     localStorage.getItem('queue_algorithm') as QueueAlgorithmType || QueueAlgorithmType.FIFO
   );
   

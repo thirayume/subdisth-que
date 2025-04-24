@@ -1,14 +1,14 @@
 
-import { useState, useEffect } from 'react';
+import * as React from 'react';
 import { format, startOfDay, startOfWeek, startOfMonth } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { TimeFrame } from './useTimeFrameState';
 
 export const useThroughputData = (timeFrame: TimeFrame) => {
-  const [throughputData, setThroughputData] = useState<any[]>([]);
+  const [throughputData, setThroughputData] = React.useState<any[]>([]);
   
-  useEffect(() => {
+  React.useEffect(() => {
     const fetchThroughputData = async () => {
       try {
         let startDate: Date;

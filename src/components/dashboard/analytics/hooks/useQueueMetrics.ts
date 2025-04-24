@@ -1,4 +1,5 @@
 
+import * as React from 'react';
 import { Queue } from '@/integrations/supabase/schema';
 
 export const useQueueMetrics = (completedQueues: Queue[]) => {
