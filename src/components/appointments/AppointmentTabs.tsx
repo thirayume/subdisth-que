@@ -1,36 +1,67 @@
 
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import AppointmentSearch from './AppointmentSearch';
 import AppointmentsList from './AppointmentsList';
+import AppointmentSearchForm from './AppointmentSearchForm';
 import { Appointment } from '@/integrations/supabase/schema';
 
 interface AppointmentTabsProps {
   todayAppointments: Appointment[];
   tomorrowAppointments: Appointment[];
   upcomingAppointments: Appointment[];
-  searchTerm: string;
-  setSearchTerm: (value: string) => void;
+  nameSearchTerm: string;
+  setNameSearchTerm: (value: string) => void;
+  phoneSearchTerm: string;
+  setPhoneSearchTerm: (value: string) => void;
+  dateRange: {
+    from: Date | undefined;
+    to: Date | undefined;
+  };
+  setDateRange: (range: { from: Date | undefined; to: Date | undefined }) => void;
   getPatientName: (patientId: string) => string;
+  getPatientPhone: (patientId: string) => string;
+  filteredAppointments: Appointment[];
+  isFiltered: boolean;
+  onClearSearch: () => void;
 }
 
 const AppointmentTabs: React.FC<AppointmentTabsProps> = ({
   todayAppointments,
   tomorrowAppointments,
   upcomingAppointments,
-  searchTerm,
-  setSearchTerm,
-  getPatientName
+  nameSearchTerm,
+  setNameSearchTerm,
+  phoneSearchTerm,
+  setPhoneSearchTerm,
+  dateRange,
+  setDateRange,
+  getPatientName,
+  getPatientPhone,
+  filteredAppointments,
+  isFiltered,
+  onClearSearch
 }) => {
   return (
     <Tabs defaultValue="today" className="space-y-4">
       <TabsList>
-        <TabsTrigger value="today">วันนี้ ({todayAppointments.length})</TabsTrigger>
-        <TabsTrigger value="tomorrow">พรุ่งนี้ ({tomorrowAppointments.length})</TabsTrigger>
-        <TabsTrigger value="upcoming">นัดหมายในอนาคต ({upcomingAppointments.length})</TabsTrigger>
+        <TabsTrigger value="today" disabled={isFiltered}>วันนี้ ({todayAppointments.length})</TabsTrigger>
+        <TabsTrigger value="tomorrow" disabled={isFiltered}>พรุ่งนี้ ({tomorrowAppointments.length})</TabsTrigger>
+        <TabsTrigger value="upcoming" disabled={isFiltered}>นัดหมายในอนาคต ({upcomingAppointments.length})</TabsTrigger>
+        {isFiltered && (
+          <TabsTrigger value="search-results">ผลการค้นหา ({filteredAppointments.length})</TabsTrigger>
+        )}
       </TabsList>
       
-      <AppointmentSearch searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+      <AppointmentSearchForm
+        nameSearchTerm={nameSearchTerm}
+        setNameSearchTerm={setNameSearchTerm}
+        phoneSearchTerm={phoneSearchTerm}
+        setPhoneSearchTerm={setPhoneSearchTerm}
+        dateRange={dateRange}
+        setDateRange={setDateRange}
+        onClearSearch={onClearSearch}
+        isFiltered={isFiltered}
+      />
       
       <TabsContent value="today" className="animate-fade-in">
         <AppointmentsList 
@@ -61,6 +92,18 @@ const AppointmentTabs: React.FC<AppointmentTabsProps> = ({
           iconColor="text-purple-600"
         />
       </TabsContent>
+
+      {isFiltered && (
+        <TabsContent value="search-results" className="animate-fade-in">
+          <AppointmentsList 
+            appointments={filteredAppointments}
+            getPatientName={getPatientName}
+            emptyMessage="ไม่พบนัดหมายที่ตรงกับเงื่อนไขการค้นหา"
+            iconBgColor="bg-amber-100"
+            iconColor="text-amber-600"
+          />
+        </TabsContent>
+      )}
     </Tabs>
   );
 };
