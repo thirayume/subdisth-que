@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { Queue, QueueStatus, QueueType } from '@/integrations/supabase/schema';
 import { useQueueState } from './queue/useQueueState';
@@ -6,9 +5,6 @@ import { useQueueStatusUpdates } from './queue/useQueueStatusUpdates';
 import { useQueueAnnouncements } from './queue/useQueueAnnouncements';
 import { announceQueue } from '@/utils/textToSpeech';
 import { QueueAlgorithmType, sortQueuesByAlgorithm, QueueTypeWithAlgorithm } from '@/utils/queueAlgorithms';
-
-// Add debug logging
-console.log("[DEBUG] useQueues importing React:", React);
 
 export const useQueues = () => {
   console.log('[useQueues] Hook initialized');

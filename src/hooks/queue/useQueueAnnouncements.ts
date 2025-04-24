@@ -1,124 +1,63 @@
 
 import * as React from 'react';
-import { Queue } from '@/integrations/supabase/schema';
-import { announceQueue } from '@/utils/textToSpeech';
 import { toast } from 'sonner';
-
-// Add debug logging
-console.log("[DEBUG] useQueueAnnouncements importing React:", React);
+import { announceQueue } from '@/utils/textToSpeech';
 
 export const useQueueAnnouncements = () => {
-  const [voiceEnabled, setVoiceEnabled] = React.useState(true);
-  const [counterName, setCounterName] = React.useState('1');
-  const [volume, setVolume] = React.useState(80);
-  const [rate, setRate] = React.useState(90);
-  
-  // Load voice settings from localStorage on startup
+  const [voiceEnabled, setVoiceEnabled] = React.useState<boolean>(() => {
+    const saved = localStorage.getItem('queue_voice_enabled');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const [counterName, setCounterName] = React.useState<string>(() => {
+    return localStorage.getItem('queue_counter_name') || '1';
+  });
+
   React.useEffect(() => {
-    const savedVoiceEnabled = localStorage.getItem('queue_voice_enabled');
-    if (savedVoiceEnabled !== null) {
-      setVoiceEnabled(savedVoiceEnabled === 'true');
-    }
-    
-    const savedCounterName = localStorage.getItem('counter_name');
-    if (savedCounterName) {
-      setCounterName(savedCounterName);
-    }
-    
-    const savedVolume = localStorage.getItem('queue_voice_volume');
-    if (savedVolume) {
-      setVolume(parseInt(savedVolume));
-    }
-    
-    const savedRate = localStorage.getItem('queue_voice_rate');
-    if (savedRate) {
-      setRate(parseInt(savedRate));
-    }
-  }, []);
+    localStorage.setItem('queue_voice_enabled', String(voiceEnabled));
+  }, [voiceEnabled]);
 
-  // Update queue settings
-  const updateQueueSettings = (enabled: boolean, counter: string, newVolume?: number, newRate?: number) => {
-    setVoiceEnabled(enabled);
-    setCounterName(counter);
-    
-    if (newVolume !== undefined) {
-      setVolume(newVolume);
-      localStorage.setItem('queue_voice_volume', String(newVolume));
+  React.useEffect(() => {
+    localStorage.setItem('queue_counter_name', counterName);
+  }, [counterName]);
+
+  const updateQueueSettings = (settings: {
+    voiceEnabled?: boolean;
+    counterName?: string;
+  }) => {
+    if (settings.voiceEnabled !== undefined) {
+      setVoiceEnabled(settings.voiceEnabled);
     }
-    
-    if (newRate !== undefined) {
-      setRate(newRate);
-      localStorage.setItem('queue_voice_rate', String(newRate));
+    if (settings.counterName !== undefined) {
+      setCounterName(settings.counterName);
     }
-    
-    // Save to localStorage
-    localStorage.setItem('queue_voice_enabled', String(enabled));
-    localStorage.setItem('counter_name', counter);
   };
-  
-  // Call a queue
-  const callQueue = async (queue: Queue, updateStatus: (id: string, status: string) => Promise<Queue | null>) => {
-    const updatedQueue = await updateStatus(queue.id, 'ACTIVE');
+
+  const recallQueue = async (queueId: string, getQueueById: (id: string) => any | undefined) => {
+    const queueToRecall = getQueueById(queueId);
     
-    // Announce the queue if voice is enabled
-    if (updatedQueue && voiceEnabled) {
+    if (queueToRecall && voiceEnabled) {
       try {
         const announcementText = localStorage.getItem('queue_announcement_text') || 
           'ขอเชิญหมายเลข {queueNumber} ที่ช่องบริการ {counter}';
         
         await announceQueue(
-          updatedQueue.number, 
+          queueToRecall.number, 
           counterName, 
-          updatedQueue.type,
-          announcementText
-        );
-      } catch (err) {
-        console.error('Error announcing queue:', err);
-      }
-    }
-    
-    return updatedQueue;
-  };
-  
-  // Recall a queue (announce again)
-  const recallQueue = async (queueOrId: Queue | string, queueGetter?: (id: string) => Queue | undefined) => {
-    // If queueOrId is a string and we have a queueGetter function, get the Queue object
-    let queue: Queue | undefined;
-    
-    if (typeof queueOrId === 'string' && queueGetter) {
-      queue = queueGetter(queueOrId);
-      if (!queue) {
-        console.error('Queue not found for ID:', queueOrId);
-        return null;
-      }
-    } else if (typeof queueOrId !== 'string') {
-      queue = queueOrId;
-    } else {
-      console.error('Cannot recall queue without Queue object or queue getter function');
-      return null;
-    }
-
-    if (voiceEnabled && queue) {
-      try {
-        const announcementText = localStorage.getItem('queue_announcement_text') || 
-          'ขอเชิญหมายเลข {queueNumber} ที่ช่องบริการ {counter}';
-        
-        await announceQueue(
-          queue.number, 
-          counterName, 
-          queue.type,
+          queueToRecall.type,
           announcementText
         );
         
-        toast.info(`เรียกซ้ำคิวหมายเลข ${queue.number}`);
-        return queue;
+        toast.success(`เรียกซ้ำคิวหมายเลข ${queueToRecall.number}`);
+        return true;
       } catch (err) {
         console.error('Error recalling queue:', err);
-        toast.error('ไม่สามารถประกาศเสียงเรียกคิวได้');
+        toast.error('ไม่สามารถเรียกคิวซ้ำได้');
+        return false;
       }
     }
     
-    return queue || null;
+    return false;
   };
 
   return {
@@ -126,10 +65,7 @@ export const useQueueAnnouncements = () => {
     setVoiceEnabled,
     counterName,
     setCounterName,
-    volume,
-    rate,
     updateQueueSettings,
-    callQueue,
     recallQueue
   };
 };

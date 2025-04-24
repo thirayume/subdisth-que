@@ -1,11 +1,7 @@
-
 import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Queue, QueueStatus, QueueType } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
-
-// Add debug logging
-console.log("[DEBUG] useQueueState importing React:", React);
 
 export const useQueueState = () => {
   const [queues, setQueues] = React.useState<Queue[]>([]);
@@ -121,7 +117,7 @@ export const useQueueState = () => {
         };
         
         setQueues(prev => [newQueue, ...prev]);
-        toast.success(`เพิ่มคิวหมายเลข ${queueData.number} เรียบร้อยแล้ว`);
+        toast.success(`เพิ่มคิวหมายเลข ${queueData.number} เรียบร้อยแ��้ว`);
         return newQueue;
       }
     } catch (err: any) {

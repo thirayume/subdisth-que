@@ -2,9 +2,6 @@
 import * as React from 'react';
 import { useQueues } from '@/hooks/useQueues';
 
-// Add debug logging
-console.log("[DEBUG] useDashboardQueues importing React:", React);
-
 export const useDashboardQueues = () => {
   console.log('[useDashboardQueues] Hook initialized');
   const { queues, sortQueues } = useQueues() || { queues: [], sortQueues: (q) => q };

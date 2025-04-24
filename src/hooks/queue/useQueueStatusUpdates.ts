@@ -1,67 +1,77 @@
 
 import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Queue, QueueStatus, QueueType } from '@/integrations/supabase/schema';
+import { Queue, QueueStatus } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
 
-// Add debug logging
-console.log("[DEBUG] useQueueStatusUpdates importing React:", React);
-
-export const useQueueStatusUpdates = (updateQueues: (newQueue: Queue) => void) => {
-  const [error, setError] = React.useState<string | null>(null);
-  
-  // Update queue status
-  const updateQueueStatus = async (id: string, status: QueueStatus) => {
+export const useQueueStatusUpdates = (
+  updateQueueInState: (updatedQueue: Queue) => void
+) => {
+  const updateQueueStatus = React.useCallback(async (queueId: string, newStatus: QueueStatus) => {
     try {
-      setError(null);
+      const now = new Date().toISOString();
       
-      const updates: Partial<Queue> = { status, updated_at: new Date().toISOString() };
+      let updates: any = {
+        status: newStatus,
+        updated_at: now
+      };
       
-      // Add timestamps based on status
-      if (status === 'ACTIVE') {
-        updates.called_at = new Date().toISOString();
-      } else if (status === 'COMPLETED') {
-        updates.completed_at = new Date().toISOString();
+      // Add status-specific timestamp fields
+      if (newStatus === 'ACTIVE') {
+        updates.active_at = now;
+      } else if (newStatus === 'COMPLETED') {
+        updates.completed_at = now;
+      } else if (newStatus === 'SKIPPED') {
+        updates.skipped_at = now;
+      } else if (newStatus === 'WAITING') {
+        // Clear status-specific timestamps if setting back to WAITING
+        updates.active_at = null;
+        updates.completed_at = null;
+        updates.skipped_at = null;
       }
       
       const { data, error } = await supabase
         .from('queues')
         .update(updates)
-        .eq('id', id)
-        .select();
-
+        .eq('id', queueId)
+        .select()
+        .single();
+      
       if (error) {
         throw error;
       }
-
-      if (data && data.length > 0) {
-        // Cast the returned data to ensure proper type conversion
+      
+      if (data) {
+        // Cast to ensure proper types
         const updatedQueue: Queue = {
-          ...data[0],
-          type: data[0].type as QueueType,
-          status: data[0].status as QueueStatus
+          ...data,
+          type: data.type as Queue['type'],
+          status: data.status as QueueStatus
         };
         
-        updateQueues(updatedQueue);
+        updateQueueInState(updatedQueue);
         
-        let statusMessage = 'อัปเดตสถานะคิวเรียบร้อยแล้ว';
-        if (status === 'ACTIVE') statusMessage = 'เรียกคิวเรียบร้อยแล้ว';
-        else if (status === 'COMPLETED') statusMessage = 'คิวเสร็จสิ้นเรียบร้อยแล้ว';
-        else if (status === 'SKIPPED') statusMessage = 'ข้ามคิวเรียบร้อยแล้ว';
+        // Show success toast with appropriate message
+        const statusMessages = {
+          ACTIVE: 'เรียกคิวเรียบร้อยแล้ว',
+          COMPLETED: 'เสร็จสิ้นการให้บริการ',
+          SKIPPED: 'ข้ามคิวเรียบร้อยแล้ว',
+          WAITING: 'คืนสถานะเป็นรอดำเนินการ'
+        };
         
-        toast.success(statusMessage);
+        toast.success(statusMessages[newStatus] || 'อัปเดตสถานะคิวเรียบร้อยแล้ว');
         return updatedQueue;
       }
+      
+      return null;
     } catch (err: any) {
       console.error('Error updating queue status:', err);
-      setError(err.message || 'Failed to update queue status');
       toast.error('ไม่สามารถอัปเดตสถานะคิวได้');
       return null;
     }
-  };
+  }, [updateQueueInState]);
 
   return {
-    error,
     updateQueueStatus
   };
 };
