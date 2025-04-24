@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import AppointmentsList from './AppointmentsList';
+import { Tabs } from '@/components/ui/tabs';
 import AppointmentSearchForm from './AppointmentSearchForm';
+import AppointmentTabsList from './tabs/AppointmentTabsList';
+import AppointmentTabContent from './tabs/AppointmentTabContent';
 import { Appointment } from '@/integrations/supabase/schema';
 
 interface AppointmentTabsProps {
@@ -36,21 +37,19 @@ const AppointmentTabs: React.FC<AppointmentTabsProps> = ({
   dateRange,
   setDateRange,
   getPatientName,
-  getPatientPhone,
   filteredAppointments,
   isFiltered,
   onClearSearch
 }) => {
   return (
     <Tabs defaultValue="today" className="space-y-4">
-      <TabsList>
-        <TabsTrigger value="today" disabled={isFiltered}>วันนี้ ({todayAppointments.length})</TabsTrigger>
-        <TabsTrigger value="tomorrow" disabled={isFiltered}>พรุ่งนี้ ({tomorrowAppointments.length})</TabsTrigger>
-        <TabsTrigger value="upcoming" disabled={isFiltered}>นัดหมายในอนาคต ({upcomingAppointments.length})</TabsTrigger>
-        {isFiltered && (
-          <TabsTrigger value="search-results">ผลการค้นหา ({filteredAppointments.length})</TabsTrigger>
-        )}
-      </TabsList>
+      <AppointmentTabsList 
+        todayCount={todayAppointments.length}
+        tomorrowCount={tomorrowAppointments.length}
+        upcomingCount={upcomingAppointments.length}
+        isFiltered={isFiltered}
+        filteredCount={filteredAppointments.length}
+      />
       
       <AppointmentSearchForm
         nameSearchTerm={nameSearchTerm}
@@ -63,46 +62,42 @@ const AppointmentTabs: React.FC<AppointmentTabsProps> = ({
         isFiltered={isFiltered}
       />
       
-      <TabsContent value="today" className="animate-fade-in">
-        <AppointmentsList 
-          appointments={todayAppointments}
-          getPatientName={getPatientName}
-          emptyMessage="ไม่มีนัดหมายในวันนี้"
-          iconBgColor="bg-green-100"
-          iconColor="text-green-600"
-        />
-      </TabsContent>
+      <AppointmentTabContent 
+        value="today"
+        appointments={todayAppointments}
+        getPatientName={getPatientName}
+        emptyMessage="ไม่มีนัดหมายในวันนี้"
+        iconBgColor="bg-green-100"
+        iconColor="text-green-600"
+      />
       
-      <TabsContent value="tomorrow" className="animate-fade-in">
-        <AppointmentsList 
-          appointments={tomorrowAppointments}
-          getPatientName={getPatientName}
-          emptyMessage="ไม่มีนัดหมายในวันพรุ่งนี้"
-          iconBgColor="bg-blue-100"
-          iconColor="text-blue-600"
-        />
-      </TabsContent>
+      <AppointmentTabContent 
+        value="tomorrow"
+        appointments={tomorrowAppointments}
+        getPatientName={getPatientName}
+        emptyMessage="ไม่มีนัดหมายในวันพรุ่งนี้"
+        iconBgColor="bg-blue-100"
+        iconColor="text-blue-600"
+      />
       
-      <TabsContent value="upcoming" className="animate-fade-in">
-        <AppointmentsList 
-          appointments={upcomingAppointments}
-          getPatientName={getPatientName}
-          emptyMessage="ไม่มีนัดหมายในอนาคต"
-          iconBgColor="bg-purple-100"
-          iconColor="text-purple-600"
-        />
-      </TabsContent>
+      <AppointmentTabContent 
+        value="upcoming"
+        appointments={upcomingAppointments}
+        getPatientName={getPatientName}
+        emptyMessage="ไม่มีนัดหมายในอนาคต"
+        iconBgColor="bg-purple-100"
+        iconColor="text-purple-600"
+      />
 
       {isFiltered && (
-        <TabsContent value="search-results" className="animate-fade-in">
-          <AppointmentsList 
-            appointments={filteredAppointments}
-            getPatientName={getPatientName}
-            emptyMessage="ไม่พบนัดหมายที่ตรงกับเงื่อนไขการค้นหา"
-            iconBgColor="bg-amber-100"
-            iconColor="text-amber-600"
-          />
-        </TabsContent>
+        <AppointmentTabContent 
+          value="search-results"
+          appointments={filteredAppointments}
+          getPatientName={getPatientName}
+          emptyMessage="ไม่พบนัดหมายที่ตรงกับเงื่อนไขการค้นหา"
+          iconBgColor="bg-amber-100"
+          iconColor="text-amber-600"
+        />
       )}
     </Tabs>
   );
