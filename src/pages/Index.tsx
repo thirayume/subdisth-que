@@ -15,10 +15,10 @@ const Dashboard = () => {
   console.log('[Dashboard] Component rendering');
   
   try {
-    // Get patients and queue data
-    const { patients } = usePatients();
-    const { waitingQueues, activeQueues, completedQueues } = useDashboardQueues();
-    const todayStats = useDashboardStats(completedQueues);
+    // Get patients and queue data 
+    const { patients = [] } = usePatients() || { patients: [] };
+    const { waitingQueues = [], activeQueues = [], completedQueues = [] } = useDashboardQueues() || {};
+    const todayStats = useDashboardStats(completedQueues || []);
 
     console.log('[Dashboard] Queue counts:', {
       waiting: waitingQueues?.length || 0,
@@ -35,8 +35,8 @@ const Dashboard = () => {
           activeQueues={activeQueues || []}
           completedQueues={completedQueues || []}
           queues={[...(waitingQueues || []), ...(activeQueues || []), ...(completedQueues || [])]}
-          avgWaitTime={todayStats?.avgWaitTime}
-          avgServiceTime={todayStats?.avgServiceTime}
+          avgWaitTime={todayStats?.avgWaitTime || 0}
+          avgServiceTime={todayStats?.avgServiceTime || 0}
         />
         
         <DashboardCards 
@@ -44,7 +44,7 @@ const Dashboard = () => {
           activeQueues={activeQueues || []}
           completedQueues={completedQueues || []}
           patientsCount={patients?.length || 0}
-          avgWaitTime={todayStats?.avgWaitTime}
+          avgWaitTime={todayStats?.avgWaitTime || 0}
         />
       </Layout>
     );

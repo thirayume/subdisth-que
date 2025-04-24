@@ -16,7 +16,7 @@ import {
 console.log("[DEBUG] In toaster.tsx, React is:", React);
 
 export function Toaster() {
-  const { toasts } = useToast()
+  const { toasts } = useToast() || { toasts: [] };
   
   console.log("[DEBUG] Toaster rendering with toasts:", toasts);
 
