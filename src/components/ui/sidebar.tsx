@@ -10,7 +10,7 @@ import {
   navigationMenuTriggerStyle
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
-import { useLocation, Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
 // Add debug logging
@@ -29,7 +29,7 @@ interface SidebarItemProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   // Use our custom theme hook if needed
-  // const { theme } = useTheme();
+  const { theme } = useTheme();
   
   return (
     <NavigationMenu className={cn("hidden lg:flex items-center", className)}>
