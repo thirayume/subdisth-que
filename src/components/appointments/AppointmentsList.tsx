@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Appointment, AppointmentStatus } from '@/integrations/supabase/schema';
@@ -30,6 +31,11 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({
   const { updateAppointment, deleteAppointment } = useAppointments();
   const { patients } = usePatients();
   
+  const handleEditDialogClose = () => {
+    setIsEditDialogOpen(false);
+    setEditingAppointment(null);
+  };
+
   const openEditDialog = (appointment: Appointment) => {
     setEditingAppointment(appointment);
     setIsEditDialogOpen(true);
@@ -50,15 +56,19 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({
     // Combine date and time into a single ISO string
     const combinedDate = new Date(`${date}T${time}`);
     
-    const updated = await updateAppointment(editingAppointment.id, {
-      ...rest,
-      date: combinedDate.toISOString(),
-      status: rest.status as AppointmentStatus // Explicitly cast to ensure correct typing
-    });
-    
-    if (updated) {
-      setIsEditDialogOpen(false);
-      setEditingAppointment(null);
+    try {
+      const updated = await updateAppointment(editingAppointment.id, {
+        ...rest,
+        date: combinedDate.toISOString(),
+        status: rest.status as AppointmentStatus
+      });
+      
+      if (updated) {
+        handleEditDialogClose();
+      }
+    } catch (error) {
+      console.error('Failed to update appointment:', error);
+      handleEditDialogClose(); // Ensure dialog closes even on error
     }
   };
 
@@ -91,7 +101,7 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({
       {/* Edit Appointment Dialog */}
       <EditAppointmentDialog
         open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
+        onOpenChange={handleEditDialogClose}
         appointment={editingAppointment}
         patients={patients}
         onSubmit={onSubmit}
