@@ -42,7 +42,7 @@ const AppointmentItem: React.FC<AppointmentItemProps> = ({
           {appointment.purpose}
         </p>
         <p className="text-xs text-gray-400">
-          {format(new Date(appointment.date), 'HH:mm น.', { locale: th })}
+          {format(new Date(appointment.date), 'dd MMM yyyy, HH:mm น.', { locale: th })}
         </p>
       </div>
       <div className="ml-4">
@@ -72,3 +72,4 @@ const AppointmentItem: React.FC<AppointmentItemProps> = ({
 };
 
 export default AppointmentItem;
+
