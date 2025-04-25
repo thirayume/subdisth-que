@@ -8,6 +8,7 @@ import AppointmentItem from './AppointmentItem';
 import EditAppointmentDialog from './edit-dialog/EditAppointmentDialog';
 import { AppointmentFormValues } from './edit-dialog/types';
 import DeleteAppointmentDialog from './DeleteAppointmentDialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface AppointmentsListProps {
   appointments: Appointment[];
@@ -30,6 +31,7 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({
   
   const { updateAppointment, deleteAppointment } = useAppointments();
   const { patients } = usePatients();
+  const { toast } = useToast();
   
   const handleEditDialogClose = () => {
     setIsEditDialogOpen(false);
@@ -43,8 +45,21 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({
 
   const handleDeleteConfirm = async () => {
     if (appointmentToDelete) {
-      await deleteAppointment(appointmentToDelete);
-      setAppointmentToDelete(null);
+      try {
+        await deleteAppointment(appointmentToDelete);
+        setAppointmentToDelete(null);
+        toast({
+          title: "การนัดถูกลบแล้ว",
+          description: "การนัดหมายถูกลบออกจากระบบเรียบร้อยแล้ว",
+        });
+      } catch (error) {
+        console.error('Failed to delete appointment:', error);
+        toast({
+          variant: "destructive",
+          title: "เกิดข้อผิดพลาด",
+          description: "ไม่สามารถลบการนัดหมายได้ กรุณาลองใหม่อีกครั้ง",
+        });
+      }
     }
   };
 
@@ -64,11 +79,21 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({
       });
       
       if (updated) {
+        toast({
+          title: "อัพเดทการนัดสำเร็จ",
+          description: "ข้อมูลการนัดหมายถูกอัพเดทเรียบร้อยแล้ว",
+        });
         handleEditDialogClose();
       }
     } catch (error) {
       console.error('Failed to update appointment:', error);
-      handleEditDialogClose(); // Ensure dialog closes even on error
+      toast({
+        variant: "destructive",
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถอัพเดทการนัดหมายได้ กรุณาลองใหม่อีกครั้ง",
+      });
+      // Still close the dialog even if there's an error
+      handleEditDialogClose();
     }
   };
 
