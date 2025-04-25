@@ -19,6 +19,7 @@ interface AppointmentItemProps {
   iconColor: string;
   onEdit: (appointment: Appointment) => void;
   onDelete: (appointmentId: string) => void;
+  dropdownKey: number; // Add this new prop
 }
 
 const AppointmentItem: React.FC<AppointmentItemProps> = ({
@@ -27,7 +28,8 @@ const AppointmentItem: React.FC<AppointmentItemProps> = ({
   iconBgColor,
   iconColor,
   onEdit,
-  onDelete
+  onDelete,
+  dropdownKey
 }) => {
   return (
     <div className="flex items-center p-4 hover:bg-gray-50">
@@ -46,7 +48,7 @@ const AppointmentItem: React.FC<AppointmentItemProps> = ({
         </p>
       </div>
       <div className="ml-4">
-        <DropdownMenu>
+        <DropdownMenu key={dropdownKey}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm">
               <ChevronRight className="h-5 w-5" />
@@ -72,4 +74,3 @@ const AppointmentItem: React.FC<AppointmentItemProps> = ({
 };
 
 export default AppointmentItem;
-

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Appointment, AppointmentStatus } from '@/integrations/supabase/schema';
@@ -28,14 +27,16 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [appointmentToDelete, setAppointmentToDelete] = useState<string | null>(null);
-  
+  const [dropdownKey, setDropdownKey] = useState(0);
+
   const { updateAppointment, deleteAppointment } = useAppointments();
   const { patients } = usePatients();
   const { toast } = useToast();
-  
+
   const handleEditDialogClose = () => {
     setIsEditDialogOpen(false);
     setEditingAppointment(null);
+    setDropdownKey(prev => prev + 1);
   };
 
   const openEditDialog = (appointment: Appointment) => {
@@ -68,7 +69,6 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({
     
     const { date, time, ...rest } = values;
     
-    // Combine date and time into a single ISO string
     const combinedDate = new Date(`${date}T${time}`);
     
     try {
@@ -92,7 +92,6 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({
         title: "เกิดข้อผิดพลาด",
         description: "ไม่สามารถอัพเดทการนัดหมายได้ กรุณาลองใหม่อีกครั้ง",
       });
-      // Still close the dialog even if there's an error
       handleEditDialogClose();
     }
   };
@@ -116,6 +115,7 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({
                   iconColor={iconColor}
                   onEdit={openEditDialog}
                   onDelete={setAppointmentToDelete}
+                  dropdownKey={dropdownKey}
                 />
               ))}
             </div>
@@ -123,7 +123,6 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({
         </CardContent>
       </Card>
 
-      {/* Edit Appointment Dialog */}
       <EditAppointmentDialog
         open={isEditDialogOpen}
         onOpenChange={handleEditDialogClose}
@@ -132,7 +131,6 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({
         onSubmit={onSubmit}
       />
 
-      {/* Delete Confirmation Dialog */}
       <DeleteAppointmentDialog
         open={!!appointmentToDelete}
         onOpenChange={(open) => !open && setAppointmentToDelete(null)}
