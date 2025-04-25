@@ -4,13 +4,14 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/comp
 import { Input } from '@/components/ui/input';
 import { UseFormReturn, Path } from 'react-hook-form';
 
-interface DateTimeFieldsProps<T extends { date: string; time: string }> {
+// Modified to accept forms where date and time might be optional
+interface DateTimeFieldsProps<T extends { date?: string; time?: string }> {
   form: UseFormReturn<T>;
   dateField?: Path<T>;
   timeField?: Path<T>;
 }
 
-export const DateTimeFields = <T extends { date: string; time: string }>({ 
+export const DateTimeFields = <T extends { date?: string; time?: string }>({ 
   form, 
   dateField = 'date' as Path<T>, 
   timeField = 'time' as Path<T> 
