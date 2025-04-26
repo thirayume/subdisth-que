@@ -39,6 +39,7 @@ export interface Appointment {
   purpose: string;
   notes?: string;
   status: AppointmentStatus;
+  batch_id?: string; // Added for grouping batch appointments
   created_at: string;
   updated_at: string;
 }

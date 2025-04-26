@@ -1,11 +1,13 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Users } from 'lucide-react';
 import { CreateAppointmentDialog } from './create-dialog/CreateAppointmentDialog';
+import { BatchAppointmentDialog } from './batch-dialog/BatchAppointmentDialog';
 
 const AppointmentHeader: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isBatchDialogOpen, setIsBatchDialogOpen] = useState(false);
 
   return (
     <div className="flex justify-between items-center mb-6">
@@ -15,6 +17,15 @@ const AppointmentHeader: React.FC = () => {
       </div>
       
       <div className="flex items-center gap-2">
+        <Button 
+          variant="outline"
+          className="border-pharmacy-600 text-pharmacy-600 hover:bg-pharmacy-50"
+          onClick={() => setIsBatchDialogOpen(true)}
+        >
+          <Users className="w-4 h-4 mr-2" />
+          นัดหมายแบบกลุ่ม
+        </Button>
+        
         <Button 
           className="bg-pharmacy-600 hover:bg-pharmacy-700 text-white"
           onClick={() => setIsDialogOpen(true)}
@@ -28,9 +39,13 @@ const AppointmentHeader: React.FC = () => {
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
       />
+      
+      <BatchAppointmentDialog
+        open={isBatchDialogOpen}
+        onOpenChange={setIsBatchDialogOpen}
+      />
     </div>
   );
 };
 
 export default AppointmentHeader;
-
