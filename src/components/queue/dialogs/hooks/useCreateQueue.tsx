@@ -67,6 +67,7 @@ export const useCreateQueue = (
 
   // Reset all state
   const resetState = React.useCallback(() => {
+    console.log('[useCreateQueue] Resetting state');
     setPhoneNumber('');
     setMatchedPatients([]);
     setLocalShowNewPatientForm(false);
@@ -117,6 +118,9 @@ export const useCreateQueue = (
   const handleCreateQueue = async () => {
     try {
       console.log('[useCreateQueue] Creating queue...');
+      console.log(`[useCreateQueue] Patient ID: ${patientId}`);
+      console.log(`[useCreateQueue] Show new patient form: ${localShowNewPatientForm}`);
+      console.log(`[useCreateQueue] New patient name: ${newPatientName}`);
       
       if (localShowNewPatientForm && newPatientName) {
         console.log('[useCreateQueue] Creating new patient:', newPatientName);
@@ -134,6 +138,9 @@ export const useCreateQueue = (
             onCreateQueue,
             onOpenChange
           );
+          console.log('[useCreateQueue] After createQueue call for new patient');
+          console.log(`[useCreateQueue] QR dialog open: ${qrDialogOpen}`);
+          console.log(`[useCreateQueue] Created queue number: ${createdQueueNumber}`);
         }
       } else if (patientId) {
         console.log('[useCreateQueue] Creating queue for existing patient:', patientId);
@@ -147,6 +154,9 @@ export const useCreateQueue = (
           onCreateQueue,
           onOpenChange
         );
+        console.log('[useCreateQueue] After createQueue call for existing patient');
+        console.log(`[useCreateQueue] QR dialog open: ${qrDialogOpen}`);
+        console.log(`[useCreateQueue] Created queue number: ${createdQueueNumber}`);
       } else {
         console.error('[useCreateQueue] Cannot create queue: No patient selected or created');
         toast.error('ไม่สามารถสร้างคิวได้ โปรดเลือกผู้ป่วยหรือสร้างผู้ป่วยใหม่');

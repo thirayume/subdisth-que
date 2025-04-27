@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { QueueType } from '@/integrations/supabase/schema';
 import { formatQueueNumber } from '@/utils/queueFormatters';
@@ -33,16 +33,21 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
 }) => {
   const formattedQueueNumber = formatQueueNumber(queueType, queueNumber);
   
-  // Add debug logging
-  React.useEffect(() => {
-    console.log(`[QueueCreatedDialog] Dialog open state: ${open}`);
-    console.log(`[QueueCreatedDialog] Queue number: ${queueNumber}`);
-    console.log(`[QueueCreatedDialog] Queue type: ${queueType}`);
+  // Enhanced debug logging
+  useEffect(() => {
+    console.log(`=== QueueCreatedDialog Component State ===`);
+    console.log(`- open: ${open}`);
+    console.log(`- queueNumber: ${queueNumber}`);
+    console.log(`- queueType: ${queueType}`);
+    console.log(`- patientName: ${patientName}`);
+    console.log(`- formattedQueueNumber: ${formattedQueueNumber}`);
+    console.log(`- purpose: ${purpose}`);
     
     if (open) {
+      console.log(`[QueueCreatedDialog] Dialog should be visible now`);
       toast.success(`คิวถูกสร้างเรียบร้อย: ${formattedQueueNumber}`);
     }
-  }, [open, queueNumber, queueType, formattedQueueNumber]);
+  }, [open, queueNumber, queueType, patientName, formattedQueueNumber, purpose]);
   
   const handlePrint = () => {
     console.log('Printing queue ticket...');
@@ -57,25 +62,42 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px] bg-background">
-        <QueueCreatedHeader purpose={purpose} />
-        
-        <QueueCreatedContent 
-          formattedQueueNumber={formattedQueueNumber}
-          queueNumber={queueNumber}
-          queueType={queueType}
-          patientName={patientName}
-          patientPhone={patientPhone}
-          patientLineId={patientLineId}
-        />
-        
-        <DialogFooterActions 
-          onPrint={handlePrint}
-          onClose={() => onOpenChange(false)}
-        />
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog 
+        open={open} 
+        onOpenChange={(newOpenState) => {
+          console.log(`[QueueCreatedDialog] Dialog onOpenChange called with: ${newOpenState}`);
+          onOpenChange(newOpenState);
+        }}
+      >
+        <DialogContent className="sm:max-w-[400px] bg-background">
+          <div style={{ display: 'none' }}>
+            {console.log('[QueueCreatedDialog] Rendering dialog content')}
+            {console.log(`[QueueCreatedDialog] Dialog open state: ${open}`)}
+            {console.log(`[QueueCreatedDialog] Queue number: ${queueNumber}`)}
+          </div>
+          
+          <QueueCreatedHeader purpose={purpose} />
+          
+          <QueueCreatedContent 
+            formattedQueueNumber={formattedQueueNumber}
+            queueNumber={queueNumber}
+            queueType={queueType}
+            patientName={patientName}
+            patientPhone={patientPhone}
+            patientLineId={patientLineId}
+          />
+          
+          <DialogFooterActions 
+            onPrint={handlePrint}
+            onClose={() => {
+              console.log('[QueueCreatedDialog] Close button clicked');
+              onOpenChange(false);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

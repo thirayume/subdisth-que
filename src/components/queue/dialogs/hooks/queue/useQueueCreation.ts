@@ -30,6 +30,7 @@ export const useQueueCreation = () => {
 
   // Reset queue creation state
   const resetQueueCreation = React.useCallback(() => {
+    console.log('[useQueueCreation] Resetting queue creation state');
     setQueueType('GENERAL');
     setNotes('');
     setQrDialogOpen(false);
@@ -104,18 +105,20 @@ export const useQueueCreation = () => {
         setCreatedQueueNumber(nextQueueNumber);
         setCreatedQueueType(queueType);
         setCreatedPurpose(purpose);
+        console.log(`[useQueueCreation] Updated state - queue number: ${nextQueueNumber}`);
         
         // Update patient info for display
         updatePatientInfo(patientName, patientPhone, patientLineId);
+        console.log(`[useQueueCreation] Updated patient info: ${patientName}`);
         
         // Close the create dialog and open QR dialog
         onOpenChange(false);
+        console.log('[useQueueCreation] Closed create dialog');
         
-        // Add a small delay before showing the QR dialog to ensure smooth transition
-        setTimeout(() => {
-          setQrDialogOpen(true);
-          console.log('[useQueueCreation] QR dialog opened');
-        }, 300);
+        // Direct QR dialog opening without setTimeout
+        console.log('[useQueueCreation] Setting QR dialog to open immediately');
+        setQrDialogOpen(true);
+        console.log(`[useQueueCreation] QR dialog open state: ${qrDialogOpen}`);
         
         toast.success(`คิวหมายเลข ${nextQueueNumber} ถูกสร้างเรียบร้อยแล้ว`);
         onCreateQueue(newQueue);

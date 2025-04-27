@@ -94,6 +94,8 @@ export const useQueueState = () => {
         throw new Error('Missing required queue data');
       }
       
+      console.log('[useQueueState] Adding queue:', queueData);
+      
       const { data, error } = await supabase
         .from('queues')
         .insert([{
@@ -106,23 +108,29 @@ export const useQueueState = () => {
         .select();
 
       if (error) {
+        console.error('[useQueueState] Error in supabase insert:', error);
         throw error;
       }
 
-      if (data && data.length > 0) {
-        // Cast the returned data to ensure proper type conversion
-        const newQueue: Queue = {
-          ...data[0],
-          type: data[0].type as QueueType,
-          status: data[0].status as QueueStatus
-        };
-        
-        setQueues(prev => [newQueue, ...prev]);
-        toast.success(`เพิ่มคิวหมายเลข ${queueData.number} เรียบร้อยแล้ว`);
-        return newQueue;
+      if (!data || data.length === 0) {
+        console.error('[useQueueState] No queue returned from insert');
+        throw new Error('No queue data returned from insert');
       }
+      
+      console.log('[useQueueState] Queue added successfully:', data[0]);
+      
+      // Cast the returned data to ensure proper type conversion
+      const newQueue: Queue = {
+        ...data[0],
+        type: data[0].type as QueueType,
+        status: data[0].status as QueueStatus
+      };
+      
+      setQueues(prev => [newQueue, ...prev]);
+      toast.success(`เพิ่มคิวหมายเลข ${queueData.number} เรียบร้อยแล้ว`);
+      return newQueue;
     } catch (err: any) {
-      console.error('Error adding queue:', err);
+      console.error('[useQueueState] Error adding queue:', err);
       setError(err.message || 'Failed to add queue');
       toast.error('ไม่สามารถเพิ่มคิวได้');
       return null;

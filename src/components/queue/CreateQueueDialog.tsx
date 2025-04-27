@@ -70,6 +70,12 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
       toast.info("กำลังเปิดหน้าสร้างคิว");
     }
   }, [open]);
+  
+  // Add debug logging for QR dialog state
+  React.useEffect(() => {
+    console.log(`[CreateQueueDialog] QR dialog open state: ${qrDialogOpen}`);
+    console.log(`[CreateQueueDialog] Created queue number: ${createdQueueNumber}`);
+  }, [qrDialogOpen, createdQueueNumber]);
 
   const shouldShowQueueDetails = Boolean(patientId) || (showNewPatientForm && Boolean(newPatientName));
 
@@ -117,7 +123,10 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
             <Button 
               className="bg-pharmacy-600 hover:bg-pharmacy-700" 
               onClick={() => {
-                console.log("Create queue button clicked");
+                console.log("[CreateQueueDialog] Create queue button clicked");
+                console.log(`[CreateQueueDialog] Patient ID: ${patientId}`);
+                console.log(`[CreateQueueDialog] New patient name: ${newPatientName}`);
+                console.log(`[CreateQueueDialog] Show new patient form: ${showNewPatientForm}`);
                 handleCreateQueue();
               }}
               disabled={!patientId && !(showNewPatientForm && newPatientName)}
@@ -129,16 +138,24 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
       </Dialog>
       
       {createdQueueNumber !== null && (
-        <QueueCreatedDialog 
-          open={qrDialogOpen} 
-          onOpenChange={setQrDialogOpen} 
-          queueNumber={createdQueueNumber}
-          queueType={createdQueueType}
-          patientName={finalPatientName}
-          patientPhone={finalPatientPhone}
-          patientLineId={finalPatientLineId}
-          purpose={createdPurpose}
-        />
+        <>
+          <div style={{ display: "none" }}>
+            {console.log("[CreateQueueDialog] Attempting to render QueueCreatedDialog")}
+            {console.log(`[CreateQueueDialog] Queue number: ${createdQueueNumber}`)}
+            {console.log(`[CreateQueueDialog] Dialog open: ${qrDialogOpen}`)}
+            {console.log(`[CreateQueueDialog] Patient name: ${finalPatientName}`)}
+          </div>
+          <QueueCreatedDialog 
+            open={qrDialogOpen} 
+            onOpenChange={setQrDialogOpen} 
+            queueNumber={createdQueueNumber}
+            queueType={createdQueueType}
+            patientName={finalPatientName}
+            patientPhone={finalPatientPhone}
+            patientLineId={finalPatientLineId}
+            purpose={createdPurpose}
+          />
+        </>
       )}
     </>
   );
