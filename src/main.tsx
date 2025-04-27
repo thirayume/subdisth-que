@@ -21,18 +21,38 @@ const addDebugElement = () => {
   }
 };
 
-// Register service worker for offline support
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/serviceWorker.js')
-      .then(registration => {
+// Register service worker for offline support with improved error handling
+const registerServiceWorker = () => {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async () => {
+      try {
+        console.log('Attempting to register service worker...');
+        const registration = await navigator.serviceWorker.register('/serviceWorker.js');
         console.log('Service Worker registered with scope:', registration.scope);
-      })
-      .catch(error => {
+        
+        // Handle service worker updates
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New content is available, prompt user to refresh
+                console.log('New service worker installed, refresh recommended');
+              }
+            });
+          }
+        });
+      } catch (error) {
         console.error('Service Worker registration failed:', error);
-      });
-  });
-}
+      }
+    });
+    
+    // Handle service worker communication
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      console.log('Message from service worker:', event.data);
+    });
+  }
+};
 
 // Use a more robust root mounting approach
 const mount = () => {
@@ -46,6 +66,7 @@ const mount = () => {
 
     console.log("Mounting React application");
     addDebugElement(); // Add debug element
+    registerServiceWorker(); // Register service worker
     
     // Force a style reset on the root element
     rootElement.style.cssText = "width: 100%; height: 100%; min-height: 100vh; background-color: hsl(var(--background, 180 25% 98%));";

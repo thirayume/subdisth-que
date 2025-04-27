@@ -1,23 +1,27 @@
 
 // This is the main service worker file
 // Service worker specific globals
-const CACHE_NAME = 'queueconnect-pharmacy-v1';
+const CACHE_NAME = 'queueconnect-pharmacy-v1.1';
 const OFFLINE_URL = '/offline.html';
-const CACHE_ASSETS = [
-  '/',
-  '/index.html',
+const ESSENTIAL_ASSETS = [
   '/offline.html',
-  '/favicon.ico',
-  '/static/js/main.js',
-  '/static/css/main.css',
+  '/favicon.ico'
 ];
 
-// Install service worker and cache the assets
+// Install service worker and cache the essential assets
 self.addEventListener('install', (event) => {
+  console.log('[ServiceWorker] Installing...');
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
-      await cache.addAll(CACHE_ASSETS);
+      console.log('[ServiceWorker] Caching essential offline assets');
+      try {
+        // Only cache the essential assets that we know exist
+        await cache.addAll(ESSENTIAL_ASSETS);
+        console.log('[ServiceWorker] Essential assets successfully cached');
+      } catch (error) {
+        console.error('[ServiceWorker] Failed to cache assets:', error);
+      }
     })()
   );
   // Force the waiting service worker to become the active service worker
@@ -26,6 +30,7 @@ self.addEventListener('install', (event) => {
 
 // Clean up old caches when new service worker activates
 self.addEventListener('activate', (event) => {
+  console.log('[ServiceWorker] Activating...');
   event.waitUntil(
     (async () => {
       // Enable navigation preload if it's supported
@@ -38,17 +43,25 @@ self.addEventListener('activate', (event) => {
       await Promise.all(
         cacheNames
           .filter((cacheName) => cacheName !== CACHE_NAME)
-          .map((cacheName) => caches.delete(cacheName))
+          .map((cacheName) => {
+            console.log('[ServiceWorker] Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          })
       );
+      console.log('[ServiceWorker] Activated and claimed clients');
     })()
   );
   // Tell the active service worker to take control of the page immediately
   self.clients.claim();
 });
 
-// Serve cached content when offline
+// Cache resources progressively as they are used
 self.addEventListener('fetch', (event) => {
   // Skip cross-origin requests
+  if (!event.request.url.startsWith(self.location.origin)) {
+    return;
+  }
+  
   if (event.request.mode === 'navigate') {
     event.respondWith(
       (async () => {
@@ -60,8 +73,18 @@ self.addEventListener('fetch', (event) => {
             return preloadResponse;
           }
 
-          // Always try the network first
+          // Always try the network first for navigation requests
           const networkResponse = await fetch(event.request);
+          
+          // Add progressive caching - save successful navigation responses to cache
+          const cache = await caches.open(CACHE_NAME);
+          try {
+            cache.put(event.request, networkResponse.clone());
+            console.log('[ServiceWorker] Navigation resource cached:', event.request.url);
+          } catch (error) {
+            console.error('[ServiceWorker] Failed to cache navigation:', error);
+          }
+          
           return networkResponse;
         } catch (error) {
           // Network failed, try to serve from cache
@@ -73,6 +96,7 @@ self.addEventListener('fetch', (event) => {
           }
           
           // If both network and cache fail, show offline page
+          console.log('[ServiceWorker] Serving offline page due to network failure');
           const offlineResponse = await cache.match(OFFLINE_URL);
           return offlineResponse || new Response('You are offline and the page is not cached.', {
             status: 503,
@@ -99,11 +123,26 @@ self.addEventListener('fetch', (event) => {
           if (response.ok && (response.type === 'basic' || response.type === 'cors')) {
             const responseToCache = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
+              try {
+                cache.put(event.request, responseToCache);
+                console.log('[ServiceWorker] Asset cached:', event.request.url);
+              } catch (error) {
+                console.error('[ServiceWorker] Failed to cache asset:', error);
+              }
             });
           }
           
           return response;
+        }).catch(error => {
+          console.error('[ServiceWorker] Fetch failed for asset:', error);
+          // Return a placeholder image/empty response for failed resources
+          if (event.request.destination === 'image') {
+            return caches.match('/placeholder.svg');
+          }
+          return new Response('/* Resource temporarily unavailable */', {
+            status: 503,
+            headers: { 'Content-Type': 'text/css' }
+          });
         });
       })
     );
@@ -111,7 +150,31 @@ self.addEventListener('fetch', (event) => {
     // Use network-first for API calls
     event.respondWith(
       fetch(event.request)
+        .then(response => {
+          // Clone the response before using it to save in cache
+          const responseToCache = response.clone();
+          
+          // Cache successful API responses
+          if (response.ok) {
+            caches.open(CACHE_NAME).then(cache => {
+              try {
+                cache.put(event.request, responseToCache);
+              } catch (error) {
+                console.error('[ServiceWorker] Failed to cache API response:', error);
+              }
+            });
+          }
+          
+          return response;
+        })
         .catch(() => caches.match(event.request))
     );
+  }
+});
+
+// Listen for message events to control the service worker
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
   }
 });
