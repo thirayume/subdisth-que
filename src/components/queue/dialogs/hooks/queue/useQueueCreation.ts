@@ -3,7 +3,7 @@ import * as React from 'react';
 import { toast } from 'sonner';
 import { QueueType } from '@/integrations/supabase/schema';
 import { useQueues } from '@/hooks/useQueues';
-import { useQueueTypes } from '@/hooks/useQueueTypes';
+import { useQueueTypesData } from '@/hooks/useQueueTypesData';
 
 export const useQueueCreation = () => {
   const [queueType, setQueueType] = React.useState<QueueType>('GENERAL');
@@ -14,14 +14,16 @@ export const useQueueCreation = () => {
   const [createdPurpose, setCreatedPurpose] = React.useState('');
 
   const { addQueue } = useQueues();
-  const { queueTypes } = useQueueTypes();
+  const { queueTypes } = useQueueTypesData();
 
   // Create a lookup for queue type purposes
   const queueTypePurposes = React.useMemo(() => {
     const purposes: Record<string, string> = {};
-    queueTypes.forEach(type => {
-      purposes[type.code] = type.name || type.code;
-    });
+    if (queueTypes) {
+      queueTypes.forEach(type => {
+        purposes[type.code] = type.name || type.code;
+      });
+    }
     return purposes;
   }, [queueTypes]);
 
@@ -62,7 +64,7 @@ export const useQueueCreation = () => {
         type: queueType,
         status: 'WAITING',
         notes,
-        queue_date: currentDate
+        // The queue_date property will be set by the backend or has a default value
       });
       
       if (newQueue) {
