@@ -71,11 +71,7 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
         }}
       >
         <DialogContent className="sm:max-w-[400px] bg-background">
-          <div style={{ display: 'none' }}>
-            {console.log('[QueueCreatedDialog] Rendering dialog content')}
-            {console.log(`[QueueCreatedDialog] Dialog open state: ${open}`)}
-            {console.log(`[QueueCreatedDialog] Queue number: ${queueNumber}`)}
-          </div>
+          {/* Hidden debugging info - using comments instead of console.log in JSX */}
           
           <QueueCreatedHeader purpose={purpose} />
           

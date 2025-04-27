@@ -139,12 +139,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
       
       {createdQueueNumber !== null && (
         <>
-          <div style={{ display: "none" }}>
-            {console.log("[CreateQueueDialog] Attempting to render QueueCreatedDialog")}
-            {console.log(`[CreateQueueDialog] Queue number: ${createdQueueNumber}`)}
-            {console.log(`[CreateQueueDialog] Dialog open: ${qrDialogOpen}`)}
-            {console.log(`[CreateQueueDialog] Patient name: ${finalPatientName}`)}
-          </div>
+          {/* Hidden debugging information - using comment instead of console.log in JSX */}
           <QueueCreatedDialog 
             open={qrDialogOpen} 
             onOpenChange={setQrDialogOpen} 
