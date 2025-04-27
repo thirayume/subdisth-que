@@ -15,12 +15,8 @@ type FetchEvent = ExtendableEvent & {
   preloadResponse?: Promise<Response>;
 };
 
-const CACHE_NAME = 'queueconnect-pharmacy-v1.1';
+const CACHE_NAME = 'queueconnect-pharmacy-v1.2';
 const OFFLINE_URL = '/offline.html';
-const ESSENTIAL_ASSETS = [
-  '/offline.html',
-  '/favicon.ico'
-];
 
 // Install service worker and cache the essential assets
 self.addEventListener('install', (event: ExtendableEvent) => {
@@ -29,13 +25,24 @@ self.addEventListener('install', (event: ExtendableEvent) => {
     (async () => {
       const cache = await caches.open(CACHE_NAME);
       console.log('[ServiceWorker] Caching essential offline assets');
-      try {
-        // Only cache the essential assets that we know exist
-        await cache.addAll(ESSENTIAL_ASSETS);
-        console.log('[ServiceWorker] Essential assets successfully cached');
-      } catch (error) {
-        console.error('[ServiceWorker] Failed to cache assets:', error);
+      
+      // Cache essential assets individually with error handling
+      const essentialAssets = [
+        '/offline.html',
+        '/favicon.ico'
+      ];
+      
+      // Cache each asset individually with error handling
+      for (const asset of essentialAssets) {
+        try {
+          await cache.add(asset);
+          console.log(`[ServiceWorker] Asset cached successfully: ${asset}`);
+        } catch (error) {
+          console.error(`[ServiceWorker] Failed to cache asset ${asset}:`, error);
+        }
       }
+      
+      console.log('[ServiceWorker] Essential assets caching attempted');
     })()
   );
   // Force the waiting service worker to become the active service worker

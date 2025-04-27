@@ -33,18 +33,18 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
 }) => {
   const formattedQueueNumber = formatQueueNumber(queueType, queueNumber);
   
-  // Enhanced debug logging
+  // Enhanced debug logging moved to useEffect to avoid returning void in JSX
   useEffect(() => {
-    console.log(`=== QueueCreatedDialog Component State ===`);
-    console.log(`- open: ${open}`);
-    console.log(`- queueNumber: ${queueNumber}`);
-    console.log(`- queueType: ${queueType}`);
-    console.log(`- patientName: ${patientName}`);
-    console.log(`- formattedQueueNumber: ${formattedQueueNumber}`);
-    console.log(`- purpose: ${purpose}`);
-    
     if (open) {
+      console.log(`=== QueueCreatedDialog Component State ===`);
+      console.log(`- open: ${open}`);
+      console.log(`- queueNumber: ${queueNumber}`);
+      console.log(`- queueType: ${queueType}`);
+      console.log(`- patientName: ${patientName}`);
+      console.log(`- formattedQueueNumber: ${formattedQueueNumber}`);
+      console.log(`- purpose: ${purpose}`);
       console.log(`[QueueCreatedDialog] Dialog should be visible now`);
+      
       toast.success(`คิวถูกสร้างเรียบร้อย: ${formattedQueueNumber}`);
     }
   }, [open, queueNumber, queueType, patientName, formattedQueueNumber, purpose]);

@@ -3,6 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
+import { Toaster } from './components/ui/toaster';
 
 // Add a visible element to debug mounting issues
 const addDebugElement = () => {
@@ -27,7 +28,17 @@ const registerServiceWorker = () => {
     window.addEventListener('load', async () => {
       try {
         console.log('Attempting to register service worker...');
-        const registration = await navigator.serviceWorker.register('/serviceWorker.js');
+        // Unregister any existing service workers first to ensure clean installation
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+          console.log('Unregistered existing service worker');
+        }
+        
+        // Register new service worker
+        const registration = await navigator.serviceWorker.register('/serviceWorker.js', {
+          updateViaCache: 'none' // Prevent browser cache from interfering
+        });
         console.log('Service Worker registered with scope:', registration.scope);
         
         // Handle service worker updates
@@ -66,7 +77,6 @@ const mount = () => {
 
     console.log("Mounting React application");
     addDebugElement(); // Add debug element
-    registerServiceWorker(); // Register service worker
     
     // Force a style reset on the root element
     rootElement.style.cssText = "width: 100%; height: 100%; min-height: 100vh; background-color: hsl(var(--background, 180 25% 98%));";
@@ -77,10 +87,18 @@ const mount = () => {
     root.render(
       <React.StrictMode>
         <ErrorBoundary>
-          <App />
+          <>
+            <App />
+            <Toaster />
+            <OfflineIndicator />
+          </>
         </ErrorBoundary>
       </React.StrictMode>
     );
+    
+    // Register service worker after React has mounted
+    setTimeout(() => registerServiceWorker(), 1000);
+    
   } catch (error) {
     console.error("Error mounting React application:", error);
     // Display a useful error message
@@ -122,6 +140,9 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
     return this.props.children;
   }
 }
+
+// Import the OfflineIndicator component
+import OfflineIndicator from '@/components/ui/OfflineIndicator';
 
 // Ensure React is fully loaded before mounting
 if (document.readyState === 'loading') {
