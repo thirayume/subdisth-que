@@ -11,6 +11,7 @@ interface QueueCreatedContentProps {
   queueType: QueueType;
   patientName?: string;
   patientPhone?: string;
+  patientLineId?: string;
   estimatedWaitTime?: number;
 }
 
@@ -20,6 +21,7 @@ const QueueCreatedContent: React.FC<QueueCreatedContentProps> = ({
   queueType,
   patientName,
   patientPhone,
+  patientLineId,
   estimatedWaitTime = 15,
 }) => {
   return (
@@ -27,6 +29,7 @@ const QueueCreatedContent: React.FC<QueueCreatedContentProps> = ({
       <PatientInfoDisplay 
         patientName={patientName}
         patientPhone={patientPhone}
+        patientLineId={patientLineId}
         formattedQueueNumber={formattedQueueNumber}
       />
       

@@ -16,6 +16,7 @@ interface QueueCreatedDialogProps {
   queueType: QueueType;
   patientName?: string;
   patientPhone?: string;
+  patientLineId?: string;
   purpose?: string;
 }
 
@@ -26,6 +27,7 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
   queueType = 'GENERAL',
   patientName = '',
   patientPhone = '',
+  patientLineId = '',
   purpose = '',
 }) => {
   const formattedQueueNumber = formatQueueNumber(queueType, queueNumber);
@@ -36,6 +38,7 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
       queueType,
       patientName,
       patientPhone,
+      patientLineId,
       purpose
     });
   };
@@ -51,6 +54,7 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
           queueType={queueType}
           patientName={patientName}
           patientPhone={patientPhone}
+          patientLineId={patientLineId}
         />
         
         <DialogFooterActions 

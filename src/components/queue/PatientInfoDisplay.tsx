@@ -1,10 +1,11 @@
 
 import React from 'react';
-import { User, Phone } from 'lucide-react';
+import { User, Phone, MessagesSquare } from 'lucide-react';
 
 interface PatientInfoDisplayProps {
   patientName?: string;
   patientPhone?: string;
+  patientLineId?: string;
   formattedQueueNumber: string;
   showQRInstructions?: boolean;
   className?: string;
@@ -13,6 +14,7 @@ interface PatientInfoDisplayProps {
 const PatientInfoDisplay: React.FC<PatientInfoDisplayProps> = ({
   patientName,
   patientPhone,
+  patientLineId,
   formattedQueueNumber,
   showQRInstructions = true,
   className,
@@ -34,6 +36,13 @@ const PatientInfoDisplay: React.FC<PatientInfoDisplayProps> = ({
         <div className="flex items-center justify-center gap-1 mt-1 text-sm text-gray-600">
           <Phone className="h-3.5 w-3.5" />
           <span>{patientPhone}</span>
+        </div>
+      )}
+      
+      {patientLineId && (
+        <div className="flex items-center justify-center gap-1 mt-1 text-sm text-gray-600">
+          <MessagesSquare className="h-3.5 w-3.5" />
+          <span>LINE: {patientLineId}</span>
         </div>
       )}
       

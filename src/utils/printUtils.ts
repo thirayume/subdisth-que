@@ -7,6 +7,7 @@ interface PrintQueueOptions {
   queueType: QueueType;
   patientName?: string;
   patientPhone?: string;
+  patientLineId?: string;
   purpose?: string;
 }
 
@@ -15,6 +16,7 @@ export const printQueueTicket = ({
   queueType,
   patientName = '',
   patientPhone = '',
+  patientLineId = '',
   purpose = '',
 }: PrintQueueOptions): void => {
   const formattedQueueNumber = formatQueueNumber(queueType, queueNumber);
@@ -72,13 +74,21 @@ export const printQueueTicket = ({
             font-size: 14px;
             color: #666;
           }
+          .icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-right: 4px;
+            vertical-align: middle;
+          }
         </style>
       </head>
       <body>
         <h2>คิวของท่าน</h2>
         <div class="queue-number">${formattedQueueNumber}</div>
-        ${patientName ? `<div class="patient-info">ชื่อผู้ป่วย: ${patientName}</div>` : ''}
-        ${patientPhone ? `<div class="patient-info">โทรศัพท์: ${patientPhone}</div>` : ''}
+        ${patientName ? `<div class="patient-info">📋 ชื่อผู้ป่วย: ${patientName}</div>` : ''}
+        ${patientPhone ? `<div class="patient-info">📱 โทรศัพท์: ${patientPhone}</div>` : ''}
+        ${patientLineId ? `<div class="patient-info">💬 LINE ID: ${patientLineId}</div>` : ''}
         ${purpose ? `<div class="purpose-info">วัตถุประสงค์: ${purpose}</div>` : ''}
         <div class="queue-info">
           วันที่: ${new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
