@@ -15,19 +15,27 @@ const Layout: React.FC<LayoutProps> = ({ children, className }) => {
   React.useEffect(() => {
     setMounted(true);
     console.log("[DEBUG] Layout component mounted");
+    
+    // Force a re-render after a brief delay to ensure styles are applied
+    const timer = setTimeout(() => {
+      console.log("[DEBUG] Layout forcing style refresh");
+      setMounted(state => state); // Trigger re-render
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, []);
   
   // Show a loading state until the component is mounted
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center" style={{backgroundColor: "hsl(var(--background))"}}>
         <div className="animate-pulse text-primary">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" style={{backgroundColor: "hsl(var(--background))"}}>
       <Sidebar />
       <main
         className={cn(
@@ -36,6 +44,13 @@ const Layout: React.FC<LayoutProps> = ({ children, className }) => {
         )}
       >
         <div className="container mx-auto p-6 animate-fade-in">
+          {/* Debug overlay in development */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="fixed top-2 right-2 bg-black/70 text-white text-xs p-1 rounded z-50">
+              Layout rendered
+            </div>
+          )}
+          
           {children}
         </div>
       </main>

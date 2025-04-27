@@ -19,6 +19,28 @@ import QueueManagement from "./pages/QueueManagement";
 import Analytics from "./pages/Analytics";
 import "./App.css";
 
+// Add visible debug component
+const DebugOverlay = () => {
+  if (process.env.NODE_ENV !== 'development') return null;
+  return (
+    <div 
+      style={{
+        position: 'fixed',
+        bottom: '10px',
+        right: '10px',
+        padding: '5px 10px',
+        background: 'rgba(0,0,0,0.7)',
+        color: '#fff',
+        fontSize: '12px',
+        zIndex: 9999,
+        pointerEvents: 'none'
+      }}
+    >
+      App rendered
+    </div>
+  );
+};
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -37,21 +59,7 @@ const queryClient = new QueryClient({
 const App: React.FC = () => {
   React.useEffect(() => {
     console.log("[DEBUG] App component mounted");
-    
-    // Add a visible debug element when in development
-    if (process.env.NODE_ENV === 'development') {
-      const debugElement = document.createElement('div');
-      debugElement.style.position = 'fixed';
-      debugElement.style.bottom = '0';
-      debugElement.style.right = '0';
-      debugElement.style.backgroundColor = 'rgba(0,0,0,0.7)';
-      debugElement.style.color = '#fff';
-      debugElement.style.padding = '4px 8px';
-      debugElement.style.fontSize = '10px';
-      debugElement.style.zIndex = '9999';
-      debugElement.textContent = 'Debug: App mounted';
-      document.body.appendChild(debugElement);
-    }
+    document.body.classList.add("bg-background"); // Ensure background is applied
     
     return () => {
       console.log("[DEBUG] App component unmounted");
@@ -61,7 +69,7 @@ const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <div className="min-h-screen bg-background text-foreground">
+        <div className="min-h-screen bg-background text-foreground" style={{backgroundColor: "hsl(var(--background))"}}>
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
@@ -79,6 +87,7 @@ const App: React.FC = () => {
             </Routes>
             <Toaster />
             <OfflineIndicator />
+            <DebugOverlay />
           </BrowserRouter>
         </div>
       </ThemeProvider>
