@@ -1,16 +1,9 @@
 
 import * as React from 'react';
 import { toast } from 'sonner';
-import { QueueType, QueueStatus } from '@/integrations/supabase/schema';
-import { supabase } from '@/integrations/supabase/client';
-
-// Define the queue type purpose mapping
-export const queueTypePurposes = {
-  'GENERAL': 'รับยาทั่วไป',
-  'PRIORITY': 'กรณีเร่งด่วน',
-  'ELDERLY': 'รับยาสำหรับผู้สูงอายุ',
-  'FOLLOW_UP': 'ติดตามการรักษา'
-};
+import { QueueType } from '@/integrations/supabase/schema';
+import { useQueues } from '@/hooks/useQueues';
+import { useQueueTypes } from '@/hooks/useQueueTypes';
 
 export const useQueueCreation = () => {
   const [queueType, setQueueType] = React.useState<QueueType>('GENERAL');
@@ -20,73 +13,92 @@ export const useQueueCreation = () => {
   const [createdQueueType, setCreatedQueueType] = React.useState<QueueType>('GENERAL');
   const [createdPurpose, setCreatedPurpose] = React.useState('');
 
-  const resetQueueCreation = () => {
+  const { addQueue } = useQueues();
+  const { queueTypes } = useQueueTypes();
+
+  // Create a lookup for queue type purposes
+  const queueTypePurposes = React.useMemo(() => {
+    const purposes: Record<string, string> = {};
+    queueTypes.forEach(type => {
+      purposes[type.code] = type.name || type.code;
+    });
+    return purposes;
+  }, [queueTypes]);
+
+  // Reset queue creation state
+  const resetQueueCreation = React.useCallback(() => {
     setQueueType('GENERAL');
     setNotes('');
+    setQrDialogOpen(false);
+    setCreatedQueueNumber(null);
     setCreatedQueueType('GENERAL');
     setCreatedPurpose('');
-  };
+  }, []);
 
+  // Create a queue for a patient
   const createQueue = async (
-    patientId: string, 
-    patientName: string, 
-    patientPhone: string, 
-    updateFinalPatientInfo: (name: string, phone: string) => void,
+    patientId: string,
+    patientName: string,
+    patientPhone: string,
+    patientLineId: string,
+    updatePatientInfo: (name: string, phone: string, lineId: string) => void,
     onCreateQueue: (queue: any) => void,
     onOpenChange: (open: boolean) => void
   ) => {
-    if (!patientId) {
-      toast.error('กรุณาเลือกผู้ป่วย');
-      return;
-    }
-
-    // Set the final patient information
-    updateFinalPatientInfo(patientName, patientPhone);
-
-    const purpose = queueTypePurposes[queueType];
-    const queueNumber = Math.floor(Math.random() * 100) + 1;
-
-    // Ensure queue_date is today
-    const today = new Date().toISOString().slice(0, 10); // yyyy-mm-dd
-
     try {
-      const { data, error } = await supabase
-        .from('queues')
-        .insert([{
-          number: queueNumber,
-          patient_id: patientId,
-          type: queueType,
-          status: 'WAITING' as QueueStatus,
-          notes: notes,
-          queue_date: today
-        }])
-        .select();
-        
-      if (error) {
-        throw error;
-      }
+      // Get the current highest queue number for this type
+      const currentDate = new Date().toISOString().split('T')[0];
       
-      if (data && data.length > 0) {
-        onCreateQueue(data[0]);
-        toast.success(`สร้างคิวหมายเลข ${queueNumber} เรียบร้อยแล้ว`);
+      // Get the purpose text based on queue type
+      const purpose = queueTypePurposes[queueType] || '';
+      
+      // Get the next queue number
+      const nextQueueNumber = await getNextQueueNumber(queueType);
+      
+      // Create the queue
+      const newQueue = await addQueue({
+        patient_id: patientId,
+        number: nextQueueNumber,
+        type: queueType,
+        status: 'WAITING',
+        notes,
+        queue_date: currentDate
+      });
+      
+      if (newQueue) {
+        onCreateQueue(newQueue);
         
-        setCreatedQueueNumber(queueNumber);
+        // Store created queue info for QR dialog
+        setCreatedQueueNumber(nextQueueNumber);
         setCreatedQueueType(queueType);
         setCreatedPurpose(purpose);
+        
+        // Update patient info in parent component
+        updatePatientInfo(patientName, patientPhone, patientLineId);
+        
+        // Close the create dialog and open QR dialog
+        onOpenChange(false);
         setQrDialogOpen(true);
         
-        onOpenChange(false);
+        toast.success(`คิวหมายเลข ${nextQueueNumber} ถูกสร้างเรียบร้อยแล้ว`);
       }
-    } catch (err) {
-      console.error('Error creating queue:', err);
-      toast.error('ไม่สามารถสร้างคิวได้');
+    } catch (error) {
+      console.error('Error creating queue:', error);
+      toast.error('เกิดข้อผิดพลาดในการสร้างคิว กรุณาลองใหม่อีกครั้ง');
     }
+  };
+
+  // Helper function to get the next queue number
+  const getNextQueueNumber = async (queueType: QueueType): Promise<number> => {
+    // In a real app, this would call an API to get the next queue number
+    // For now, we'll simulate it with a random number between 1-100
+    return Math.floor(Math.random() * 100) + 1;
   };
 
   return {
     queueType,
     setQueueType,
-    notes,
+    notes, 
     setNotes,
     qrDialogOpen,
     setQrDialogOpen,

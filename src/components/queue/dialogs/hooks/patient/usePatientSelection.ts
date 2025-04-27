@@ -6,16 +6,20 @@ export const usePatientSelection = () => {
   const [newPatientName, setNewPatientName] = React.useState('');
   const [selectedPatientName, setSelectedPatientName] = React.useState('');
   const [selectedPatientPhone, setSelectedPatientPhone] = React.useState('');
+  const [selectedPatientLineId, setSelectedPatientLineId] = React.useState('');
   const [finalPatientName, setFinalPatientName] = React.useState('');
   const [finalPatientPhone, setFinalPatientPhone] = React.useState('');
+  const [finalPatientLineId, setFinalPatientLineId] = React.useState('');
 
   const resetPatientSelection = () => {
     setPatientId('');
     setNewPatientName('');
     setSelectedPatientName('');
     setSelectedPatientPhone('');
+    setSelectedPatientLineId('');
     setFinalPatientName('');
     setFinalPatientPhone('');
+    setFinalPatientLineId('');
   };
 
   const handleSelectPatient = (id: string, patients: any[]) => {
@@ -25,12 +29,14 @@ export const usePatientSelection = () => {
     if (selectedPatient) {
       setSelectedPatientName(selectedPatient.name);
       setSelectedPatientPhone(selectedPatient.phone || '');
+      setSelectedPatientLineId(selectedPatient.line_id || '');
     }
   };
 
-  const updateFinalPatientInfo = (name: string, phone: string) => {
+  const updateFinalPatientInfo = (name: string, phone: string, lineId: string = '') => {
     setFinalPatientName(name);
     setFinalPatientPhone(phone);
+    setFinalPatientLineId(lineId);
   };
 
   return {
@@ -40,8 +46,10 @@ export const usePatientSelection = () => {
     setNewPatientName,
     selectedPatientName,
     selectedPatientPhone,
+    selectedPatientLineId,
     finalPatientName,
     finalPatientPhone,
+    finalPatientLineId,
     handleSelectPatient,
     updateFinalPatientInfo,
     resetPatientSelection

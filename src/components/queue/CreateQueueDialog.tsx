@@ -46,6 +46,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
     createdPurpose,
     finalPatientName,
     finalPatientPhone,
+    finalPatientLineId,  // Make sure this is properly passed
     queueTypePurposes,
     handlePhoneSearch,
     handleAddNewPatient,
@@ -123,6 +124,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
           queueType={createdQueueType}
           patientName={finalPatientName}
           patientPhone={finalPatientPhone}
+          patientLineId={finalPatientLineId}
           purpose={createdPurpose}
         />
       )}

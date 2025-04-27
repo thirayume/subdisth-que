@@ -36,8 +36,10 @@ export const useCreateQueue = (
     setNewPatientName,
     selectedPatientName,
     selectedPatientPhone,
+    selectedPatientLineId,
     finalPatientName,
     finalPatientPhone,
+    finalPatientLineId,
     handleSelectPatient: selectPatientFromList,
     updateFinalPatientInfo,
     resetPatientSelection
@@ -116,6 +118,7 @@ export const useCreateQueue = (
           newPatient.id,
           newPatient.name,
           phoneNumber,
+          newPatient.line_id || '',
           updateFinalPatientInfo,
           onCreateQueue,
           onOpenChange
@@ -127,6 +130,7 @@ export const useCreateQueue = (
         patientId,
         selectedPatientName,
         selectedPatientPhone,
+        selectedPatientLineId,
         updateFinalPatientInfo,
         onCreateQueue,
         onOpenChange
@@ -154,6 +158,7 @@ export const useCreateQueue = (
     createdPurpose,
     finalPatientName,
     finalPatientPhone,
+    finalPatientLineId,
     queueTypePurposes,
     handlePhoneSearch,
     handleAddNewPatient,
