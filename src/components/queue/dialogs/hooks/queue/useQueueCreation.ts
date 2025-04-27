@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { QueueType } from '@/integrations/supabase/schema';
 import { useQueues } from '@/hooks/useQueues';
 import { useQueueTypesData } from '@/hooks/useQueueTypesData';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useQueueCreation = () => {
   const [queueType, setQueueType] = React.useState<QueueType>('GENERAL');
@@ -37,6 +38,32 @@ export const useQueueCreation = () => {
     setCreatedPurpose('');
   }, []);
 
+  // Get the next queue number based on the highest number for the day
+  const getNextQueueNumber = async (queueType: QueueType): Promise<number> => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    try {
+      const { data: existingQueues, error } = await supabase
+        .from('queues')
+        .select('number')
+        .eq('queue_date', today)
+        .eq('type', queueType)
+        .order('number', { ascending: false })
+        .limit(1);
+
+      if (error) {
+        console.error('Error fetching latest queue number:', error);
+        throw new Error('Could not get next queue number');
+      }
+
+      const highestNumber = existingQueues && existingQueues[0]?.number || 0;
+      return highestNumber + 1;
+    } catch (error) {
+      console.error('Error in getNextQueueNumber:', error);
+      throw error;
+    }
+  };
+
   // Create a queue for a patient
   const createQueue = async (
     patientId: string,
@@ -48,9 +75,6 @@ export const useQueueCreation = () => {
     onOpenChange: (open: boolean) => void
   ) => {
     try {
-      // Get the current highest queue number for this type
-      const currentDate = new Date().toISOString().split('T')[0];
-      
       // Get the purpose text based on queue type
       const purpose = queueTypePurposes[queueType] || '';
       
@@ -64,7 +88,6 @@ export const useQueueCreation = () => {
         type: queueType,
         status: 'WAITING',
         notes
-        // The queue_date property will be set by the backend or has a default value
       });
       
       if (newQueue) {
@@ -88,13 +111,6 @@ export const useQueueCreation = () => {
       console.error('Error creating queue:', error);
       toast.error('เกิดข้อผิดพลาดในการสร้างคิว กรุณาลองใหม่อีกครั้ง');
     }
-  };
-
-  // Helper function to get the next queue number
-  const getNextQueueNumber = async (queueType: QueueType): Promise<number> => {
-    // In a real app, this would call an API to get the next queue number
-    // For now, we'll simulate it with a random number between 1-100
-    return Math.floor(Math.random() * 100) + 1;
   };
 
   return {
