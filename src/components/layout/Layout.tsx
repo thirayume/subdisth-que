@@ -9,6 +9,23 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, className }) => {
+  const [mounted, setMounted] = React.useState(false);
+  
+  // Wait for component to mount to avoid hydration mismatch
+  React.useEffect(() => {
+    setMounted(true);
+    console.log("[DEBUG] Layout component mounted");
+  }, []);
+  
+  // Show a loading state until the component is mounted
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse text-primary">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />

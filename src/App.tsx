@@ -17,6 +17,7 @@ import QueueTicket from "./pages/QueueTicket";
 import PatientPortal from "./pages/PatientPortal";
 import QueueManagement from "./pages/QueueManagement";
 import Analytics from "./pages/Analytics";
+import "./App.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,15 +37,31 @@ const queryClient = new QueryClient({
 const App: React.FC = () => {
   React.useEffect(() => {
     console.log("[DEBUG] App component mounted");
+    
+    // Add a visible debug element when in development
+    if (process.env.NODE_ENV === 'development') {
+      const debugElement = document.createElement('div');
+      debugElement.style.position = 'fixed';
+      debugElement.style.bottom = '0';
+      debugElement.style.right = '0';
+      debugElement.style.backgroundColor = 'rgba(0,0,0,0.7)';
+      debugElement.style.color = '#fff';
+      debugElement.style.padding = '4px 8px';
+      debugElement.style.fontSize = '10px';
+      debugElement.style.zIndex = '9999';
+      debugElement.textContent = 'Debug: App mounted';
+      document.body.appendChild(debugElement);
+    }
+    
     return () => {
       console.log("[DEBUG] App component unmounted");
     };
   }, []);
 
   return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <div className="min-h-screen bg-background text-foreground">
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
@@ -63,9 +80,9 @@ const App: React.FC = () => {
             <Toaster />
             <OfflineIndicator />
           </BrowserRouter>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </React.StrictMode>
+        </div>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 };
 

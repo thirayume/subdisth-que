@@ -4,9 +4,6 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 
-// Reference React explicitly to ensure proper initialization
-console.log("React version:", React.version);
-
 // Register service worker for offline support
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
