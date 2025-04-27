@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { usePatientSearch } from './patient/usePatientSearch';
 import { usePatientSelection } from './patient/usePatientSelection';
@@ -109,32 +108,37 @@ export const useCreateQueue = (
 
   // Handle creating a queue
   const handleCreateQueue = async () => {
-    if (localShowNewPatientForm && newPatientName) {
-      // Create new patient first
-      const newPatient = await createNewPatient(newPatientName, phoneNumber);
-      if (newPatient) {
-        // Create queue for new patient
+    try {
+      if (localShowNewPatientForm && newPatientName) {
+        // Create new patient first
+        const newPatient = await createNewPatient(newPatientName, phoneNumber);
+        if (newPatient) {
+          // Create queue for new patient
+          await createQueue(
+            newPatient.id,
+            newPatient.name,
+            phoneNumber,
+            newPatient.line_id || '',
+            updateFinalPatientInfo,
+            onCreateQueue,
+            onOpenChange
+          );
+        }
+      } else if (patientId) {
+        // Create queue for existing patient
         await createQueue(
-          newPatient.id,
-          newPatient.name,
-          phoneNumber,
-          newPatient.line_id || '',
+          patientId,
+          selectedPatientName,
+          selectedPatientPhone,
+          selectedPatientLineId,
           updateFinalPatientInfo,
           onCreateQueue,
           onOpenChange
         );
       }
-    } else if (patientId) {
-      // Create queue for existing patient
-      await createQueue(
-        patientId,
-        selectedPatientName,
-        selectedPatientPhone,
-        selectedPatientLineId,
-        updateFinalPatientInfo,
-        onCreateQueue,
-        onOpenChange
-      );
+    } catch (error) {
+      console.error('Error in handleCreateQueue:', error);
+      // The createQueue function will already show an error toast
     }
   };
 

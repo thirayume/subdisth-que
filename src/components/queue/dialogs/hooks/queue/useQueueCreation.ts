@@ -91,14 +91,12 @@ export const useQueueCreation = () => {
       });
       
       if (newQueue) {
-        onCreateQueue(newQueue);
-        
-        // Store created queue info for QR dialog
+        // Update created queue info for QR dialog
         setCreatedQueueNumber(nextQueueNumber);
         setCreatedQueueType(queueType);
         setCreatedPurpose(purpose);
         
-        // Update patient info in parent component
+        // Update patient info for display
         updatePatientInfo(patientName, patientPhone, patientLineId);
         
         // Close the create dialog and open QR dialog
@@ -106,10 +104,12 @@ export const useQueueCreation = () => {
         setQrDialogOpen(true);
         
         toast.success(`คิวหมายเลข ${nextQueueNumber} ถูกสร้างเรียบร้อยแล้ว`);
+        onCreateQueue(newQueue);
       }
     } catch (error) {
       console.error('Error creating queue:', error);
       toast.error('เกิดข้อผิดพลาดในการสร้างคิว กรุณาลองใหม่อีกครั้ง');
+      throw error; // Let the error bubble up
     }
   };
 
