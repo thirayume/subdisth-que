@@ -63,7 +63,7 @@ export const useQueueCreation = () => {
         number: nextQueueNumber,
         type: queueType,
         status: 'WAITING',
-        notes,
+        notes
         // The queue_date property will be set by the backend or has a default value
       });
       
