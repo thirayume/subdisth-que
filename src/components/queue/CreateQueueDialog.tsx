@@ -14,6 +14,7 @@ import PatientResultsList from './dialogs/PatientResultsList';
 import NewPatientForm from './dialogs/NewPatientForm';
 import QueueDetailsForm from './dialogs/QueueDetailsForm';
 import { useCreateQueue } from './dialogs/hooks/useCreateQueue';
+import { toast } from 'sonner'; // Added toast for visual feedback
 
 interface CreateQueueDialogProps {
   open: boolean;
@@ -46,7 +47,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
     createdPurpose,
     finalPatientName,
     finalPatientPhone,
-    finalPatientLineId,  // Make sure this is properly passed
+    finalPatientLineId,
     queueTypePurposes,
     handlePhoneSearch,
     handleAddNewPatient,
@@ -62,12 +63,20 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
     }
   }, [open, resetState]);
 
+  // Add debug logging to see when dialog opens/closes
+  React.useEffect(() => {
+    console.log(`[CreateQueueDialog] Dialog open state: ${open}`);
+    if (open) {
+      toast.info("กำลังเปิดหน้าสร้างคิว");
+    }
+  }, [open]);
+
   const shouldShowQueueDetails = Boolean(patientId) || (showNewPatientForm && Boolean(newPatientName));
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] bg-background">
           <DialogHeader>
             <DialogTitle>สร้างคิวใหม่</DialogTitle>
           </DialogHeader>
@@ -107,7 +116,10 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
             </Button>
             <Button 
               className="bg-pharmacy-600 hover:bg-pharmacy-700" 
-              onClick={handleCreateQueue}
+              onClick={() => {
+                console.log("Create queue button clicked");
+                handleCreateQueue();
+              }}
               disabled={!patientId && !(showNewPatientForm && newPatientName)}
             >
               สร้างคิว

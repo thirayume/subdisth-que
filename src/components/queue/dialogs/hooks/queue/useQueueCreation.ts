@@ -43,6 +43,8 @@ export const useQueueCreation = () => {
     const today = new Date().toISOString().split('T')[0];
     
     try {
+      console.log(`[useQueueCreation] Getting next queue number for ${queueType} on ${today}`);
+      
       const { data: existingQueues, error } = await supabase
         .from('queues')
         .select('number')
@@ -52,14 +54,16 @@ export const useQueueCreation = () => {
         .limit(1);
 
       if (error) {
-        console.error('Error fetching latest queue number:', error);
+        console.error('[useQueueCreation] Error fetching latest queue number:', error);
         throw new Error('Could not get next queue number');
       }
 
       const highestNumber = existingQueues && existingQueues[0]?.number || 0;
-      return highestNumber + 1;
+      const nextNumber = highestNumber + 1;
+      console.log(`[useQueueCreation] Next queue number: ${nextNumber}`);
+      return nextNumber;
     } catch (error) {
-      console.error('Error in getNextQueueNumber:', error);
+      console.error('[useQueueCreation] Error in getNextQueueNumber:', error);
       throw error;
     }
   };
@@ -75,8 +79,11 @@ export const useQueueCreation = () => {
     onOpenChange: (open: boolean) => void
   ) => {
     try {
+      console.log(`[useQueueCreation] Creating queue for patient ${patientId} with type ${queueType}`);
+      
       // Get the purpose text based on queue type
       const purpose = queueTypePurposes[queueType] || '';
+      console.log(`[useQueueCreation] Queue purpose: ${purpose}`);
       
       // Get the next queue number
       const nextQueueNumber = await getNextQueueNumber(queueType);
@@ -91,6 +98,8 @@ export const useQueueCreation = () => {
       });
       
       if (newQueue) {
+        console.log(`[useQueueCreation] Queue created successfully: ${JSON.stringify(newQueue)}`);
+        
         // Update created queue info for QR dialog
         setCreatedQueueNumber(nextQueueNumber);
         setCreatedQueueType(queueType);
@@ -101,13 +110,21 @@ export const useQueueCreation = () => {
         
         // Close the create dialog and open QR dialog
         onOpenChange(false);
-        setQrDialogOpen(true);
+        
+        // Add a small delay before showing the QR dialog to ensure smooth transition
+        setTimeout(() => {
+          setQrDialogOpen(true);
+          console.log('[useQueueCreation] QR dialog opened');
+        }, 300);
         
         toast.success(`คิวหมายเลข ${nextQueueNumber} ถูกสร้างเรียบร้อยแล้ว`);
         onCreateQueue(newQueue);
+        return newQueue;
+      } else {
+        throw new Error('Failed to create queue, no queue was returned');
       }
     } catch (error) {
-      console.error('Error creating queue:', error);
+      console.error('[useQueueCreation] Error creating queue:', error);
       toast.error('เกิดข้อผิดพลาดในการสร้างคิว กรุณาลองใหม่อีกครั้ง');
       throw error; // Let the error bubble up
     }

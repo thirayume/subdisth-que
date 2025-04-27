@@ -1,4 +1,6 @@
+
 import * as React from 'react';
+import { toast } from 'sonner';
 import { usePatientSearch } from './patient/usePatientSearch';
 import { usePatientSelection } from './patient/usePatientSelection';
 import { useNewPatientCreation } from './patient/useNewPatientCreation';
@@ -76,14 +78,17 @@ export const useCreateQueue = (
   // Handle phone search
   const handlePhoneSearch = async () => {
     if (phoneNumber) {
+      console.log('[useCreateQueue] Searching for patients with phone:', phoneNumber);
       // Use the hook's function but fetch patient data from the API
       const patients = await searchPatientsByPhone();
       setMatchedPatients(patients || []);
+      console.log('[useCreateQueue] Found patients:', patients);
       
       // If no patients found, show new patient form
       if (patients.length === 0) {
         setLocalShowNewPatientForm(true);
         setShowNewPatientForm(true);
+        console.log('[useCreateQueue] No patients found, showing new patient form');
       } else {
         setLocalShowNewPatientForm(false);
         setShowNewPatientForm(false);
@@ -96,6 +101,7 @@ export const useCreateQueue = (
     setLocalShowNewPatientForm(true);
     setShowNewPatientForm(true);
     setPatientId('');  // Clear any selected patient
+    console.log('[useCreateQueue] Showing new patient form');
   };
 
   // Handle selecting a patient
@@ -104,15 +110,20 @@ export const useCreateQueue = (
     setShowNewPatientForm(false);
     setPatientId(id);
     selectPatientFromList(id, matchedPatients);
+    console.log('[useCreateQueue] Patient selected:', id);
   };
 
   // Handle creating a queue
   const handleCreateQueue = async () => {
     try {
+      console.log('[useCreateQueue] Creating queue...');
+      
       if (localShowNewPatientForm && newPatientName) {
+        console.log('[useCreateQueue] Creating new patient:', newPatientName);
         // Create new patient first
         const newPatient = await createNewPatient(newPatientName, phoneNumber);
         if (newPatient) {
+          console.log('[useCreateQueue] New patient created:', newPatient.id);
           // Create queue for new patient
           await createQueue(
             newPatient.id,
@@ -125,6 +136,7 @@ export const useCreateQueue = (
           );
         }
       } else if (patientId) {
+        console.log('[useCreateQueue] Creating queue for existing patient:', patientId);
         // Create queue for existing patient
         await createQueue(
           patientId,
@@ -135,10 +147,13 @@ export const useCreateQueue = (
           onCreateQueue,
           onOpenChange
         );
+      } else {
+        console.error('[useCreateQueue] Cannot create queue: No patient selected or created');
+        toast.error('ไม่สามารถสร้างคิวได้ โปรดเลือกผู้ป่วยหรือสร้างผู้ป่วยใหม่');
       }
     } catch (error) {
-      console.error('Error in handleCreateQueue:', error);
-      // The createQueue function will already show an error toast
+      console.error('[useCreateQueue] Error in handleCreateQueue:', error);
+      toast.error('เกิดข้อผิดพลาดในการสร้างคิว กรุณาลองใหม่อีกครั้ง');
     }
   };
 

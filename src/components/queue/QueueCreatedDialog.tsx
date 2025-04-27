@@ -4,6 +4,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { QueueType } from '@/integrations/supabase/schema';
 import { formatQueueNumber } from '@/utils/queueFormatters';
 import { printQueueTicket } from '@/utils/printUtils';
+import { toast } from 'sonner';
 
 import QueueCreatedHeader from './dialog-parts/QueueCreatedHeader';
 import QueueCreatedContent from './dialog-parts/QueueCreatedContent';
@@ -32,7 +33,19 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
 }) => {
   const formattedQueueNumber = formatQueueNumber(queueType, queueNumber);
   
+  // Add debug logging
+  React.useEffect(() => {
+    console.log(`[QueueCreatedDialog] Dialog open state: ${open}`);
+    console.log(`[QueueCreatedDialog] Queue number: ${queueNumber}`);
+    console.log(`[QueueCreatedDialog] Queue type: ${queueType}`);
+    
+    if (open) {
+      toast.success(`คิวถูกสร้างเรียบร้อย: ${formattedQueueNumber}`);
+    }
+  }, [open, queueNumber, queueType, formattedQueueNumber]);
+  
   const handlePrint = () => {
+    console.log('Printing queue ticket...');
     printQueueTicket({
       queueNumber,
       queueType,
@@ -45,7 +58,7 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent className="sm:max-w-[400px] bg-background">
         <QueueCreatedHeader purpose={purpose} />
         
         <QueueCreatedContent 
