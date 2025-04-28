@@ -122,13 +122,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
             </Button>
             <Button 
               className="bg-pharmacy-600 hover:bg-pharmacy-700" 
-              onClick={() => {
-                console.log("[CreateQueueDialog] Create queue button clicked");
-                console.log(`[CreateQueueDialog] Patient ID: ${patientId}`);
-                console.log(`[CreateQueueDialog] New patient name: ${newPatientName}`);
-                console.log(`[CreateQueueDialog] Show new patient form: ${showNewPatientForm}`);
-                handleCreateQueue();
-              }}
+              onClick={handleCreateQueue}
               disabled={!patientId && !(showNewPatientForm && newPatientName)}
             >
               สร้างคิว

@@ -59,7 +59,7 @@ export const useQueueCreation = () => {
         throw new Error('Could not get next queue number');
       }
 
-      const highestNumber = existingQueues && existingQueues[0]?.number || 0;
+      const highestNumber = existingQueues && existingQueues.length > 0 ? existingQueues[0]?.number || 0 : 0;
       const nextNumber = highestNumber + 1;
       console.log(`[useQueueCreation] Next queue number: ${nextNumber}`);
       return nextNumber;
@@ -99,32 +99,36 @@ export const useQueueCreation = () => {
       });
       
       if (newQueue) {
-        console.log(`[useQueueCreation] Queue created successfully: ${JSON.stringify(newQueue)}`);
+        console.log(`[useQueueCreation] Queue created successfully:`, newQueue);
         
         // Update created queue info for QR dialog
         setCreatedQueueNumber(nextQueueNumber);
         setCreatedQueueType(queueType);
         setCreatedPurpose(purpose);
-        console.log(`[useQueueCreation] Updated state - queue number: ${nextQueueNumber}`);
         
         // Update patient info for display
         updatePatientInfo(patientName, patientPhone, patientLineId);
-        console.log(`[useQueueCreation] Updated patient info: ${patientName}`);
         
-        // Close the create dialog and open QR dialog
+        // Close the create dialog
         onOpenChange(false);
-        console.log('[useQueueCreation] Closed create dialog');
         
-        // We need to ensure the QR dialog opens after state updates are processed
-        // Using setTimeout to push this to the next event loop iteration
+        // Show success toast
+        toast.success(`คิวหมายเลข ${nextQueueNumber} ถูกสร้างเรียบร้อยแล้ว`);
+        
+        // Notify parent component
+        onCreateQueue(newQueue);
+        
+        // Open QR dialog after a short delay to ensure state updates have been processed
         setTimeout(() => {
-          console.log('[useQueueCreation] Opening QR dialog...');
           setQrDialogOpen(true);
-          console.log(`[useQueueCreation] QR dialog open state set to true`);
+          console.log('[useQueueCreation] QR dialog opened, state:', { 
+            qrDialogOpen: true,
+            createdQueueNumber: nextQueueNumber,
+            patientName,
+            purpose
+          });
         }, 100);
         
-        toast.success(`คิวหมายเลข ${nextQueueNumber} ถูกสร้างเรียบร้อยแล้ว`);
-        onCreateQueue(newQueue);
         return newQueue;
       } else {
         throw new Error('Failed to create queue, no queue was returned');
@@ -132,7 +136,7 @@ export const useQueueCreation = () => {
     } catch (error) {
       console.error('[useQueueCreation] Error creating queue:', error);
       toast.error('เกิดข้อผิดพลาดในการสร้างคิว กรุณาลองใหม่อีกครั้ง');
-      throw error; // Let the error bubble up
+      throw error;
     }
   };
 

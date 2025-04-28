@@ -64,14 +64,9 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
   return (
     <Dialog 
       open={open} 
-      onOpenChange={(newOpenState) => {
-        console.log(`[QueueCreatedDialog] Dialog onOpenChange called with: ${newOpenState}`);
-        onOpenChange(newOpenState);
-      }}
+      onOpenChange={onOpenChange}
     >
       <DialogContent className="sm:max-w-[400px] bg-background">
-        {/* Hidden debugging info - using comments instead of console.log in JSX */}
-        
         <QueueCreatedHeader purpose={purpose} />
         
         <QueueCreatedContent 
