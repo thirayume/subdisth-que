@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -18,21 +18,30 @@ const PhoneSearchSection: React.FC<PhoneSearchSectionProps> = ({
   handlePhoneSearch,
   isSearching
 }) => {
-  console.log(`[PhoneSearchSection] Rendering with phoneNumber=${phoneNumber}, isSearching=${isSearching}`);
+  // Add useEffect to log every render
+  useEffect(() => {
+    console.log('----------------------------------------');
+    console.log('🔍 PHONE SEARCH SECTION RENDERED');
+    console.log(`Current phone number: "${phoneNumber}"`);
+    console.log(`isSearching: ${isSearching}`);
+    console.log('----------------------------------------');
+  }, [phoneNumber, isSearching]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(`[PhoneSearchSection] Phone number input changed: ${e.target.value}`);
+    console.log(`🔍 [PhoneSearchSection] Phone number input changed: ${e.target.value}`);
     setPhoneNumber(e.target.value);
   };
   
   const handleSearchClick = () => {
-    console.log('[PhoneSearchSection] Search button clicked');
+    console.log('🔍 [PhoneSearchSection] Search button clicked');
+    console.log(`Searching for phone number: ${phoneNumber}`);
     handlePhoneSearch();
   };
   
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      console.log('[PhoneSearchSection] Enter key pressed in phone input');
+      console.log('🔍 [PhoneSearchSection] Enter key pressed in phone input');
+      console.log(`Searching for phone number: ${phoneNumber}`);
       e.preventDefault();
       handlePhoneSearch();
     }

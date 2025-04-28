@@ -21,7 +21,9 @@ export const printQueueTicket = ({
 }: PrintQueueOptions): void => {
   const formattedQueueNumber = formatQueueNumber(queueType, queueNumber);
   
-  console.log(`[printQueueTicket] Starting print process for queue ${formattedQueueNumber}`);
+  console.log(`----------------------------------------`);
+  console.log(`🖨️🖨️🖨️ PRINT QUEUE TICKET FUNCTION CALLED 🖨️🖨️🖨️`);
+  console.log(`----------------------------------------`);
   console.log(`[printQueueTicket] Queue details:`, { 
     queueNumber, 
     queueType, 

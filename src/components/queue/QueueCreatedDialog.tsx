@@ -31,14 +31,16 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
   patientLineId = '',
   purpose = '',
 }) => {
-  console.log(`[QueueCreatedDialog] Rendering with open=${open}, queueNumber=${queueNumber}, queueType=${queueType}`);
+  console.log(`🎟️ [QueueCreatedDialog] Rendering with open=${open}, queueNumber=${queueNumber}, queueType=${queueType}`);
   const dialogRef = useRef<HTMLDivElement>(null);
   const formattedQueueNumber = formatQueueNumber(queueType, queueNumber);
   
   // Track when dialog is opened/closed
   useEffect(() => {
     if (open) {
-      console.log(`=== QueueCreatedDialog OPENED ===`);
+      console.log(`----------------------------------------`);
+      console.log(`🎉 QUEUE CREATED DIALOG OPENED 🎉`);
+      console.log(`----------------------------------------`);
       console.log(`- queueNumber: ${queueNumber}`);
       console.log(`- queueType: ${queueType}`);
       console.log(`- patientName: ${patientName || 'none'}`);
@@ -49,12 +51,16 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
       
       toast.success(`คิวถูกสร้างเรียบร้อย: ${formattedQueueNumber}`);
     } else {
-      console.log(`=== QueueCreatedDialog CLOSED ===`);
+      console.log(`----------------------------------------`);
+      console.log(`🎟️ [QueueCreatedDialog] DIALOG CLOSED`);
+      console.log(`----------------------------------------`);
     }
   }, [open, queueNumber, queueType, patientName, formattedQueueNumber, purpose, patientPhone, patientLineId]);
   
   const handlePrint = () => {
-    console.log('[QueueCreatedDialog] Print button clicked');
+    console.log(`----------------------------------------`);
+    console.log('🖨️ [QueueCreatedDialog] PRINT BUTTON CLICKED');
+    console.log(`----------------------------------------`);
     try {
       console.log('[QueueCreatedDialog] Calling printQueueTicket with:', {
         queueNumber,
@@ -104,7 +110,7 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
     <Dialog 
       open={open} 
       onOpenChange={(newOpen) => {
-        console.log(`[QueueCreatedDialog] Dialog onOpenChange called with: ${newOpen}`);
+        console.log(`🎟️ [QueueCreatedDialog] Dialog onOpenChange called with: ${newOpen}`);
         onOpenChange(newOpen);
       }}
     >

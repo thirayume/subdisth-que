@@ -20,14 +20,18 @@ const DialogFooterActions: React.FC<DialogFooterActionsProps> = ({
   console.log('[DialogFooterActions] Rendering footer actions');
 
   const handlePrintClick = (e: React.MouseEvent) => {
-    console.log('[DialogFooterActions] Print button clicked');
+    console.log(`----------------------------------------`);
+    console.log('🖨️🖨️🖨️ PRINT BUTTON CLICKED 🖨️🖨️🖨️');
+    console.log(`----------------------------------------`);
     e.preventDefault(); // Prevent default behavior
     e.stopPropagation(); // Stop propagation to prevent dialog closing
     onPrint();
   };
 
   const handleCloseClick = (e: React.MouseEvent) => {
-    console.log('[DialogFooterActions] Close button clicked');
+    console.log(`----------------------------------------`);
+    console.log('❌ CLOSE BUTTON CLICKED');
+    console.log(`----------------------------------------`);
     e.preventDefault();
     e.stopPropagation();
     onClose();
@@ -49,7 +53,9 @@ const DialogFooterActions: React.FC<DialogFooterActionsProps> = ({
         <Button 
           variant="outline"
           onClick={(e) => {
-            console.log('[DialogFooterActions] Send SMS button clicked');
+            console.log(`----------------------------------------`);
+            console.log('[DialogFooterActions] SEND SMS BUTTON CLICKED');
+            console.log(`----------------------------------------`);
             e.preventDefault();
             e.stopPropagation();
             onSendSms();
@@ -66,7 +72,9 @@ const DialogFooterActions: React.FC<DialogFooterActionsProps> = ({
         <Button 
           variant="outline"
           onClick={(e) => {
-            console.log('[DialogFooterActions] Schedule notification button clicked');
+            console.log(`----------------------------------------`);
+            console.log('[DialogFooterActions] SCHEDULE NOTIFICATION BUTTON CLICKED');
+            console.log(`----------------------------------------`);
             e.preventDefault();
             e.stopPropagation();
             onScheduleNotification();
