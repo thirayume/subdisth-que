@@ -27,6 +27,8 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
   onOpenChange,
   onCreateQueue,
 }) => {
+  console.log(`[CreateQueueDialog] Rendering with open=${open}`);
+  
   const {
     phoneNumber,
     setPhoneNumber,
@@ -59,7 +61,10 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
   // Reset state when dialog is closed
   React.useEffect(() => {
     if (!open) {
+      console.log('[CreateQueueDialog] Dialog closed, resetting state');
       resetState();
+    } else {
+      console.log('[CreateQueueDialog] Dialog opened');
     }
   }, [open, resetState]);
 
@@ -78,10 +83,17 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
   }, [qrDialogOpen, createdQueueNumber]);
 
   const shouldShowQueueDetails = Boolean(patientId) || (showNewPatientForm && Boolean(newPatientName));
+  console.log(`[CreateQueueDialog] shouldShowQueueDetails: ${shouldShowQueueDetails}`);
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog 
+        open={open} 
+        onOpenChange={(newOpen) => {
+          console.log(`[CreateQueueDialog] Dialog onOpenChange called with: ${newOpen}`);
+          onOpenChange(newOpen);
+        }}
+      >
         <DialogContent className="sm:max-w-[425px] bg-background">
           <DialogHeader>
             <DialogTitle>สร้างคิวใหม่</DialogTitle>
@@ -142,7 +154,6 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
         </DialogContent>
       </Dialog>
       
-      {/* Always render QueueCreatedDialog but control visibility with open prop */}
       <QueueCreatedDialog 
         open={qrDialogOpen && createdQueueNumber !== null} 
         onOpenChange={(newState) => {

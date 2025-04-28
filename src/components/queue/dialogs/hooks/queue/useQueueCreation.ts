@@ -25,6 +25,7 @@ export const useQueueCreation = () => {
         purposes[type.code] = type.name || type.code;
       });
     }
+    console.log('[useQueueCreation] Queue type purposes initialized:', purposes);
     return purposes;
   }, [queueTypes]);
 
@@ -59,10 +60,10 @@ export const useQueueCreation = () => {
         throw new Error('Could not get next queue number');
       }
 
-      // Fix: Handle case when no queues exist yet
+      // Handle case when no queues exist yet
       const highestNumber = existingQueues && existingQueues.length > 0 ? existingQueues[0]?.number || 0 : 0;
       const nextNumber = highestNumber + 1;
-      console.log(`[useQueueCreation] Next queue number: ${nextNumber}`);
+      console.log(`[useQueueCreation] Highest existing number: ${highestNumber}, Next queue number: ${nextNumber}`);
       return nextNumber;
     } catch (error) {
       console.error('[useQueueCreation] Error in getNextQueueNumber:', error);
@@ -82,6 +83,7 @@ export const useQueueCreation = () => {
   ) => {
     try {
       console.log(`[useQueueCreation] Creating queue for patient ${patientId} with type ${queueType}`);
+      console.log(`[useQueueCreation] Patient details - name: ${patientName}, phone: ${patientPhone}, lineId: ${patientLineId}`);
       
       // Get the purpose text based on queue type
       const purpose = queueTypePurposes[queueType] || '';
@@ -89,8 +91,10 @@ export const useQueueCreation = () => {
       
       // Get the next queue number
       const nextQueueNumber = await getNextQueueNumber(queueType);
+      console.log(`[useQueueCreation] Next queue number acquired: ${nextQueueNumber}`);
       
       // Create the queue
+      console.log('[useQueueCreation] Calling addQueue to create queue in database');
       const newQueue = await addQueue({
         patient_id: patientId,
         number: nextQueueNumber,
@@ -103,24 +107,29 @@ export const useQueueCreation = () => {
         console.log(`[useQueueCreation] Queue created successfully:`, newQueue);
         
         // First update all the state needed for the QR dialog
+        console.log(`[useQueueCreation] Setting state for QR dialog - number: ${nextQueueNumber}, type: ${queueType}, purpose: ${purpose}`);
         setCreatedQueueNumber(nextQueueNumber);
         setCreatedQueueType(queueType);
         setCreatedPurpose(purpose);
         
         // Update patient info for display
+        console.log('[useQueueCreation] Updating patient info for display');
         updatePatientInfo(patientName, patientPhone, patientLineId);
         
         // Close the create dialog
+        console.log('[useQueueCreation] Closing create dialog');
         onOpenChange(false);
         
         // Show success toast
         toast.success(`คิวหมายเลข ${nextQueueNumber} ถูกสร้างเรียบร้อยแล้ว`);
         
         // Notify parent component
+        console.log('[useQueueCreation] Notifying parent component about new queue');
         onCreateQueue(newQueue);
         
         // Use a more reliable approach with a slightly longer delay to ensure 
         // the create dialog has fully closed before opening the QR dialog
+        console.log('[useQueueCreation] Setting timeout to open QR dialog');
         setTimeout(() => {
           console.log('[useQueueCreation] Opening QR dialog now...');
           setQrDialogOpen(true);
@@ -128,6 +137,7 @@ export const useQueueCreation = () => {
         
         return newQueue;
       } else {
+        console.error('[useQueueCreation] Failed to create queue, no queue was returned');
         throw new Error('Failed to create queue, no queue was returned');
       }
     } catch (error) {

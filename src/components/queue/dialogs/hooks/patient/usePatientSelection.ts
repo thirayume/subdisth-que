@@ -12,6 +12,7 @@ export const usePatientSelection = () => {
   const [finalPatientLineId, setFinalPatientLineId] = React.useState('');
 
   const resetPatientSelection = () => {
+    console.log('[usePatientSelection] Resetting all patient selection state');
     setPatientId('');
     setNewPatientName('');
     setSelectedPatientName('');
@@ -23,17 +24,23 @@ export const usePatientSelection = () => {
   };
 
   const handleSelectPatient = (id: string, patients: any[]) => {
+    console.log(`[usePatientSelection] Selecting patient with ID: ${id}`);
     const selectedPatient = patients.find(p => p.id === id);
     setPatientId(id);
     
     if (selectedPatient) {
+      console.log('[usePatientSelection] Patient found:', selectedPatient);
       setSelectedPatientName(selectedPatient.name);
       setSelectedPatientPhone(selectedPatient.phone || '');
       setSelectedPatientLineId(selectedPatient.line_id || '');
+      console.log(`[usePatientSelection] Set name: ${selectedPatient.name}, phone: ${selectedPatient.phone}, lineId: ${selectedPatient.line_id || 'none'}`);
+    } else {
+      console.warn('[usePatientSelection] Selected patient not found in patients array');
     }
   };
 
   const updateFinalPatientInfo = (name: string, phone: string, lineId: string = '') => {
+    console.log(`[usePatientSelection] Updating final patient info - name: ${name}, phone: ${phone}, lineId: ${lineId}`);
     setFinalPatientName(name);
     setFinalPatientPhone(phone);
     setFinalPatientLineId(lineId);

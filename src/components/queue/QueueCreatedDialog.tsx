@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { QueueType } from '@/integrations/supabase/schema';
 import { formatQueueNumber } from '@/utils/queueFormatters';
@@ -31,27 +31,40 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
   patientLineId = '',
   purpose = '',
 }) => {
+  console.log(`[QueueCreatedDialog] Rendering with open=${open}, queueNumber=${queueNumber}, queueType=${queueType}`);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const formattedQueueNumber = formatQueueNumber(queueType, queueNumber);
   
-  // Enhanced debug logging to track dialog state
+  // Track when dialog is opened/closed
   useEffect(() => {
     if (open) {
       console.log(`=== QueueCreatedDialog OPENED ===`);
       console.log(`- queueNumber: ${queueNumber}`);
       console.log(`- queueType: ${queueType}`);
-      console.log(`- patientName: ${patientName}`);
+      console.log(`- patientName: ${patientName || 'none'}`);
       console.log(`- formattedQueueNumber: ${formattedQueueNumber}`);
-      console.log(`- purpose: ${purpose}`);
+      console.log(`- purpose: ${purpose || 'none'}`);
+      console.log(`- patientPhone: ${patientPhone || 'none'}`);
+      console.log(`- patientLineId: ${patientLineId || 'none'}`);
       
       toast.success(`คิวถูกสร้างเรียบร้อย: ${formattedQueueNumber}`);
     } else {
       console.log(`=== QueueCreatedDialog CLOSED ===`);
     }
-  }, [open, queueNumber, queueType, patientName, formattedQueueNumber, purpose]);
+  }, [open, queueNumber, queueType, patientName, formattedQueueNumber, purpose, patientPhone, patientLineId]);
   
   const handlePrint = () => {
-    console.log('Printing queue ticket...');
+    console.log('[QueueCreatedDialog] Print button clicked');
     try {
+      console.log('[QueueCreatedDialog] Calling printQueueTicket with:', {
+        queueNumber,
+        queueType,
+        patientName,
+        patientPhone,
+        patientLineId,
+        purpose
+      });
+      
       printQueueTicket({
         queueNumber,
         queueType,
@@ -60,22 +73,27 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
         patientLineId,
         purpose
       });
+      
       // Show print success message
       toast.success('กำลังพิมพ์บัตรคิว');
+      console.log('[QueueCreatedDialog] Print initiated successfully');
     } catch (error) {
-      console.error('Error printing ticket:', error);
+      console.error('[QueueCreatedDialog] Error printing ticket:', error);
       toast.error('เกิดข้อผิดพลาดในการพิมพ์บัตรคิว');
     }
   };
 
   // Force focus on dialog when it opens
   useEffect(() => {
-    if (open) {
+    if (open && dialogRef.current) {
+      console.log('[QueueCreatedDialog] Dialog opened, attempting to focus');
       const timer = setTimeout(() => {
-        const dialogElement = document.querySelector('[role="dialog"]');
+        const dialogElement = dialogRef.current?.querySelector('[role="dialog"]');
         if (dialogElement) {
           (dialogElement as HTMLElement).focus();
-          console.log('Dialog focused');
+          console.log('[QueueCreatedDialog] Dialog focused successfully');
+        } else {
+          console.log('[QueueCreatedDialog] Could not find dialog element to focus');
         }
       }, 100);
       return () => clearTimeout(timer);
@@ -86,11 +104,18 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
     <Dialog 
       open={open} 
       onOpenChange={(newOpen) => {
-        console.log(`Dialog onOpenChange called with: ${newOpen}`);
+        console.log(`[QueueCreatedDialog] Dialog onOpenChange called with: ${newOpen}`);
         onOpenChange(newOpen);
       }}
     >
-      <DialogContent className="sm:max-w-[400px] bg-background">
+      <DialogContent 
+        ref={dialogRef} 
+        className="sm:max-w-[400px] bg-background"
+        onOpenAutoFocus={(e) => {
+          console.log('[QueueCreatedDialog] onOpenAutoFocus event triggered');
+          // Don't prevent default to allow auto-focusing
+        }}
+      >
         <QueueCreatedHeader purpose={purpose} />
         
         <QueueCreatedContent 

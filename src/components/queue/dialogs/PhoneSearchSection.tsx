@@ -18,6 +18,26 @@ const PhoneSearchSection: React.FC<PhoneSearchSectionProps> = ({
   handlePhoneSearch,
   isSearching
 }) => {
+  console.log(`[PhoneSearchSection] Rendering with phoneNumber=${phoneNumber}, isSearching=${isSearching}`);
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log(`[PhoneSearchSection] Phone number input changed: ${e.target.value}`);
+    setPhoneNumber(e.target.value);
+  };
+  
+  const handleSearchClick = () => {
+    console.log('[PhoneSearchSection] Search button clicked');
+    handlePhoneSearch();
+  };
+  
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      console.log('[PhoneSearchSection] Enter key pressed in phone input');
+      e.preventDefault();
+      handlePhoneSearch();
+    }
+  };
+
   return (
     <div className="grid gap-2">
       <Label htmlFor="phoneNumber">เบอร์โทรศัพท์</Label>
@@ -25,13 +45,14 @@ const PhoneSearchSection: React.FC<PhoneSearchSectionProps> = ({
         <Input
           id="phoneNumber"
           value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
+          onChange={handleInputChange}
+          onKeyPress={handleKeyPress}
           placeholder="กรอกเบอร์โทรศัพท์"
           disabled={isSearching}
         />
         <Button 
           variant="outline" 
-          onClick={handlePhoneSearch}
+          onClick={handleSearchClick}
           disabled={isSearching}
           className="px-3"
         >

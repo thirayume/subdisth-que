@@ -17,11 +17,20 @@ const DialogFooterActions: React.FC<DialogFooterActionsProps> = ({
   onScheduleNotification,
   onSendSms,
 }) => {
+  console.log('[DialogFooterActions] Rendering footer actions');
+
   const handlePrintClick = (e: React.MouseEvent) => {
     console.log('[DialogFooterActions] Print button clicked');
     e.preventDefault(); // Prevent default behavior
     e.stopPropagation(); // Stop propagation to prevent dialog closing
     onPrint();
+  };
+
+  const handleCloseClick = (e: React.MouseEvent) => {
+    console.log('[DialogFooterActions] Close button clicked');
+    e.preventDefault();
+    e.stopPropagation();
+    onClose();
   };
 
   return (
@@ -30,6 +39,7 @@ const DialogFooterActions: React.FC<DialogFooterActionsProps> = ({
         variant="outline"
         onClick={handlePrintClick}
         className="w-full sm:w-auto flex items-center gap-2"
+        type="button"
       >
         <Printer className="h-4 w-4" />
         พิมพ์คิว
@@ -39,11 +49,13 @@ const DialogFooterActions: React.FC<DialogFooterActionsProps> = ({
         <Button 
           variant="outline"
           onClick={(e) => {
+            console.log('[DialogFooterActions] Send SMS button clicked');
             e.preventDefault();
             e.stopPropagation();
             onSendSms();
           }} 
           className="w-full sm:w-auto flex items-center gap-2"
+          type="button"
         >
           <MessageSquare className="h-4 w-4" />
           ส่ง SMS
@@ -54,11 +66,13 @@ const DialogFooterActions: React.FC<DialogFooterActionsProps> = ({
         <Button 
           variant="outline"
           onClick={(e) => {
+            console.log('[DialogFooterActions] Schedule notification button clicked');
             e.preventDefault();
             e.stopPropagation();
             onScheduleNotification();
           }} 
           className="w-full sm:w-auto flex items-center gap-2"
+          type="button"
         >
           <Calendar className="h-4 w-4" />
           ตั้งเวลาแจ้งเตือน
@@ -66,11 +80,9 @@ const DialogFooterActions: React.FC<DialogFooterActionsProps> = ({
       )}
       
       <Button 
-        onClick={() => {
-          console.log('[DialogFooterActions] Close button clicked');
-          onClose();
-        }} 
+        onClick={handleCloseClick}
         className="w-full sm:w-auto bg-pharmacy-600 hover:bg-pharmacy-700"
+        type="button"
       >
         ตกลง
       </Button>
