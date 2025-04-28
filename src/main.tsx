@@ -3,24 +3,6 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
-import { Toaster } from './components/ui/toaster';
-
-// Add a visible element to debug mounting issues
-const addDebugElement = () => {
-  if (process.env.NODE_ENV === 'development') {
-    const debugElement = document.createElement('div');
-    debugElement.style.position = 'fixed';
-    debugElement.style.bottom = '30px';
-    debugElement.style.right = '10px';
-    debugElement.style.backgroundColor = 'rgba(255,0,0,0.7)';
-    debugElement.style.color = '#fff';
-    debugElement.style.padding = '4px 8px';
-    debugElement.style.fontSize = '10px';
-    debugElement.style.zIndex = '9999';
-    debugElement.textContent = 'Main.tsx mounted';
-    document.body.appendChild(debugElement);
-  }
-};
 
 // Register service worker for offline support with improved error handling
 const registerServiceWorker = () => {
@@ -56,23 +38,16 @@ const mount = () => {
     }
 
     console.log("Mounting React application");
-    addDebugElement(); // Add debug element
     
     // Force a style reset on the root element
     rootElement.style.cssText = "width: 100%; height: 100%; min-height: 100vh; background-color: hsl(var(--background, 180 25% 98%));";
     
     const root = ReactDOM.createRoot(rootElement);
 
-    // Wrap in error boundary at the highest level
+    // Render without error boundary at root to avoid React context issues
     root.render(
       <React.StrictMode>
-        <ErrorBoundary>
-          <>
-            <App />
-            <Toaster />
-            <OfflineIndicator />
-          </>
-        </ErrorBoundary>
+        <App />
       </React.StrictMode>
     );
     
