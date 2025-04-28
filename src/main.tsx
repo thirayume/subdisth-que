@@ -28,39 +28,19 @@ const registerServiceWorker = () => {
     window.addEventListener('load', async () => {
       try {
         console.log('Attempting to register service worker...');
-        // Unregister any existing service workers first to ensure clean installation
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        for (const registration of registrations) {
-          await registration.unregister();
-          console.log('Unregistered existing service worker');
+        // Only try to register in production to avoid development conflicts
+        if (process.env.NODE_ENV === 'production') {
+          const registration = await navigator.serviceWorker.register('/serviceWorker.js', {
+            updateViaCache: 'none' // Prevent browser cache from interfering
+          });
+          console.log('Service Worker registered with scope:', registration.scope);
+        } else {
+          console.log('Service Worker registration skipped in development mode');
         }
-        
-        // Register new service worker
-        const registration = await navigator.serviceWorker.register('/serviceWorker.js', {
-          updateViaCache: 'none' // Prevent browser cache from interfering
-        });
-        console.log('Service Worker registered with scope:', registration.scope);
-        
-        // Handle service worker updates
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          if (newWorker) {
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New content is available, prompt user to refresh
-                console.log('New service worker installed, refresh recommended');
-              }
-            });
-          }
-        });
       } catch (error) {
         console.error('Service Worker registration failed:', error);
+        // Don't block the app from loading if service worker fails
       }
-    });
-    
-    // Handle service worker communication
-    navigator.serviceWorker.addEventListener('message', (event) => {
-      console.log('Message from service worker:', event.data);
     });
   }
 };

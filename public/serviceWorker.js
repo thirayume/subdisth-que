@@ -1,7 +1,7 @@
 
 // This is the main service worker file
 // Service worker specific globals
-const CACHE_NAME = 'queueconnect-pharmacy-v1.2';
+const CACHE_NAME = 'queueconnect-pharmacy-v1.3';
 const OFFLINE_URL = '/offline.html';
 
 // Install service worker and cache the essential assets
@@ -21,10 +21,11 @@ self.addEventListener('install', (event) => {
       // Cache each asset individually with error handling
       for (const asset of essentialAssets) {
         try {
-          await cache.add(asset);
+          await cache.add(new Request(asset, { cache: 'reload' }));
           console.log(`[ServiceWorker] Asset cached successfully: ${asset}`);
         } catch (error) {
           console.error(`[ServiceWorker] Failed to cache asset ${asset}:`, error);
+          // Continue despite errors - don't block installation
         }
       }
       
@@ -42,7 +43,11 @@ self.addEventListener('activate', (event) => {
     (async () => {
       // Enable navigation preload if it's supported
       if ('navigationPreload' in self.registration) {
-        await self.registration.navigationPreload.enable();
+        try {
+          await self.registration.navigationPreload.enable();
+        } catch (error) {
+          console.error('[ServiceWorker] Navigation preload error:', error);
+        }
       }
       
       // Clean up old cache versions
@@ -62,124 +67,55 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Cache resources progressively as they are used
+// Simplified fetch handler - use network first with fallback to cache
 self.addEventListener('fetch', (event) => {
   // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) {
     return;
   }
   
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      (async () => {
-        try {
-          // First, try to use the navigation preload response if it's supported
-          const preloadResponse = await event.preloadResponse;
-          
-          if (preloadResponse) {
-            return preloadResponse;
-          }
-
-          // Always try the network first for navigation requests
-          const networkResponse = await fetch(event.request);
-          
-          // Add progressive caching - save successful navigation responses to cache
-          const cache = await caches.open(CACHE_NAME);
-          try {
-            cache.put(event.request, networkResponse.clone());
-            console.log('[ServiceWorker] Navigation resource cached:', event.request.url);
-          } catch (error) {
-            console.error('[ServiceWorker] Failed to cache navigation:', error);
-          }
-          
-          return networkResponse;
-        } catch (error) {
-          // Network failed, try to serve from cache
-          const cache = await caches.open(CACHE_NAME);
-          const cachedResponse = await cache.match(event.request);
-          
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          
-          // If both network and cache fail, show offline page
-          console.log('[ServiceWorker] Serving offline page due to network failure');
-          const offlineResponse = await cache.match(OFFLINE_URL);
-          return offlineResponse || new Response('You are offline and the page is not cached.', {
-            status: 503,
-            statusText: 'Service Unavailable',
-            headers: new Headers({
-              'Content-Type': 'text/plain',
-            }),
+  event.respondWith(
+    fetch(event.request)
+      .then(response => {
+        // Only cache successful responses
+        if (response.ok && response.type === 'basic') {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            try {
+              cache.put(event.request, responseToCache);
+            } catch (error) {
+              console.error('[ServiceWorker] Failed to cache response:', error);
+            }
           });
         }
-      })()
-    );
-  } else if (event.request.destination === 'image' || 
-             event.request.destination === 'style' || 
-             event.request.destination === 'script') {
-    // Use cache-first strategy for assets
-    event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
+        return response;
+      })
+      .catch(async () => {
+        // Try to get from cache
+        const cachedResponse = await caches.match(event.request);
         if (cachedResponse) {
           return cachedResponse;
         }
         
-        return fetch(event.request).then((response) => {
-          // Cache important assets for offline use
-          if (response.ok && (response.type === 'basic' || response.type === 'cors')) {
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              try {
-                cache.put(event.request, responseToCache);
-                console.log('[ServiceWorker] Asset cached:', event.request.url);
-              } catch (error) {
-                console.error('[ServiceWorker] Failed to cache asset:', error);
-              }
-            });
-          }
-          
-          return response;
-        }).catch(error => {
-          console.error('[ServiceWorker] Fetch failed for asset:', error);
-          // Return a placeholder image/empty response for failed resources
-          if (event.request.destination === 'image') {
-            return caches.match('/placeholder.svg');
-          }
-          return new Response('/* Resource temporarily unavailable */', {
+        // Return offline page for navigation requests
+        if (event.request.mode === 'navigate') {
+          const cache = await caches.open(CACHE_NAME);
+          return cache.match(OFFLINE_URL) || new Response('Offline content not available', {
             status: 503,
-            headers: { 'Content-Type': 'text/css' }
+            headers: { 'Content-Type': 'text/plain' }
           });
+        }
+        
+        // Return empty response for other resources
+        return new Response('', {
+          status: 408,
+          headers: { 'Content-Type': 'text/plain' }
         });
       })
-    );
-  } else {
-    // Use network-first for API calls
-    event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          // Clone the response before using it to save in cache
-          const responseToCache = response.clone();
-          
-          // Cache successful API responses
-          if (response.ok) {
-            caches.open(CACHE_NAME).then(cache => {
-              try {
-                cache.put(event.request, responseToCache);
-              } catch (error) {
-                console.error('[ServiceWorker] Failed to cache API response:', error);
-              }
-            });
-          }
-          
-          return response;
-        })
-        .catch(() => caches.match(event.request))
-    );
-  }
+  );
 });
 
-// Listen for message events to control the service worker
+// Listen for message events
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();

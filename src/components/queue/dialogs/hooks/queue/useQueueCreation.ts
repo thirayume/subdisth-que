@@ -115,10 +115,13 @@ export const useQueueCreation = () => {
         onOpenChange(false);
         console.log('[useQueueCreation] Closed create dialog');
         
-        // Direct QR dialog opening without setTimeout
-        console.log('[useQueueCreation] Setting QR dialog to open immediately');
-        setQrDialogOpen(true);
-        console.log(`[useQueueCreation] QR dialog open state: ${qrDialogOpen}`);
+        // We need to ensure the QR dialog opens after state updates are processed
+        // Using setTimeout to push this to the next event loop iteration
+        setTimeout(() => {
+          console.log('[useQueueCreation] Opening QR dialog...');
+          setQrDialogOpen(true);
+          console.log(`[useQueueCreation] QR dialog open state set to true`);
+        }, 100);
         
         toast.success(`คิวหมายเลข ${nextQueueNumber} ถูกสร้างเรียบร้อยแล้ว`);
         onCreateQueue(newQueue);

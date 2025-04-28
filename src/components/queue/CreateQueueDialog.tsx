@@ -14,7 +14,7 @@ import PatientResultsList from './dialogs/PatientResultsList';
 import NewPatientForm from './dialogs/NewPatientForm';
 import QueueDetailsForm from './dialogs/QueueDetailsForm';
 import { useCreateQueue } from './dialogs/hooks/useCreateQueue';
-import { toast } from 'sonner'; // Added toast for visual feedback
+import { toast } from 'sonner'; 
 
 interface CreateQueueDialogProps {
   open: boolean;
@@ -63,7 +63,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
     }
   }, [open, resetState]);
 
-  // Add debug logging to see when dialog opens/closes
+  // Add debug logging
   React.useEffect(() => {
     console.log(`[CreateQueueDialog] Dialog open state: ${open}`);
     if (open) {
@@ -137,20 +137,18 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
         </DialogContent>
       </Dialog>
       
+      {/* Only render QueueCreatedDialog when we have a created queue number */}
       {createdQueueNumber !== null && (
-        <>
-          {/* Hidden debugging information - using comment instead of console.log in JSX */}
-          <QueueCreatedDialog 
-            open={qrDialogOpen} 
-            onOpenChange={setQrDialogOpen} 
-            queueNumber={createdQueueNumber}
-            queueType={createdQueueType}
-            patientName={finalPatientName}
-            patientPhone={finalPatientPhone}
-            patientLineId={finalPatientLineId}
-            purpose={createdPurpose}
-          />
-        </>
+        <QueueCreatedDialog 
+          open={qrDialogOpen} 
+          onOpenChange={setQrDialogOpen} 
+          queueNumber={createdQueueNumber}
+          queueType={createdQueueType}
+          patientName={finalPatientName}
+          patientPhone={finalPatientPhone}
+          patientLineId={finalPatientLineId}
+          purpose={createdPurpose}
+        />
       )}
     </>
   );

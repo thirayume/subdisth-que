@@ -62,38 +62,36 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
   };
 
   return (
-    <>
-      <Dialog 
-        open={open} 
-        onOpenChange={(newOpenState) => {
-          console.log(`[QueueCreatedDialog] Dialog onOpenChange called with: ${newOpenState}`);
-          onOpenChange(newOpenState);
-        }}
-      >
-        <DialogContent className="sm:max-w-[400px] bg-background">
-          {/* Hidden debugging info - using comments instead of console.log in JSX */}
-          
-          <QueueCreatedHeader purpose={purpose} />
-          
-          <QueueCreatedContent 
-            formattedQueueNumber={formattedQueueNumber}
-            queueNumber={queueNumber}
-            queueType={queueType}
-            patientName={patientName}
-            patientPhone={patientPhone}
-            patientLineId={patientLineId}
-          />
-          
-          <DialogFooterActions 
-            onPrint={handlePrint}
-            onClose={() => {
-              console.log('[QueueCreatedDialog] Close button clicked');
-              onOpenChange(false);
-            }}
-          />
-        </DialogContent>
-      </Dialog>
-    </>
+    <Dialog 
+      open={open} 
+      onOpenChange={(newOpenState) => {
+        console.log(`[QueueCreatedDialog] Dialog onOpenChange called with: ${newOpenState}`);
+        onOpenChange(newOpenState);
+      }}
+    >
+      <DialogContent className="sm:max-w-[400px] bg-background">
+        {/* Hidden debugging info - using comments instead of console.log in JSX */}
+        
+        <QueueCreatedHeader purpose={purpose} />
+        
+        <QueueCreatedContent 
+          formattedQueueNumber={formattedQueueNumber}
+          queueNumber={queueNumber}
+          queueType={queueType}
+          patientName={patientName}
+          patientPhone={patientPhone}
+          patientLineId={patientLineId}
+        />
+        
+        <DialogFooterActions 
+          onPrint={handlePrint}
+          onClose={() => {
+            console.log('[QueueCreatedDialog] Close button clicked');
+            onOpenChange(false);
+          }}
+        />
+      </DialogContent>
+    </Dialog>
   );
 };
 
