@@ -122,7 +122,13 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
             </Button>
             <Button 
               className="bg-pharmacy-600 hover:bg-pharmacy-700" 
-              onClick={handleCreateQueue}
+              onClick={() => {
+                console.log("[CreateQueueDialog] Create queue button clicked");
+                console.log(`[CreateQueueDialog] Patient ID: ${patientId}`);
+                console.log(`[CreateQueueDialog] New patient name: ${newPatientName}`);
+                console.log(`[CreateQueueDialog] Show new patient form: ${showNewPatientForm}`);
+                handleCreateQueue();
+              }}
               disabled={!patientId && !(showNewPatientForm && newPatientName)}
             >
               สร้างคิว
@@ -135,7 +141,10 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
       {createdQueueNumber !== null && (
         <QueueCreatedDialog 
           open={qrDialogOpen} 
-          onOpenChange={setQrDialogOpen} 
+          onOpenChange={(newState) => {
+            console.log(`[CreateQueueDialog] Updating QR dialog state to: ${newState}`);
+            setQrDialogOpen(newState);
+          }}
           queueNumber={createdQueueNumber}
           queueType={createdQueueType}
           patientName={finalPatientName}

@@ -59,6 +59,7 @@ export const useQueueCreation = () => {
         throw new Error('Could not get next queue number');
       }
 
+      // Fix: Handle case when no queues exist yet
       const highestNumber = existingQueues && existingQueues.length > 0 ? existingQueues[0]?.number || 0 : 0;
       const nextNumber = highestNumber + 1;
       console.log(`[useQueueCreation] Next queue number: ${nextNumber}`);
@@ -101,7 +102,7 @@ export const useQueueCreation = () => {
       if (newQueue) {
         console.log(`[useQueueCreation] Queue created successfully:`, newQueue);
         
-        // Update created queue info for QR dialog
+        // First update all the state needed for the QR dialog
         setCreatedQueueNumber(nextQueueNumber);
         setCreatedQueueType(queueType);
         setCreatedPurpose(purpose);
@@ -118,16 +119,12 @@ export const useQueueCreation = () => {
         // Notify parent component
         onCreateQueue(newQueue);
         
-        // Open QR dialog after a short delay to ensure state updates have been processed
+        // Use a more reliable approach with a slightly longer delay to ensure 
+        // the create dialog has fully closed before opening the QR dialog
         setTimeout(() => {
+          console.log('[useQueueCreation] Opening QR dialog now...');
           setQrDialogOpen(true);
-          console.log('[useQueueCreation] QR dialog opened, state:', { 
-            qrDialogOpen: true,
-            createdQueueNumber: nextQueueNumber,
-            patientName,
-            purpose
-          });
-        }, 100);
+        }, 300);
         
         return newQueue;
       } else {

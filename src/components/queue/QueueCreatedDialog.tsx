@@ -59,6 +59,8 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
       patientLineId,
       purpose
     });
+    // Show print success message
+    toast.success('กำลังพิมพ์บัตรคิว');
   };
 
   return (

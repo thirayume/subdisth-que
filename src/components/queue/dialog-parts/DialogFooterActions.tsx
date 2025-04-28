@@ -21,7 +21,10 @@ const DialogFooterActions: React.FC<DialogFooterActionsProps> = ({
     <DialogFooter className="flex flex-col sm:flex-row gap-2">
       <Button 
         variant="outline"
-        onClick={onPrint} 
+        onClick={() => {
+          console.log('[DialogFooterActions] Print button clicked');
+          onPrint();
+        }} 
         className="w-full sm:w-auto flex items-center gap-2"
       >
         <Printer className="h-4 w-4" />
@@ -51,7 +54,10 @@ const DialogFooterActions: React.FC<DialogFooterActionsProps> = ({
       )}
       
       <Button 
-        onClick={onClose} 
+        onClick={() => {
+          console.log('[DialogFooterActions] Close button clicked');
+          onClose();
+        }} 
         className="w-full sm:w-auto bg-pharmacy-600 hover:bg-pharmacy-700"
       >
         ตกลง

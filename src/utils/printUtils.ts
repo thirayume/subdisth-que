@@ -21,6 +21,8 @@ export const printQueueTicket = ({
 }: PrintQueueOptions): void => {
   const formattedQueueNumber = formatQueueNumber(queueType, queueNumber);
   
+  console.log(`[printQueueTicket] Printing ticket for queue ${formattedQueueNumber}`);
+  
   // Create a new window with just the content we want to print
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
@@ -81,6 +83,15 @@ export const printQueueTicket = ({
             margin-right: 4px;
             vertical-align: middle;
           }
+          @media print {
+            body {
+              margin: 0;
+              padding: 15px;
+            }
+            .queue-number {
+              font-size: 60px;
+            }
+          }
         </style>
       </head>
       <body>
@@ -106,9 +117,13 @@ export const printQueueTicket = ({
         <script>
           // Auto print when the window loads
           window.onload = function() {
-            window.print();
-            // Close after printing or after 10 seconds
-            setTimeout(() => window.close(), 10000);
+            console.log('Print window loaded, triggering print...');
+            setTimeout(() => {
+              window.print();
+              console.log('Print triggered');
+              // Close after printing or after 10 seconds
+              setTimeout(() => window.close(), 10000);
+            }, 500);
           }
         </script>
       </body>
@@ -119,4 +134,6 @@ export const printQueueTicket = ({
   printWindow.document.open();
   printWindow.document.write(printContent);
   printWindow.document.close();
+  
+  console.log('[printQueueTicket] Print window opened and content written');
 };
