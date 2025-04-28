@@ -17,14 +17,18 @@ const DialogFooterActions: React.FC<DialogFooterActionsProps> = ({
   onScheduleNotification,
   onSendSms,
 }) => {
+  const handlePrintClick = (e: React.MouseEvent) => {
+    console.log('[DialogFooterActions] Print button clicked');
+    e.preventDefault(); // Prevent default behavior
+    e.stopPropagation(); // Stop propagation to prevent dialog closing
+    onPrint();
+  };
+
   return (
     <DialogFooter className="flex flex-col sm:flex-row gap-2">
       <Button 
         variant="outline"
-        onClick={() => {
-          console.log('[DialogFooterActions] Print button clicked');
-          onPrint();
-        }} 
+        onClick={handlePrintClick}
         className="w-full sm:w-auto flex items-center gap-2"
       >
         <Printer className="h-4 w-4" />
@@ -34,7 +38,11 @@ const DialogFooterActions: React.FC<DialogFooterActionsProps> = ({
       {onSendSms && (
         <Button 
           variant="outline"
-          onClick={onSendSms} 
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onSendSms();
+          }} 
           className="w-full sm:w-auto flex items-center gap-2"
         >
           <MessageSquare className="h-4 w-4" />
@@ -45,7 +53,11 @@ const DialogFooterActions: React.FC<DialogFooterActionsProps> = ({
       {onScheduleNotification && (
         <Button 
           variant="outline"
-          onClick={onScheduleNotification} 
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onScheduleNotification();
+          }} 
           className="w-full sm:w-auto flex items-center gap-2"
         >
           <Calendar className="h-4 w-4" />

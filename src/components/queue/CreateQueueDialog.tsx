@@ -127,6 +127,11 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
                 console.log(`[CreateQueueDialog] Patient ID: ${patientId}`);
                 console.log(`[CreateQueueDialog] New patient name: ${newPatientName}`);
                 console.log(`[CreateQueueDialog] Show new patient form: ${showNewPatientForm}`);
+                
+                // Toast notification for feedback
+                toast.loading("กำลังสร้างคิว...");
+                
+                // Call handle create queue
                 handleCreateQueue();
               }}
               disabled={!patientId && !(showNewPatientForm && newPatientName)}
@@ -137,22 +142,20 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
         </DialogContent>
       </Dialog>
       
-      {/* Only render QueueCreatedDialog when we have a created queue number */}
-      {createdQueueNumber !== null && (
-        <QueueCreatedDialog 
-          open={qrDialogOpen} 
-          onOpenChange={(newState) => {
-            console.log(`[CreateQueueDialog] Updating QR dialog state to: ${newState}`);
-            setQrDialogOpen(newState);
-          }}
-          queueNumber={createdQueueNumber}
-          queueType={createdQueueType}
-          patientName={finalPatientName}
-          patientPhone={finalPatientPhone}
-          patientLineId={finalPatientLineId}
-          purpose={createdPurpose}
-        />
-      )}
+      {/* Always render QueueCreatedDialog but control visibility with open prop */}
+      <QueueCreatedDialog 
+        open={qrDialogOpen && createdQueueNumber !== null} 
+        onOpenChange={(newState) => {
+          console.log(`[CreateQueueDialog] Updating QR dialog state to: ${newState}`);
+          setQrDialogOpen(newState);
+        }}
+        queueNumber={createdQueueNumber || 0}
+        queueType={createdQueueType || 'GENERAL'}
+        patientName={finalPatientName}
+        patientPhone={finalPatientPhone}
+        patientLineId={finalPatientLineId}
+        purpose={createdPurpose}
+      />
     </>
   );
 };

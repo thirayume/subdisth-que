@@ -33,40 +33,62 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
 }) => {
   const formattedQueueNumber = formatQueueNumber(queueType, queueNumber);
   
-  // Enhanced debug logging moved to useEffect to avoid returning void in JSX
+  // Enhanced debug logging to track dialog state
   useEffect(() => {
     if (open) {
-      console.log(`=== QueueCreatedDialog Component State ===`);
-      console.log(`- open: ${open}`);
+      console.log(`=== QueueCreatedDialog OPENED ===`);
       console.log(`- queueNumber: ${queueNumber}`);
       console.log(`- queueType: ${queueType}`);
       console.log(`- patientName: ${patientName}`);
       console.log(`- formattedQueueNumber: ${formattedQueueNumber}`);
       console.log(`- purpose: ${purpose}`);
-      console.log(`[QueueCreatedDialog] Dialog should be visible now`);
       
       toast.success(`คิวถูกสร้างเรียบร้อย: ${formattedQueueNumber}`);
+    } else {
+      console.log(`=== QueueCreatedDialog CLOSED ===`);
     }
   }, [open, queueNumber, queueType, patientName, formattedQueueNumber, purpose]);
   
   const handlePrint = () => {
     console.log('Printing queue ticket...');
-    printQueueTicket({
-      queueNumber,
-      queueType,
-      patientName,
-      patientPhone,
-      patientLineId,
-      purpose
-    });
-    // Show print success message
-    toast.success('กำลังพิมพ์บัตรคิว');
+    try {
+      printQueueTicket({
+        queueNumber,
+        queueType,
+        patientName,
+        patientPhone,
+        patientLineId,
+        purpose
+      });
+      // Show print success message
+      toast.success('กำลังพิมพ์บัตรคิว');
+    } catch (error) {
+      console.error('Error printing ticket:', error);
+      toast.error('เกิดข้อผิดพลาดในการพิมพ์บัตรคิว');
+    }
   };
+
+  // Force focus on dialog when it opens
+  useEffect(() => {
+    if (open) {
+      const timer = setTimeout(() => {
+        const dialogElement = document.querySelector('[role="dialog"]');
+        if (dialogElement) {
+          (dialogElement as HTMLElement).focus();
+          console.log('Dialog focused');
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
 
   return (
     <Dialog 
       open={open} 
-      onOpenChange={onOpenChange}
+      onOpenChange={(newOpen) => {
+        console.log(`Dialog onOpenChange called with: ${newOpen}`);
+        onOpenChange(newOpen);
+      }}
     >
       <DialogContent className="sm:max-w-[400px] bg-background">
         <QueueCreatedHeader purpose={purpose} />
