@@ -8,13 +8,13 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner'; 
 import QueueCreatedDialog from './QueueCreatedDialog';
 import PhoneSearchSection from './dialogs/PhoneSearchSection';
 import PatientResultsList from './dialogs/PatientResultsList';
 import NewPatientForm from './dialogs/NewPatientForm';
 import QueueDetailsForm from './dialogs/QueueDetailsForm';
 import { useCreateQueue } from './dialogs/hooks/useCreateQueue';
-import { toast } from 'sonner'; 
 
 interface CreateQueueDialogProps {
   open: boolean;

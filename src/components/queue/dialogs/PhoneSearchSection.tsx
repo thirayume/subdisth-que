@@ -55,7 +55,7 @@ const PhoneSearchSection: React.FC<PhoneSearchSectionProps> = ({
           id="phoneNumber"
           value={phoneNumber}
           onChange={handleInputChange}
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyPress}
           placeholder="กรอกเบอร์โทรศัพท์"
           disabled={isSearching}
         />

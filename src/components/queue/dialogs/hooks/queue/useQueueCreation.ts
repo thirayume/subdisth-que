@@ -22,7 +22,7 @@ export const useQueueCreation = () => {
   // Create a lookup for queue type purposes
   const queueTypePurposes = React.useMemo(() => {
     const purposes: Record<string, string> = {};
-    if (queueTypes) {
+    if (queueTypes && Array.isArray(queueTypes)) {
       queueTypes.forEach(type => {
         purposes[type.code] = type.name || type.code;
       });
