@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { useQueues } from '@/hooks/useQueues';
 import { createLogger } from '@/utils/logger';
@@ -25,8 +24,8 @@ export const useDashboardQueues = () => {
     skipped: []
   });
   
-  // Memoize the filter and sort operation to avoid unnecessary recalculations
-  const processQueues = React.useCallback(() => {
+  // Process queues when data changes
+  React.useEffect(() => {
     if (!Array.isArray(queues)) return;
     
     // Filter queues by status
@@ -38,29 +37,22 @@ export const useDashboardQueues = () => {
     // Only apply sorting to waiting queues for efficiency
     const sortedWaiting = sortQueues ? sortQueues(waiting) : waiting;
     
-    return {
+    const processedQueues = {
       waiting: sortedWaiting,
       active,
       completed,
       skipped
     };
-  }, [queues, sortQueues]);
-  
-  // Update state when queues change or sort function changes
-  React.useEffect(() => {
-    const processedQueues = processQueues();
     
-    if (processedQueues) {
-      setQueuesByStatus(processedQueues);
-      
-      logger.info(
-        `Processed queues - Waiting: ${processedQueues.waiting.length}, ` +
-        `Active: ${processedQueues.active.length}, ` +
-        `Completed: ${processedQueues.completed.length}, ` +
-        `Skipped: ${processedQueues.skipped.length}`
-      );
-    }
-  }, [processQueues]);
+    setQueuesByStatus(processedQueues);
+    
+    logger.info(
+      `Processed queues - Waiting: ${processedQueues.waiting.length}, ` +
+      `Active: ${processedQueues.active.length}, ` +
+      `Completed: ${processedQueues.completed.length}, ` +
+      `Skipped: ${processedQueues.skipped.length}`
+    );
+  }, [queues, sortQueues]); // Dependencies are now directly queues and sortQueues
 
   return {
     waitingQueues: queuesByStatus.waiting,
