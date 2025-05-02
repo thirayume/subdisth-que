@@ -85,8 +85,8 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({
     } catch (error) {
       console.error('Failed to update appointment:', error);
       toast("เกิดข้อผิดพลาด", {
-        description: "ไม่สามารถอัพเดทการนัดหมายได้ กรุณาลองใหม่อีกครั้ง",
-        style: { backgroundColor: 'hsl(var(--destructive))', color: 'hsl(var(--destructive-foreground))' }
+          description: "ไม่สามารถอัพเดทการนัดหมายได้ กรุณาลองใหม่อีกครั้ง",
+          style: { backgroundColor: 'hsl(var(--destructive))', color: 'hsl(var(--destructive-foreground))' }
       });
       handleEditDialogClose();
     }

@@ -1,6 +1,6 @@
 
-// Import from sonner directly
-import { toast as sonnerToast } from 'sonner';
+// Import directly from sonner
+import { toast as sonnerToast, type ToastOptions } from 'sonner';
 
 // Create a compatibility wrapper for old toast usage pattern
 const compatibilityToast = (props: any) => {
@@ -9,7 +9,7 @@ const compatibilityToast = (props: any) => {
   }
   
   if (props.title && props.description) {
-    return sonnerToast(`${props.title}`, {
+    return sonnerToast(props.title, {
       description: props.description,
       ...(props.variant === 'destructive' ? { style: { backgroundColor: 'hsl(var(--destructive))', color: 'hsl(var(--destructive-foreground))' } } : {})
     });

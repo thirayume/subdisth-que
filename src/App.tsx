@@ -19,7 +19,7 @@ import QueueManagement from "./pages/QueueManagement";
 import Analytics from "./pages/Analytics";
 import "./App.css";
 
-// Add visible debug component
+// Debug overlay component
 const DebugOverlay = () => {
   if (process.env.NODE_ENV !== 'development') return null;
   return (
@@ -59,7 +59,7 @@ const queryClient = new QueryClient({
 const App: React.FC = () => {
   React.useEffect(() => {
     console.log("[DEBUG] App component mounted");
-    document.body.classList.add("bg-background"); // Ensure background is applied
+    document.body.classList.add("bg-background");
     
     return () => {
       console.log("[DEBUG] App component unmounted");
