@@ -5,6 +5,11 @@ import * as React from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import type { ThemeProviderProps } from "next-themes";
 
+// Ensure React is imported correctly
+if (typeof window !== "undefined" && !window.React) {
+  window.React = React;
+}
+
 export type Theme = 'dark' | 'light' | 'system';
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {

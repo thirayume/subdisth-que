@@ -12,12 +12,13 @@
 
   <body>
     <div id="root"></div>
-    <!-- Initialize React before scripts to prevent null context issues -->
+    <!-- Initialize React context before scripts to prevent null context issues -->
     <script>
-      // Initialize React global variable to prevent context issues
+      // Initialize React global context to prevent issues
+      window.React = React || {};
       window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = window.__REACT_DEVTOOLS_GLOBAL_HOOK__ || {};
     </script>
-    <!-- The React application script must be loaded first to ensure proper initialization -->
+    <!-- The React application script must be loaded first -->
     <script type="module" src="/src/main.tsx"></script>
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>

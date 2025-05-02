@@ -4,8 +4,10 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 
-// Ensure React is defined globally to prevent "React refresh preamble not loaded" errors
-window.React = React;
+// Explicitly assign React to window to prevent "React refresh preamble not loaded" errors
+if (typeof window !== 'undefined') {
+  window.React = React;
+}
 
 // Register service worker for offline support with improved error handling
 const registerServiceWorker = () => {
@@ -30,7 +32,10 @@ const registerServiceWorker = () => {
   }
 };
 
-// Use a more robust root mounting approach
+// Import the OfflineIndicator component
+import OfflineIndicator from '@/components/ui/OfflineIndicator';
+
+// Use a more robust root mounting approach with better error handling
 const mount = () => {
   try {
     const rootElement = document.getElementById("root");
@@ -63,9 +68,6 @@ const mount = () => {
     document.body.innerHTML = '<div style="color:red;padding:20px;">Failed to load application. Please refresh the page.</div>';
   }
 };
-
-// Import the OfflineIndicator component
-import OfflineIndicator from '@/components/ui/OfflineIndicator';
 
 // Ensure React is fully loaded before mounting
 if (document.readyState === 'loading') {
