@@ -1,67 +1,68 @@
-// src/services/line.service.ts
-export interface LineProfile {
-  userId: string;
-  displayName: string;
-  pictureUrl?: string;
-  statusMessage?: string;
-  email?: string;
-}
+import axios from 'axios';
 
-export interface LineTokenResponse {
+interface LineTokenResponse {
   access_token: string;
   expires_in: number;
-  id_token?: string;
+  id_token: string;
   refresh_token: string;
   scope: string;
   token_type: string;
+  profile?: {
+    userId: string;
+    displayName: string;
+    pictureUrl?: string;
+  };
 }
 
 class LineService {
-  async getAccessToken(code: string): Promise<LineTokenResponse> {
-    const response = await fetch('/api/line-token-exchange', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ code })
-    });
+  private channelId: string;
+  private redirectUri: string;
 
-    if (!response.ok) {
-      throw new Error('Failed to exchange token');
-    }
-
-    return await response.json();
-  }
-
-  async getProfile(accessToken: string): Promise<LineProfile> {
-    const response = await fetch('/api/line-profile', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to get LINE profile');
-    }
-
-    return await response.json();
+  constructor() {
+    this.channelId = import.meta.env.VITE_LINE_CHANNEL_ID || '';
+    this.redirectUri = import.meta.env.VITE_LINE_CALLBACK_URL || `${window.location.origin}/auth/line/callback`;
   }
 
   generateLoginUrl(state: string): string {
-    const LINE_CHANNEL_ID = import.meta.env.VITE_LINE_CHANNEL_ID;
-    const LINE_CALLBACK_URL = import.meta.env.VITE_LINE_CALLBACK_URL;
-    
+    const baseUrl = 'https://access.line.me/oauth2/v2.1/authorize';
     const params = new URLSearchParams({
       response_type: 'code',
-      client_id: LINE_CHANNEL_ID,
-      redirect_uri: LINE_CALLBACK_URL,
-      state: state,
-      scope: 'profile openid email',
-      nonce: Math.random().toString(36).substring(2, 15)
+      client_id: this.channelId, // LINE API uses client_id in the URL params
+      redirect_uri: this.redirectUri,
+      state,
+      scope: 'profile openid',
+      bot_prompt: 'normal'
     });
 
-    return `https://access.line.me/oauth2/v2.1/authorize?${params.toString()}`;
+    return `${baseUrl}?${params.toString()}`;
+  }
+
+  async exchangeToken(code: string): Promise<LineTokenResponse> {
+    try {
+      const response = await axios.post('/api/line-token-exchange', {
+        code,
+        redirectUri: this.redirectUri
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error exchanging LINE token:', error);
+      throw new Error('Failed to exchange LINE token');
+    }
+  }
+
+  async getProfile(accessToken: string) {
+    try {
+      const response = await axios.get('https://api.line.me/v2/profile', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting LINE profile:', error);
+      throw new Error('Failed to get LINE profile');
+    }
   }
 }
 
