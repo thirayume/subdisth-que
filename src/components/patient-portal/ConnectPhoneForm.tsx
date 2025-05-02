@@ -1,77 +1,156 @@
 // src/components/patient-portal/ConnectPhoneForm.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const ConnectPhoneForm: React.FC = () => {
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [loading, setLoading] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const [phone, setPhone] = useState('');
   
-  // Get LINE profile from location state
-  const { lineId, displayName } = location.state || {};
+  // Extract LINE user data from location state
+  const lineUserId = location.state?.lineUserId;
+  const displayName = location.state?.displayName;
+  const pictureUrl = location.state?.pictureUrl;
+  const email = location.state?.email;
   
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    // If no LINE user ID is provided, redirect back to patient portal
+    if (!lineUserId) {
+      toast.error('ไม่พบข้อมูลผู้ใช้ LINE');
+      navigate('/patient-portal');
+    }
+  }, [lineUserId, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!phone) {
+    if (!phoneNumber.trim()) {
       toast.error('กรุณากรอกเบอร์โทรศัพท์');
       return;
     }
     
-    // Store phone number with LINE token
-    localStorage.setItem('userPhone', phone);
-    
-    // Call your handleLineLoginSuccess function
-    toast.success('เชื่อมต่อบัญชีสำเร็จ');
-    
-    // Navigate back to patient portal
-    navigate('/patient-portal');
-  };
-  
-  return (
-    <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
-      <h2>เชื่อมต่อบัญชี LINE</h2>
-      <p>สวัสดี {displayName}</p>
-      <p>กรุณากรอกเบอร์โทรศัพท์เพื่อเชื่อมต่อกับบัญชี LINE ของคุณ</p>
+    try {
+      setLoading(true);
       
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '20px' }}>
-          <label htmlFor="phone" style={{ display: 'block', marginBottom: '5px' }}>
-            เบอร์โทรศัพท์
-          </label>
-          <input
-            id="phone"
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="0812345678"
-            style={{
-              width: '100%',
-              padding: '8px',
-              borderRadius: '4px',
-              border: '1px solid #ddd'
-            }}
-            required
-          />
-        </div>
+      // Check if this phone number exists in the patients table
+      const { data: patientData, error: patientError } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('phone', phoneNumber)
+        .limit(1);
         
-        <button
-          type="submit"
-          style={{
-            backgroundColor: '#06C755',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            padding: '10px 16px',
-            width: '100%',
-            fontWeight: 'bold',
-            cursor: 'pointer'
-          }}
-        >
-          เชื่อมต่อบัญชี
-        </button>
-      </form>
+      if (patientError) {
+        throw patientError;
+      }
+      
+      if (patientData && patientData.length > 0) {
+        // Patient exists, update the LINE ID
+        const patient = patientData[0];
+        
+        // Make sure we're only updating fields that exist in the database schema
+        const updateData = { 
+          line_id: lineUserId 
+        };
+        
+        // Only add these fields if they exist in your schema
+        // Uncomment only the fields that exist in your database
+        // if (displayName) updateData.line_display_name = displayName;
+        // if (pictureUrl) updateData.line_picture_url = pictureUrl;
+        // if (email) updateData.email = email;
+        
+        console.log('Updating patient with data:', updateData);
+        
+        const { error: updateError } = await supabase
+          .from('patients')
+          .update(updateData)
+          .eq('id', patient.id);
+          
+        if (updateError) {
+          console.error('Error updating patient:', updateError);
+          throw updateError;
+        }
+        
+        // Store the phone number and LINE ID in localStorage
+        localStorage.setItem('userPhone', phoneNumber);
+        localStorage.setItem('lineUserId', lineUserId);
+        
+        toast.success('เชื่อมต่อบัญชี LINE สำเร็จ');
+        navigate('/patient-portal');
+      } else {
+        // No patient found with this phone number
+        toast.error('ไม่พบข้อมูลผู้ป่วยที่ใช้เบอร์โทรศัพท์นี้');
+      }
+    } catch (error) {
+      console.error('Error connecting phone number:', error);
+      toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อเบอร์โทรศัพท์');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
+      <div className="w-full max-w-md p-6 bg-card rounded-lg shadow-lg">
+        <h1 className="text-2xl font-bold text-center mb-6">เชื่อมต่อบัญชี LINE</h1>
+        
+        {displayName && (
+          <div className="mb-6 text-center">
+            <p className="text-sm text-muted-foreground mb-2">เข้าสู่ระบบด้วยบัญชี LINE</p>
+            <p className="font-medium">{displayName}</p>
+            {email && <p className="text-sm text-muted-foreground mt-1">{email}</p>}
+            {pictureUrl && (
+              <div className="mt-3 flex justify-center">
+                <img 
+                  src={pictureUrl} 
+                  alt={displayName} 
+                  className="w-16 h-16 rounded-full"
+                />
+              </div>
+            )}
+          </div>
+        )}
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="phone" className="text-sm font-medium">
+              กรุณากรอกเบอร์โทรศัพท์เพื่อเชื่อมต่อกับบัญชี LINE
+            </label>
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="0812345678"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              required
+            />
+            <p className="text-xs text-muted-foreground">
+              เบอร์โทรศัพท์นี้จะถูกใช้เพื่อเชื่อมต่อกับข้อมูลผู้ป่วยของคุณ
+            </p>
+          </div>
+          
+          <Button 
+            type="submit" 
+            className="w-full bg-[#06C755] hover:bg-[#06B048] text-white"
+            disabled={loading}
+          >
+            {loading ? 'กำลังดำเนินการ...' : 'เชื่อมต่อบัญชี'}
+          </Button>
+          
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={() => navigate('/patient-portal')}
+          >
+            ยกเลิก
+          </Button>
+        </form>
+      </div>
     </div>
   );
 };

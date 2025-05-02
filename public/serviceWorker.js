@@ -45,6 +45,7 @@ self.addEventListener('activate', (event) => {
       if ('navigationPreload' in self.registration) {
         try {
           await self.registration.navigationPreload.enable();
+          console.log('[ServiceWorker] Navigation preload enabled');
         } catch (error) {
           console.error('[ServiceWorker] Navigation preload error:', error);
         }
@@ -67,51 +68,51 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Simplified fetch handler - use network first with fallback to cache
+// Handle fetch events with proper preload handling
 self.addEventListener('fetch', (event) => {
-  // Skip cross-origin requests
-  if (!event.request.url.startsWith(self.location.origin)) {
+  // Only handle GET requests
+  if (event.request.method !== 'GET') {
     return;
   }
-  
+
   event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        // Only cache successful responses
-        if (response.ok && response.type === 'basic') {
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            try {
-              cache.put(event.request, responseToCache);
-            } catch (error) {
-              console.error('[ServiceWorker] Failed to cache response:', error);
-            }
-          });
+    (async () => {
+      try {
+        // Try to use the preloaded response first if available
+        const preloadResponse = await event.preloadResponse;
+        if (preloadResponse) {
+          console.log('[ServiceWorker] Using preloaded response for:', event.request.url);
+          return preloadResponse;
         }
-        return response;
-      })
-      .catch(async () => {
-        // Try to get from cache
+
+        // Otherwise, try the cache
         const cachedResponse = await caches.match(event.request);
         if (cachedResponse) {
           return cachedResponse;
         }
+
+        // If not in cache, try the network
+        const networkResponse = await fetch(event.request);
         
-        // Return offline page for navigation requests
-        if (event.request.mode === 'navigate') {
-          const cache = await caches.open(CACHE_NAME);
-          return cache.match(OFFLINE_URL) || new Response('Offline content not available', {
-            status: 503,
-            headers: { 'Content-Type': 'text/plain' }
-          });
+        // Cache successful responses for future use
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const cache = await caches.open('runtime-cache');
+          cache.put(event.request, networkResponse.clone());
         }
         
-        // Return empty response for other resources
-        return new Response('', {
-          status: 408,
-          headers: { 'Content-Type': 'text/plain' }
-        });
-      })
+        return networkResponse;
+      } catch (error) {
+        console.log('[ServiceWorker] Fetch failed, serving offline page for:', event.request.url);
+        
+        // If it's a navigation request, return the offline page
+        if (event.request.mode === 'navigate') {
+          return caches.match('/offline.html');
+        }
+        
+        // Otherwise, just propagate the error
+        throw error;
+      }
+    })()
   );
 });
 

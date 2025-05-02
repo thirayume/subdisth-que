@@ -8,7 +8,6 @@ import PatientPortalAuth from '@/components/patient-portal/PatientPortalAuth';
 import ActiveQueueView from '@/components/patient-portal/ActiveQueueView';
 import PatientSelectionView from '@/components/patient-portal/PatientSelectionView';
 import { useIsMobile } from '@/hooks/use-mobile';
-import LineLoginButton from '../components/LineLoginButton';
 
 const PatientPortal: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -31,6 +30,7 @@ const PatientPortal: React.FC = () => {
         const userPhone = localStorage.getItem('userPhone');
         
         if (lineToken && userPhone) {
+          console.log("[DEBUG] Found LINE token and phone number, authenticating...");
           setIsAuthenticated(true);
           setPhoneNumber(userPhone);
           
@@ -43,6 +43,7 @@ const PatientPortal: React.FC = () => {
           if (patientError) throw patientError;
           
           if (patientData && patientData.length > 0) {
+            console.log("[DEBUG] Found patients:", patientData.length);
             setPatients(patientData);
             
             // Check if there's an active queue for any of these patients
@@ -58,6 +59,7 @@ const PatientPortal: React.FC = () => {
             if (queueError) throw queueError;
             
             if (queueData && queueData.length > 0) {
+              console.log("[DEBUG] Found active queue:", queueData[0]);
               // Convert string type to QueueType and string status to QueueStatus
               const typedQueue: Queue = {
                 ...queueData[0],
@@ -76,10 +78,19 @@ const PatientPortal: React.FC = () => {
                 setSelectedPatient(patientData[0]);
               }
             } else {
+              console.log("[DEBUG] No active queue found");
               // No active queue, select first patient
               setSelectedPatient(patientData[0]);
             }
+          } else {
+            console.log("[DEBUG] No patients found for phone:", userPhone);
+            // No patients found for this phone number
+            toast.info('ไม่พบข้อมูลผู้ป่วยที่เชื่อมโยงกับเบอร์โทรศัพท์นี้');
           }
+        } else {
+          console.log("[DEBUG] No LINE token or phone number found");
+          // No LINE token or phone number found
+          setIsAuthenticated(false);
         }
       } catch (error) {
         console.error('Error checking authentication:', error);

@@ -23,14 +23,15 @@ class LineService {
     this.redirectUri = import.meta.env.VITE_LINE_CALLBACK_URL || `${window.location.origin}/auth/line/callback`;
   }
 
+  // In the generateLoginUrl method
   generateLoginUrl(state: string): string {
     const baseUrl = 'https://access.line.me/oauth2/v2.1/authorize';
     const params = new URLSearchParams({
       response_type: 'code',
-      client_id: this.channelId, // LINE API uses client_id in the URL params
+      client_id: this.channelId,
       redirect_uri: this.redirectUri,
       state,
-      scope: 'profile openid',
+      scope: 'profile openid email', // Added email scope
       bot_prompt: 'normal'
     });
 
