@@ -17,6 +17,7 @@ import QueueTicket from "./pages/QueueTicket";
 import PatientPortal from "./pages/PatientPortal";
 import QueueManagement from "./pages/QueueManagement";
 import Analytics from "./pages/Analytics";
+import EmailConsentScreen from './components/EmailConsentScreen';
 import "./App.css";
 
 // Debug overlay component
@@ -83,6 +84,7 @@ const App: React.FC = () => {
               <Route path="/settings" element={<Settings />} />
               <Route path="/queue-ticket/:id" element={<QueueTicket />} />
               <Route path="/patient-portal" element={<PatientPortal />} />
+              <Route path="/email-consent" element={<EmailConsentScreen />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Toaster richColors closeButton position="bottom-right" />
