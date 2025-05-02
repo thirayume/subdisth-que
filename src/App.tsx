@@ -19,6 +19,8 @@ import QueueManagement from "./pages/QueueManagement";
 import Analytics from "./pages/Analytics";
 import EmailConsentScreen from './components/EmailConsentScreen';
 import "./App.css";
+import LineCallback from "./components/LineCallback";
+import ConnectPhoneForm from "./components/patient-portal/ConnectPhoneForm";
 
 // Debug overlay component
 const DebugOverlay = () => {
@@ -85,6 +87,8 @@ const App: React.FC = () => {
               <Route path="/queue-ticket/:id" element={<QueueTicket />} />
               <Route path="/patient-portal" element={<PatientPortal />} />
               <Route path="/email-consent" element={<EmailConsentScreen />} />
+              <Route path="/auth/line/callback" element={<LineCallback />} />
+              <Route path="/patient-portal/connect-phone" element={<ConnectPhoneForm />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Toaster richColors closeButton position="bottom-right" />

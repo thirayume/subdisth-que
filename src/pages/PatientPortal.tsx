@@ -8,6 +8,7 @@ import PatientPortalAuth from '@/components/patient-portal/PatientPortalAuth';
 import ActiveQueueView from '@/components/patient-portal/ActiveQueueView';
 import PatientSelectionView from '@/components/patient-portal/PatientSelectionView';
 import { useIsMobile } from '@/hooks/use-mobile';
+import LineLoginButton from '../components/LineLoginButton';
 
 const PatientPortal: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);

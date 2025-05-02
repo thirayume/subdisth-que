@@ -1,77 +1,44 @@
 // src/services/line.service.ts
-import { LineProfile, LineTokenResponse } from '../components/settings/types';
+export interface LineProfile {
+  userId: string;
+  displayName: string;
+  pictureUrl?: string;
+  statusMessage?: string;
+  email?: string;
+}
+
+export interface LineTokenResponse {
+  access_token: string;
+  expires_in: number;
+  id_token?: string;
+  refresh_token: string;
+  scope: string;
+  token_type: string;
+}
 
 class LineService {
-  private readonly channelId: string;
-  private readonly redirectUri: string;
-  private readonly apiBaseUrl: string = 'https://api.line.me';
-
-  constructor() {
-    this.channelId = process.env.LINE_CHANNEL_ID || '';
-    this.redirectUri = process.env.LINE_CALLBACK_URL || '';
-    
-    if (!this.channelId || !this.redirectUri) {
-      console.error('LINE configuration is missing or incomplete');
-    }
-  }
-
-  /**
-   * Generate the LINE login URL
-   */
-  generateLoginUrl(state: string): string {
-    const params = new URLSearchParams({
-      response_type: 'code',
-      client_id: this.channelId,
-      redirect_uri: this.redirectUri,
-      state: state,
-      scope: 'profile openid',
-      nonce: this.generateNonce(),
-    });
-
-    return `https://access.line.me/oauth2/v2.1/authorize?${params.toString()}`;
-  }
-
-  /**
-   * Generate a random nonce for security
-   */
-  private generateNonce(): string {
-    return Math.random().toString(36).substring(2, 15) + 
-           Math.random().toString(36).substring(2, 15);
-  }
-
-  /**
-   * Exchange authorization code for access token
-   * Note: This should be done in your backend for security
-   */
   async getAccessToken(code: string): Promise<LineTokenResponse> {
-    // In a real implementation, this should be a call to your backend API
-    // that handles the token exchange securely
-    const response = await fetch('/api/auth/line/token', {
+    const response = await fetch('/api/line-token-exchange', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ code })
     });
 
     if (!response.ok) {
-      throw new Error('Failed to get LINE access token');
+      throw new Error('Failed to exchange token');
     }
 
     return await response.json();
   }
 
-  /**
-   * Get user profile with access token
-   * Note: This should also be done in your backend
-   */
   async getProfile(accessToken: string): Promise<LineProfile> {
-    // In a real implementation, this should be a call to your backend API
-    const response = await fetch('/api/auth/line/profile', {
+    const response = await fetch('/api/line-profile', {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
+        'Authorization': `Bearer ${accessToken}`
+      }
     });
 
     if (!response.ok) {
@@ -81,12 +48,20 @@ class LineService {
     return await response.json();
   }
 
-  /**
-   * Handle LINE login callback
-   */
-  async handleCallback(code: string): Promise<LineProfile> {
-    const tokenResponse = await this.getAccessToken(code);
-    return await this.getProfile(tokenResponse.access_token);
+  generateLoginUrl(state: string): string {
+    const LINE_CHANNEL_ID = import.meta.env.VITE_LINE_CHANNEL_ID;
+    const LINE_CALLBACK_URL = import.meta.env.VITE_LINE_CALLBACK_URL;
+    
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: LINE_CHANNEL_ID,
+      redirect_uri: LINE_CALLBACK_URL,
+      state: state,
+      scope: 'profile openid email',
+      nonce: Math.random().toString(36).substring(2, 15)
+    });
+
+    return `https://access.line.me/oauth2/v2.1/authorize?${params.toString()}`;
   }
 }
 
