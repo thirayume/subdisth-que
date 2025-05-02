@@ -2,6 +2,7 @@
 import * as React from 'react';
 import { QueueType } from '@/integrations/supabase/schema';
 import { createLogger } from '@/utils/logger';
+import { supabase } from '@/integrations/supabase/client';
 
 const logger = createLogger('useQueueCreation');
 
@@ -28,8 +29,41 @@ export const useQueueCreation = () => {
   // Method to create a queue
   const createQueue = async (patientId: string) => {
     logger.debug('Creating queue for patient', patientId);
-    // Implementation would go here
-    return null;
+    
+    try {
+      // Get the next queue number
+      const { data: queueCountData } = await supabase
+        .from('queues')
+        .select('number')
+        .order('number', { ascending: false })
+        .limit(1);
+      
+      const nextQueueNumber = queueCountData && queueCountData.length > 0 
+        ? queueCountData[0].number + 1 
+        : 1;
+      
+      // Create queue in Supabase
+      const { data, error } = await supabase
+        .from('queues')
+        .insert({
+          patient_id: patientId,
+          number: nextQueueNumber,
+          type: queueType,
+          status: 'WAITING',
+          notes: notes
+        })
+        .select();
+      
+      if (error) {
+        logger.error('Error creating queue:', error);
+        throw error;
+      }
+      
+      return data && data.length > 0 ? data[0] : null;
+    } catch (err) {
+      logger.error('Error in createQueue:', err);
+      throw err;
+    }
   };
 
   return {

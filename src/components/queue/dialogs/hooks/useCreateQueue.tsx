@@ -13,14 +13,6 @@ import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('useCreateQueue');
 
-// Fix the queueTypePurposes to use string values instead of arrays
-const queueTypePurposes: Record<string, string> = {
-  'GENERAL': 'ทั่วไป',
-  'PRIORITY': 'กรณีเร่งด่วน',
-  'ELDERLY': 'ผู้สูงอายุ 60 ปีขึ้นไป',
-  'FOLLOW_UP': 'ติดตามการรักษา'
-};
-
 export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQueue: (queue: any) => void) => {
   const {
     phoneNumber,
@@ -54,6 +46,8 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     setQueueType,
     notes,
     setNotes,
+    createQueue,
+    queueTypePurposes
   } = useQueueCreation();
   
   const {
@@ -96,17 +90,27 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     }
     
     try {
+      // Get the next queue number
+      const { data: queueCountData } = await supabase
+        .from('queues')
+        .select('number')
+        .order('number', { ascending: false })
+        .limit(1);
+      
+      const nextQueueNumber = queueCountData && queueCountData.length > 0 
+        ? queueCountData[0].number + 1 
+        : 1;
+      
       // Create queue in Supabase
       const { data: queueData, error } = await supabase
         .from('queues')
-        .insert([
-          {
-            patient_id: patientId,
-            type: queueType,
-            status: 'WAITING',
-            notes: notes
-          }
-        ])
+        .insert({
+          patient_id: patientId,
+          type: queueType,
+          status: 'WAITING',
+          notes: notes,
+          number: nextQueueNumber
+        })
         .select();
       
       if (error) {
@@ -122,7 +126,7 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
         // Update QR dialog state
         setQrDialogOpen(true);
         setCreatedQueueNumber(newQueue.number);
-        setCreatedQueueType(newQueue.type);
+        setCreatedQueueType(newQueue.type as QueueType);
         setCreatedPurpose(queueTypePurposes[newQueue.type]);
         
         // Notify parent component
@@ -146,9 +150,9 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
   const resetState = React.useCallback(() => {
     logger.debug('Resetting all states');
     setPhoneNumber('');
-    setPatientId(null);
+    setPatientId('');
     setNewPatientName('');
-    setQueueType('GENERAL');
+    setQueueType('GENERAL' as QueueType);
     setNotes('');
     resetQueueDialog();
     resetPatientSelection();
