@@ -6,9 +6,12 @@ import { useQueueStatusUpdates } from './queue/useQueueStatusUpdates';
 import { useQueueAnnouncements } from './queue/useQueueAnnouncements';
 import { announceQueue } from '@/utils/textToSpeech';
 import { QueueAlgorithmType, sortQueuesByAlgorithm, QueueTypeWithAlgorithm } from '@/utils/queueAlgorithms';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('useQueues');
 
 export const useQueues = () => {
-  console.log('[useQueues] Hook initialized');
+  logger.debug('Hook initialized');
   
   const { 
     queues, 
@@ -36,7 +39,7 @@ export const useQueues = () => {
   const [queueTypes, setQueueTypes] = React.useState<QueueTypeWithAlgorithm[]>([]);
   
   React.useEffect(() => {
-    console.log('[useQueues] Loading queue algorithm and types');
+    logger.info('Loading queue algorithm and types');
     // Load algorithm from localStorage
     const savedAlgorithm = localStorage.getItem('queue_algorithm') as QueueAlgorithmType | null;
     if (savedAlgorithm) {
@@ -50,7 +53,7 @@ export const useQueues = () => {
         const parsedQueueTypes = JSON.parse(savedQueueTypes);
         setQueueTypes(parsedQueueTypes);
       } catch (error) {
-        console.error('Error parsing queue types from localStorage:', error);
+        logger.error('Error parsing queue types from localStorage:', error);
       }
     }
   }, []);
@@ -77,7 +80,7 @@ export const useQueues = () => {
             announcementText
           );
         } catch (err) {
-          console.error('Error announcing queue:', err);
+          logger.error('Error announcing queue:', err);
         }
       }
       return updatedQueue;

@@ -4,6 +4,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('PhoneSearch');
 
 interface PhoneSearchSectionProps {
   phoneNumber: string;
@@ -18,30 +21,24 @@ const PhoneSearchSection: React.FC<PhoneSearchSectionProps> = ({
   handlePhoneSearch,
   isSearching
 }) => {
-  // Add useEffect to log every render
+  // Log only when important values change
   useEffect(() => {
-    console.log('----------------------------------------');
-    console.log('🔍 PHONE SEARCH SECTION RENDERED');
-    console.log(`Current phone number: "${phoneNumber}"`);
-    console.log(`isSearching: ${isSearching}`);
-    console.log('----------------------------------------');
+    logger.debug(`Current phone number: "${phoneNumber}", isSearching: ${isSearching}`);
   }, [phoneNumber, isSearching]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(`🔍 [PhoneSearchSection] Phone number input changed: ${e.target.value}`);
+    logger.debug(`Phone number input changed: ${e.target.value}`);
     setPhoneNumber(e.target.value);
   };
   
   const handleSearchClick = () => {
-    console.log('🔍 [PhoneSearchSection] Search button clicked');
-    console.log(`Searching for phone number: ${phoneNumber}`);
+    logger.info(`Searching for phone number: ${phoneNumber}`);
     handlePhoneSearch();
   };
   
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      console.log('🔍 [PhoneSearchSection] Enter key pressed in phone input');
-      console.log(`Searching for phone number: ${phoneNumber}`);
+      logger.info(`Enter key pressed, searching for: ${phoneNumber}`);
       e.preventDefault();
       handlePhoneSearch();
     }

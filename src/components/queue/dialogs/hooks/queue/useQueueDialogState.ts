@@ -1,6 +1,9 @@
 
 import * as React from 'react';
 import { QueueType } from '@/integrations/supabase/schema';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('useQueueDialogState');
 
 export const useQueueDialogState = (onOpenChange: (open: boolean) => void) => {
   const [qrDialogOpen, setQrDialogOpen] = React.useState(false);
@@ -10,7 +13,7 @@ export const useQueueDialogState = (onOpenChange: (open: boolean) => void) => {
 
   // Reset all state
   const resetQueueDialog = React.useCallback(() => {
-    console.log('🔄 [useQueueDialogState] Resetting dialog state');
+    logger.debug('Resetting dialog state');
     setQrDialogOpen(false);
     setCreatedQueueNumber(null);
     setCreatedQueueType('GENERAL');

@@ -7,8 +7,13 @@ import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardCards from '@/components/dashboard/DashboardCards';
 import { useDashboardQueues } from '@/components/dashboard/useDashboardQueues';
 import { useDashboardStats } from '@/components/dashboard/useDashboardStats';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('Dashboard');
 
 const Dashboard = () => {
+  logger.info('Dashboard component rendering');
+  
   // Get patients and queue data 
   const { patients = [] } = usePatients() || { patients: [] };
   const { waitingQueues = [], activeQueues = [], completedQueues = [] } = useDashboardQueues() || {};

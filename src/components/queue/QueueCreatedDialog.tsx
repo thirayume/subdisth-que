@@ -5,10 +5,13 @@ import { QueueType } from '@/integrations/supabase/schema';
 import { formatQueueNumber } from '@/utils/queueFormatters';
 import { printQueueTicket } from '@/utils/printUtils';
 import { toast } from 'sonner';
+import { createLogger } from '@/utils/logger';
 
 import QueueCreatedHeader from './dialog-parts/QueueCreatedHeader';
 import QueueCreatedContent from './dialog-parts/QueueCreatedContent';
 import DialogFooterActions from './dialog-parts/DialogFooterActions';
+
+const logger = createLogger('QueueCreatedDialog');
 
 interface QueueCreatedDialogProps {
   open: boolean;
@@ -31,25 +34,25 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
   patientLineId = '',
   purpose = '',
 }) => {
-  console.log(`🎟️ [QueueCreatedDialog] Rendering with open=${open}, queueNumber=${queueNumber}, queueType=${queueType}`);
+  logger.debug(`Rendering with open=${open}, queueNumber=${queueNumber}, queueType=${queueType}`);
   const dialogRef = useRef<HTMLDivElement>(null);
   const formattedQueueNumber = formatQueueNumber(queueType, queueNumber);
   
   // Track when dialog is opened/closed
   useEffect(() => {
     if (open) {
-      console.log(`🎉 QUEUE CREATED DIALOG OPENED`);
-      console.log(`- queueNumber: ${queueNumber}`);
-      console.log(`- queueType: ${queueType}`);
-      console.log(`- patientName: ${patientName || 'none'}`);
-      console.log(`- formattedQueueNumber: ${formattedQueueNumber}`);
+      logger.info(`QUEUE CREATED DIALOG OPENED`);
+      logger.debug(`- queueNumber: ${queueNumber}`);
+      logger.debug(`- queueType: ${queueType}`);
+      logger.debug(`- patientName: ${patientName || 'none'}`);
+      logger.debug(`- formattedQueueNumber: ${formattedQueueNumber}`);
     } else {
-      console.log(`🎟️ [QueueCreatedDialog] DIALOG CLOSED`);
+      logger.debug(`DIALOG CLOSED`);
     }
   }, [open, queueNumber, queueType, patientName, formattedQueueNumber]);
   
   const handlePrint = () => {
-    console.log('🖨️ [QueueCreatedDialog] PRINT BUTTON CLICKED');
+    logger.info('PRINT BUTTON CLICKED');
     try {
       printQueueTicket({
         queueNumber,
@@ -63,7 +66,7 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
       // Show print success message
       toast.success('กำลังพิมพ์บัตรคิว', { id: "print-ticket" });
     } catch (error) {
-      console.error('[QueueCreatedDialog] Error printing ticket:', error);
+      logger.error('Error printing ticket:', error);
       toast.error('เกิดข้อผิดพลาดในการพิมพ์บัตรคิว', { id: "print-ticket" });
     }
   };

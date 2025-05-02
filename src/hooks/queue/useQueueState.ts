@@ -3,6 +3,9 @@ import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Queue, QueueStatus, QueueType } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('useQueueState');
 
 export const useQueueState = () => {
   const [queues, setQueues] = React.useState<Queue[]>([]);
@@ -34,9 +37,9 @@ export const useQueueState = () => {
         status: item.status as QueueStatus
       })));
       
-      console.log(`Fetched ${data?.length || 0} queues for ${getTodayDate()} from database`);
+      logger.info(`Fetched ${data?.length || 0} queues for ${getTodayDate()} from database`);
     } catch (err: any) {
-      console.error('Error fetching queues:', err);
+      logger.error('Error fetching queues:', err);
       setError(err.message || 'Failed to fetch queues');
       toast.error('ไม่สามารถดึงข้อมูลคิวได้');
     } finally {
@@ -72,13 +75,13 @@ export const useQueueState = () => {
         status: item.status as QueueStatus
       }));
       
-      console.log(
+      logger.info(
         `Fetched ${typedData.length} queues for ${getTodayDate()} with status ${Array.isArray(status) ? status.join(', ') : status}`
       );
       
       return typedData;
     } catch (err: any) {
-      console.error('Error fetching queues by status:', err);
+      logger.error('Error fetching queues by status:', err);
       setError(err.message || 'Failed to fetch queues');
       toast.error('ไม่สามารถดึงข้อมูลคิวได้');
       return [];
@@ -94,7 +97,7 @@ export const useQueueState = () => {
         throw new Error('Missing required queue data');
       }
       
-      console.log('[useQueueState] Adding queue:', queueData);
+      logger.info('Adding queue:', queueData);
       
       const { data, error } = await supabase
         .from('queues')
@@ -108,16 +111,16 @@ export const useQueueState = () => {
         .select();
 
       if (error) {
-        console.error('[useQueueState] Error in supabase insert:', error);
+        logger.error('Error in supabase insert:', error);
         throw error;
       }
 
       if (!data || data.length === 0) {
-        console.error('[useQueueState] No queue returned from insert');
+        logger.error('No queue returned from insert');
         throw new Error('No queue data returned from insert');
       }
       
-      console.log('[useQueueState] Queue added successfully:', data[0]);
+      logger.info('Queue added successfully:', data[0]);
       
       // Cast the returned data to ensure proper type conversion
       const newQueue: Queue = {
@@ -130,7 +133,7 @@ export const useQueueState = () => {
       toast.success(`เพิ่มคิวหมายเลข ${queueData.number} เรียบร้อยแล้ว`);
       return newQueue;
     } catch (err: any) {
-      console.error('[useQueueState] Error adding queue:', err);
+      logger.error('Error adding queue:', err);
       setError(err.message || 'Failed to add queue');
       toast.error('ไม่สามารถเพิ่มคิวได้');
       return null;
@@ -146,7 +149,7 @@ export const useQueueState = () => {
 
   // Initial data fetch and set up real-time subscription
   React.useEffect(() => {
-    console.log('[useQueueState] Initial mount, fetching queues');
+    logger.info('Initial mount, fetching queues');
     fetchQueues();
     
     // Set up real-time subscription for queues
@@ -155,14 +158,14 @@ export const useQueueState = () => {
       .on('postgres_changes', 
           { event: '*', schema: 'public', table: 'queues' },
           (payload) => {
-            console.log('Queue change detected:', payload);
+            logger.debug('Queue change detected:', payload);
             fetchQueues(); // Refresh all queues when changes occur
           }
       )
       .subscribe();
       
     return () => {
-      console.log('[useQueueState] Unmounting, cleaning up subscription');
+      logger.debug('Unmounting, cleaning up subscription');
       supabase.removeChannel(channel);
     };
   }, []);

@@ -15,6 +15,9 @@ import PatientResultsList from './dialogs/PatientResultsList';
 import NewPatientForm from './dialogs/NewPatientForm';
 import QueueDetailsForm from './dialogs/QueueDetailsForm';
 import { useCreateQueue } from './dialogs/hooks/useCreateQueue';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('CreateQueueDialog');
 
 interface CreateQueueDialogProps {
   open: boolean;
@@ -27,7 +30,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
   onOpenChange,
   onCreateQueue,
 }) => {
-  console.log(`🚨 [CreateQueueDialog] Rendering with open=${open}`);
+  logger.debug(`Rendering with open=${open}`);
   
   const {
     phoneNumber,
@@ -61,28 +64,28 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
   // Reset state when dialog is closed
   React.useEffect(() => {
     if (!open) {
-      console.log('🚨 [CreateQueueDialog] Dialog closed, resetting state');
+      logger.debug('Dialog closed, resetting state');
       resetState();
     } else {
-      console.log('🚨 [CreateQueueDialog] Dialog opened');
+      logger.debug('Dialog opened');
     }
   }, [open, resetState]);
   
   // Add debug logging for QR dialog state
   React.useEffect(() => {
-    console.log(`🚨 [CreateQueueDialog] QR dialog state changed:`);
-    console.log(`- qrDialogOpen: ${qrDialogOpen}`);
-    console.log(`- createdQueueNumber: ${createdQueueNumber}`);
-    console.log(`- QR dialog should show: ${qrDialogOpen && createdQueueNumber !== null}`);
+    logger.debug(`QR dialog state changed:`);
+    logger.debug(`- qrDialogOpen: ${qrDialogOpen}`);
+    logger.debug(`- createdQueueNumber: ${createdQueueNumber}`);
+    logger.debug(`- QR dialog should show: ${qrDialogOpen && createdQueueNumber !== null}`);
   }, [qrDialogOpen, createdQueueNumber]);
 
   const shouldShowQueueDetails = Boolean(patientId) || (showNewPatientForm && Boolean(newPatientName));
 
   const handleSubmit = async () => {
-    console.log('🚨 [CreateQueueDialog] Create queue button clicked');
-    console.log(`Patient ID: ${patientId}`);
-    console.log(`New patient form shown: ${showNewPatientForm}`);
-    console.log(`New patient name: ${newPatientName}`);
+    logger.info('Create queue button clicked');
+    logger.debug(`Patient ID: ${patientId}`);
+    logger.debug(`New patient form shown: ${showNewPatientForm}`);
+    logger.debug(`New patient name: ${newPatientName}`);
     
     if (!patientId && !(showNewPatientForm && newPatientName)) {
       toast.error('โปรดเลือกผู้ป่วยหรือสร้างผู้ป่วยใหม่');
@@ -97,7 +100,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
       <Dialog 
         open={open} 
         onOpenChange={(newOpen) => {
-          console.log(`🚨 [CreateQueueDialog] Dialog onOpenChange called with: ${newOpen}`);
+          logger.debug(`Dialog onOpenChange called with: ${newOpen}`);
           onOpenChange(newOpen);
         }}
       >
@@ -137,7 +140,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => {
-              console.log('🚨 [CreateQueueDialog] Cancel button clicked');
+              logger.debug('Cancel button clicked');
               onOpenChange(false);
             }}>
               ยกเลิก

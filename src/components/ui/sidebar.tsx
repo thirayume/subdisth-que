@@ -12,6 +12,9 @@ import {
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { createLogger } from "@/utils/logger";
+
+const logger = createLogger('Sidebar');
 
 interface SidebarProps {
   className?: string;
@@ -27,6 +30,8 @@ interface SidebarItemProps {
 const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   // Use our custom theme hook if needed
   const { theme } = useTheme();
+  
+  logger.debug('Component rendering');
   
   return (
     <NavigationMenu className={cn("hidden lg:flex items-center", className)}>

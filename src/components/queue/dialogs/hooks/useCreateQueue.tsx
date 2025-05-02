@@ -3,6 +3,9 @@ import * as React from 'react';
 import { useQueueDialogState } from './queue/useQueueDialogState';
 import { usePatientQueueInfo } from './queue/usePatientQueueInfo';
 import { useQueueHandler } from './queue/useQueueHandler';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('useCreateQueue');
 
 export const useCreateQueue = (
   onOpenChange: (open: boolean) => void,
@@ -31,7 +34,7 @@ export const useCreateQueue = (
 
   // Reset all state
   const resetState = React.useCallback(() => {
-    console.log('⭐ [useCreateQueue] Resetting all state');
+    logger.debug('Resetting all state');
     patientInfo.resetAll();
     resetQueueCreation();
     resetQueueDialog();
@@ -41,7 +44,7 @@ export const useCreateQueue = (
     try {
       await baseHandleCreateQueue();
     } catch (error) {
-      console.error('⭐ [useCreateQueue] Error in handleCreateQueue:', error);
+      logger.error('Error in handleCreateQueue:', error);
     }
   };
 
