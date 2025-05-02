@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { lineService } from '@/services/line.service';
 
 interface LineLoginButtonProps {
   onLoginSuccess: (token: string, phoneNumber: string) => void;
@@ -13,12 +14,21 @@ const LineLoginButton: React.FC<LineLoginButtonProps> = ({ onLoginSuccess }) => 
   const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // In a real implementation, we would integrate with LINE Login
-  // For now, we'll simulate it with a phone number input
+  const handleLineLogin = useCallback(() => {
+    // Generate state for CSRF protection
+    const state = Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('lineLoginState', state);
+    
+    // Store callback information to be used after LINE login
+    localStorage.setItem('lineLoginCallback', 'patient-portal');
+    
+    // Generate and redirect to LINE login URL
+    const loginUrl = lineService.generateLoginUrl(state);
+    window.location.href = loginUrl;
+  }, []);
 
-  const handleLineLogin = () => {
-    // In a real implementation, we would redirect to LINE Login
-    // For now, we'll show a phone number input
+  // Keep the phone input functionality as a fallback option
+  const handleShowPhoneInput = () => {
     setShowPhoneInput(true);
   };
 
@@ -32,9 +42,6 @@ const LineLoginButton: React.FC<LineLoginButtonProps> = ({ onLoginSuccess }) => 
     
     try {
       setLoading(true);
-      
-      // Simulate LINE Login with phone verification
-      // In a real implementation, we would verify the phone number with LINE
       
       // Simulate a delay
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -94,12 +101,24 @@ const LineLoginButton: React.FC<LineLoginButtonProps> = ({ onLoginSuccess }) => 
   }
 
   return (
-    <Button 
-      onClick={handleLineLogin} 
-      className="w-full bg-[#06C755] hover:bg-[#06B048] text-white"
-    >
-      เข้าสู่ระบบด้วย LINE
-    </Button>
+    <div className="space-y-3">
+      <Button 
+        onClick={handleLineLogin} 
+        className="w-full bg-[#06C755] hover:bg-[#06B048] text-white"
+      >
+        เข้าสู่ระบบด้วย LINE
+      </Button>
+      
+      <div className="text-center">
+        <button 
+          type="button"
+          onClick={handleShowPhoneInput}
+          className="text-sm text-gray-500 hover:underline"
+        >
+          หรือเข้าสู่ระบบด้วยเบอร์โทรศัพท์
+        </button>
+      </div>
+    </div>
   );
 };
 
