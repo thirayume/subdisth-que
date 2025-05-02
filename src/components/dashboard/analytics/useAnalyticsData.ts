@@ -18,8 +18,8 @@ export const useAnalyticsData = (completedQueues: Queue[], waitingQueues: Queue[
   const { timeFrame, setTimeFrame } = useTimeFrameState();
   
   // Chart data
-  const { waitTimeData } = useWaitTimeData(completedQueues, timeFrame);
-  const { throughputData } = useThroughputData(completedQueues, timeFrame);
+  const waitTimeData = useWaitTimeData(timeFrame);
+  const throughputData = useThroughputData(timeFrame);
   
   // Calculate metrics
   const { 
@@ -27,7 +27,7 @@ export const useAnalyticsData = (completedQueues: Queue[], waitingQueues: Queue[
     averageServiceTime,
     urgentCount,
     elderlyCount
-  } = useQueueMetrics(completedQueues, waitingQueues);
+  } = useQueueMetrics(completedQueues);
   
   // Algorithm recommendation
   const {

@@ -1,5 +1,6 @@
 
 import * as React from 'react';
+import { UseFormReturn } from 'react-hook-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import GeneralSettings from './GeneralSettings';
 import QueueSettings from './QueueSettings';
@@ -10,7 +11,11 @@ import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('SettingsTabs');
 
-const SettingsTabs = () => {
+interface SettingsTabsProps {
+  children: React.ReactNode;
+}
+
+const SettingsTabs: React.FC<SettingsTabsProps> = ({ children }) => {
   logger.debug('Rendering settings tabs');
   
   return (
@@ -23,25 +28,7 @@ const SettingsTabs = () => {
         <TabsTrigger value="developer">Developer</TabsTrigger>
       </TabsList>
       
-      <TabsContent value="general">
-        <GeneralSettings />
-      </TabsContent>
-      
-      <TabsContent value="queue">
-        <QueueSettings />
-      </TabsContent>
-      
-      <TabsContent value="notifications">
-        <NotificationSettings />
-      </TabsContent>
-      
-      <TabsContent value="line">
-        <LineSettings />
-      </TabsContent>
-      
-      <TabsContent value="developer">
-        <LoggingSettingsSection />
-      </TabsContent>
+      {children}
     </Tabs>
   );
 };

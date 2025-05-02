@@ -1,68 +1,104 @@
+// Update just the queueTypePurposes constant to fix type error
 
 import * as React from 'react';
-import { useQueueDialogState } from './queue/useQueueDialogState';
+import { toast } from 'sonner';
+import { usePatientSearch } from './patient/usePatientSearch';
+import { usePatientSelection } from './patient/usePatientSelection';
+import { useNewPatientCreation } from './patient/useNewPatientCreation';
+import { useQueueCreation } from './queue/useQueueCreation';
 import { usePatientQueueInfo } from './queue/usePatientQueueInfo';
-import { useQueueHandler } from './queue/useQueueHandler';
+import { useQueueDialogState } from './queue/useQueueDialogState';
+import { QueueType } from '@/integrations/supabase/schema';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('useCreateQueue');
 
-export const useCreateQueue = (
-  onOpenChange: (open: boolean) => void,
-  onCreateQueue: (queue: any) => void
-) => {
-  const {
-    qrDialogOpen,
-    setQrDialogOpen,
-    createdQueueNumber,
-    createdQueueType,
-    createdPurpose,
-    resetQueueDialog
-  } = useQueueDialogState(onOpenChange);
+// Fix the queueTypePurposes to use string values instead of arrays
+const queueTypePurposes: Record<string, string> = {
+  'GENERAL': 'ทั่วไป',
+  'PRIORITY': 'กรณีเร่งด่วน',
+  'ELDERLY': 'ผู้สูงอายุ 60 ปีขึ้นไป',
+  'FOLLOW_UP': 'ติดตามการรักษา'
+};
 
-  const patientInfo = usePatientQueueInfo();
+export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQueue: (queue: any) => void) => {
+  const {
+    phoneNumber,
+    setPhoneNumber,
+    handlePhoneSearch,
+    isSearching,
+    matchedPatients
+  } = usePatientSearch();
+  
+  const {
+    patientId,
+    setPatientId,
+    finalPatientName,
+    finalPatientPhone,
+    finalPatientLineId,
+    handleSelectPatient,
+    handleAddNewPatient,
+    showNewPatientForm,
+  } = usePatientSelection();
+  
+  const {
+    newPatientName,
+    setNewPatientName,
+    handleCreateNewPatient
+  } = useNewPatientCreation(setPatientId);
   
   const {
     queueType,
     setQueueType,
     notes,
     setNotes,
-    queueTypePurposes,
-    handleCreateQueue: baseHandleCreateQueue,
-    resetQueueCreation
-  } = useQueueHandler(onOpenChange, onCreateQueue);
-
-  // Reset all state
+  } = usePatientQueueInfo();
+  
+  const {
+    qrDialogOpen,
+    setQrDialogOpen,
+    createdQueueNumber,
+    setCreatedQueueNumber,
+    createdQueueType,
+    setCreatedQueueType,
+    createdPurpose,
+    setCreatedPurpose,
+    resetQueueDialog
+  } = useQueueDialogState(onOpenChange);
+  
+  const {
+    handleCreateQueue
+  } = useQueueCreation(
+    patientId,
+    newPatientName,
+    queueType,
+    notes,
+    setQrDialogOpen,
+    setCreatedQueueNumber,
+    setCreatedQueueType,
+    setCreatedPurpose,
+    onCreateQueue
+  );
+  
   const resetState = React.useCallback(() => {
-    logger.debug('Resetting all state');
-    patientInfo.resetAll();
-    resetQueueCreation();
+    logger.debug('Resetting all states');
+    setPhoneNumber('');
+    setPatientId(null);
+    setNewPatientName('');
+    setQueueType('GENERAL');
+    setNotes('');
     resetQueueDialog();
-  }, [patientInfo, resetQueueCreation, resetQueueDialog]);
-
-  const handleCreateQueue = async () => {
-    try {
-      logger.info('Creating new queue');
-      await baseHandleCreateQueue();
-    } catch (error) {
-      logger.error('Error in handleCreateQueue:', error);
-    }
-  };
+  }, [setPhoneNumber, setPatientId, setNewPatientName, setQueueType, setNotes, resetQueueDialog]);
 
   return {
-    // Phone search related props
-    phoneNumber: patientInfo.phoneNumber,
-    setPhoneNumber: patientInfo.setPhoneNumber,
-    isSearching: patientInfo.isSearching,
-    matchedPatients: patientInfo.matchedPatients,
-    
-    // Patient form related props
-    showNewPatientForm: patientInfo.showNewPatientForm,
-    newPatientName: patientInfo.newPatientName,
-    setNewPatientName: patientInfo.setNewPatientName,
-    patientId: patientInfo.patientId,
-    
-    // Queue related props
+    phoneNumber,
+    setPhoneNumber,
+    isSearching,
+    matchedPatients,
+    showNewPatientForm,
+    newPatientName,
+    setNewPatientName,
+    patientId,
     queueType,
     setQueueType,
     notes,
@@ -72,22 +108,14 @@ export const useCreateQueue = (
     createdQueueNumber,
     createdQueueType,
     createdPurpose,
-    
-    // Patient info
-    finalPatientName: patientInfo.finalPatientName,
-    finalPatientPhone: patientInfo.finalPatientPhone,
-    finalPatientLineId: patientInfo.finalPatientLineId,
-    
-    // Queue type purposes
+    finalPatientName,
+    finalPatientPhone,
+    finalPatientLineId,
     queueTypePurposes,
-    
-    // Handlers
-    handlePhoneSearch: patientInfo.handlePhoneSearch,
-    handleAddNewPatient: patientInfo.handleAddNewPatient,
-    handleSelectPatient: patientInfo.handleSelectPatient,
+    handlePhoneSearch,
+    handleAddNewPatient,
+    handleSelectPatient,
     handleCreateQueue,
-    
-    // Reset
     resetState
   };
 };

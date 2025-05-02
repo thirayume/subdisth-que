@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,6 +26,10 @@ const Settings = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { settings, loading, updateMultipleSettings } = useSettings('general_settings');
   const { queueTypes: dbQueueTypes, loading: loadingQueueTypes } = useQueueTypesData();
+  
+  // For queue types management
+  const [editingQueueType, setEditingQueueType] = useState<string | null>(null);
+  const [newQueueType, setNewQueueType] = useState(false);
   
   // Define the form with explicit typing for the form values
   const form = useForm<z.infer<typeof queueSettingsSchema>>({
@@ -187,16 +190,24 @@ const Settings = () => {
               <QueueSettings 
                 form={form}
                 formatOptions={formatOptions}
+                editingQueueType={editingQueueType}
+                setEditingQueueType={setEditingQueueType}
+                newQueueType={newQueueType}
+                setNewQueueType={setNewQueueType}
                 {...queueTypeActions}
               />
             </TabsContent>
             
-            <TabsContent value="notification" className="space-y-6">
+            <TabsContent value="notifications" className="space-y-6">
               <NotificationSettings form={form} />
             </TabsContent>
             
             <TabsContent value="line" className="space-y-6">
               <LineSettings />
+            </TabsContent>
+            
+            <TabsContent value="developer" className="space-y-6">
+              <LoggingSettingsSection />
             </TabsContent>
             
             <SettingsFormActions isSubmitting={isSubmitting} />
