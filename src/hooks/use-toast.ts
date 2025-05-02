@@ -1,6 +1,6 @@
 
 // Import directly from sonner
-import { toast as sonnerToast, type ToastOptions } from 'sonner';
+import { toast as sonnerToast, type ToastT } from 'sonner';
 
 // Create a compatibility wrapper for old toast usage pattern
 const compatibilityToast = (props: any) => {
