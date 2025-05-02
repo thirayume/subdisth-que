@@ -65,10 +65,6 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
       resetState();
     } else {
       console.log('🚨 [CreateQueueDialog] Dialog opened');
-      console.log('----------------------------------------');
-      console.log('CREATE QUEUE DIALOG OPENED');
-      console.log('----------------------------------------');
-      toast.info("กำลังเปิดหน้าสร้างคิว");
     }
   }, [open, resetState]);
   
@@ -81,10 +77,6 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
   }, [qrDialogOpen, createdQueueNumber]);
 
   const shouldShowQueueDetails = Boolean(patientId) || (showNewPatientForm && Boolean(newPatientName));
-  console.log(`🚨 [CreateQueueDialog] shouldShowQueueDetails: ${shouldShowQueueDetails}`);
-  console.log(`- patientId: ${patientId}`);
-  console.log(`- showNewPatientForm: ${showNewPatientForm}`);
-  console.log(`- newPatientName: ${newPatientName}`);
 
   return (
     <>
@@ -138,19 +130,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
             </Button>
             <Button 
               className="bg-pharmacy-600 hover:bg-pharmacy-700" 
-              onClick={() => {
-                console.log("🚨 [CreateQueueDialog] Create queue button clicked");
-                console.log(`- Patient ID: ${patientId}`);
-                console.log(`- New patient name: ${newPatientName}`);
-                console.log(`- Show new patient form: ${showNewPatientForm}`);
-                console.log(`- Button should be disabled: ${!patientId && !(showNewPatientForm && newPatientName)}`);
-                
-                // Toast notification for feedback
-                toast.loading("กำลังสร้างคิว...");
-                
-                // Call handle create queue
-                handleCreateQueue();
-              }}
+              onClick={handleCreateQueue}
               disabled={!patientId && !(showNewPatientForm && newPatientName)}
             >
               สร้างคิว
@@ -161,10 +141,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
       
       <QueueCreatedDialog 
         open={qrDialogOpen && createdQueueNumber !== null} 
-        onOpenChange={(newState) => {
-          console.log(`🚨 [CreateQueueDialog] Updating QR dialog state to: ${newState}`);
-          setQrDialogOpen(newState);
-        }}
+        onOpenChange={setQrDialogOpen}
         queueNumber={createdQueueNumber || 0}
         queueType={createdQueueType || 'GENERAL'}
         patientName={finalPatientName}

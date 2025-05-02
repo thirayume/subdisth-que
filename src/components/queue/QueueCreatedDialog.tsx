@@ -38,39 +38,19 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
   // Track when dialog is opened/closed
   useEffect(() => {
     if (open) {
-      console.log(`----------------------------------------`);
-      console.log(`🎉 QUEUE CREATED DIALOG OPENED 🎉`);
-      console.log(`----------------------------------------`);
+      console.log(`🎉 QUEUE CREATED DIALOG OPENED`);
       console.log(`- queueNumber: ${queueNumber}`);
       console.log(`- queueType: ${queueType}`);
       console.log(`- patientName: ${patientName || 'none'}`);
       console.log(`- formattedQueueNumber: ${formattedQueueNumber}`);
-      console.log(`- purpose: ${purpose || 'none'}`);
-      console.log(`- patientPhone: ${patientPhone || 'none'}`);
-      console.log(`- patientLineId: ${patientLineId || 'none'}`);
-      
-      toast.success(`คิวถูกสร้างเรียบร้อย: ${formattedQueueNumber}`);
     } else {
-      console.log(`----------------------------------------`);
       console.log(`🎟️ [QueueCreatedDialog] DIALOG CLOSED`);
-      console.log(`----------------------------------------`);
     }
-  }, [open, queueNumber, queueType, patientName, formattedQueueNumber, purpose, patientPhone, patientLineId]);
+  }, [open, queueNumber, queueType, patientName, formattedQueueNumber]);
   
   const handlePrint = () => {
-    console.log(`----------------------------------------`);
     console.log('🖨️ [QueueCreatedDialog] PRINT BUTTON CLICKED');
-    console.log(`----------------------------------------`);
     try {
-      console.log('[QueueCreatedDialog] Calling printQueueTicket with:', {
-        queueNumber,
-        queueType,
-        patientName,
-        patientPhone,
-        patientLineId,
-        purpose
-      });
-      
       printQueueTicket({
         queueNumber,
         queueType,
@@ -81,25 +61,20 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
       });
       
       // Show print success message
-      toast.success('กำลังพิมพ์บัตรคิว');
-      console.log('[QueueCreatedDialog] Print initiated successfully');
+      toast.success('กำลังพิมพ์บัตรคิว', { id: "print-ticket" });
     } catch (error) {
       console.error('[QueueCreatedDialog] Error printing ticket:', error);
-      toast.error('เกิดข้อผิดพลาดในการพิมพ์บัตรคิว');
+      toast.error('เกิดข้อผิดพลาดในการพิมพ์บัตรคิว', { id: "print-ticket" });
     }
   };
 
   // Force focus on dialog when it opens
   useEffect(() => {
     if (open && dialogRef.current) {
-      console.log('[QueueCreatedDialog] Dialog opened, attempting to focus');
       const timer = setTimeout(() => {
         const dialogElement = dialogRef.current?.querySelector('[role="dialog"]');
         if (dialogElement) {
           (dialogElement as HTMLElement).focus();
-          console.log('[QueueCreatedDialog] Dialog focused successfully');
-        } else {
-          console.log('[QueueCreatedDialog] Could not find dialog element to focus');
         }
       }, 100);
       return () => clearTimeout(timer);
@@ -109,18 +84,11 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
   return (
     <Dialog 
       open={open} 
-      onOpenChange={(newOpen) => {
-        console.log(`🎟️ [QueueCreatedDialog] Dialog onOpenChange called with: ${newOpen}`);
-        onOpenChange(newOpen);
-      }}
+      onOpenChange={onOpenChange}
     >
       <DialogContent 
         ref={dialogRef} 
         className="sm:max-w-[400px] bg-background"
-        onOpenAutoFocus={(e) => {
-          console.log('[QueueCreatedDialog] onOpenAutoFocus event triggered');
-          // Don't prevent default to allow auto-focusing
-        }}
       >
         <QueueCreatedHeader purpose={purpose} />
         
@@ -135,10 +103,7 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
         
         <DialogFooterActions 
           onPrint={handlePrint}
-          onClose={() => {
-            console.log('[QueueCreatedDialog] Close button clicked');
-            onOpenChange(false);
-          }}
+          onClose={() => onOpenChange(false)}
         />
       </DialogContent>
     </Dialog>

@@ -85,7 +85,7 @@ const App: React.FC = () => {
               <Route path="/patient-portal" element={<PatientPortal />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-            <Toaster />
+            <Toaster richColors closeButton position="bottom-right" />
             <OfflineIndicator />
             <DebugOverlay />
           </BrowserRouter>

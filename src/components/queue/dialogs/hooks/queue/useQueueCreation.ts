@@ -84,9 +84,7 @@ export const useQueueCreation = () => {
     onOpenChange: (open: boolean) => void
   ) => {
     try {
-      console.log(`----------------------------------------`);
       console.log(`🔄 [useQueueCreation] CREATING QUEUE`);
-      console.log(`----------------------------------------`);
       console.log(`Patient ID: ${patientId}`);
       console.log(`Patient Name: ${patientName}`);
       console.log(`Patient Phone: ${patientPhone}`);
@@ -116,70 +114,39 @@ export const useQueueCreation = () => {
         console.log(`🔄 [useQueueCreation] Queue created successfully:`, newQueue);
         
         // First update all the state needed for the QR dialog
-        console.log(`🔄 [useQueueCreation] Setting state for QR dialog:`);
-        console.log(`- number: ${nextQueueNumber}`);
-        console.log(`- type: ${queueType}`);
-        console.log(`- purpose: ${purpose}`);
-        
         setCreatedQueueNumber(nextQueueNumber);
         setCreatedQueueType(queueType);
         setCreatedPurpose(purpose);
         
         // Update patient info for display
-        console.log('🔄 [useQueueCreation] Updating patient info for display');
-        console.log(`- name: ${patientName}`);
-        console.log(`- phone: ${patientPhone}`);
-        console.log(`- lineId: ${patientLineId || 'none'}`);
-        
         updatePatientInfo(patientName, patientPhone, patientLineId);
         
         // Close the create dialog
-        console.log('🔄 [useQueueCreation] Closing create dialog');
         onOpenChange(false);
         
         // Show success toast
-        toast.success(`คิวหมายเลข ${nextQueueNumber} ถูกสร้างเรียบร้อยแล้ว`);
+        toast.success(`คิวหมายเลข ${nextQueueNumber} ถูกสร้างเรียบร้อยแล้ว`, { id: "create-queue" });
         
         // Notify parent component
-        console.log('🔄 [useQueueCreation] Notifying parent component about new queue');
         onCreateQueue(newQueue);
         
         // Use a more reliable approach with a slightly longer delay to ensure 
         // the create dialog has fully closed before opening the QR dialog
-        console.log('🔄 [useQueueCreation] Setting timeout to open QR dialog');
         setTimeout(() => {
-          console.log('🔄 [useQueueCreation] Opening QR dialog now...');
           setQrDialogOpen(true);
-          
-          // Force a log right after to verify state update
-          setTimeout(() => {
-            console.log(`🔄 [useQueueCreation] QR dialog state after timeout: ${qrDialogOpen}`);
-            console.log(`🔄 [useQueueCreation] Created queue number: ${createdQueueNumber}`);
-          }, 10);
         }, 300);
         
         return newQueue;
       } else {
-        console.error('🔄 [useQueueCreation] Failed to create queue, no queue was returned');
+        toast.error('ไม่สามารถสร้างคิว กรุณาลองใหม่อีกครั้ง', { id: "create-queue" });
         throw new Error('Failed to create queue, no queue was returned');
       }
     } catch (error) {
       console.error('🔄 [useQueueCreation] Error creating queue:', error);
-      toast.error('เกิดข้อผิดพลาดในการสร้างคิว กรุณาลองใหม่อีกครั้ง');
+      toast.error('เกิดข้อผิดพลาดในการสร้างคิว กรุณาลองใหม่อีกครั้ง', { id: "create-queue" });
       throw error;
     }
   };
-
-  // Add effect to monitor dialog state changes
-  React.useEffect(() => {
-    console.log(`🔄 [useQueueCreation] Dialog state changed: qrDialogOpen=${qrDialogOpen}`);
-    if (qrDialogOpen) {
-      console.log('🔄 [useQueueCreation] QR dialog opened with data:');
-      console.log(`- Queue Number: ${createdQueueNumber}`);
-      console.log(`- Queue Type: ${createdQueueType}`);
-      console.log(`- Purpose: ${createdPurpose}`);
-    }
-  }, [qrDialogOpen, createdQueueNumber, createdQueueType, createdPurpose]);
 
   return {
     queueType,

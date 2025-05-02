@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/integrations/supabase/schema';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export const usePatientsSearch = () => {
   const [searchLoading, setSearchLoading] = React.useState(false);
@@ -28,11 +28,7 @@ export const usePatientsSearch = () => {
     } catch (err: any) {
       console.error('Error searching patients:', err);
       setSearchError(err.message || 'Failed to search patients');
-      toast({
-        title: "Error",
-        description: 'ไม่สามารถค้นหาข้อมูลผู้ป่วยได้',
-        variant: "destructive"
-      });
+      toast.error('ไม่สามารถค้นหาข้อมูลผู้ป่วยได้');
       return [];
     } finally {
       setSearchLoading(false);

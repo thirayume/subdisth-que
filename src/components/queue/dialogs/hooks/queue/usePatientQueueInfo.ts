@@ -57,7 +57,7 @@ export const usePatientQueueInfo = () => {
         setShowNewPatientForm(false);
       }
     } else {
-      toast.error('กรุณากรอกเบอร์โทรศัพท์');
+      toast.error('กรุณากรอกเบอร์โทรศัพท์', { id: "phone-search" });
     }
   };
 
