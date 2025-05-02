@@ -12,6 +12,8 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react({
       jsxImportSource: 'react',
+      // Fix React refresh
+      refresh: true,
     }),
     mode === 'development' &&
     componentTagger(),
@@ -19,6 +21,7 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
+      // Ensure single instances of React and ReactDOM
       "react": path.resolve(__dirname, "node_modules/react"),
       "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
       "next-themes": path.resolve(__dirname, "node_modules/next-themes")
@@ -35,7 +38,7 @@ export default defineConfig(({ mode }) => ({
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: true,
+        drop_console: process.env.NODE_ENV === 'production',
         drop_debugger: true,
       },
     },

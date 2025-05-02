@@ -12,9 +12,9 @@
 
   <body>
     <div id="root"></div>
-    <!-- Ensure React is properly initialized by loading it first -->
+    <!-- Initialize React before scripts to prevent null context issues -->
     <script>
-      // Initialize React global variable to prevent null context issues
+      // Initialize React global variable to prevent context issues
       window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = window.__REACT_DEVTOOLS_GLOBAL_HOOK__ || {};
     </script>
     <!-- The React application script must be loaded first to ensure proper initialization -->

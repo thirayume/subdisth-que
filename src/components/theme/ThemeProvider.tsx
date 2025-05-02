@@ -24,31 +24,53 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
 export const useTheme = () => {
   const [mounted, setMounted] = React.useState(false);
   
-  // Use try/catch to avoid errors during server-side rendering
-  let theme, setTheme;
-  try {
-    const nextThemes = require("next-themes");
-    const themeData = nextThemes.useTheme();
-    theme = themeData.theme;
-    setTheme = themeData.setTheme;
-  } catch (err) {
-    console.error("Error loading theme:", err);
-    theme = "light";
-    setTheme = () => console.warn("Theme setter not available");
-  }
+  // Use React.useState for theme state to avoid hydration issues
+  const [themeState, setThemeState] = React.useState<Theme>("light");
   
-  // Only access theme after component mounts to avoid hydration mismatch
+  // Effect to handle theme initialization
   React.useEffect(() => {
-    setMounted(true);
-    console.log("[ThemeProvider] Component mounted, theme:", theme);
-  }, [theme]);
+    try {
+      // Import next-themes only on client side to prevent SSR issues
+      const { useTheme } = require("next-themes");
+      const { theme, setTheme } = useTheme();
+      
+      if (theme) {
+        setThemeState(theme as Theme);
+      }
+      
+      // Update mounted state
+      setMounted(true);
+      console.log("[ThemeProvider] Component mounted, theme:", theme);
+      
+      // Set up a listener for theme changes
+      const handleThemeChange = () => {
+        const { theme } = useTheme();
+        setThemeState(theme as Theme || "light");
+      };
+      
+      window.addEventListener("theme-change", handleThemeChange);
+      
+      return () => {
+        window.removeEventListener("theme-change", handleThemeChange);
+      };
+    } catch (err) {
+      console.error("Error loading theme:", err);
+      setMounted(true);
+    }
+  }, []);
   
   return {
-    theme: mounted ? (theme as Theme || "light") : "light",
+    theme: mounted ? themeState : "light",
     setTheme: (newTheme: Theme) => {
       console.log("[ThemeProvider] Setting theme to:", newTheme);
       try {
+        const { useTheme } = require("next-themes");
+        const { setTheme } = useTheme();
         setTheme(newTheme);
+        setThemeState(newTheme);
+        
+        // Dispatch a custom event to notify about theme changes
+        window.dispatchEvent(new CustomEvent("theme-change"));
       } catch (err) {
         console.error("Error setting theme:", err);
       }

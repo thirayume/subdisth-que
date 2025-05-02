@@ -4,6 +4,9 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 
+// Ensure React is defined globally to prevent "React refresh preamble not loaded" errors
+window.React = React;
+
 // Register service worker for offline support with improved error handling
 const registerServiceWorker = () => {
   if ('serviceWorker' in navigator) {
