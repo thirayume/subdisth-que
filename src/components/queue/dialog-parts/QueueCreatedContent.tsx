@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { QueueType } from '@/integrations/supabase/schema';
 import LineQRCode from '@/components/ui/LineQRCode';
 import PatientInfoDisplay from '../PatientInfoDisplay';
 import { Badge } from '@/components/ui/badge';
+import { useQueues } from '@/hooks/useQueues';
 
 interface QueueCreatedContentProps {
   formattedQueueNumber: string;
@@ -12,7 +13,6 @@ interface QueueCreatedContentProps {
   patientName?: string;
   patientPhone?: string;
   patientLineId?: string;
-  estimatedWaitTime?: number;
 }
 
 const QueueCreatedContent: React.FC<QueueCreatedContentProps> = ({
@@ -22,8 +22,40 @@ const QueueCreatedContent: React.FC<QueueCreatedContentProps> = ({
   patientName,
   patientPhone,
   patientLineId,
-  estimatedWaitTime = 15,
 }) => {
+  const { queues, sortQueues } = useQueues() || { queues: [], sortQueues: (q) => q };
+  const [estimatedWaitTime, setEstimatedWaitTime] = useState<number>(15);
+  
+  // Calculate the estimated wait time based on queue position and current workload
+  useEffect(() => {
+    if (queues && Array.isArray(queues)) {
+      const waitingQueues = queues.filter(q => q.status === 'WAITING');
+      const sortedQueues = sortQueues(waitingQueues);
+      
+      // Find the position of the new queue (this one) in the waiting list
+      const queuePosition = sortedQueues.findIndex(q => 
+        q.number === queueNumber && q.type === queueType
+      ) + 1;
+      
+      // Apply wait time calculation based on position and average service time
+      const avgServiceTimePerPatient = 5; // minutes per patient on average
+      let calculatedWaitTime = 0;
+      
+      if (queuePosition > 0) {
+        calculatedWaitTime = queuePosition * avgServiceTimePerPatient;
+      } else {
+        // If we can't find the queue in the list, use default calculation
+        calculatedWaitTime = waitingQueues.length * avgServiceTimePerPatient;
+      }
+      
+      // Add a buffer for more realistic estimation
+      calculatedWaitTime = Math.round(calculatedWaitTime * 1.2);
+      
+      // Minimum wait time of 5 minutes, maximum of 60 minutes display
+      setEstimatedWaitTime(Math.max(5, Math.min(60, calculatedWaitTime)));
+    }
+  }, [queues, queueNumber, queueType, sortQueues]);
+
   return (
     <div className="flex flex-col items-center justify-center py-4">
       <PatientInfoDisplay 

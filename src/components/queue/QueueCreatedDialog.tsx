@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+
+import React, { useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { QueueType } from '@/integrations/supabase/schema';
 import { formatQueueNumber } from '@/utils/queueFormatters';
@@ -33,9 +34,10 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
   patientLineId = '',
   purpose = '',
 }) => {
-  logger.verbose(`Rendering with open=${open}, queueNumber=${queueNumber}, queueType=${queueType}`);
+  logger.debug(`Rendering with open=${open}, queueNumber=${queueNumber}, queueType=${queueType}`);
   const dialogRef = useRef<HTMLDivElement>(null);
   const formattedQueueNumber = formatQueueNumber(queueType, queueNumber);
+  const [estimatedWaitTime, setEstimatedWaitTime] = useState(15);
   
   // Track when dialog is opened/closed
   useEffect(() => {
@@ -50,6 +52,11 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
     }
   }, [open, queueNumber, queueType, patientName, formattedQueueNumber]);
   
+  // Get estimated wait time from the QueueCreatedContent component
+  const updateEstimatedWaitTime = (time: number) => {
+    setEstimatedWaitTime(time);
+  };
+  
   const handlePrint = () => {
     logger.info('PRINT BUTTON CLICKED');
     try {
@@ -59,7 +66,8 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
         patientName,
         patientPhone,
         patientLineId,
-        purpose
+        purpose,
+        estimatedWaitTime
       });
       
       // Show print success message

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,14 +11,40 @@ import { useQueues } from '@/hooks/useQueues';
 import { usePatients } from '@/hooks/usePatients';
 import { printQueueTicket } from '@/utils/printUtils';
 import { QueueType } from '@/integrations/supabase/schema';
+import { Badge } from '@/components/ui/badge';
 
 const QueueTicket = () => {
   const { id } = useParams<{ id: string }>();
-  const { queues } = useQueues();
+  const { queues, sortQueues } = useQueues();
   const { patients } = usePatients();
+  const [estimatedWaitTime, setEstimatedWaitTime] = useState<number>(15);
   
   const queue = queues.find(q => q.id === id);
   const patient = queue ? patients.find(p => p.id === queue.patient_id) : null;
+  
+  // Calculate estimated wait time
+  useEffect(() => {
+    if (queue && queue.status === 'WAITING') {
+      const waitingQueues = queues.filter(q => q.status === 'WAITING');
+      const sortedQueues = sortQueues(waitingQueues);
+      
+      const queuePosition = sortedQueues.findIndex(q => q.id === id) + 1;
+      
+      // Average service time per patient in minutes
+      const avgServiceTimePerPatient = 5;
+      let calculatedTime = 0;
+      
+      if (queuePosition > 0) {
+        calculatedTime = queuePosition * avgServiceTimePerPatient;
+      } else {
+        calculatedTime = waitingQueues.length * avgServiceTimePerPatient;
+      }
+      
+      // Add buffer for realistic estimation
+      calculatedTime = Math.round(calculatedTime * 1.2);
+      setEstimatedWaitTime(Math.max(5, Math.min(60, calculatedTime)));
+    }
+  }, [queue, queues, id, sortQueues]);
   
   if (!queue) {
     return (
@@ -48,7 +74,9 @@ const QueueTicket = () => {
       queueType: queue.type as QueueType,
       patientName: patient?.name,
       patientPhone: patient?.phone,
-      purpose: queue.notes
+      patientLineId: patient?.line_id,
+      purpose: queue.notes,
+      estimatedWaitTime: queue.status === 'WAITING' ? estimatedWaitTime : undefined
     });
   };
   
@@ -80,9 +108,18 @@ const QueueTicket = () => {
           <PatientInfoDisplay
             patientName={patient?.name}
             patientPhone={patient?.phone}
+            patientLineId={patient?.line_id}
             formattedQueueNumber={formattedQueueNumber}
-            className="mb-6"
+            className="mb-4"
           />
+          
+          {queue.status === 'WAITING' && (
+            <div className="flex justify-center mb-4">
+              <Badge variant="outline" className="bg-pharmacy-50 text-pharmacy-700 border-pharmacy-200 px-3 py-1">
+                เวลารอโดยประมาณ: {estimatedWaitTime} นาที
+              </Badge>
+            </div>
+          )}
           
           <LineQRCode 
             queueNumber={queue.number} 
