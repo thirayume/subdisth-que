@@ -21,16 +21,16 @@ import {
 import CreateQueueDialog from '@/components/queue/CreateQueueDialog';
 import { mockQueues } from '@/lib/mockData';
 import { useTheme } from '@/components/theme/ThemeProvider';
+import { createLogger } from '@/utils/logger';
 
-// Add debug logging
-console.log("[DEBUG] Sidebar.tsx importing React:", React);
+const logger = createLogger('Sidebar');
 
 interface SidebarProps {
   className?: string;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ className }) => {
-  console.log('[Sidebar] Component rendering');
+  logger.debug('Component rendering'); // Changed from info to debug
   
   const [expanded, setExpanded] = React.useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
@@ -49,13 +49,14 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
 
   const handleCreateQueue = (newQueue: any) => {
     // In a real application, we'd update the global state or send to API
-    console.log('New queue created:', newQueue);
+    logger.debug('New queue created:', newQueue);
     
     // For now, just add to mockQueues for demonstration
     mockQueues.push(newQueue);
   };
 
-  const navItems = [
+  // Only create navItems once
+  const navItems = React.useMemo(() => [
     { to: '/', label: 'แดชบอร์ด', icon: <LayoutGrid className="h-5 w-5" /> },
     { to: '/queue-management', label: 'จัดการคิว', icon: <ListChecks className="h-5 w-5" /> },
     { to: '/analytics', label: 'การวิเคราะห์', icon: <BarChart className="h-5 w-5" /> },
@@ -65,7 +66,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
     { to: '/appointments', label: 'นัดหมาย', icon: <Calendar className="h-5 w-5" /> },
     { to: '/history', label: 'ประวัติคิว', icon: <Clock className="h-5 w-5" /> },
     { to: '/settings', label: 'ตั้งค่า', icon: <Settings className="h-5 w-5" /> },
-  ];
+  ], []);
 
   return (
     <>

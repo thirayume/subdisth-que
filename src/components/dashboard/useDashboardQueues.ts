@@ -13,6 +13,12 @@ export const useDashboardQueues = () => {
   const [activeQueues, setActiveQueues] = React.useState([]);
   const [completedQueues, setCompletedQueues] = React.useState([]);
 
+  // Memoize the sortQueues function to prevent it from changing on every render
+  const memoizedSortQueues = React.useCallback(
+    (queues) => sortQueues(queues),
+    [sortQueues]
+  );
+
   React.useEffect(() => {
     logger.debug('Queues updated, filtering by status');
     if (queues && Array.isArray(queues)) {
@@ -20,13 +26,13 @@ export const useDashboardQueues = () => {
       const active = queues.filter(q => q.status === 'ACTIVE');
       const completed = queues.filter(q => q.status === 'COMPLETED');
 
-      setWaitingQueues(sortQueues(waiting));
+      setWaitingQueues(memoizedSortQueues(waiting));
       setActiveQueues(active);
       setCompletedQueues(completed);
       
       logger.info(`Filtered queues - Waiting: ${waiting.length}, Active: ${active.length}, Completed: ${completed.length}`);
     }
-  }, [queues, sortQueues]);
+  }, [queues, memoizedSortQueues]);
 
   return {
     waitingQueues,
