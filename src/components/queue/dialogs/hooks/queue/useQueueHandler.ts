@@ -19,6 +19,7 @@ export const useQueueHandler = (
 
   const handleCreateQueue = async () => {
     try {
+      // Get patient data directly from parameters instead of DOM
       const patientId = document.getElementById('patientId')?.getAttribute('data-patient-id');
       const selectedPatientName = document.getElementById('patientId')?.getAttribute('data-patient-name') || '';
       const selectedPatientPhone = document.getElementById('patientId')?.getAttribute('data-patient-phone') || '';
@@ -27,7 +28,23 @@ export const useQueueHandler = (
       const newPatientName = (document.getElementById('newPatientName') as HTMLInputElement)?.value || '';
       const phoneNumber = (document.getElementById('phoneNumber') as HTMLInputElement)?.value || '';
       
+      console.log('[DEBUG] Queue creation data:', {
+        patientId,
+        selectedPatientName,
+        showNewPatientForm,
+        newPatientName,
+        phoneNumber,
+        queueType,
+        notes
+      });
+      
       toast.loading("กำลังสร้างคิว...", { id: "create-queue" });
+      
+      if (!patientId && !(showNewPatientForm && newPatientName)) {
+        console.error('[DEBUG] No patient selected or created');
+        toast.error('ไม่สามารถสร้างคิวได้ โปรดเลือกผู้ป่วยหรือสร้างผู้ป่วยใหม่', { id: "create-queue" });
+        return;
+      }
       
       if (showNewPatientForm && newPatientName) {
         // Logic for creating new patient

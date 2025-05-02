@@ -26,6 +26,12 @@ export const usePatientSelection = () => {
   const handleSelectPatient = (id: string, patients: any[]) => {
     console.log(`[usePatientSelection] Selecting patient with ID: ${id}`);
     const selectedPatient = patients.find(p => p.id === id);
+    
+    if (!selectedPatient) {
+      console.error('[usePatientSelection] Selected patient not found!', { id, patients });
+      return;
+    }
+    
     setPatientId(id);
     
     if (selectedPatient) {

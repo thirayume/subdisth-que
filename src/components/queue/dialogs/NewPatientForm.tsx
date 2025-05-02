@@ -27,6 +27,7 @@ const NewPatientForm: React.FC<NewPatientFormProps> = ({
         onChange={(e) => setNewPatientName(e.target.value)}
         placeholder="กรอกชื่อ-นามสกุลผู้ป่วยใหม่"
       />
+      <div id="newPatientForm" data-show={showNewPatientForm.toString()}></div>
     </div>
   );
 };

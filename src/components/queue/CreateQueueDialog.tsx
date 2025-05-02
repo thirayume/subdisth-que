@@ -78,6 +78,20 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
 
   const shouldShowQueueDetails = Boolean(patientId) || (showNewPatientForm && Boolean(newPatientName));
 
+  const handleSubmit = async () => {
+    console.log('🚨 [CreateQueueDialog] Create queue button clicked');
+    console.log(`Patient ID: ${patientId}`);
+    console.log(`New patient form shown: ${showNewPatientForm}`);
+    console.log(`New patient name: ${newPatientName}`);
+    
+    if (!patientId && !(showNewPatientForm && newPatientName)) {
+      toast.error('โปรดเลือกผู้ป่วยหรือสร้างผู้ป่วยใหม่');
+      return;
+    }
+    
+    await handleCreateQueue();
+  };
+
   return (
     <>
       <Dialog 
@@ -130,7 +144,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
             </Button>
             <Button 
               className="bg-pharmacy-600 hover:bg-pharmacy-700" 
-              onClick={handleCreateQueue}
+              onClick={handleSubmit}
               disabled={!patientId && !(showNewPatientForm && newPatientName)}
             >
               สร้างคิว

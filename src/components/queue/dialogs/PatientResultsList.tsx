@@ -48,6 +48,16 @@ const PatientResultsList: React.FC<PatientResultsListProps> = ({
           </div>
         ))}
       </div>
+      
+      {/* Hidden input to store patient data for form submission */}
+      <input 
+        type="hidden" 
+        id="patientId" 
+        data-patient-id={patientId || ''} 
+        data-patient-name={matchedPatients.find(p => p.id === patientId)?.name || ''} 
+        data-patient-phone={matchedPatients.find(p => p.id === patientId)?.phone || ''}
+        data-patient-line-id={matchedPatients.find(p => p.id === patientId)?.line_id || ''}
+      />
     </div>
   );
 };
