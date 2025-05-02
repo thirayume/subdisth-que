@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+// No need to import a separate CSS file since we're using App.css
 
 const EmailConsentScreen: React.FC = () => {
   const [consentGiven, setConsentGiven] = useState(false);
@@ -19,18 +20,18 @@ const EmailConsentScreen: React.FC = () => {
   };
   
   return (
-    <div className="consent-container">
-      <div className="user-profile">
-        <div className="avatar-placeholder">
+    <div className="email-consent-container">
+      <div className="email-user-profile">
+        <div className="email-avatar-placeholder">
           <img src="/images/profile-placeholder.png" alt="Profile" />
         </div>
         <h2>ระบบคิวยา รพสต.</h2>
-        <div className="tag">
-          <span className="tag-text">Messaging API</span>
+        <div className="email-tag">
+          <span>Messaging API</span>
         </div>
       </div>
       
-      <div className="consent-form">
+      <div className="email-consent-form">
         <h3>ขออนุญาตเข้าถึงอีเมล</h3>
         <p>
           เราขออนุญาตเข้าถึงอีเมลของคุณเพื่อ:
@@ -41,7 +42,7 @@ const EmailConsentScreen: React.FC = () => {
           <li>ใช้เป็นช่องทางติดต่อสำรองกรณีไม่สามารถติดต่อผ่าน LINE ได้</li>
         </ul>
         
-        <div className="consent-checkbox">
+        <div className="email-consent-checkbox">
           <input 
             type="checkbox" 
             id="consent" 
@@ -53,15 +54,15 @@ const EmailConsentScreen: React.FC = () => {
           </label>
         </div>
         
-        <div className="consent-actions">
+        <div className="email-consent-actions">
           <button 
-            className="button-submit"
+            className="email-button-submit"
             disabled={!consentGiven}
             onClick={handleSubmit}
           >
             ยืนยัน
           </button>
-          <button className="button-cancel">
+          <button className="email-button-cancel">
             ยกเลิก
           </button>
         </div>
