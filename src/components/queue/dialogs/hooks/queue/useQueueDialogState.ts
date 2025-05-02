@@ -11,9 +11,15 @@ export const useQueueDialogState = (onOpenChange: (open: boolean) => void) => {
   const [createdQueueType, setCreatedQueueType] = React.useState<QueueType>('GENERAL');
   const [createdPurpose, setCreatedPurpose] = React.useState('');
 
+  // Use useCallback for setQrDialogOpen to prevent unnecessary re-renders
+  const handleSetQrDialogOpen = React.useCallback((open: boolean) => {
+    logger.verbose(`Setting QR dialog open: ${open}`);
+    setQrDialogOpen(open);
+  }, []);
+
   // Reset all state
   const resetQueueDialog = React.useCallback(() => {
-    logger.verbose('Resetting dialog state'); // Changed from debug to verbose
+    logger.verbose('Resetting dialog state');
     setQrDialogOpen(false);
     setCreatedQueueNumber(null);
     setCreatedQueueType('GENERAL');
@@ -22,7 +28,7 @@ export const useQueueDialogState = (onOpenChange: (open: boolean) => void) => {
 
   return {
     qrDialogOpen,
-    setQrDialogOpen,
+    setQrDialogOpen: handleSetQrDialogOpen,
     createdQueueNumber,
     setCreatedQueueNumber,
     createdQueueType,

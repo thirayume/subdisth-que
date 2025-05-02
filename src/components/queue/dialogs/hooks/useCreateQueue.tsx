@@ -90,37 +90,10 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     }
     
     try {
-      // Get the next queue number
-      const { data: queueCountData } = await supabase
-        .from('queues')
-        .select('number')
-        .order('number', { ascending: false })
-        .limit(1);
+      // Create queue using the hook method
+      const newQueue = await createQueue(patientId);
       
-      const nextQueueNumber = queueCountData && queueCountData.length > 0 
-        ? queueCountData[0].number + 1 
-        : 1;
-      
-      // Create queue in Supabase
-      const { data: queueData, error } = await supabase
-        .from('queues')
-        .insert({
-          patient_id: patientId,
-          type: queueType,
-          status: 'WAITING',
-          notes: notes,
-          number: nextQueueNumber
-        })
-        .select();
-      
-      if (error) {
-        logger.error('Error creating queue:', error);
-        toast.error('ไม่สามารถสร้างคิวได้');
-        return;
-      }
-      
-      if (queueData && queueData.length > 0) {
-        const newQueue = queueData[0];
+      if (newQueue) {
         logger.info('Queue created successfully:', newQueue);
         
         // Update QR dialog state
