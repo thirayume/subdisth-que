@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +16,7 @@ import NotificationSettings from '@/components/settings/NotificationSettings';
 import LineSettings from '@/components/settings/LineSettings';
 import SettingsTabs from '@/components/settings/SettingsTabs';
 import SettingsFormActions from '@/components/settings/SettingsFormActions';
+import LoggingSettingsSection from '@/components/settings/LoggingSettingsSection';
 import { queueSettingsSchema, formatOptions, initialQueueTypes } from '@/components/settings/schemas';
 import { useQueueTypes, QueueType } from '@/hooks/useQueueTypes';
 import { z } from 'zod';

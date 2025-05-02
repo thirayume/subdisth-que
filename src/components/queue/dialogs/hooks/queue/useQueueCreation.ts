@@ -5,6 +5,14 @@ import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('useQueueCreation');
 
+// Define the queue type purposes
+export const queueTypePurposes: Record<string, string> = {
+  'GENERAL': 'ทั่วไป',
+  'PRIORITY': 'กรณีเร่งด่วน',
+  'ELDERLY': 'ผู้สูงอายุ 60 ปีขึ้นไป',
+  'FOLLOW_UP': 'ติดตามการรักษา'
+};
+
 export const useQueueCreation = () => {
   logger.debug('Hook initialized');
   
@@ -17,11 +25,20 @@ export const useQueueCreation = () => {
     setNotes('');
   }, []);
 
+  // Method to create a queue
+  const createQueue = async (patientId: string) => {
+    logger.debug('Creating queue for patient', patientId);
+    // Implementation would go here
+    return null;
+  };
+
   return {
     queueType,
     setQueueType,
     notes,
     setNotes,
-    resetQueueCreation
+    resetQueueCreation,
+    createQueue,
+    queueTypePurposes
   };
 };

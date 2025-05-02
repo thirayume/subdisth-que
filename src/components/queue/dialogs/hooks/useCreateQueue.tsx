@@ -8,6 +8,7 @@ import { useQueueCreation } from './queue/useQueueCreation';
 import { usePatientQueueInfo } from './queue/usePatientQueueInfo';
 import { useQueueDialogState } from './queue/useQueueDialogState';
 import { QueueType } from '@/integrations/supabase/schema';
+import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('useCreateQueue');
@@ -34,6 +35,8 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
   const {
     patientId,
     setPatientId,
+    newPatientName,
+    setNewPatientName,
     finalPatientName,
     finalPatientPhone,
     finalPatientLineId,
@@ -41,9 +44,6 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     updateFinalPatientInfo,
     resetPatientSelection
   } = usePatientSelection();
-  
-  // Create a local state for the new patient name to avoid dependency issues
-  const [newPatientName, setNewPatientName] = React.useState('');
   
   const {
     createNewPatient
@@ -156,6 +156,7 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
   }, [
     setPhoneNumber, 
     setPatientId, 
+    setNewPatientName,
     setQueueType, 
     setNotes, 
     resetQueueDialog, 
