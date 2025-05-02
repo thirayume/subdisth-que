@@ -23,16 +23,22 @@ const QueueCreatedContent: React.FC<QueueCreatedContentProps> = ({
   patientPhone,
   patientLineId,
 }) => {
-  const { queues, sortQueues } = useQueues() || { queues: [], sortQueues: (q) => q };
+  // Access queues from the hook
+  const queuesResult = useQueues();
+  const queues = queuesResult?.queues || [];
+  const sortQueues = queuesResult?.sortQueues || ((q) => q);
+  
   const [estimatedWaitTime, setEstimatedWaitTime] = useState<number>(15);
   
   // Calculate the estimated wait time based on queue position and current workload
   useEffect(() => {
     if (queues && Array.isArray(queues)) {
       const waitingQueues = queues.filter(q => q.status === 'WAITING');
-      const sortedQueues = sortQueues(waitingQueues);
+      // Clone the array to avoid mutation issues when sorting
+      const queuesCopy = [...waitingQueues];
+      const sortedQueues = sortQueues(queuesCopy);
       
-      // Find the position of the new queue (this one) in the waiting list
+      // Find the position of the new queue in the waiting list
       const queuePosition = sortedQueues.findIndex(q => 
         q.number === queueNumber && q.type === queueType
       ) + 1;

@@ -28,35 +28,31 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
 
 export const useTheme = () => {
   const [mounted, setMounted] = React.useState(false);
-  
-  // Use React.useState for theme state to avoid hydration issues
   const [themeState, setThemeState] = React.useState<Theme>("light");
   
   // Effect to handle theme initialization
   React.useEffect(() => {
     try {
-      // Import next-themes only on client side to prevent SSR issues
-      const { useTheme } = require("next-themes");
-      const { theme, setTheme } = useTheme();
-      
-      if (theme) {
-        setThemeState(theme as Theme);
-      }
-      
-      // Update mounted state
-      setMounted(true);
-      console.log("[ThemeProvider] Component mounted, theme:", theme);
-      
-      // Set up a listener for theme changes
-      const handleThemeChange = () => {
+      // Import next-themes dynamically
+      import("next-themes").then(({ useTheme }) => {
         const { theme } = useTheme();
-        setThemeState(theme as Theme || "light");
-      };
-      
-      window.addEventListener("theme-change", handleThemeChange);
+        
+        if (theme) {
+          setThemeState(theme as Theme);
+        }
+        
+        setMounted(true);
+        console.log("[ThemeProvider] Component mounted, theme:", theme);
+        
+        // Set up a listener for theme changes
+        window.addEventListener("theme-change", () => {
+          const { theme } = useTheme();
+          setThemeState(theme as Theme || "light");
+        });
+      });
       
       return () => {
-        window.removeEventListener("theme-change", handleThemeChange);
+        window.removeEventListener("theme-change", () => {});
       };
     } catch (err) {
       console.error("Error loading theme:", err);
@@ -64,21 +60,24 @@ export const useTheme = () => {
     }
   }, []);
   
-  return {
-    theme: mounted ? themeState : "light",
-    setTheme: (newTheme: Theme) => {
-      console.log("[ThemeProvider] Setting theme to:", newTheme);
-      try {
-        const { useTheme } = require("next-themes");
+  const setTheme = React.useCallback((newTheme: Theme) => {
+    console.log("[ThemeProvider] Setting theme to:", newTheme);
+    try {
+      import("next-themes").then(({ useTheme }) => {
         const { setTheme } = useTheme();
         setTheme(newTheme);
         setThemeState(newTheme);
         
         // Dispatch a custom event to notify about theme changes
         window.dispatchEvent(new CustomEvent("theme-change"));
-      } catch (err) {
-        console.error("Error setting theme:", err);
-      }
+      });
+    } catch (err) {
+      console.error("Error setting theme:", err);
     }
+  }, []);
+  
+  return {
+    theme: mounted ? themeState : "light",
+    setTheme
   };
 };

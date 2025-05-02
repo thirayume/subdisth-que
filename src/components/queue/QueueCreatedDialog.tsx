@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { QueueType } from '@/integrations/supabase/schema';
 import { formatQueueNumber } from '@/utils/queueFormatters';
@@ -37,9 +37,9 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
   logger.debug(`Rendering with open=${open}, queueNumber=${queueNumber}, queueType=${queueType}`);
   const dialogRef = useRef<HTMLDivElement>(null);
   const formattedQueueNumber = formatQueueNumber(queueType, queueNumber);
-  const [estimatedWaitTime, setEstimatedWaitTime] = useState(15);
+  const [estimatedWaitTime, setEstimatedWaitTime] = React.useState(15);
   
-  // Track when dialog is opened/closed
+  // Track when dialog is opened/closed - fixed with a stable dependency array
   useEffect(() => {
     if (open) {
       logger.info(`QUEUE CREATED DIALOG OPENED`);
@@ -52,12 +52,7 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
     }
   }, [open, queueNumber, queueType, patientName, formattedQueueNumber]);
   
-  // Get estimated wait time from the QueueCreatedContent component
-  const updateEstimatedWaitTime = (time: number) => {
-    setEstimatedWaitTime(time);
-  };
-  
-  const handlePrint = () => {
+  const handlePrint = React.useCallback(() => {
     logger.info('PRINT BUTTON CLICKED');
     try {
       printQueueTicket({
@@ -76,9 +71,9 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
       logger.error('Error printing ticket:', error);
       toast.error('เกิดข้อผิดพลาดในการพิมพ์บัตรคิว', { id: "print-ticket" });
     }
-  };
+  }, [queueNumber, queueType, patientName, patientPhone, patientLineId, purpose, estimatedWaitTime]);
 
-  // Force focus on dialog when it opens
+  // Force focus on dialog when it opens - using a stable dependency array
   useEffect(() => {
     if (open && dialogRef.current) {
       const timer = setTimeout(() => {
