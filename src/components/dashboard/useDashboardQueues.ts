@@ -24,35 +24,61 @@ export const useDashboardQueues = () => {
     skipped: []
   });
   
+  // Memoize the queues array to prevent unnecessary re-renders
+  const queuesMemoized = React.useMemo(() => queues, [
+    // Only re-create when the queues length changes or when specific key properties change
+    queues?.length,
+    // Use a stable stringification of key queue properties
+    JSON.stringify(queues?.map(q => ({ id: q.id, status: q.status })))
+  ]);
+  
+  // Memoize the sort function
+  const sortQueuesMemoized = React.useMemo(() => sortQueues, [
+    // Create a stable reference by using a JSON string representation
+    JSON.stringify(sortQueues?.toString())
+  ]);
+  
   // Process queues when data changes
   React.useEffect(() => {
-    if (!Array.isArray(queues)) return;
+    if (!Array.isArray(queuesMemoized)) return;
     
     // Filter queues by status
-    const waiting = queues.filter(q => q.status === 'WAITING');
-    const active = queues.filter(q => q.status === 'ACTIVE');
-    const completed = queues.filter(q => q.status === 'COMPLETED');
-    const skipped = queues.filter(q => q.status === 'SKIPPED');
+    const waiting = queuesMemoized.filter(q => q.status === 'WAITING');
+    const active = queuesMemoized.filter(q => q.status === 'ACTIVE');
+    const completed = queuesMemoized.filter(q => q.status === 'COMPLETED');
+    const skipped = queuesMemoized.filter(q => q.status === 'SKIPPED');
     
     // Only apply sorting to waiting queues for efficiency
-    const sortedWaiting = sortQueues ? sortQueues(waiting) : waiting;
+    const sortedWaiting = sortQueuesMemoized ? sortQueuesMemoized(waiting) : waiting;
     
-    const processedQueues = {
-      waiting: sortedWaiting,
-      active,
-      completed,
-      skipped
-    };
-    
-    setQueuesByStatus(processedQueues);
-    
-    logger.info(
-      `Processed queues - Waiting: ${processedQueues.waiting.length}, ` +
-      `Active: ${processedQueues.active.length}, ` +
-      `Completed: ${processedQueues.completed.length}, ` +
-      `Skipped: ${processedQueues.skipped.length}`
-    );
-  }, [queues, sortQueues]); // Dependencies are now directly queues and sortQueues
+    // Compare with previous state to prevent unnecessary updates
+    setQueuesByStatus(prev => {
+      // Only update if there are actual changes
+      const hasChanged = 
+        prev.waiting.length !== sortedWaiting.length ||
+        prev.active.length !== active.length ||
+        prev.completed.length !== completed.length ||
+        prev.skipped.length !== skipped.length;
+      
+      if (!hasChanged) return prev;
+      
+      const newState = {
+        waiting: sortedWaiting,
+        active,
+        completed,
+        skipped
+      };
+      
+      logger.info(
+        `Processed queues - Waiting: ${newState.waiting.length}, ` +
+        `Active: ${newState.active.length}, ` +
+        `Completed: ${newState.completed.length}, ` +
+        `Skipped: ${newState.skipped.length}`
+      );
+      
+      return newState;
+    });
+  }, [queuesMemoized, sortQueuesMemoized]);
 
   return {
     waitingQueues: queuesByStatus.waiting,
