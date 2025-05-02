@@ -1,6 +1,6 @@
 
 import * as React from 'react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export const useOfflineStatus = () => {
   const [isOffline, setIsOffline] = React.useState(() => {
@@ -16,18 +16,16 @@ export const useOfflineStatus = () => {
     
     const handleOnline = () => {
       setIsOffline(false);
-      toast({
-        title: "Connected",
+      toast("Connected", {
         description: "การเชื่อมต่อกลับมาแล้ว คุณออนไลน์อยู่",
       });
     };
     
     const handleOffline = () => {
       setIsOffline(true);
-      toast({
-        title: "Disconnected",
+      toast("Disconnected", {
         description: "คุณกำลังออฟไลน์ บางฟีเจอร์อาจไม่ทำงาน",
-        variant: "destructive"
+        style: { backgroundColor: 'hsl(var(--destructive))', color: 'hsl(var(--destructive-foreground))' }
       });
     };
     

@@ -38,17 +38,11 @@ export const useCreateQueue = (
   }, [patientInfo, resetQueueCreation, resetQueueDialog]);
 
   const handleCreateQueue = async () => {
-    await baseHandleCreateQueue(
-      patientInfo.patientId,
-      patientInfo.selectedPatientName,
-      patientInfo.selectedPatientPhone,
-      patientInfo.selectedPatientLineId,
-      patientInfo.showNewPatientForm,
-      patientInfo.newPatientName,
-      patientInfo.phoneNumber,
-      patientInfo.createNewPatient,
-      patientInfo.updateFinalPatientInfo
-    );
+    try {
+      await baseHandleCreateQueue();
+    } catch (error) {
+      console.error('⭐ [useCreateQueue] Error in handleCreateQueue:', error);
+    }
   };
 
   return {
