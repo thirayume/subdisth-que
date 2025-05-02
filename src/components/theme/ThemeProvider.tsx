@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { ThemeProvider as NextThemesProvider, useTheme as useNextTheme } from "next-themes";
 import type { ThemeProviderProps } from "next-themes";
 
 // Ensure React is imported correctly
@@ -25,59 +25,78 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   );
 }
 
-// Import these at the top level
-import { useTheme as useNextTheme } from "next-themes";
-
-export const useTheme = () => {
-  const [mounted, setMounted] = React.useState(false);
-  const [themeState, setThemeState] = React.useState<Theme>("light");
+// Create a separate component that uses the next-themes hook
+function ThemeStateProvider({ children }: { children: React.ReactNode }) {
+  const { theme, setTheme } = useNextTheme();
   
-  // Use the next-themes hook directly (only works in client components)
-  const { theme: nextTheme, setTheme: nextSetTheme } = useNextTheme();
-  
-  // Effect to handle theme initialization
+  // Make the theme context available to our custom hook
   React.useEffect(() => {
-    try {
-      if (nextTheme) {
-        setThemeState(nextTheme as Theme);
-      }
-      
-      setMounted(true);
-      console.log("[ThemeProvider] Component mounted, theme:", nextTheme);
-      
-      // Set up a listener for theme changes
-      const handleThemeChange = () => {
-        if (nextTheme) {
-          setThemeState(nextTheme as Theme || "light");
-        }
+    if (theme) {
+      window.__themeState = {
+        theme: theme as Theme,
+        setTheme: (newTheme: Theme) => setTheme(newTheme)
       };
-      
-      window.addEventListener("theme-change", handleThemeChange);
-      
-      return () => {
-        window.removeEventListener("theme-change", handleThemeChange);
-      };
-    } catch (err) {
-      console.error("Error loading theme:", err);
-      setMounted(true);
+      window.dispatchEvent(new CustomEvent("theme-change"));
     }
-  }, [nextTheme]);
+  }, [theme, setTheme]);
   
+  return <>{children}</>;
+}
+
+// Augment the Window interface to include our theme state
+declare global {
+  interface Window {
+    __themeState?: {
+      theme: Theme;
+      setTheme: (theme: Theme) => void;
+    };
+  }
+}
+
+// Our custom hook that doesn't call hooks inside effects
+export const useTheme = () => {
+  const [themeState, setThemeState] = React.useState<Theme>("light");
+  const [mounted, setMounted] = React.useState(false);
+  
+  // Handle initial setup and subscribe to theme changes
+  React.useEffect(() => {
+    const updateTheme = () => {
+      if (window.__themeState) {
+        setThemeState(window.__themeState.theme);
+      }
+    };
+    
+    // Set initial state
+    updateTheme();
+    setMounted(true);
+    
+    // Listen for changes
+    window.addEventListener("theme-change", updateTheme);
+    
+    return () => {
+      window.removeEventListener("theme-change", updateTheme);
+    };
+  }, []);
+  
+  // Function to set the theme
   const setTheme = React.useCallback((newTheme: Theme) => {
     console.log("[ThemeProvider] Setting theme to:", newTheme);
-    try {
-      nextSetTheme(newTheme);
+    
+    if (window.__themeState) {
+      window.__themeState.setTheme(newTheme);
       setThemeState(newTheme);
-      
-      // Dispatch a custom event to notify about theme changes
-      window.dispatchEvent(new CustomEvent("theme-change"));
-    } catch (err) {
-      console.error("Error setting theme:", err);
     }
-  }, [nextSetTheme]);
+  }, []);
   
   return {
     theme: mounted ? themeState : "light",
     setTheme
   };
 };
+
+// Export a combined provider that includes both providers
+export const CombinedThemeProvider = ({ children, ...props }: ThemeProviderProps) => (
+  <ThemeProvider {...props}>
+    <ThemeStateProvider>{children}</ThemeStateProvider>
+  </ThemeProvider>
+);
