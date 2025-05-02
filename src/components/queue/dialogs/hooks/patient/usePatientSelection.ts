@@ -6,7 +6,6 @@ const logger = createLogger('usePatientSelection');
 
 export const usePatientSelection = () => {
   const [patientId, setPatientId] = React.useState('');
-  const [newPatientName, setNewPatientName] = React.useState('');
   const [selectedPatientName, setSelectedPatientName] = React.useState('');
   const [selectedPatientPhone, setSelectedPatientPhone] = React.useState('');
   const [selectedPatientLineId, setSelectedPatientLineId] = React.useState('');
@@ -15,9 +14,8 @@ export const usePatientSelection = () => {
   const [finalPatientLineId, setFinalPatientLineId] = React.useState('');
 
   const resetPatientSelection = () => {
-    logger.debug('Resetting all patient selection state'); // Changed from console.log to logger.debug
+    logger.debug('Resetting all patient selection state');
     setPatientId('');
-    setNewPatientName('');
     setSelectedPatientName('');
     setSelectedPatientPhone('');
     setSelectedPatientLineId('');
@@ -27,7 +25,7 @@ export const usePatientSelection = () => {
   };
 
   const handleSelectPatient = (id: string, patients: any[]) => {
-    logger.info(`Selecting patient with ID: ${id}`); // Changed to info level
+    logger.info(`Selecting patient with ID: ${id}`);
     const selectedPatient = patients.find(p => p.id === id);
     
     if (!selectedPatient) {
@@ -38,7 +36,7 @@ export const usePatientSelection = () => {
     setPatientId(id);
     
     if (selectedPatient) {
-      logger.debug('Patient found:', selectedPatient); // Changed from console.log to logger.debug
+      logger.debug('Patient found:', selectedPatient);
       setSelectedPatientName(selectedPatient.name);
       setSelectedPatientPhone(selectedPatient.phone || '');
       setSelectedPatientLineId(selectedPatient.line_id || '');
@@ -58,8 +56,6 @@ export const usePatientSelection = () => {
   return {
     patientId,
     setPatientId,
-    newPatientName,
-    setNewPatientName,
     selectedPatientName,
     selectedPatientPhone,
     selectedPatientLineId,

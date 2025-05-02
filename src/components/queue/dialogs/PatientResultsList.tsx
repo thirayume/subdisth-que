@@ -1,13 +1,11 @@
 
 import React from 'react';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
 import { Patient } from '@/integrations/supabase/schema';
 
 interface PatientResultsListProps {
   matchedPatients: Patient[];
-  patientId: string;
+  patientId: string | null;
   handleSelectPatient: (id: string) => void;
   handleAddNewPatient: () => void;
 }
@@ -18,46 +16,50 @@ const PatientResultsList: React.FC<PatientResultsListProps> = ({
   handleSelectPatient,
   handleAddNewPatient
 }) => {
-  if (matchedPatients.length === 0) {
+  if (!matchedPatients || matchedPatients.length === 0) {
     return null;
   }
 
   return (
-    <div className="grid gap-2">
-      <div className="flex justify-between items-center">
-        <Label>ผู้ป่วยที่พบ</Label>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={handleAddNewPatient}
-          className="h-8 px-2 text-xs"
-        >
-          <PlusCircle className="h-3.5 w-3.5 mr-1" />
-          เพิ่มผู้ป่วยใหม่
-        </Button>
-      </div>
-      <div className="border rounded-md p-1 bg-muted/30 space-y-1">
-        {matchedPatients.map(patient => (
+    <div className="border rounded-md p-4">
+      <h3 className="text-sm font-medium mb-2">ผลการค้นหา ({matchedPatients.length} รายการ)</h3>
+      <div className="space-y-2">
+        {matchedPatients.map((patient) => (
           <div 
-            key={patient.id} 
-            className={`p-2 rounded-sm cursor-pointer hover:bg-muted flex justify-between ${patientId === patient.id ? 'bg-muted' : ''}`}
-            onClick={() => handleSelectPatient(patient.id)}
+            key={patient.id}
+            className={`flex items-center justify-between p-2 rounded-md ${
+              patientId === patient.id 
+                ? 'bg-pharmacy-100 border border-pharmacy-400' 
+                : 'bg-gray-50 hover:bg-gray-100'
+            }`}
           >
-            <span>{patient.name}</span>
-            <span className="text-muted-foreground text-sm">{patient.phone}</span>
+            <div>
+              <p className="font-medium">{patient.name}</p>
+              <p className="text-xs text-gray-500">
+                {patient.phone}
+                {patient.patient_id && ` • รหัส: ${patient.patient_id}`}
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant={patientId === patient.id ? "outline" : "default"}
+              className={patientId === patient.id ? "border-pharmacy-400 text-gray-700" : ""}
+              onClick={() => handleSelectPatient(patient.id)}
+            >
+              {patientId === patient.id ? 'เลือกแล้ว' : 'เลือก'}
+            </Button>
           </div>
         ))}
       </div>
-      
-      {/* Hidden input to store patient data for form submission */}
-      <input 
-        type="hidden" 
-        id="patientId" 
-        data-patient-id={patientId || ''} 
-        data-patient-name={matchedPatients.find(p => p.id === patientId)?.name || ''} 
-        data-patient-phone={matchedPatients.find(p => p.id === patientId)?.phone || ''}
-        data-patient-line-id={matchedPatients.find(p => p.id === patientId)?.line_id || ''}
-      />
+      <div className="mt-4 text-center">
+        <Button 
+          variant="link" 
+          className="text-pharmacy-600"
+          onClick={handleAddNewPatient}
+        >
+          เพิ่มผู้ป่วยใหม่
+        </Button>
+      </div>
     </div>
   );
 };

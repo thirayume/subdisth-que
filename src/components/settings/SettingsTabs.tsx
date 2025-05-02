@@ -1,12 +1,6 @@
 
 import * as React from 'react';
-import { UseFormReturn } from 'react-hook-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import GeneralSettings from './GeneralSettings';
-import QueueSettings from './QueueSettings';
-import NotificationSettings from './NotificationSettings';
-import LineSettings from './LineSettings';
-import LoggingSettingsSection from './LoggingSettingsSection';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('SettingsTabs');

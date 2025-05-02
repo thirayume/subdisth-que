@@ -14,7 +14,7 @@ export const usePatientSearch = () => {
   const [showNewPatientForm, setShowNewPatientForm] = React.useState(false);
   
   const resetPatientSearch = () => {
-    logger.debug('Resetting patient search state'); // Changed from info to debug
+    logger.debug('Resetting patient search state');
     setPhoneNumber('');
     setIsSearching(false);
     setMatchedPatients([]);
@@ -22,19 +22,19 @@ export const usePatientSearch = () => {
   };
 
   const handlePhoneSearch = async () => {
-    logger.debug(`Starting phone search for: "${phoneNumber}"`); // Changed from verbose to debug
+    logger.debug(`Starting phone search for: "${phoneNumber}"`);
     
     if (!phoneNumber) {
-      logger.warn('Phone number is empty, showing error toast'); // Changed from log to warn
+      logger.warn('Phone number is empty, showing error toast');
       toast.error('กรุณากรอกเบอร์โทรศัพท์');
       return [];
     }
 
     setIsSearching(true);
-    logger.debug('Setting isSearching to true'); // Changed from verbose to debug
+    logger.debug('Setting isSearching to true');
     
     try {
-      logger.debug('Making Supabase request to search for patients'); // Changed from verbose to debug
+      logger.debug('Making Supabase request to search for patients');
       const { data, error } = await supabase
         .from('patients')
         .select('*')
@@ -46,7 +46,7 @@ export const usePatientSearch = () => {
       }
       
       const patients = data || [];
-      logger.info(`Found ${patients.length} patients with phone number containing "${phoneNumber}"`); // More informative message
+      logger.info(`Found ${patients.length} patients with phone number containing "${phoneNumber}"`);
       setMatchedPatients(patients);
       
       if (patients.length === 0) {
@@ -68,11 +68,6 @@ export const usePatientSearch = () => {
     }
   };
 
-  const handleAddNewPatient = () => {
-    console.log('[usePatientSearch] Adding new patient, showing form');
-    setShowNewPatientForm(true);
-  };
-
   return {
     phoneNumber,
     setPhoneNumber,
@@ -81,7 +76,6 @@ export const usePatientSearch = () => {
     showNewPatientForm,
     setShowNewPatientForm,
     handlePhoneSearch,
-    handleAddNewPatient,
     resetPatientSearch
   };
 };

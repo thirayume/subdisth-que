@@ -1,70 +1,77 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { LogLevel, getLogLevel, setLogLevel } from '@/utils/logger';
 import { toast } from 'sonner';
+import { LogLevel } from '@/utils/logger';
 
-const LoggingSettingsSection = () => {
-  const [currentLevel, setCurrentLevel] = useState<LogLevel>(LogLevel.WARN);
+const LoggingSettingsSection: React.FC = () => {
+  const [logLevel, setLogLevel] = useState<string>('INFO');
 
+  // Load the current log level when the component mounts
   useEffect(() => {
-    setCurrentLevel(getLogLevel());
+    const storedLogLevel = localStorage.getItem('log_level') || 'INFO';
+    setLogLevel(storedLogLevel);
   }, []);
 
-  const handleChangeLogLevel = (value: string) => {
-    const level = Number(value) as LogLevel;
-    setCurrentLevel(level);
-  };
-
-  const handleSaveSettings = () => {
-    setLogLevel(currentLevel);
-    toast.success('จะรีเฟรชหน้าจอเพื่ออัปเดตการตั้งค่า');
+  const handleSaveLogLevel = () => {
+    localStorage.setItem('log_level', logLevel);
+    
+    // Reload the application to apply the new log level
+    // We're using this method because logger is initialized at application start
+    window.location.reload();
   };
 
   return (
-    <Card className="mb-6">
+    <Card>
       <CardHeader>
-        <CardTitle>การตั้งค่า Logging</CardTitle>
+        <CardTitle>การบันทึกข้อมูล (Logging)</CardTitle>
         <CardDescription>
-          กำหนดระดับการแสดงข้อมูล log ในคอนโซลสำหรับการพัฒนาและแก้ไขปัญหา
+          ตั้งค่าระดับการบันทึกข้อมูลในคอนโซลสำหรับการพัฒนาและแก้ไขปัญหา
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="logLevel">ระดับ Log</Label>
-            <Select 
-              value={currentLevel.toString()} 
-              onValueChange={handleChangeLogLevel}
+        <div className="space-y-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="logLevel" className="col-span-1">
+              ระดับการบันทึก
+            </Label>
+            <Select
+              value={logLevel}
+              onValueChange={setLogLevel}
             >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="เลือกระดับ Log" />
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="เลือกระดับการบันทึก" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={LogLevel.NONE.toString()}>ไม่แสดง Log (None)</SelectItem>
-                <SelectItem value={LogLevel.ERROR.toString()}>เฉพาะข้อผิดพลาด (Error)</SelectItem>
-                <SelectItem value={LogLevel.WARN.toString()}>คำเตือนและข้อผิดพลาด (Warning)</SelectItem>
-                <SelectItem value={LogLevel.INFO.toString()}>ข้อมูลทั่วไป (Info)</SelectItem>
-                <SelectItem value={LogLevel.DEBUG.toString()}>ข้อมูลดีบัก (Debug)</SelectItem>
-                <SelectItem value={LogLevel.VERBOSE.toString()}>แสดงทั้งหมด (Verbose)</SelectItem>
+                <SelectItem value="NONE">ไม่บันทึก (NONE)</SelectItem>
+                <SelectItem value="ERROR">ข้อผิดพลาดเท่านั้น (ERROR)</SelectItem>
+                <SelectItem value="WARN">คำเตือนและข้อผิดพลาด (WARN)</SelectItem>
+                <SelectItem value="INFO">ข้อมูลทั่วไป (INFO)</SelectItem>
+                <SelectItem value="DEBUG">ข้อมูลการแก้ไขปัญหา (DEBUG)</SelectItem>
+                <SelectItem value="VERBOSE">ข้อมูลอย่างละเอียด (VERBOSE)</SelectItem>
               </SelectContent>
             </Select>
-            
-            <div className="mt-4">
-              <p className="text-sm text-muted-foreground mb-2">
-                ระดับ Log สูงขึ้นจะแสดงข้อมูลมากขึ้น แต่อาจทำให้คอนโซลเต็มได้
-              </p>
-              <p className="text-xs text-muted-foreground mb-4">
-                การเปลี่ยนระดับ Log จะต้องรีเฟรชหน้าจอเพื่อใช้งาน
-              </p>
-            </div>
-            
-            <Button onClick={handleSaveSettings}>
-              บันทึกการตั้งค่า
+          </div>
+          
+          <div className="flex justify-end">
+            <Button onClick={handleSaveLogLevel}>
+              บันทึกและรีโหลด
             </Button>
+          </div>
+          
+          <div className="mt-4 p-3 bg-gray-100 rounded-md text-sm">
+            <h4 className="font-semibold mb-2">ระดับการบันทึกข้อมูล:</h4>
+            <ul className="list-disc pl-5 space-y-1">
+              <li><span className="font-mono">NONE</span> - ไม่บันทึกข้อมูลใดๆ</li>
+              <li><span className="font-mono">ERROR</span> - บันทึกเฉพาะข้อผิดพลาดร้ายแรง</li>
+              <li><span className="font-mono">WARN</span> - บันทึกข้อมูลคำเตือนและข้อผิดพลาด</li>
+              <li><span className="font-mono">INFO</span> - บันทึกข้อมูลสำคัญของแอปพลิเคชัน (ค่าเริ่มต้น)</li>
+              <li><span className="font-mono">DEBUG</span> - บันทึกข้อมูลที่ใช้ในการแก้ไขปัญหา</li>
+              <li><span className="font-mono">VERBOSE</span> - บันทึกข้อมูลทั้งหมดอย่างละเอียด</li>
+            </ul>
           </div>
         </div>
       </CardContent>
