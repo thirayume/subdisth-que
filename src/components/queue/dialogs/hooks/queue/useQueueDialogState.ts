@@ -13,7 +13,7 @@ export const useQueueDialogState = (onOpenChange: (open: boolean) => void) => {
 
   // Reset all state
   const resetQueueDialog = React.useCallback(() => {
-    logger.debug('Resetting dialog state');
+    logger.verbose('Resetting dialog state'); // Changed from debug to verbose
     setQrDialogOpen(false);
     setCreatedQueueNumber(null);
     setCreatedQueueType('GENERAL');

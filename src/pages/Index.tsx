@@ -12,7 +12,7 @@ import { createLogger } from '@/utils/logger';
 const logger = createLogger('Dashboard');
 
 const Dashboard = () => {
-  logger.info('Dashboard component rendering');
+  logger.debug('Dashboard component rendering');
   
   // Get patients and queue data 
   const { patients = [] } = usePatients() || { patients: [] };

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { QueueType } from '@/integrations/supabase/schema';
@@ -34,7 +33,7 @@ const QueueCreatedDialog: React.FC<QueueCreatedDialogProps> = ({
   patientLineId = '',
   purpose = '',
 }) => {
-  logger.debug(`Rendering with open=${open}, queueNumber=${queueNumber}, queueType=${queueType}`);
+  logger.verbose(`Rendering with open=${open}, queueNumber=${queueNumber}, queueType=${queueType}`);
   const dialogRef = useRef<HTMLDivElement>(null);
   const formattedQueueNumber = formatQueueNumber(queueType, queueNumber);
   

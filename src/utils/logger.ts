@@ -20,7 +20,7 @@ const currentLogLevel = process.env.NODE_ENV === 'production'
   ? LogLevel.ERROR 
   : (localStorage.getItem('logLevel') 
       ? Number(localStorage.getItem('logLevel')) 
-      : LogLevel.INFO);
+      : LogLevel.WARN); // Changed from INFO to WARN to reduce logging
 
 // Allowed modules to log, empty means allow all
 // Add module names to this array to allow them to log, e.g. ['queue', 'patient']
@@ -94,3 +94,4 @@ export function getLogLevel(): LogLevel {
 
 // Export a default logger for quick use
 export default createLogger('app');
+

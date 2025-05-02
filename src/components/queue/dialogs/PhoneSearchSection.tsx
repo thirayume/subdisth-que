@@ -23,22 +23,22 @@ const PhoneSearchSection: React.FC<PhoneSearchSectionProps> = ({
 }) => {
   // Log only when important values change
   useEffect(() => {
-    logger.debug(`Current phone number: "${phoneNumber}", isSearching: ${isSearching}`);
+    logger.verbose(`Current phone number: "${phoneNumber}", isSearching: ${isSearching}`);
   }, [phoneNumber, isSearching]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    logger.debug(`Phone number input changed: ${e.target.value}`);
+    logger.verbose(`Phone number input changed: ${e.target.value}`);
     setPhoneNumber(e.target.value);
   };
   
   const handleSearchClick = () => {
-    logger.info(`Searching for phone number: ${phoneNumber}`);
+    logger.debug(`Searching for phone number: ${phoneNumber}`);
     handlePhoneSearch();
   };
   
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      logger.info(`Enter key pressed, searching for: ${phoneNumber}`);
+      logger.debug(`Enter key pressed, searching for: ${phoneNumber}`);
       e.preventDefault();
       handlePhoneSearch();
     }

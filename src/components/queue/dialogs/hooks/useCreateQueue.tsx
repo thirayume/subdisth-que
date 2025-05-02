@@ -42,6 +42,7 @@ export const useCreateQueue = (
 
   const handleCreateQueue = async () => {
     try {
+      logger.info('Creating new queue');
       await baseHandleCreateQueue();
     } catch (error) {
       logger.error('Error in handleCreateQueue:', error);

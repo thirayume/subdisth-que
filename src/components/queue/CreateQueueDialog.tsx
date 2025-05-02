@@ -30,7 +30,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
   onOpenChange,
   onCreateQueue,
 }) => {
-  logger.debug(`Rendering with open=${open}`);
+  logger.verbose(`Rendering with open=${open}`); // Changed from debug to verbose
   
   const {
     phoneNumber,
@@ -74,8 +74,8 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
   // Add debug logging for QR dialog state
   React.useEffect(() => {
     logger.debug(`QR dialog state changed:`);
-    logger.debug(`- qrDialogOpen: ${qrDialogOpen}`);
-    logger.debug(`- createdQueueNumber: ${createdQueueNumber}`);
+    logger.verbose(`- qrDialogOpen: ${qrDialogOpen}`); // Changed from debug to verbose
+    logger.verbose(`- createdQueueNumber: ${createdQueueNumber}`); // Changed from debug to verbose
     logger.debug(`- QR dialog should show: ${qrDialogOpen && createdQueueNumber !== null}`);
   }, [qrDialogOpen, createdQueueNumber]);
 

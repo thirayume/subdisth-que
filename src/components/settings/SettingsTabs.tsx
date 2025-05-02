@@ -1,39 +1,47 @@
 
-import React from 'react';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import { Settings as SettingsIcon, Bell, Globe, ClipboardList } from 'lucide-react';
+import * as React from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import GeneralSettings from './GeneralSettings';
+import QueueSettings from './QueueSettings';
+import NotificationSettings from './NotificationSettings';
+import LineSettings from './LineSettings';
+import LoggingSettingsSection from './LoggingSettingsSection';
+import { createLogger } from '@/utils/logger';
 
-interface SettingsTabsProps {
-  children: React.ReactNode;
-}
+const logger = createLogger('SettingsTabs');
 
-const SettingsTabs: React.FC<SettingsTabsProps> = ({ children }) => {
+const SettingsTabs = () => {
+  logger.debug('Rendering settings tabs');
+  
   return (
-    <Tabs defaultValue="general" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-1 md:grid-cols-4">
-        <TabsTrigger value="general" className="flex items-center gap-2">
-          <SettingsIcon className="h-4 w-4" />
-          <span>ทั่วไป</span>
-        </TabsTrigger>
-        <TabsTrigger value="queue" className="flex items-center gap-2">
-          <ClipboardList className="h-4 w-4" />
-          <span>การจัดการคิว</span>
-        </TabsTrigger>
-        <TabsTrigger value="notification" className="flex items-center gap-2">
-          <Bell className="h-4 w-4" />
-          <span>การแจ้งเตือน</span>
-        </TabsTrigger>
-        <TabsTrigger value="line" className="flex items-center gap-2">
-          <Globe className="h-4 w-4" />
-          <span>ตั้งค่า LINE</span>
-        </TabsTrigger>
+    <Tabs defaultValue="general" className="w-full">
+      <TabsList className="grid grid-cols-5 mb-8">
+        <TabsTrigger value="general">ทั่วไป</TabsTrigger>
+        <TabsTrigger value="queue">คิว</TabsTrigger>
+        <TabsTrigger value="notifications">แจ้งเตือน</TabsTrigger>
+        <TabsTrigger value="line">LINE</TabsTrigger>
+        <TabsTrigger value="developer">Developer</TabsTrigger>
       </TabsList>
-      {children}
+      
+      <TabsContent value="general">
+        <GeneralSettings />
+      </TabsContent>
+      
+      <TabsContent value="queue">
+        <QueueSettings />
+      </TabsContent>
+      
+      <TabsContent value="notifications">
+        <NotificationSettings />
+      </TabsContent>
+      
+      <TabsContent value="line">
+        <LineSettings />
+      </TabsContent>
+      
+      <TabsContent value="developer">
+        <LoggingSettingsSection />
+      </TabsContent>
     </Tabs>
   );
 };

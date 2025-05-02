@@ -1,5 +1,8 @@
 
 import * as React from 'react';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('usePatientSelection');
 
 export const usePatientSelection = () => {
   const [patientId, setPatientId] = React.useState('');
@@ -12,7 +15,7 @@ export const usePatientSelection = () => {
   const [finalPatientLineId, setFinalPatientLineId] = React.useState('');
 
   const resetPatientSelection = () => {
-    console.log('[usePatientSelection] Resetting all patient selection state');
+    logger.debug('Resetting all patient selection state'); // Changed from console.log to logger.debug
     setPatientId('');
     setNewPatientName('');
     setSelectedPatientName('');
@@ -24,29 +27,29 @@ export const usePatientSelection = () => {
   };
 
   const handleSelectPatient = (id: string, patients: any[]) => {
-    console.log(`[usePatientSelection] Selecting patient with ID: ${id}`);
+    logger.info(`Selecting patient with ID: ${id}`); // Changed to info level
     const selectedPatient = patients.find(p => p.id === id);
     
     if (!selectedPatient) {
-      console.error('[usePatientSelection] Selected patient not found!', { id, patients });
+      logger.error('Selected patient not found!', { id, patients });
       return;
     }
     
     setPatientId(id);
     
     if (selectedPatient) {
-      console.log('[usePatientSelection] Patient found:', selectedPatient);
+      logger.debug('Patient found:', selectedPatient); // Changed from console.log to logger.debug
       setSelectedPatientName(selectedPatient.name);
       setSelectedPatientPhone(selectedPatient.phone || '');
       setSelectedPatientLineId(selectedPatient.line_id || '');
-      console.log(`[usePatientSelection] Set name: ${selectedPatient.name}, phone: ${selectedPatient.phone}, lineId: ${selectedPatient.line_id || 'none'}`);
+      logger.verbose(`Set name: ${selectedPatient.name}, phone: ${selectedPatient.phone}, lineId: ${selectedPatient.line_id || 'none'}`);
     } else {
-      console.warn('[usePatientSelection] Selected patient not found in patients array');
+      logger.warn('Selected patient not found in patients array');
     }
   };
 
   const updateFinalPatientInfo = (name: string, phone: string, lineId: string = '') => {
-    console.log(`[usePatientSelection] Updating final patient info - name: ${name}, phone: ${phone}, lineId: ${lineId}`);
+    logger.debug(`Updating final patient info - name: ${name}, phone: ${phone}, lineId: ${lineId}`);
     setFinalPatientName(name);
     setFinalPatientPhone(phone);
     setFinalPatientLineId(lineId);

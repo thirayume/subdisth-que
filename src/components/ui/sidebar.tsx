@@ -31,7 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   // Use our custom theme hook if needed
   const { theme } = useTheme();
   
-  logger.debug('Component rendering');
+  logger.debug('Component rendering'); // Changed from info to debug
   
   return (
     <NavigationMenu className={cn("hidden lg:flex items-center", className)}>

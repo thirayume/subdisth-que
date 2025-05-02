@@ -3,6 +3,9 @@ import * as React from 'react';
 import { toast } from 'sonner';
 import { Patient } from '@/integrations/supabase/schema';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('usePatientSearch');
 
 export const usePatientSearch = () => {
   const [phoneNumber, setPhoneNumber] = React.useState('');
@@ -11,7 +14,7 @@ export const usePatientSearch = () => {
   const [showNewPatientForm, setShowNewPatientForm] = React.useState(false);
   
   const resetPatientSearch = () => {
-    console.log('[usePatientSearch] Resetting patient search state');
+    logger.debug('Resetting patient search state'); // Changed from info to debug
     setPhoneNumber('');
     setIsSearching(false);
     setMatchedPatients([]);
@@ -19,48 +22,48 @@ export const usePatientSearch = () => {
   };
 
   const handlePhoneSearch = async () => {
-    console.log(`[usePatientSearch] Starting phone search for: "${phoneNumber}"`);
+    logger.debug(`Starting phone search for: "${phoneNumber}"`); // Changed from verbose to debug
     
     if (!phoneNumber) {
-      console.log('[usePatientSearch] Phone number is empty, showing error toast');
+      logger.warn('Phone number is empty, showing error toast'); // Changed from log to warn
       toast.error('กรุณากรอกเบอร์โทรศัพท์');
       return [];
     }
 
     setIsSearching(true);
-    console.log('[usePatientSearch] Setting isSearching to true');
+    logger.debug('Setting isSearching to true'); // Changed from verbose to debug
     
     try {
-      console.log('[usePatientSearch] Making Supabase request to search for patients');
+      logger.debug('Making Supabase request to search for patients'); // Changed from verbose to debug
       const { data, error } = await supabase
         .from('patients')
         .select('*')
         .ilike('phone', `%${phoneNumber}%`);
         
       if (error) {
-        console.error('[usePatientSearch] Supabase error:', error);
+        logger.error('Supabase error:', error);
         throw error;
       }
       
       const patients = data || [];
-      console.log(`[usePatientSearch] Found ${patients.length} patients:`, patients);
+      logger.info(`Found ${patients.length} patients with phone number containing "${phoneNumber}"`); // More informative message
       setMatchedPatients(patients);
       
       if (patients.length === 0) {
-        console.log('[usePatientSearch] No patients found, showing new patient form');
+        logger.debug('No patients found, showing new patient form');
         setShowNewPatientForm(true);
       } else {
-        console.log('[usePatientSearch] Patients found, hiding new patient form');
+        logger.debug('Patients found, hiding new patient form');
         setShowNewPatientForm(false);
       }
       
       return patients;
     } catch (err: any) {
-      console.error('[usePatientSearch] Error searching for patients:', err);
+      logger.error('Error searching for patients:', err);
       toast.error('ไม่สามารถค้นหาข้อมูลผู้ป่วยได้');
       return [];
     } finally {
-      console.log('[usePatientSearch] Search completed, setting isSearching to false');
+      logger.debug('Search completed, setting isSearching to false');
       setIsSearching(false);
     }
   };

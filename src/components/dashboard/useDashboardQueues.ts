@@ -1,9 +1,12 @@
 
 import * as React from 'react';
 import { useQueues } from '@/hooks/useQueues';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('useDashboardQueues');
 
 export const useDashboardQueues = () => {
-  console.log('[useDashboardQueues] Hook initialized');
+  logger.debug('Hook initialized');
   const { queues, sortQueues } = useQueues() || { queues: [], sortQueues: (q) => q };
   
   const [waitingQueues, setWaitingQueues] = React.useState([]);
@@ -11,7 +14,7 @@ export const useDashboardQueues = () => {
   const [completedQueues, setCompletedQueues] = React.useState([]);
 
   React.useEffect(() => {
-    console.log('[useDashboardQueues] Queues updated, filtering by status');
+    logger.debug('Queues updated, filtering by status');
     if (queues && Array.isArray(queues)) {
       const waiting = queues.filter(q => q.status === 'WAITING');
       const active = queues.filter(q => q.status === 'ACTIVE');
@@ -20,6 +23,8 @@ export const useDashboardQueues = () => {
       setWaitingQueues(sortQueues(waiting));
       setActiveQueues(active);
       setCompletedQueues(completed);
+      
+      logger.info(`Filtered queues - Waiting: ${waiting.length}, Active: ${active.length}, Completed: ${completed.length}`);
     }
   }, [queues, sortQueues]);
 

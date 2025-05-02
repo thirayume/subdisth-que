@@ -10,6 +10,9 @@ import QueueBoardContent from './QueueBoardContent';
 import HospitalFooter from '@/components/queue/HospitalFooter';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('QueueBoard');
 
 // Define queue status constants to use as values
 const QUEUE_STATUS = {
@@ -20,6 +23,8 @@ const QUEUE_STATUS = {
 };
 
 const QueueBoardContainer = () => {
+  logger.debug('Rendering QueueBoardContainer');
+  
   const [currentTime, setCurrentTime] = useState(new Date());
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [currentAlgorithm, setCurrentAlgorithm] = useState<QueueAlgorithmType>(QueueAlgorithmType.FIFO);
@@ -64,8 +69,10 @@ const QueueBoardContainer = () => {
         setCompletedQueues(completed.sort((a, b) => 
           new Date(b.completed_at || b.updated_at).getTime() - 
           new Date(a.completed_at || a.updated_at).getTime()).slice(0, 5));
+          
+        logger.info(`Fetched queues - Active: ${active.length}, Waiting: ${waiting.length}, Completed: ${completed.length}`);
       } catch (error) {
-        console.error('Error fetching queues:', error);
+        logger.error('Error fetching queues:', error);
         toast.error('ไม่สามารถดึงข้อมูลคิวได้');
       }
     };
@@ -78,7 +85,7 @@ const QueueBoardContainer = () => {
       .on('postgres_changes', 
           { event: '*', schema: 'public', table: 'queues' },
           (payload) => {
-            console.log('Queue change detected:', payload);
+            logger.debug('Queue change detected:', payload);
             fetchQueues(); // Refresh data when changes occur
           }
       )
