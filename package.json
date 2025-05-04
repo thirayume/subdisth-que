@@ -9,13 +9,8 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy-function": "supabase functions deploy get_patient_medications --project-ref lkclreldnbejfubzhube",
-    "supabase:login": "supabase login",
-    "supabase:init": "supabase init",
-    "supabase:new-function": "supabase functions new",
-    "supabase:serve": "supabase functions serve",
-    "netlify:deploy": "netlify build && netlify deploy --prod",
-    "supabase:recreate-function": "rimraf supabase\\functions\\$1 && supabase functions new $1"
+    "supabase:prepare-function": "cd supabase/functions/get_patient_medications && zip -r ../get_patient_medications.zip .",
+    "netlify:deploy": "netlify build && netlify deploy --prod"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

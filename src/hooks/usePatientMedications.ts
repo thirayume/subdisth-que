@@ -69,7 +69,7 @@ export const usePatientMedications = (patientId: string) => {
 
   const addPatientMedication = async (medicationData: Omit<PatientMedication, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      const { data, error } = await supabase.functions.invoke<any>("add_patient_medication", {
+      const { data, error } = await supabase.functions.invoke<{ id: string }>("add_patient_medication", {
         body: { 
           p_patient_id: patientId,
           p_medication_id: medicationData.medication_id,
@@ -84,10 +84,10 @@ export const usePatientMedications = (patientId: string) => {
       if (error) throw error;
       
       // Refresh the medications list after adding
-      fetchPatientMedications();
+      fetchPatientMedications(patientId);
       toast.success('เพิ่มข้อมูลยาสำหรับผู้ป่วยเรียบร้อยแล้ว');
       return data;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error adding patient medication:', err);
       toast.error('ไม่สามารถเพิ่มข้อมูลยาสำหรับผู้ป่วยได้');
       return null;
@@ -99,7 +99,7 @@ export const usePatientMedications = (patientId: string) => {
     medicationData: Partial<PatientMedication>
   ) => {
     try {
-      const { data, error } = await supabase.functions.invoke<any>("update_patient_medication", {
+      const { data, error } = await supabase.functions.invoke<{ success: boolean }>("update_patient_medication", {
         body: {
           p_id: id,
           p_medication_id: medicationData.medication_id,
@@ -114,10 +114,10 @@ export const usePatientMedications = (patientId: string) => {
       if (error) throw error;
       
       // Refresh the medications list after updating
-      fetchPatientMedications();
+      fetchPatientMedications(patientId);
       toast.success('อัปเดตข้อมูลยาสำหรับผู้ป่วยเรียบร้อยแล้ว');
       return data;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating patient medication:', err);
       toast.error('ไม่สามารถอัปเดตข้อมูลยาสำหรับผู้ป่วยได้');
       return null;
@@ -126,17 +126,17 @@ export const usePatientMedications = (patientId: string) => {
 
   const deletePatientMedication = async (id: string) => {
     try {
-      const { error } = await supabase.functions.invoke<any>("delete_patient_medication", {
+      const { error } = await supabase.functions.invoke<{ success: boolean }>("delete_patient_medication", {
         body: { p_id: id }
       });
 
       if (error) throw error;
 
       // Refresh the medications list after deleting
-      fetchPatientMedications();
+      fetchPatientMedications(patientId);
       toast.success('ลบข้อมูลยาสำหรับผู้ป่วยเรียบร้อยแล้ว');
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error deleting patient medication:', err);
       toast.error('ไม่สามารถลบข้อมูลยาสำหรับผู้ป่วยได้');
       return false;
@@ -146,7 +146,7 @@ export const usePatientMedications = (patientId: string) => {
   // Initial fetch on component mount
   useEffect(() => {
     if (patientId) {
-      fetchPatientMedications();
+      fetchPatientMedications(patientId);
     }
   }, [patientId]);
 
@@ -182,5 +182,3 @@ export const usePatientMedications = (patientId: string) => {
     speakMedicationInstructions
   };
 };
-
-// Remove the duplicate function outside the hook
