@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { speakText } from '@/utils/textToSpeech';
 
 interface PatientMedication {
   id: string;
@@ -26,38 +27,43 @@ export const usePatientMedications = (patientId: string) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPatientMedications = async () => {
+  const fetchPatientMedications = async (patientId: string) => {
     try {
-      setLoading(true);
-      setError(null);
-
-      // Call the Supabase function with proper typing
-      const { data, error: queryError } = await supabase.functions.invoke<any>("get_patient_medications", {
-        body: { p_patient_id: patientId }
-      });
-
-      if (queryError) throw queryError;
+      console.log('Fetching medications for patient:', patientId);
       
-      // Parse and set medications - safely handle the response structure
-      let parsedData: PatientMedication[] = [];
-      if (data && Array.isArray(data)) {
-        // If data is directly an array of medications
-        if (data.length > 0 && typeof data[0] === 'object' && 'id' in data[0]) {
-          parsedData = data as PatientMedication[];
-        } 
-        // If data is an array with a single item that contains the medications array
-        else if (data.length > 0 && Array.isArray(data[0])) {
-          parsedData = data[0] as PatientMedication[];
-        }
+      // Get the current session to include the auth token
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (!sessionData.session) {
+        setError('ไม่พบข้อมูลการเข้าสู่ระบบ กรุณาเข้าสู่ระบบก่อนใช้งาน');
+        setLoading(false);
+        return [];
       }
       
-      setMedications(parsedData);
-    } catch (err: any) {
-      console.error('Error fetching patient medications:', err);
-      setError(err.message);
-      toast.error('ไม่สามารถดึงข้อมูลยาของผู้ป่วยได้');
-    } finally {
-      setLoading(false);
+      const response = await fetch(
+        'https://lkclreldnbejfubzhube.supabase.co/functions/v1/get_patient_medications',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionData.session.access_token}`,
+          },
+          body: JSON.stringify({ patientId }),
+        }
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Error response:', errorData);
+        throw new Error(errorData.error || `Failed with status: ${response.status}`);
+      }
+      
+      const responseData = await response.json();
+      console.log('Received data:', responseData);
+      return responseData.data;
+    } catch (error) {
+      console.error('Error fetching patient medications:', error);
+      throw error;
     }
   };
 
@@ -144,6 +150,27 @@ export const usePatientMedications = (patientId: string) => {
     }
   }, [patientId]);
 
+  // Function to speak medication instructions with enhanced Thai support
+  const speakMedicationInstructions = (medication: PatientMedication) => {
+    if (!medication || !medication.medication) {
+      toast.error('ไม่พบข้อมูลยาที่จะอ่าน');
+      return;
+    }
+    
+    const text = `ยา${medication.medication.name} ขนาด ${medication.dosage} ${medication.medication.unit || ''} ${medication.instructions || ''}`;
+    
+    // Enhanced options for Thai voice
+    speakText(text, {
+      language: 'th-TH',
+      rate: 0.8,  // Slightly slower for better Thai pronunciation
+      pitch: 1.0,
+      volume: 1.0
+    }).catch(error => {
+      console.error('Error speaking text:', error);
+      toast.error('ไม่สามารถอ่านข้อมูลยาได้ กรุณาตรวจสอบการตั้งค่าเสียงของเบราว์เซอร์');
+    });
+  };
+
   return {
     medications,
     loading,
@@ -151,6 +178,9 @@ export const usePatientMedications = (patientId: string) => {
     fetchPatientMedications,
     addPatientMedication,
     updatePatientMedication,
-    deletePatientMedication
+    deletePatientMedication,
+    speakMedicationInstructions
   };
 };
+
+// Remove the duplicate function outside the hook
