@@ -74,7 +74,7 @@ const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({
         </TabsContent>
       </Tabs>
       
-      <div className="mt-4 sm:mt-6 text-center">
+      {/* <div className="mt-4 sm:mt-6 text-center">
         <Button 
           variant="outline" 
           onClick={() => navigate('/')}
@@ -82,7 +82,7 @@ const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({
         >
           กลับไปหน้าหลัก
         </Button>
-      </div>
+      </div> */}
     </div>
   );
 };

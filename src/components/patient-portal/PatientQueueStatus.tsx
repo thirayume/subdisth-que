@@ -151,7 +151,7 @@ const PatientQueueStatus: React.FC<PatientQueueStatusProps> = ({ queue, patient,
           </>
         )}
         
-        <div className={`text-center ${isMobile ? 'pt-2' : 'pt-4'}`}>
+        {/* <div className={`text-center ${isMobile ? 'pt-2' : 'pt-4'}`}>
           <p className="text-sm mb-2">แสกนเพื่อติดตามคิวผ่าน LINE</p>
           <div className="flex justify-center">
             <LineQRCode 
@@ -160,7 +160,7 @@ const PatientQueueStatus: React.FC<PatientQueueStatusProps> = ({ queue, patient,
               size={isMobile ? 100 : 120} 
             />
           </div>
-        </div>
+        </div> */}
       </CardContent>
     </Card>
   );
