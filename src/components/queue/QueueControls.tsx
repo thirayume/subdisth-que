@@ -12,7 +12,7 @@ import {
   Bug,
   MessageSquare,
 } from "lucide-react";
-import { announceQueue, toggleTTSDebug } from "@/utils/textToSpeech";
+import { announceQueue } from "@/utils/textToSpeech";
 import { toast } from "sonner";
 import { lineNotificationService } from "@/services/line-notification.service";
 

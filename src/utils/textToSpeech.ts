@@ -421,48 +421,48 @@ export const cancelSpeech = (): void => {
   stopSpeaking();
 };
 
-/**
- * Toggle debug mode for TTS
- */
-export const toggleTTSDebug = (): boolean => {
-  const currentState = localStorage.getItem('tts_debug_mode') === 'true';
-  const newState = !currentState;
+// /**
+//  * Toggle debug mode for TTS
+//  */
+// export const toggleTTSDebug = (): boolean => {
+//   const currentState = localStorage.getItem('tts_debug_mode') === 'true';
+//   const newState = !currentState;
   
-  if (newState) {
-    localStorage.setItem('tts_debug_mode', 'true');
-    setupDebugUI();
-    toast.info("เปิดโหมดการแก้ไขปัญหาเสียงแล้ว");
-  } else {
-    localStorage.removeItem('tts_debug_mode');
-    if (debugContainer) {
-      document.body.removeChild(debugContainer);
-      debugContainer = null;
-    }
-    toast.info("ปิดโหมดการแก้ไขปัญหาเสียงแล้ว");
-  }
+//   if (newState) {
+//     localStorage.setItem('tts_debug_mode', 'true');
+//     setupDebugUI();
+//     toast.info("เปิดโหมดการแก้ไขปัญหาเสียงแล้ว");
+//   } else {
+//     localStorage.removeItem('tts_debug_mode');
+//     if (debugContainer) {
+//       document.body.removeChild(debugContainer);
+//       debugContainer = null;
+//     }
+//     toast.info("ปิดโหมดการแก้ไขปัญหาเสียงแล้ว");
+//   }
   
-  return newState;
-};
+//   return newState;
+// };
 
-/**
- * Test TTS functionality
- */
-export const testTTSSettings = (): Promise<void> => {
-  const volumeStr = localStorage.getItem('queue_voice_volume');
-  const rateStr = localStorage.getItem('queue_voice_rate');
-  const voiceType = localStorage.getItem('queue_voice_type') || 'th';
+// /**
+//  * Test TTS functionality
+//  */
+// export const testTTSSettings = (): Promise<void> => {
+//   const volumeStr = localStorage.getItem('queue_voice_volume');
+//   const rateStr = localStorage.getItem('queue_voice_rate');
+//   const voiceType = localStorage.getItem('queue_voice_type') || 'th';
   
-  const volume = volumeStr ? parseInt(volumeStr) / 100 : 1;
-  const rate = rateStr ? parseInt(rateStr) / 100 : 1.0;
+//   const volume = volumeStr ? parseInt(volumeStr) / 100 : 1;
+//   const rate = rateStr ? parseInt(rateStr) / 100 : 1.0;
   
-  const testMessage = "ทดสอบระบบเสียงด้วยการตั้งค่าปัจจุบัน";
+//   const testMessage = "ทดสอบระบบเสียงด้วยการตั้งค่าปัจจุบัน";
   
-  toast.info("กำลังทดสอบการตั้งค่าเสียง...");
+//   toast.info("กำลังทดสอบการตั้งค่าเสียง...");
   
-  return speakText(testMessage, { 
-    volume, 
-    rate, 
-    voice: voiceType,
-    debug: true
-  });
-};
+//   return speakText(testMessage, { 
+//     volume, 
+//     rate, 
+//     voice: voiceType,
+//     debug: true
+//   });
+// };
