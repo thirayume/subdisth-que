@@ -12,11 +12,11 @@ import Layout from '@/components/layout/Layout';
 import { toast } from 'sonner';
 import GeneralSettings from '@/components/settings/GeneralSettings';
 import QueueSettings from '@/components/settings/QueueSettings';
-import NotificationSettings from '@/components/settings/NotificationSettings';
+// import NotificationSettings from '@/components/settings/NotificationSettings';
 import LineSettings from '@/components/settings/LineSettings';
 import SettingsTabs from '@/components/settings/SettingsTabs';
 import SettingsFormActions from '@/components/settings/SettingsFormActions';
-import LoggingSettingsSection from '@/components/settings/LoggingSettingsSection';
+// import LoggingSettingsSection from '@/components/settings/LoggingSettingsSection';
 import { queueSettingsSchema, formatOptions, initialQueueTypes } from '@/components/settings/schemas';
 import { useQueueTypes, QueueType } from '@/hooks/useQueueTypes';
 import { z } from 'zod';
@@ -200,17 +200,17 @@ const Settings = () => {
               />
             </TabsContent>
             
-            <TabsContent value="notifications" className="space-y-6">
+            {/* <TabsContent value="notifications" className="space-y-6">
               <NotificationSettings form={form} />
-            </TabsContent>
+            </TabsContent> */}
             
             <TabsContent value="line" className="space-y-6">
               <LineSettings />
             </TabsContent>
             
-            <TabsContent value="developer" className="space-y-6">
+            {/* <TabsContent value="developer" className="space-y-6">
               <LoggingSettingsSection />
-            </TabsContent>
+            </TabsContent> */}
             
             <SettingsFormActions isSubmitting={isSubmitting} />
           </form>

@@ -35,7 +35,7 @@ const PatientPortalAuth: React.FC<PatientPortalAuthProps> = ({
           <Tabs defaultValue="patient" value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-2 mb-4">
               <TabsTrigger value="patient">สำหรับผู้ป่วย</TabsTrigger>
-              <TabsTrigger value="staff">สำหรับเจ้าหน้าที่</TabsTrigger>
+              {/* <TabsTrigger value="staff">สำหรับเจ้าหน้าที่</TabsTrigger> */}
             </TabsList>
             
             <TabsContent value="patient">
@@ -56,11 +56,11 @@ const PatientPortalAuth: React.FC<PatientPortalAuthProps> = ({
             </TabsContent>
           </Tabs>
           
-          <div className="text-center mt-6">
+          {/* <div className="text-center mt-6">
             <Button variant="outline" onClick={() => navigate('/')}>
               กลับไปหน้าหลัก
             </Button>
-          </div>
+          </div> */}
         </CardContent>
       </Card>
     </div>

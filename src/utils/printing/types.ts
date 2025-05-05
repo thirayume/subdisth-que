@@ -1,9 +1,9 @@
 
-import { QueueType } from '@/integrations/supabase/schema';
+import { QueueTypeEnum } from '@/integrations/supabase/schema';
 
 export interface PrintQueueOptions {
   queueNumber: number;
-  queueType: QueueType;
+  queueType: QueueTypeEnum;
   patientName?: string;
   patientPhone?: string;
   patientLineId?: string;

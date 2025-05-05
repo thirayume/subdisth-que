@@ -6,7 +6,7 @@ import { FormatOption } from './schemas';
 import { QueueType } from '@/hooks/useQueueTypes';
 import QueueConfigSection from './QueueConfigSection';
 import QueueTypesList from './QueueTypesList';
-import QueueAnnouncementSection from './QueueAnnouncementSection';
+// import QueueAnnouncementSection from './QueueAnnouncementSection';
 
 interface QueueSettingsProps {
   form: UseFormReturn<any>;
@@ -68,7 +68,7 @@ const QueueSettings: React.FC<QueueSettingsProps> = ({
         </CardContent>
       </Card>
       
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>การประกาศเรียกคิว</CardTitle>
           <CardDescription>
@@ -78,7 +78,7 @@ const QueueSettings: React.FC<QueueSettingsProps> = ({
         <CardContent className="space-y-6">
           <QueueAnnouncementSection form={form} />
         </CardContent>
-      </Card>
+      </Card> */}
     </>
   );
 };

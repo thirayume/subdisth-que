@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Patient, Queue, QueueStatus, QueueType } from '@/integrations/supabase/schema';
+import { Patient, Queue, QueueStatus, QueueTypeEnum } from '@/integrations/supabase/schema';
 import PatientPortalLoading from '@/components/patient-portal/PatientPortalLoading';
 import PatientPortalAuth from '@/components/patient-portal/PatientPortalAuth';
 import ActiveQueueView from '@/components/patient-portal/ActiveQueueView';
@@ -63,7 +63,7 @@ const PatientPortal: React.FC = () => {
               // Convert string type to QueueType and string status to QueueStatus
               const typedQueue: Queue = {
                 ...queueData[0],
-                type: queueData[0].type as QueueType,
+                type: queueData[0].type as QueueTypeEnum,
                 status: queueData[0].status as QueueStatus
               };
               
@@ -140,7 +140,7 @@ const PatientPortal: React.FC = () => {
         // Convert string type to QueueType and string status to QueueStatus
         const typedQueue: Queue = {
           ...queueData[0],
-          type: queueData[0].type as QueueType,
+          type: queueData[0].type as QueueTypeEnum,
           status: queueData[0].status as QueueStatus
         };
         

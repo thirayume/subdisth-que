@@ -10,7 +10,7 @@ import { formatQueueNumber } from '@/utils/queueFormatters';
 import { useQueues } from '@/hooks/useQueues';
 import { usePatients } from '@/hooks/usePatients';
 import { printQueueTicket } from '@/utils/printUtils';
-import { QueueType } from '@/integrations/supabase/schema';
+import { QueueTypeEnum } from '@/integrations/supabase/schema';
 import { Badge } from '@/components/ui/badge';
 
 const QueueTicket = () => {
@@ -66,12 +66,12 @@ const QueueTicket = () => {
     );
   }
   
-  const formattedQueueNumber = formatQueueNumber(queue.type as QueueType, queue.number);
+  const formattedQueueNumber = formatQueueNumber(queue.type as QueueTypeEnum, queue.number);
   
   const handlePrint = () => {
     printQueueTicket({
       queueNumber: queue.number,
-      queueType: queue.type as QueueType,
+      queueType: queue.type as QueueTypeEnum,
       patientName: patient?.name,
       patientPhone: patient?.phone,
       patientLineId: patient?.line_id,
@@ -123,7 +123,7 @@ const QueueTicket = () => {
           
           <LineQRCode 
             queueNumber={queue.number} 
-            queueType={queue.type as QueueType} 
+            queueType={queue.type as QueueTypeEnum} 
             className="w-full max-w-[250px] mx-auto" 
           />
           

@@ -2,11 +2,11 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import LineCredentialFields from './line/LineCredentialFields';
-import LineMessageTemplates from './line/LineMessageTemplates';
+// import LineMessageTemplates from './line/LineMessageTemplates';
 import LineActionButtons from './line/LineActionButtons';
 import LineOfficialAccountIcon from './line/LineOfficialAccountIcon';
-import LineSettingsHelpSection from './line/LineSettingsHelpSection';
-import TextToSpeechSettings from './line/TextToSpeechSettings';
+// import LineSettingsHelpSection from './line/LineSettingsHelpSection';
+// import TextToSpeechSettings from './line/TextToSpeechSettings';
 import { useLineSettingsValidation } from './line/hooks/useLineSettingsValidation';
 import { LineSettingsErrors } from './line/types';
 import { useLineSettingsData } from '@/hooks/useLineSettingsData';
@@ -164,13 +164,13 @@ const LineSettings = () => {
             errors={errors}
           />
           
-          <LineMessageTemplates 
+          {/* <LineMessageTemplates 
             lineSettings={currentLineSettings}
             isEditing={isEditing}
             handleChange={handleChange}
             handleTestMessage={handleTestMessage}
             isTesting={isTestingMessage}
-          />
+          /> */}
           
           <LineActionButtons 
             isEditing={isEditing}
@@ -184,13 +184,13 @@ const LineSettings = () => {
         </CardContent>
       </Card>
       
-      <TextToSpeechSettings 
+      {/* <TextToSpeechSettings 
         ttsConfig={currentTtsConfig}
         isEditing={isEditing}
         handleTtsConfigChange={handleTtsConfigChange}
       />
       
-      <LineSettingsHelpSection />
+      <LineSettingsHelpSection /> */}
     </>
   );
 };
