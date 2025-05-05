@@ -5,6 +5,14 @@ import { lineService } from '@/services/line.service';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
+// Define interface for LINE profile
+interface LineProfile {
+  userId: string;
+  displayName: string;
+  pictureUrl?: string;
+  statusMessage?: string;
+}
+
 const LineCallback: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,15 +48,18 @@ const LineCallback: React.FC = () => {
         // Exchange code for token
         const tokenResponse = await lineService.exchangeToken(code);
         
-        // Store token and user information
+        // Store token
         localStorage.setItem('lineToken', tokenResponse.access_token);
         
-        // In the handleCallback function, when redirecting to connect-phone
-        // Extract and pass all available profile information
+        // Extract and store profile information
         if (tokenResponse.profile) {
-          const lineProfile = tokenResponse.profile;
+          const lineProfile: LineProfile = tokenResponse.profile;
+          
+          // Store all profile information in localStorage
           localStorage.setItem('lineProfile', JSON.stringify(lineProfile));
           localStorage.setItem('lineUserId', lineProfile.userId);
+          
+          console.log('LINE Profile Information:', lineProfile);
           
           // Extract email from id_token if available
           let email = null;
@@ -63,6 +74,7 @@ const LineCallback: React.FC = () => {
 
               const decoded = JSON.parse(jsonPayload);
               email = decoded.email;
+              console.log('Extracted email from ID token:', email);
             } catch (e) {
               console.error('Error decoding id_token:', e);
             }
@@ -75,10 +87,40 @@ const LineCallback: React.FC = () => {
               lineUserId: lineProfile.userId,
               displayName: lineProfile.displayName,
               pictureUrl: lineProfile.pictureUrl,
+              statusMessage: lineProfile.statusMessage,
               email: email
             }
           });
           return;
+        } else {
+          // If no profile in the token response, try to fetch it separately
+          console.log('No profile in token response, fetching profile separately...');
+          try {
+            const profileResponse = await lineService.getProfile(tokenResponse.access_token);
+            const lineProfile: LineProfile = profileResponse;
+            
+            // Store all profile information in localStorage
+            localStorage.setItem('lineProfile', JSON.stringify(lineProfile));
+            localStorage.setItem('lineUserId', lineProfile.userId);
+            
+            console.log('Fetched LINE Profile Information:', lineProfile);
+            
+            // Navigate to connect phone page with all profile information
+            navigate('/patient-portal/connect-phone', { 
+              state: { 
+                lineLoginSuccess: true,
+                lineUserId: lineProfile.userId,
+                displayName: lineProfile.displayName,
+                pictureUrl: lineProfile.pictureUrl,
+                statusMessage: lineProfile.statusMessage,
+                email: null // No email since we couldn't extract it from ID token
+              }
+            });
+            return;
+          } catch (profileError) {
+            console.error('Error fetching LINE profile:', profileError);
+            // Continue with the flow, but without profile information
+          }
         }
         
         // Clean up

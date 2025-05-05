@@ -1,3 +1,4 @@
+// src/services/line.service.ts
 import axios from 'axios';
 
 interface LineTokenResponse {
@@ -23,8 +24,10 @@ class LineService {
     this.redirectUri = import.meta.env.VITE_LINE_CALLBACK_URL || `${window.location.origin}/auth/line/callback`;
   }
 
-  // In the generateLoginUrl method
   generateLoginUrl(state: string): string {
+    // Save state to localStorage for verification in callback
+    localStorage.setItem('lineLoginState', state);
+    
     const baseUrl = 'https://access.line.me/oauth2/v2.1/authorize';
     const params = new URLSearchParams({
       response_type: 'code',
@@ -45,6 +48,9 @@ class LineService {
         redirectUri: this.redirectUri
       });
       
+      // Log to debug
+      console.log("LINE token exchange complete. Response contains profile:", !!response.data.profile);
+      
       return response.data;
     } catch (error) {
       console.error('Error exchanging LINE token:', error);
@@ -54,7 +60,7 @@ class LineService {
 
   async getProfile(accessToken: string) {
     try {
-      const response = await axios.get('https://api.line.me/v2/profile', {
+      const response = await axios.get('/api/line-profile', {
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -64,6 +70,24 @@ class LineService {
       console.error('Error getting LINE profile:', error);
       throw new Error('Failed to get LINE profile');
     }
+  }
+
+  // Get LINE user ID from localStorage
+  getUserId(): string | null {
+    return localStorage.getItem('lineUserId');
+  }
+
+  // Store LINE user ID to localStorage
+  storeUserId(userId: string): void {
+    localStorage.setItem('lineUserId', userId);
+  }
+
+  // Clear LINE authentication data
+  clearAuth(): void {
+    localStorage.removeItem('lineToken');
+    localStorage.removeItem('lineUserId');
+    localStorage.removeItem('lineProfile');
+    localStorage.removeItem('lineLoginState');
   }
 }
 

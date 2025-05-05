@@ -24,6 +24,7 @@ exports.handler = async function(event, context) {
     const { lineUserId, message, queueId } = requestBody;
 
     if (!lineUserId || !message) {
+      console.error('LINE notification error: Missing lineUserId or message');
       return {
         statusCode: 400,
         headers,
@@ -43,10 +44,14 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Send message using LINE Messaging API
+    console.log(`Sending LINE notification to ${lineUserId} for queue ${queueId}`);
+    console.log(`Message content: ${message}`);
+    console.log(`LINE user ID format check: ${lineUserId.startsWith('U') ? 'Valid format (starts with U)' : 'Invalid format (does not start with U)'}`);
+    
+    // Send message using LINE Messaging API directly with the correct parameter names
     const response = await axios.post('https://api.line.me/v2/bot/message/push', 
       {
-        to: lineUserId,
+        to: lineUserId, // Use 'to' instead of 'lineUserId' to match LINE API requirements
         messages: [
           {
             type: 'text',
@@ -62,9 +67,8 @@ exports.handler = async function(event, context) {
       }
     );
 
-    // Log the notification for tracking
-    console.log(`LINE notification sent to ${lineUserId} for queue ${queueId}`);
-
+    console.log('LINE API response:', response.status, response.statusText);
+    
     return {
       statusCode: 200,
       headers,

@@ -1,4 +1,3 @@
-
 export interface Patient {
   id: string;
   patient_id: string;
@@ -12,22 +11,26 @@ export interface Patient {
   profile_image?: string;
   created_at: string;
   updated_at: string;
+  line_user_id?: string;    // LINE's system-generated user ID (starts with 'U')
+  line_picture_url?: string; // URL to the user's LINE profile picture
+  line_status_message?: string; // User's LINE status message
 }
 
-export type QueueType = 'GENERAL' | 'PRIORITY' | 'ELDERLY' | 'FOLLOW_UP';
+export type QueueTypeEnum = 'GENERAL' | 'PRIORITY' | 'ELDERLY' | 'FOLLOW_UP';
 export type QueueStatus = 'WAITING' | 'ACTIVE' | 'COMPLETED' | 'SKIPPED';
 
 export interface Queue {
   id: string;
   number: number;
   patient_id: string;
-  type: QueueType;
+  type: QueueTypeEnum;
   status: QueueStatus;
   notes?: string;
   created_at: string;
   updated_at: string;
   called_at?: string;
   completed_at?: string;
+  queue_date?: string;  // Added based on your schema
 }
 
 export type AppointmentStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
@@ -52,6 +55,42 @@ export interface Medication {
   unit: string;
   stock: number;
   min_stock: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LineSettings {
+  id: string;
+  channel_id: number;
+  channel_secret: string;
+  access_token: number;
+  welcome_message: string;
+  queue_received_message: string;
+  queue_called_message: string;
+  tts_config: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Settings {
+  id: string;
+  category: string;
+  key: string;
+  value: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface QueueTypeConfig {
+  id: string;
+  code: string;
+  name: string;
+  prefix: string;
+  purpose: string;
+  format: number;
+  enabled: boolean;
+  algorithm: string;
+  priority: number;
   created_at: string;
   updated_at: string;
 }

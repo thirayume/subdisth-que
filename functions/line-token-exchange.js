@@ -44,6 +44,8 @@ exports.handler = async function(event, context) {
       };
     }
 
+    console.log(`Exchanging code for token with redirect URI: ${redirectUri}`);
+
     // Exchange code for token
     const tokenResponse = await axios.post('https://api.line.me/oauth2/v2.1/token', 
       new URLSearchParams({
@@ -60,6 +62,8 @@ exports.handler = async function(event, context) {
       }
     );
 
+    console.log('Received token response:', JSON.stringify(tokenResponse.data));
+
     // Get user profile with the access token
     const accessToken = tokenResponse.data.access_token;
     const profileResponse = await axios.get('https://api.line.me/v2/profile', {
@@ -67,6 +71,8 @@ exports.handler = async function(event, context) {
         Authorization: `Bearer ${accessToken}`
       }
     });
+
+    console.log('Received profile response:', JSON.stringify(profileResponse.data));
 
     // Return both token and profile information
     return {

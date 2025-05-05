@@ -1,4 +1,4 @@
-// Remove the reference directive since it's causing issues
+// Copy this entire file and paste it into the Supabase web editor
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from "../_shared/cors.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
@@ -46,7 +46,6 @@ serve(async (req) => {
 
     // Create a Supabase client with the Auth context of the function
     const supabaseClient = createClient(
-      // Fix: Remove process.env reference since we're in Deno
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
