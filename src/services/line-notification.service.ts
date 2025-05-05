@@ -9,10 +9,10 @@ class LineNotificationService {
    */
   async sendQueueNotification(patientId: string, queue: Queue, estimatedWaitTime: number): Promise<boolean> {
     try {
-      // Get the patient with LINE information
+      // Get both line_id and line_user_id for debugging
       const { data, error } = await supabase
         .from('patients')
-        .select('line_id')  // Only select columns that exist in the database
+        .select('line_id, line_user_id')  // Select both fields
         .eq('id', patientId)
         .single();
       
@@ -21,8 +21,14 @@ class LineNotificationService {
         return false;
       }
 
-      // Use line_id only since line_user_id doesn't exist yet
-      const lineUserId = data?.line_id;
+      // Log both values for debugging
+      console.log('Patient data:', data);
+      console.log('line_id:', data.line_id);
+      console.log('line_user_id:', data.line_user_id);
+      
+      // Use line_user_id if available (the one that starts with 'U')
+      // If not available, fall back to line_id (but this will likely fail)
+      const lineUserId = data.line_user_id || data.line_id;
       
       // Check if we have any LINE ID to send to
       if (!lineUserId) {
@@ -38,7 +44,7 @@ class LineNotificationService {
       console.log(`Sending queue notification to LINE user ID: ${lineUserId}`);
       
       const response = await axios.post('/api/line-send-notification', {
-        lineUserId,
+        lineUserId,  // This will be the correct line_user_id value
         message: this.createQueueNotificationMessage(queue, estimatedWaitTime),
         queueId: queue.id
       });
@@ -55,10 +61,10 @@ class LineNotificationService {
    */
   async sendQueueCalledNotification(patientId: string, queue: Queue, counterNumber: number): Promise<boolean> {
     try {
-      // Get the patient with LINE information
+      // Get both line_id and line_user_id for debugging
       const { data, error } = await supabase
         .from('patients')
-        .select('line_id')  // Only select columns that exist in the database
+        .select('line_id, line_user_id')  // Select both fields
         .eq('id', patientId)
         .single();
       
@@ -67,8 +73,14 @@ class LineNotificationService {
         return false;
       }
 
-      // Use line_id only since line_user_id doesn't exist yet
-      const lineUserId = data?.line_id;
+      // Log both values for debugging
+      console.log('Patient data:', data);
+      console.log('line_id:', data.line_id);
+      console.log('line_user_id:', data.line_user_id);
+      
+      // Use line_user_id if available (the one that starts with 'U')
+      // If not available, fall back to line_id (but this will likely fail)
+      const lineUserId = data.line_user_id || data.line_id;
       
       // Check if we have any LINE ID to send to
       if (!lineUserId) {
@@ -84,7 +96,7 @@ class LineNotificationService {
       console.log(`Sending queue called notification to LINE user ID: ${lineUserId}`);
       
       const response = await axios.post('/api/line-send-notification', {
-        lineUserId,
+        lineUserId,  // This will be the correct line_user_id value
         message: `แจ้งเตือน: คิวหมายเลข ${queue.number} ถึงคิวของคุณแล้ว กรุณามาที่ช่องบริการ ${counterNumber}`,
         queueId: queue.id
       });

@@ -4,6 +4,9 @@ export interface Patient {
   name: string;
   phone: string;
   line_id?: string;
+  line_user_id?: string;  // Add this field
+  line_picture_url?: string;  // Add this field
+  line_status_message?: string;  // Add this field
   address?: string;
   gender?: string;
   birth_date?: string;
@@ -11,9 +14,6 @@ export interface Patient {
   profile_image?: string;
   created_at: string;
   updated_at: string;
-  line_user_id?: string;    // LINE's system-generated user ID (starts with 'U')
-  line_picture_url?: string; // URL to the user's LINE profile picture
-  line_status_message?: string; // User's LINE status message
 }
 
 export type QueueTypeEnum = 'GENERAL' | 'PRIORITY' | 'ELDERLY' | 'FOLLOW_UP';
