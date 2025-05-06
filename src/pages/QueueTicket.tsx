@@ -54,10 +54,10 @@ const QueueTicket = () => {
             <div className="text-center">
               <p className="text-lg text-gray-700 mb-4">ไม่พบข้อมูลคิว</p>
               <Link to="/">
-                <Button variant="outline" className="w-full">
+                {/* <Button variant="outline" className="w-full">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   กลับไปหน้าหลัก
-                </Button>
+                </Button> */}
               </Link>
             </div>
           </CardContent>
@@ -94,10 +94,10 @@ const QueueTicket = () => {
     <div className="max-w-md mx-auto mt-4 px-4 pb-12">
       <div className="mb-6">
         <Link to="/">
-          <Button variant="ghost" size="sm" className="mb-2">
+          {/* <Button variant="ghost" size="sm" className="mb-2">
             <ArrowLeft className="h-4 w-4 mr-2" />
             กลับไปหน้าหลัก
-          </Button>
+          </Button> */}
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">รายละเอียดคิว</h1>
         <p className="text-gray-600">คิวรับยาของคุณ</p>

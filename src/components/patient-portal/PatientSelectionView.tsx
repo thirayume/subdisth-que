@@ -84,13 +84,13 @@ const PatientSelectionView: React.FC<PatientSelectionViewProps> = ({
               </Button>
             )}
             
-            <Button 
+            {/* <Button 
               variant="outline" 
               onClick={() => navigate('/')}
               className={isMobile ? "text-sm w-full" : "w-full"}
             >
               กลับไปหน้าหลัก
-            </Button>
+            </Button> */}
           </div>
         </CardContent>
       </Card>
