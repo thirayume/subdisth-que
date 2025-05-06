@@ -66,4 +66,5 @@ const PatientProfile: React.FC<PatientProfileProps> = ({ patient }) => {
   );
 };
 
-export default PatientProfile;
+// Wrap with React.memo to prevent unnecessary re-renders
+export default React.memo(PatientProfile);
