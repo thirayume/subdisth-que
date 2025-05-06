@@ -10,6 +10,42 @@ const QueueBoard = () => {
   const connectionTestTimerRef = useRef<NodeJS.Timeout | null>(null);
   const connectionTestCountRef = useRef(0);
   const maxConnectionAttempts = 3;
+  const requestsInProgressRef = useRef<Set<string>>(new Set());
+  const requestQueueRef = useRef<Array<() => Promise<void>>>([]);
+  const maxConcurrentRequests = 2;
+
+  // Function to manage request queue
+  const processRequestQueue = async () => {
+    if (requestQueueRef.current.length === 0) return;
+    
+    // If we're already at max concurrent requests, don't start more
+    if (requestsInProgressRef.current.size >= maxConcurrentRequests) return;
+    
+    // Get the next request from the queue
+    const nextRequest = requestQueueRef.current.shift();
+    if (!nextRequest) return;
+    
+    // Add a unique ID to track this request
+    const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    requestsInProgressRef.current.add(requestId);
+    
+    try {
+      await nextRequest();
+    } catch (error) {
+      console.error('Error processing queued request:', error);
+    } finally {
+      // Remove this request from the in-progress set
+      requestsInProgressRef.current.delete(requestId);
+      // Process the next request in the queue
+      processRequestQueue();
+    }
+  };
+
+  // Function to add a request to the queue
+  const queueRequest = (requestFn: () => Promise<void>) => {
+    requestQueueRef.current.push(requestFn);
+    processRequestQueue();
+  };
 
   useEffect(() => {
     // Set up real-time subscription to queue changes
@@ -72,28 +108,35 @@ const QueueBoard = () => {
         
         console.log(`Testing Supabase connection (attempt ${connectionTestCountRef.current}/${maxConnectionAttempts})...`);
         
-        const { error } = await supabase.from('queues').select('count').limit(1);
-        if (error) {
-          console.error('Supabase connection test failed:', error);
-          setConnectionError(`Failed to connect to Supabase: ${error.message}`);
-          
-          // Schedule a retry after 5 seconds if we haven't reached max attempts
-          if (connectionTestCountRef.current < maxConnectionAttempts) {
-            connectionTestTimerRef.current = setTimeout(testConnection, 5000);
+        // Queue the connection test request
+        queueRequest(async () => {
+          try {
+            const { error } = await supabase.from('queues').select('count').limit(1);
+            if (error) {
+              console.error('Supabase connection test failed:', error);
+              setConnectionError(`Failed to connect to Supabase: ${error.message}`);
+              
+              // Schedule a retry after 5 seconds if we haven't reached max attempts
+              if (connectionTestCountRef.current < maxConnectionAttempts) {
+                connectionTestTimerRef.current = setTimeout(testConnection, 5000);
+              }
+            } else {
+              console.log('Supabase connection test successful');
+              setConnectionError(null);
+              connectionTestCountRef.current = 0; // Reset counter on success
+            }
+          } catch (err) {
+            console.error('Supabase connection test exception:', err);
+            setConnectionError(`Connection error: ${err instanceof Error ? err.message : String(err)}`);
+            
+            // Schedule a retry after 5 seconds if we haven't reached max attempts
+            if (connectionTestCountRef.current < maxConnectionAttempts) {
+              connectionTestTimerRef.current = setTimeout(testConnection, 5000);
+            }
           }
-        } else {
-          console.log('Supabase connection test successful');
-          setConnectionError(null);
-          connectionTestCountRef.current = 0; // Reset counter on success
-        }
+        });
       } catch (err) {
-        console.error('Supabase connection test exception:', err);
-        setConnectionError(`Connection error: ${err instanceof Error ? err.message : String(err)}`);
-        
-        // Schedule a retry after 5 seconds if we haven't reached max attempts
-        if (connectionTestCountRef.current < maxConnectionAttempts) {
-          connectionTestTimerRef.current = setTimeout(testConnection, 5000);
-        }
+        console.error('Error queueing connection test:', err);
       }
     };
     
@@ -108,6 +151,17 @@ const QueueBoard = () => {
       if (connectionTestTimerRef.current) {
         clearTimeout(connectionTestTimerRef.current);
       }
+    };
+  }, []);
+
+  // Expose the request queue function to the window for other components to use
+  useEffect(() => {
+    // @ts-expect-error Adding custom property to window object
+    window.queueSupabaseRequest = queueRequest;
+    
+    return () => {
+      // @ts-expect-error Removing custom property from window object
+      delete window.queueSupabaseRequest;
     };
   }, []);
 

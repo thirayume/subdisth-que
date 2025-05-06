@@ -1,9 +1,10 @@
 
 import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Queue, QueueStatus, QueueType } from '@/integrations/supabase/schema';
+import { Queue, QueueStatus, QueueTypeEnum, QueueTypeConfig } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
 import { createLogger } from '@/utils/logger';
+import { queueSupabaseRequest } from '@/utils/requestThrottler';
 
 const logger = createLogger('useQueueState');
 
@@ -21,26 +22,30 @@ export const useQueueState = () => {
       setLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
-        .from('queues')
-        .select('*')
-        .eq('queue_date', getTodayDate())
-        .order('created_at', { ascending: false });
+      const result = await queueSupabaseRequest(async () => {
+        const response = await supabase
+          .from('queues')
+          .select('*')
+          .eq('queue_date', getTodayDate())
+          .order('created_at', { ascending: false });
+        
+        return response;
+      });
 
-      if (error) {
-        throw error;
+      if (result.error) {
+        throw result.error;
       }
 
-      setQueues((data || []).map(item => ({
+      setQueues((result.data || []).map(item => ({
         ...item,
-        type: item.type as QueueType,
+        type: item.type as QueueTypeEnum,
         status: item.status as QueueStatus
       })));
       
-      logger.info(`Fetched ${data?.length || 0} queues for ${getTodayDate()} from database`);
-    } catch (err: any) {
+      logger.info(`Fetched ${result.data?.length || 0} queues for ${getTodayDate()} from database`);
+    } catch (err: unknown) {
       logger.error('Error fetching queues:', err);
-      setError(err.message || 'Failed to fetch queues');
+      setError(err instanceof Error ? err.message : 'Failed to fetch queues');
       toast.error('ไม่สามารถดึงข้อมูลคิวได้');
     } finally {
       setLoading(false);
@@ -63,15 +68,18 @@ export const useQueueState = () => {
         query = query.eq('status', status);
       }
 
-      const { data, error } = await query.order('created_at', { ascending: true });
+      const result = await queueSupabaseRequest(async () => {
+        const response = await query.order('created_at', { ascending: true });
+        return response;
+      });
 
-      if (error) {
-        throw error;
+      if (result.error) {
+        throw result.error;
       }
 
-      const typedData = (data || []).map(item => ({
+      const typedData = (result.data || []).map(item => ({
         ...item,
-        type: item.type as QueueType,
+        type: item.type as QueueTypeEnum,
         status: item.status as QueueStatus
       }));
       
@@ -80,9 +88,9 @@ export const useQueueState = () => {
       );
       
       return typedData;
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Error fetching queues by status:', err);
-      setError(err.message || 'Failed to fetch queues');
+      setError(err instanceof Error ? err.message : 'Failed to fetch queues');
       toast.error('ไม่สามารถดึงข้อมูลคิวได้');
       return [];
     }
@@ -125,16 +133,16 @@ export const useQueueState = () => {
       // Cast the returned data to ensure proper type conversion
       const newQueue: Queue = {
         ...data[0],
-        type: data[0].type as QueueType,
+        type: data[0].type as QueueTypeEnum,
         status: data[0].status as QueueStatus
       };
       
       setQueues(prev => [newQueue, ...prev]);
       toast.success(`เพิ่มคิวหมายเลข ${queueData.number} เรียบร้อยแล้ว`);
       return newQueue;
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Error adding queue:', err);
-      setError(err.message || 'Failed to add queue');
+      setError(err instanceof Error ? err.message : 'Failed to add queue');
       toast.error('ไม่สามารถเพิ่มคิวได้');
       return null;
     }
