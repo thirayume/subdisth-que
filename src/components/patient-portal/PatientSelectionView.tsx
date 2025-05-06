@@ -11,13 +11,15 @@ interface PatientSelectionViewProps {
   selectedPatient: Patient | null;
   onSelectPatient: (patient: Patient) => void;
   onLogout: () => void;
+  onClearQueueHistory?: () => void; // Add this prop
 }
 
 const PatientSelectionView: React.FC<PatientSelectionViewProps> = ({
   patients,
   selectedPatient,
   onSelectPatient,
-  onLogout
+  onLogout,
+  onClearQueueHistory
 }) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -71,11 +73,21 @@ const PatientSelectionView: React.FC<PatientSelectionViewProps> = ({
             คุณไม่มีคิวที่รอดำเนินการอยู่ในขณะนี้
           </p>
           
-          <div className="text-center mt-4">
+          <div className="text-center mt-4 space-y-2">
+            {onClearQueueHistory && (
+              <Button 
+                variant="outline" 
+                onClick={onClearQueueHistory}
+                className={isMobile ? "text-sm w-full" : "w-full"}
+              >
+                ล้างประวัติคิวเก่า
+              </Button>
+            )}
+            
             <Button 
               variant="outline" 
               onClick={() => navigate('/')}
-              className={isMobile ? "text-sm" : ""}
+              className={isMobile ? "text-sm w-full" : "w-full"}
             >
               กลับไปหน้าหลัก
             </Button>

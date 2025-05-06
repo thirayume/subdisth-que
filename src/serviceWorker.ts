@@ -6,7 +6,7 @@
 declare const self: ServiceWorkerGlobalScope;
 
 type ExtendableEvent = Event & {
-  waitUntil(fn: Promise<any>): void;
+  waitUntil(fn: Promise<unknown>): void;
 };
 
 type FetchEvent = ExtendableEvent & {
@@ -78,7 +78,13 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
 
 // Cache resources progressively as they are used
 self.addEventListener('fetch', (event: FetchEvent) => {
-  // Skip cross-origin requests
+  // Skip cross-origin requests to Supabase
+  if (event.request.url.includes('supabase.co')) {
+    // Let the browser handle Supabase requests directly
+    return;
+  }
+  
+  // Skip other cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) {
     return;
   }

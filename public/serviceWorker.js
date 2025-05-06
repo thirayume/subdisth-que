@@ -70,6 +70,11 @@ self.addEventListener('activate', (event) => {
 
 // Handle fetch events with proper preload handling
 self.addEventListener('fetch', (event) => {
+  // Skip Supabase API requests - let the browser handle them directly
+  if (event.request.url.includes('supabase.co')) {
+    return;
+  }
+  
   // Only handle GET requests
   if (event.request.method !== 'GET') {
     return;

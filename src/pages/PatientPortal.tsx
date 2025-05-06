@@ -126,11 +126,16 @@ const PatientPortal: React.FC = () => {
     
     // Check if there's an active queue for this patient
     try {
+      // Add date filtering to only show recent queues (e.g., last 24 hours)
+      const oneDayAgo = new Date();
+      oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+      
       const { data: queueData, error: queueError } = await supabase
         .from('queues')
         .select('*')
         .eq('patient_id', patient.id)
         .in('status', ['WAITING', 'ACTIVE'])
+        .gte('created_at', oneDayAgo.toISOString()) // Only show queues created in the last 24 hours
         .order('created_at', { ascending: false })
         .limit(1);
       
@@ -167,6 +172,28 @@ const PatientPortal: React.FC = () => {
     setActiveQueue(null);
   };
 
+  // Move this function up before it's used
+  const handleClearQueueHistory = async () => {
+    try {
+      if (!selectedPatient) return;
+      
+      // Mark all WAITING or ACTIVE queues as COMPLETED for this patient
+      const { error } = await supabase
+        .from('queues')
+        .update({ status: 'COMPLETED', completed_at: new Date().toISOString() })
+        .in('status', ['WAITING', 'ACTIVE'])
+        .eq('patient_id', selectedPatient.id);
+      
+      if (error) throw error;
+      
+      toast.success('ล้างประวัติคิวเก่าเรียบร้อยแล้ว');
+      setActiveQueue(null);
+    } catch (error) {
+      console.error('Error clearing queue history:', error);
+      toast.error('เกิดข้อผิดพลาดในการล้างประวัติคิว');
+    }
+  };
+
   if (loading) {
     return <PatientPortalLoading />;
   }
@@ -188,6 +215,7 @@ const PatientPortal: React.FC = () => {
         patients={patients}
         onLogout={handleLogout}
         onSwitchPatient={handleSwitchPatient}
+        onClearQueueHistory={handleClearQueueHistory}
       />
     );
   }
@@ -198,6 +226,7 @@ const PatientPortal: React.FC = () => {
       selectedPatient={selectedPatient}
       onSelectPatient={handlePatientSelect}
       onLogout={handleLogout}
+      onClearQueueHistory={handleClearQueueHistory}
     />
   );
 };

@@ -15,6 +15,7 @@ interface ActiveQueueViewProps {
   patients: Patient[];
   onLogout: () => void;
   onSwitchPatient: () => void;
+  onClearQueueHistory?: () => void; // Add this prop
 }
 
 const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({ 
@@ -22,10 +23,21 @@ const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({
   queue, 
   patients, 
   onLogout, 
-  onSwitchPatient 
+  onSwitchPatient,
+  onClearQueueHistory
 }) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+
+  // Add a function to determine if the queue is likely outdated
+  const isQueueOutdated = () => {
+    // If queue is still WAITING or ACTIVE but created more than 24 hours ago
+    const oneDayAgo = new Date();
+    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+    const queueDate = new Date(queue.created_at);
+    
+    return queueDate < oneDayAgo && (queue.status === 'WAITING' || queue.status === 'ACTIVE');
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-2 sm:p-4">
@@ -43,6 +55,16 @@ const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({
         patient={patient} 
         className="mb-3 sm:mb-4" 
       />
+      
+      {isQueueOutdated() && onClearQueueHistory && (
+        <Button 
+          variant="outline" 
+          onClick={onClearQueueHistory}
+          className="mb-3 sm:mb-4 bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+        >
+          คิวนี้อาจเป็นคิวเก่า - คลิกเพื่อล้างประวัติคิว
+        </Button>
+      )}
       
       <div className="flex justify-between items-center mb-2 sm:mb-4">
         <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold text-gray-800`}>
