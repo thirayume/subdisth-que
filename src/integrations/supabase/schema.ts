@@ -1,12 +1,13 @@
+
 export interface Patient {
   id: string;
   patient_id: string;
   name: string;
   phone: string;
   line_id?: string;
-  line_user_id?: string;  // Add this field
-  line_picture_url?: string;  // Add this field
-  line_status_message?: string;  // Add this field
+  line_user_id?: string;
+  line_picture_url?: string;
+  line_status_message?: string;
   address?: string;
   gender?: string;
   birth_date?: string;
@@ -17,6 +18,7 @@ export interface Patient {
 }
 
 export type QueueTypeEnum = 'GENERAL' | 'PRIORITY' | 'ELDERLY' | 'FOLLOW_UP';
+export type QueueType = QueueTypeEnum; // Add explicit QueueType export
 export type QueueStatus = 'WAITING' | 'ACTIVE' | 'COMPLETED' | 'SKIPPED';
 
 export interface Queue {
@@ -30,7 +32,7 @@ export interface Queue {
   updated_at: string;
   called_at?: string;
   completed_at?: string;
-  queue_date?: string;  // Added based on your schema
+  queue_date?: string;
 }
 
 export type AppointmentStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
@@ -42,7 +44,7 @@ export interface Appointment {
   purpose: string;
   notes?: string;
   status: AppointmentStatus;
-  batch_id?: string; // Added for grouping batch appointments
+  batch_id?: string;
   created_at: string;
   updated_at: string;
 }

@@ -1,9 +1,8 @@
-
 import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/utils/logger';
 import { queueSupabaseRequest } from '@/utils/requestThrottler';
-import { Queue, Patient } from '@/integrations/supabase/schema';
+import { Queue, Patient, QueueTypeEnum } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
 
 const logger = createLogger('usePharmacyQueue');
@@ -11,16 +10,17 @@ const logger = createLogger('usePharmacyQueue');
 export interface PharmacyService {
   id: string;
   queue_id: string;
-  pharmacist_notes?: string;
+  pharmacist_notes?: string | null;
   service_start_at: string;
-  service_end_at?: string;
-  forwarded_to?: string;
+  service_end_at?: string | null;
+  forwarded_to?: string | null;
   status: 'IN_PROGRESS' | 'COMPLETED' | 'FORWARDED';
   created_at: string;
   updated_at: string;
 }
 
-export interface PharmacyQueue extends Queue {
+export interface PharmacyQueue extends Omit<Queue, 'type'> {
+  type: QueueTypeEnum;
   patient?: Patient;
   service?: PharmacyService;
 }
@@ -68,11 +68,15 @@ export const usePharmacyQueue = () => {
       const typedQueues: PharmacyQueue[] = pharmacyQueues.map(q => {
         const queueService = q.service && q.service.length > 0 ? {
           ...q.service[0],
-          status: q.service[0].status as 'IN_PROGRESS' | 'COMPLETED' | 'FORWARDED'
+          status: q.service[0].status as 'IN_PROGRESS' | 'COMPLETED' | 'FORWARDED',
+          pharmacist_notes: q.service[0].pharmacist_notes || null,
+          forwarded_to: q.service[0].forwarded_to || null,
+          service_end_at: q.service[0].service_end_at || null
         } : undefined;
         
         return {
           ...q,
+          type: q.type as QueueTypeEnum,
           service: queueService
         };
       });
@@ -187,11 +191,15 @@ export const usePharmacyQueue = () => {
       // Ensure the service status is correctly typed
       const service = serviceData ? {
         ...serviceData,
-        status: serviceData.status as 'IN_PROGRESS' | 'COMPLETED' | 'FORWARDED'
+        status: serviceData.status as 'IN_PROGRESS' | 'COMPLETED' | 'FORWARDED',
+        pharmacist_notes: serviceData.pharmacist_notes || null,
+        forwarded_to: serviceData.forwarded_to || null,
+        service_end_at: serviceData.service_end_at || null
       } : undefined;
 
-      const newActiveQueue = {
+      const newActiveQueue: PharmacyQueue = {
         ...activatedQueue,
+        type: activatedQueue.type as QueueTypeEnum,
         service
       };
 

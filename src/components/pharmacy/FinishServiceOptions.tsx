@@ -4,7 +4,6 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from '@/components/ui/alert-dialog';
-import { Check, ArrowRight, AlertCircle } from 'lucide-react';
+import { Check, ArrowRight } from 'lucide-react';
 import QueueForwardDialog from './QueueForwardDialog';
 
 interface FinishServiceOptionsProps {
@@ -39,6 +38,7 @@ const FinishServiceOptions: React.FC<FinishServiceOptionsProps> = ({
       setCompleteDialogOpen(false);
       setNotes('');
     }
+    return result;
   };
   
   const handleForward = async (destination: string) => {
@@ -47,6 +47,7 @@ const FinishServiceOptions: React.FC<FinishServiceOptionsProps> = ({
       setForwardDialogOpen(false);
       setNotes('');
     }
+    return result;
   };
 
   return (
