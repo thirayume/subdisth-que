@@ -1,10 +1,14 @@
 
-import { useState, useEffect } from 'react';
+import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { speakText } from '@/utils/textToSpeech';
+import { createLogger } from '@/utils/logger';
+import { queueSupabaseRequest } from '@/utils/requestThrottler';
+import { Medication } from '@/integrations/supabase/schema';
 
-interface PatientMedication {
+const logger = createLogger('usePatientMedications');
+
+export interface PatientMedication {
   id: string;
   patient_id: string;
   medication_id: string;
@@ -15,170 +19,162 @@ interface PatientMedication {
   notes?: string;
   created_at: string;
   updated_at: string;
-  medication?: {
-    name: string;
-    description?: string;
-    unit: string;
-  };
+  medication?: Medication; // Joined medication data
 }
 
-export const usePatientMedications = (patientId: string) => {
-  const [medications, setMedications] = useState<PatientMedication[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export const usePatientMedications = (patientId?: string) => {
+  const [medications, setMedications] = React.useState<PatientMedication[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
-  const fetchPatientMedications = async (patientId: string) => {
-    try {
-      console.log('Fetching medications for patient:', patientId);
-      
-      // Get the current session to include the auth token
-      const { data: sessionData } = await supabase.auth.getSession();
-      
-      if (!sessionData.session) {
-        setError('ไม่พบข้อมูลการเข้าสู่ระบบ กรุณาเข้าสู่ระบบก่อนใช้งาน');
-        setLoading(false);
-        return [];
-      }
-      
-      const response = await fetch(
-        'https://lkclreldnbejfubzhube.supabase.co/functions/v1/get_patient_medications',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${sessionData.session.access_token}`,
-          },
-          body: JSON.stringify({ patientId }),
-        }
-      );
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Error response:', errorData);
-        throw new Error(errorData.error || `Failed with status: ${response.status}`);
-      }
-      
-      const responseData = await response.json();
-      console.log('Received data:', responseData);
-      return responseData.data;
-    } catch (error) {
-      console.error('Error fetching patient medications:', error);
-      throw error;
+  // Fetch patient medication history
+  const fetchMedicationHistory = React.useCallback(async (pid?: string) => {
+    if (!pid) {
+      setMedications([]);
+      setLoading(false);
+      return [];
     }
-  };
 
-  const addPatientMedication = async (medicationData: Omit<PatientMedication, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      const { data, error } = await supabase.functions.invoke<{ id: string }>("add_patient_medication", {
-        body: { 
-          p_patient_id: patientId,
-          p_medication_id: medicationData.medication_id,
-          p_dosage: medicationData.dosage,
-          p_instructions: medicationData.instructions || null,
-          p_start_date: medicationData.start_date,
-          p_end_date: medicationData.end_date || null,
-          p_notes: medicationData.notes || null
-        }
+      setLoading(true);
+      setError(null);
+      logger.info(`Fetching medication history for patient ${pid}`);
+
+      const result = await queueSupabaseRequest(async () => {
+        const response = await supabase
+          .from('patient_medications')
+          .select(`
+            *,
+            medication:medications(*)
+          `)
+          .eq('patient_id', pid)
+          .order('created_at', { ascending: false });
+        return response;
       });
 
-      if (error) throw error;
-      
-      // Refresh the medications list after adding
-      fetchPatientMedications(patientId);
-      toast.success('เพิ่มข้อมูลยาสำหรับผู้ป่วยเรียบร้อยแล้ว');
-      return data;
+      if (result.error) {
+        throw result.error;
+      }
+
+      const medicationHistory = result.data || [];
+      logger.info(`Fetched ${medicationHistory.length} medication records`);
+      setMedications(medicationHistory);
+      return medicationHistory;
     } catch (err: unknown) {
-      console.error('Error adding patient medication:', err);
-      toast.error('ไม่สามารถเพิ่มข้อมูลยาสำหรับผู้ป่วยได้');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch medication history';
+      logger.error('Error fetching medication history:', err);
+      setError(errorMessage);
+      toast.error('ไม่สามารถดึงข้อมูลประวัติการรับยาได้');
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Add new medication to patient's history
+  const addMedication = async (medicationData: Omit<PatientMedication, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      setError(null);
+      logger.info(`Adding medication for patient ${medicationData.patient_id}`);
+
+      const { data, error } = await supabase
+        .from('patient_medications')
+        .insert(medicationData)
+        .select(`*, medication:medications(*)`);
+
+      if (error) {
+        throw error;
+      }
+
+      if (data && data.length > 0) {
+        setMedications(prev => [data[0], ...prev]);
+        return data[0];
+      }
+      return null;
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add medication';
+      logger.error('Error adding medication:', err);
+      setError(errorMessage);
+      toast.error('ไม่สามารถบันทึกข้อมูลการจ่ายยาได้');
       return null;
     }
   };
 
-  const updatePatientMedication = async (
-    id: string,
-    medicationData: Partial<PatientMedication>
-  ) => {
+  // Update existing medication
+  const updateMedication = async (id: string, medicationData: Partial<PatientMedication>) => {
     try {
-      const { data, error } = await supabase.functions.invoke<{ success: boolean }>("update_patient_medication", {
-        body: {
-          p_id: id,
-          p_medication_id: medicationData.medication_id,
-          p_dosage: medicationData.dosage,
-          p_instructions: medicationData.instructions,
-          p_start_date: medicationData.start_date,
-          p_end_date: medicationData.end_date,
-          p_notes: medicationData.notes
-        }
-      });
+      setError(null);
+      logger.info(`Updating medication record ${id}`);
 
-      if (error) throw error;
-      
-      // Refresh the medications list after updating
-      fetchPatientMedications(patientId);
-      toast.success('อัปเดตข้อมูลยาสำหรับผู้ป่วยเรียบร้อยแล้ว');
-      return data;
+      const { data, error } = await supabase
+        .from('patient_medications')
+        .update(medicationData)
+        .eq('id', id)
+        .select(`*, medication:medications(*)`);
+
+      if (error) {
+        throw error;
+      }
+
+      if (data && data.length > 0) {
+        setMedications(prev => 
+          prev.map(med => med.id === id ? data[0] : med)
+        );
+        return data[0];
+      }
+      return null;
     } catch (err: unknown) {
-      console.error('Error updating patient medication:', err);
-      toast.error('ไม่สามารถอัปเดตข้อมูลยาสำหรับผู้ป่วยได้');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update medication';
+      logger.error('Error updating medication:', err);
+      setError(errorMessage);
+      toast.error('ไม่สามารถอัปเดตข้อมูลการจ่ายยาได้');
       return null;
     }
   };
 
-  const deletePatientMedication = async (id: string) => {
+  // Delete medication from history
+  const deleteMedication = async (id: string) => {
     try {
-      const { error } = await supabase.functions.invoke<{ success: boolean }>("delete_patient_medication", {
-        body: { p_id: id }
-      });
+      setError(null);
+      logger.info(`Deleting medication record ${id}`);
 
-      if (error) throw error;
+      const { error } = await supabase
+        .from('patient_medications')
+        .delete()
+        .eq('id', id);
 
-      // Refresh the medications list after deleting
-      fetchPatientMedications(patientId);
-      toast.success('ลบข้อมูลยาสำหรับผู้ป่วยเรียบร้อยแล้ว');
+      if (error) {
+        throw error;
+      }
+
+      setMedications(prev => prev.filter(med => med.id !== id));
       return true;
     } catch (err: unknown) {
-      console.error('Error deleting patient medication:', err);
-      toast.error('ไม่สามารถลบข้อมูลยาสำหรับผู้ป่วยได้');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete medication';
+      logger.error('Error deleting medication:', err);
+      setError(errorMessage);
+      toast.error('ไม่สามารถลบข้อมูลการจ่ายยาได้');
       return false;
     }
   };
 
-  // Initial fetch on component mount
-  useEffect(() => {
+  // Initial fetch when patientId is provided
+  React.useEffect(() => {
     if (patientId) {
-      fetchPatientMedications(patientId);
+      fetchMedicationHistory(patientId);
+    } else {
+      setMedications([]);
+      setLoading(false);
     }
-  }, [patientId]);
-
-  // Function to speak medication instructions with enhanced Thai support
-  const speakMedicationInstructions = (medication: PatientMedication) => {
-    if (!medication || !medication.medication) {
-      toast.error('ไม่พบข้อมูลยาที่จะอ่าน');
-      return;
-    }
-    
-    const text = `ยา${medication.medication.name} ขนาด ${medication.dosage} ${medication.medication.unit || ''} ${medication.instructions || ''}`;
-    
-    // Enhanced options for Thai voice
-    speakText(text, {
-      language: 'th-TH',
-      rate: 0.8,  // Slightly slower for better Thai pronunciation
-      pitch: 1.0,
-      volume: 1.0
-    }).catch(error => {
-      console.error('Error speaking text:', error);
-      toast.error('ไม่สามารถอ่านข้อมูลยาได้ กรุณาตรวจสอบการตั้งค่าเสียงของเบราว์เซอร์');
-    });
-  };
+  }, [patientId, fetchMedicationHistory]);
 
   return {
     medications,
     loading,
     error,
-    fetchPatientMedications,
-    addPatientMedication,
-    updatePatientMedication,
-    deletePatientMedication,
-    speakMedicationInstructions
+    fetchMedicationHistory,
+    addMedication,
+    updateMedication,
+    deleteMedication
   };
 };

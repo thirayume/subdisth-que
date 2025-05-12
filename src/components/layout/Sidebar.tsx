@@ -1,168 +1,284 @@
 
-import * as React from 'react';
-import { NavLink } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
-  LayoutGrid,
   Users,
   Calendar,
   Settings,
+  BarChart,
   Menu,
   X,
-  ChevronRight,
-  PlusCircle,
+  Home,
+  ListOrdered,
+  MonitorPlay,
   Clock,
-  ClipboardList,
-  Pill,
-  ListChecks,
-  BarChart
+  PanelsTopLeft,
+  Pill
 } from 'lucide-react';
-import CreateQueueDialog from '@/components/queue/CreateQueueDialog';
-import { mockQueues } from '@/lib/mockData';
-import { useTheme } from '@/components/theme/ThemeProvider';
-import { createLogger } from '@/utils/logger';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-const logger = createLogger('Sidebar');
-
-interface SidebarProps {
-  className?: string;
-}
-
-const Sidebar: React.FC<SidebarProps> = ({ className }) => {
-  logger.debug('Component rendering'); // Changed from info to debug
-  
-  const [expanded, setExpanded] = React.useState(true);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
-  const [createQueueDialogOpen, setCreateQueueDialogOpen] = React.useState(false);
-  
-  // Use our custom theme hook here
-  const { theme } = useTheme();
+export function Sidebar() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const location = useLocation();
 
   const toggleSidebar = () => {
-    setExpanded(!expanded);
+    setIsSidebarOpen(!isSidebarOpen);
   };
 
-  const toggleMobileSidebar = () => {
-    setMobileSidebarOpen(!mobileSidebarOpen);
+  const closeSidebar = () => {
+    setIsSidebarOpen(false);
   };
 
-  const handleCreateQueue = (newQueue: any) => {
-    // In a real application, we'd update the global state or send to API
-    logger.debug('New queue created:', newQueue);
-    
-    // For now, just add to mockQueues for demonstration
-    mockQueues.push(newQueue);
+  const isActiveRoute = (path: string) => {
+    return location.pathname === path;
   };
-
-  // Only create navItems once
-  const navItems = React.useMemo(() => [
-    { to: '/', label: 'แดชบอร์ด', icon: <LayoutGrid className="h-5 w-5" /> },
-    { to: '/queue-management', label: 'จัดการคิว', icon: <ListChecks className="h-5 w-5" /> },
-    { to: '/analytics', label: 'การวิเคราะห์', icon: <BarChart className="h-5 w-5" /> },
-    { to: '/queue-board', label: 'หน้าจอแสดงคิว', icon: <ClipboardList className="h-5 w-5" /> },
-    { to: '/patients', label: 'ผู้ป่วย', icon: <Users className="h-5 w-5" /> },
-    { to: '/medications', label: 'ยาและเวชภัณฑ์', icon: <Pill className="h-5 w-5" /> },
-    { to: '/appointments', label: 'นัดหมาย', icon: <Calendar className="h-5 w-5" /> },
-    { to: '/history', label: 'ประวัติคิว', icon: <Clock className="h-5 w-5" /> },
-    { to: '/settings', label: 'ตั้งค่า', icon: <Settings className="h-5 w-5" /> },
-  ], []);
 
   return (
     <>
-      {/* Mobile Sidebar Toggle Button */}
-      <Button
-        variant="outline"
-        size="icon"
-        className="fixed top-4 left-4 z-50 lg:hidden"
-        onClick={toggleMobileSidebar}
-      >
-        <Menu className="h-5 w-5" />
-      </Button>
-
-      {/* Mobile Sidebar Overlay */}
-      {mobileSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setMobileSidebarOpen(false)}
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={closeSidebar}
+          aria-hidden="true"
         />
       )}
 
+      {/* Mobile Toggle Button */}
+      <div className="fixed top-4 left-4 z-50 lg:hidden">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={toggleSidebar}
+          className="bg-white border-gray-200"
+        >
+          {isSidebarOpen ? (
+            <X className="h-5 w-5" />
+          ) : (
+            <Menu className="h-5 w-5" />
+          )}
+          <span className="sr-only">Toggle Sidebar</span>
+        </Button>
+      </div>
+
       {/* Sidebar */}
-      <aside
+      <div
         className={cn(
-          "fixed top-0 left-0 h-full z-40 transition-all duration-300 ease-in-out",
-          expanded ? "w-64" : "w-20",
-          mobileSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
-          "bg-sidebar border-r border-sidebar-border flex flex-col",
-          className
+          "fixed top-0 left-0 z-50 h-full w-64 transform transition-transform duration-200 ease-in-out bg-white border-r border-gray-200 flex flex-col",
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
-        {/* Sidebar Header */}
-        <div className="h-16 flex items-center px-4 border-b border-sidebar-border">
-          <div className={cn("flex items-center", expanded ? "justify-between w-full" : "justify-center")}>
-            {expanded && (
-              <div className="flex items-center space-x-2">
-                <span className="font-bold text-pharmacy-700">SubdisTH Que</span>
-              </div>
-            )}
-            <Button variant="ghost" size="icon" onClick={toggleSidebar} className="hidden lg:flex">
-              <ChevronRight
-                className={cn("h-5 w-5 transition-transform", !expanded && "rotate-180")}
-              />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={toggleMobileSidebar} className="lg:hidden">
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Sidebar Content */}
-        <div className="flex-1 overflow-y-auto py-4 px-3">
-          <nav className="space-y-1">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  cn(
-                    "sidebar-link",
-                    isActive ? "sidebar-link-active" : "hover:bg-sidebar-accent/50",
-                    !expanded && "justify-center px-2"
-                  )
-                }
-                end={item.to === '/'}
-              >
-                {item.icon}
-                {expanded && <span className="animate-fade-in">{item.label}</span>}
-              </NavLink>
-            ))}
-          </nav>
-        </div>
-
-        {/* Sidebar Footer - New Queue Button */}
-        <div className="p-4 border-t border-sidebar-border">
+        {/* Logo Area */}
+        <div className="h-16 flex items-center px-6 border-b border-gray-200">
+          <h1 className="text-xl font-semibold tracking-tight">Pharmacy System</h1>
           <Button
-            className={cn(
-              "w-full bg-pharmacy-600 hover:bg-pharmacy-700 text-white transition-all duration-300",
-              !expanded && "p-2"
-            )}
-            onClick={() => setCreateQueueDialogOpen(true)}
+            variant="ghost"
+            size="icon"
+            onClick={closeSidebar}
+            className="ml-auto lg:hidden"
           >
-            <PlusCircle className="h-5 w-5 mr-2" />
-            {expanded && <span>สร้างคิวใหม่</span>}
+            <X className="h-5 w-5" />
           </Button>
         </div>
-      </aside>
 
-      {/* Create Queue Dialog */}
-      <CreateQueueDialog
-        open={createQueueDialogOpen}
-        onOpenChange={setCreateQueueDialogOpen}
-        onCreateQueue={handleCreateQueue}
-      />
+        {/* Navigation */}
+        <ScrollArea className="flex-1 px-3 py-4">
+          <nav className="space-y-1">
+            <NavLink
+              to="/"
+              onClick={closeSidebar}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  isActiveRoute("/")
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                )
+              }
+            >
+              <Home className="mr-3 h-5 w-5" />
+              หน้าหลัก
+            </NavLink>
+            
+            <div className="pt-4 pb-2">
+              <div className="px-3">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  จัดการคิว
+                </h3>
+              </div>
+            </div>
+            
+            <NavLink
+              to="/queue/management"
+              onClick={closeSidebar}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  isActiveRoute("/queue/management")
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                )
+              }
+            >
+              <ListOrdered className="mr-3 h-5 w-5" />
+              จัดการคิว
+            </NavLink>
+            
+            <NavLink
+              to="/pharmacy"
+              onClick={closeSidebar}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  isActiveRoute("/pharmacy")
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                )
+              }
+            >
+              <Pill className="mr-3 h-5 w-5" />
+              บริการจ่ายยา
+            </NavLink>
+            
+            <NavLink
+              to="/queue/board"
+              onClick={closeSidebar}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  isActiveRoute("/queue/board")
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                )
+              }
+            >
+              <MonitorPlay className="mr-3 h-5 w-5" />
+              จอแสดงคิว
+            </NavLink>
+
+            <NavLink
+              to="/queue/history"
+              onClick={closeSidebar}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  isActiveRoute("/queue/history")
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                )
+              }
+            >
+              <Clock className="mr-3 h-5 w-5" />
+              ประวัติคิว
+            </NavLink>
+            
+            <div className="pt-4 pb-2">
+              <div className="px-3">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  จัดการข้อมูล
+                </h3>
+              </div>
+            </div>
+            
+            <NavLink
+              to="/patients"
+              onClick={closeSidebar}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  isActiveRoute("/patients")
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                )
+              }
+            >
+              <Users className="mr-3 h-5 w-5" />
+              ผู้ป่วย
+            </NavLink>
+            
+            <NavLink
+              to="/appointments"
+              onClick={closeSidebar}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  isActiveRoute("/appointments")
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                )
+              }
+            >
+              <Calendar className="mr-3 h-5 w-5" />
+              นัดหมาย
+            </NavLink>
+            
+            <NavLink
+              to="/medications"
+              onClick={closeSidebar}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  isActiveRoute("/medications")
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                )
+              }
+            >
+              <PanelsTopLeft className="mr-3 h-5 w-5" />
+              คลังยา
+            </NavLink>
+
+            <div className="pt-4 pb-2">
+              <div className="px-3">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  ระบบ
+                </h3>
+              </div>
+            </div>
+
+            <NavLink
+              to="/analytics"
+              onClick={closeSidebar}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  isActiveRoute("/analytics")
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                )
+              }
+            >
+              <BarChart className="mr-3 h-5 w-5" />
+              รายงาน
+            </NavLink>
+
+            <NavLink
+              to="/settings"
+              onClick={closeSidebar}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  isActiveRoute("/settings")
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                )
+              }
+            >
+              <Settings className="mr-3 h-5 w-5" />
+              ตั้งค่า
+            </NavLink>
+          </nav>
+        </ScrollArea>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-gray-200 text-xs text-gray-500 text-center">
+          &copy; {new Date().getFullYear()} Pharmacy Queue System
+        </div>
+      </div>
     </>
   );
-};
+}
 
 export default Sidebar;

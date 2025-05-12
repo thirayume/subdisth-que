@@ -125,6 +125,60 @@ export type Database = {
         }
         Relationships: []
       }
+      patient_medications: {
+        Row: {
+          created_at: string
+          dosage: string
+          end_date: string | null
+          id: string
+          instructions: string | null
+          medication_id: string
+          notes: string | null
+          patient_id: string
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dosage: string
+          end_date?: string | null
+          id?: string
+          instructions?: string | null
+          medication_id: string
+          notes?: string | null
+          patient_id: string
+          start_date?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dosage?: string
+          end_date?: string | null
+          id?: string
+          instructions?: string | null
+          medication_id?: string
+          notes?: string | null
+          patient_id?: string
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_medications_medication_id_fkey"
+            columns: ["medication_id"]
+            isOneToOne: false
+            referencedRelation: "medications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_medications_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patients: {
         Row: {
           address: string | null
@@ -134,6 +188,9 @@ export type Database = {
           gender: string | null
           id: string
           line_id: string | null
+          line_picture_url: string | null
+          line_status_message: string | null
+          line_user_id: string | null
           name: string
           patient_id: string
           phone: string
@@ -148,6 +205,9 @@ export type Database = {
           gender?: string | null
           id?: string
           line_id?: string | null
+          line_picture_url?: string | null
+          line_status_message?: string | null
+          line_user_id?: string | null
           name: string
           patient_id: string
           phone: string
@@ -162,6 +222,9 @@ export type Database = {
           gender?: string | null
           id?: string
           line_id?: string | null
+          line_picture_url?: string | null
+          line_status_message?: string | null
+          line_user_id?: string | null
           name?: string
           patient_id?: string
           phone?: string
@@ -169,6 +232,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      pharmacy_queue_services: {
+        Row: {
+          created_at: string
+          forwarded_to: string | null
+          id: string
+          pharmacist_notes: string | null
+          queue_id: string
+          service_end_at: string | null
+          service_start_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          forwarded_to?: string | null
+          id?: string
+          pharmacist_notes?: string | null
+          queue_id: string
+          service_end_at?: string | null
+          service_start_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          forwarded_to?: string | null
+          id?: string
+          pharmacist_notes?: string | null
+          queue_id?: string
+          service_end_at?: string | null
+          service_start_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pharmacy_queue_services_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "queues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       queue_types: {
         Row: {
@@ -221,6 +328,7 @@ export type Database = {
           notes: string | null
           number: number
           patient_id: string
+          pharmacy_status: string | null
           queue_date: string
           status: string
           type: string
@@ -234,6 +342,7 @@ export type Database = {
           notes?: string | null
           number: number
           patient_id: string
+          pharmacy_status?: string | null
           queue_date?: string
           status: string
           type: string
@@ -247,6 +356,7 @@ export type Database = {
           notes?: string | null
           number?: number
           patient_id?: string
+          pharmacy_status?: string | null
           queue_date?: string
           status?: string
           type?: string
