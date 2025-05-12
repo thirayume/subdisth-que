@@ -24,7 +24,9 @@ const PharmacyQueue = () => {
 
   React.useEffect(() => {
     // Fetch medications on mount
-    medications.length === 0 && useMedications().fetchMedications();
+    if (medications.length === 0) {
+      useMedications().fetchMedications();
+    }
   }, [medications.length]);
 
   return (
