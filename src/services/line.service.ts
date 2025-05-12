@@ -1,5 +1,6 @@
 // src/services/line.service.ts
 import axios from 'axios';
+import { LineProfile } from '../components/settings/types';
 
 interface LineTokenResponse {
   access_token: string;
@@ -58,7 +59,29 @@ class LineService {
     }
   }
 
-  async getProfile(accessToken: string) {
+  async handleCallback(code: string): Promise<LineProfile> {
+    try {
+      const tokenResponse = await this.exchangeToken(code);
+      
+      // If profile is included in the token response
+      if (tokenResponse.profile) {
+        return {
+          userId: tokenResponse.profile.userId,
+          displayName: tokenResponse.profile.displayName,
+          pictureUrl: tokenResponse.profile.pictureUrl
+        };
+      }
+      
+      // Otherwise fetch the profile separately
+      const profile = await this.getProfile(tokenResponse.access_token);
+      return profile;
+    } catch (error) {
+      console.error('Error handling LINE callback:', error);
+      throw new Error('Failed to handle LINE callback');
+    }
+  }
+
+  async getProfile(accessToken: string): Promise<LineProfile> {
     try {
       const response = await axios.get('/api/line-profile', {
         headers: {
@@ -88,6 +111,32 @@ class LineService {
     localStorage.removeItem('lineUserId');
     localStorage.removeItem('lineProfile');
     localStorage.removeItem('lineLoginState');
+  }
+
+  // Method to send notifications (added for interface compliance)
+  async sendNotification(userId: string, message: string): Promise<void> {
+    try {
+      await axios.post('/api/line-send-notification', {
+        userId,
+        message
+      });
+    } catch (error) {
+      console.error('Error sending LINE notification:', error);
+      throw new Error('Failed to send LINE notification');
+    }
+  }
+
+  // Method to get LINE profile (added for interface compliance)
+  async getLINEProfile(userId: string): Promise<any> {
+    try {
+      const response = await axios.post('/api/line-profile', {
+        userId
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting LINE profile:', error);
+      throw new Error('Failed to get LINE profile');
+    }
   }
 }
 

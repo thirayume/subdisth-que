@@ -1,8 +1,9 @@
+
 import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/utils/logger';
 import { queueSupabaseRequest } from '@/utils/requestThrottler';
-import { Queue, Patient, QueueTypeEnum } from '@/integrations/supabase/schema';
+import { Queue, Patient, QueueTypeEnum, QueueStatus } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
 
 const logger = createLogger('usePharmacyQueue');
@@ -19,8 +20,9 @@ export interface PharmacyService {
   updated_at: string;
 }
 
-export interface PharmacyQueue extends Omit<Queue, 'type'> {
+export interface PharmacyQueue extends Omit<Queue, 'type' | 'status'> {
   type: QueueTypeEnum;
+  status: QueueStatus;
   patient?: Patient;
   service?: PharmacyService;
 }
@@ -77,6 +79,7 @@ export const usePharmacyQueue = () => {
         return {
           ...q,
           type: q.type as QueueTypeEnum,
+          status: q.status as QueueStatus,
           service: queueService
         };
       });
@@ -200,6 +203,7 @@ export const usePharmacyQueue = () => {
       const newActiveQueue: PharmacyQueue = {
         ...activatedQueue,
         type: activatedQueue.type as QueueTypeEnum,
+        status: activatedQueue.status as QueueStatus,
         service
       };
 
