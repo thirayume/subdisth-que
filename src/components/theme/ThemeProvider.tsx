@@ -23,8 +23,8 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
 
 // A custom hook that provides access to the theme context
 export const useTheme = () => {
-  const [theme, setThemeState] = React.useState<Theme>("light");
   const [mounted, setMounted] = React.useState(false);
+  const [theme, setThemeState] = React.useState<Theme>("light");
   
   React.useEffect(() => {
     // Set mounted state once the component using this hook mounts

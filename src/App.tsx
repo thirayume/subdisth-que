@@ -18,32 +18,35 @@ import EmailConsentScreen from './components/EmailConsentScreen';
 import PharmacyQueue from './pages/PharmacyQueue';
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 import { Toaster } from 'sonner';
+import { LineAuthProvider } from './contexts/LineAuthContext';
 import './App.css';
 
 function App() {
   return (
     <React.StrictMode>
       <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/patients" element={<Patients />} />
-            <Route path="/medications" element={<Medications />} />
-            <Route path="/queue/management" element={<QueueManagement />} />
-            <Route path="/queue/board" element={<QueueBoard />} />
-            <Route path="/queue/ticket/:queueId" element={<QueueTicket />} />
-            <Route path="/queue/history" element={<QueueHistory />} />
-            <Route path="/appointments" element={<Appointments />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/patient-portal" element={<PatientPortal />} />
-            <Route path="/line-callback" element={<LineCallback />} />
-            <Route path="/email-consent" element={<EmailConsentScreen />} />
-            <Route path="/pharmacy" element={<PharmacyQueue />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Toaster richColors position="bottom-right" />
-        </BrowserRouter>
+        <LineAuthProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/patients" element={<Patients />} />
+              <Route path="/medications" element={<Medications />} />
+              <Route path="/queue/management" element={<QueueManagement />} />
+              <Route path="/queue/board" element={<QueueBoard />} />
+              <Route path="/queue/ticket/:queueId" element={<QueueTicket />} />
+              <Route path="/queue/history" element={<QueueHistory />} />
+              <Route path="/appointments" element={<Appointments />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/patient-portal" element={<PatientPortal />} />
+              <Route path="/line-callback" element={<LineCallback />} />
+              <Route path="/email-consent" element={<EmailConsentScreen />} />
+              <Route path="/pharmacy" element={<PharmacyQueue />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Toaster richColors position="bottom-right" />
+          </BrowserRouter>
+        </LineAuthProvider>
       </ThemeProvider>
     </React.StrictMode>
   );

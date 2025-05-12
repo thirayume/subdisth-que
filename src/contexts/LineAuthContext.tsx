@@ -88,20 +88,20 @@ export const LineAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     checkAuth();
   }, []);
 
-  const login = () => {
-    const state = Math.random().toString(36).substring(2, 15);
-    sessionStorage.setItem('lineLoginState', state);
+  const login = React.useCallback(() => {
+    const stateParam = Math.random().toString(36).substring(2, 15);
+    sessionStorage.setItem('lineLoginState', stateParam);
     
-    const loginUrl = lineService.generateLoginUrl(state);
+    const loginUrl = lineService.generateLoginUrl(stateParam);
     window.location.href = loginUrl;
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = React.useCallback(() => {
     localStorage.removeItem('lineProfile');
     dispatch({ type: 'LOGOUT' });
-  };
+  }, []);
 
-  const handleCallback = async (code: string, state: string) => {
+  const handleCallback = React.useCallback(async (code: string, state: string) => {
     const savedState = sessionStorage.getItem('lineLoginState');
     sessionStorage.removeItem('lineLoginState');
     
@@ -126,10 +126,17 @@ export const LineAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         payload: error instanceof Error ? error.message : 'An unknown error occurred' 
       });
     }
-  };
+  }, []);
+
+  const contextValue = React.useMemo(() => ({
+    state,
+    login,
+    logout,
+    handleCallback
+  }), [state, login, logout, handleCallback]);
 
   return (
-    <LineAuthContext.Provider value={{ state, login, logout, handleCallback }}>
+    <LineAuthContext.Provider value={contextValue}>
       {children}
     </LineAuthContext.Provider>
   );
