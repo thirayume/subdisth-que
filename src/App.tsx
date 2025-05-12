@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Index from './pages/Index';
 import Patients from './pages/Patients';
 import NotFound from './pages/NotFound';
@@ -22,26 +22,28 @@ import './App.css';
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/patients" element={<Patients />} />
-        <Route path="/medications" element={<Medications />} />
-        <Route path="/queue/management" element={<QueueManagement />} />
-        <Route path="/queue/board" element={<QueueBoard />} />
-        <Route path="/queue/ticket/:queueId" element={<QueueTicket />} />
-        <Route path="/queue/history" element={<QueueHistory />} />
-        <Route path="/appointments" element={<Appointments />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/patient-portal" element={<PatientPortal />} />
-        <Route path="/line-callback" element={<LineCallback />} />
-        <Route path="/email-consent" element={<EmailConsentScreen />} />
-        <Route path="/pharmacy" element={<PharmacyQueue />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <Toaster richColors position="bottom-right" />
-    </ThemeProvider>
+    <BrowserRouter>
+      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/patients" element={<Patients />} />
+          <Route path="/medications" element={<Medications />} />
+          <Route path="/queue/management" element={<QueueManagement />} />
+          <Route path="/queue/board" element={<QueueBoard />} />
+          <Route path="/queue/ticket/:queueId" element={<QueueTicket />} />
+          <Route path="/queue/history" element={<QueueHistory />} />
+          <Route path="/appointments" element={<Appointments />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/patient-portal" element={<PatientPortal />} />
+          <Route path="/line-callback" element={<LineCallback />} />
+          <Route path="/email-consent" element={<EmailConsentScreen />} />
+          <Route path="/pharmacy" element={<PharmacyQueue />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Toaster richColors position="bottom-right" />
+      </ThemeProvider>
+    </BrowserRouter>
   );
 }
 

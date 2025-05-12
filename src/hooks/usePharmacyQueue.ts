@@ -1,8 +1,9 @@
+
 import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/utils/logger';
 import { queueSupabaseRequest } from '@/utils/requestThrottler';
-import { Queue, QueueStatus, Patient } from '@/integrations/supabase/schema';
+import { Queue, Patient } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
 
 const logger = createLogger('usePharmacyQueue');
@@ -62,23 +63,34 @@ export const usePharmacyQueue = () => {
 
       const pharmacyQueues = result.data || [];
       logger.info(`Fetched ${pharmacyQueues.length} pharmacy queues`);
-      setQueues(pharmacyQueues);
+      
+      // Transform the data to ensure type safety
+      const typedQueues: PharmacyQueue[] = pharmacyQueues.map(q => {
+        const queueService = q.service && q.service.length > 0 ? {
+          ...q.service[0],
+          status: q.service[0].status as 'IN_PROGRESS' | 'COMPLETED' | 'FORWARDED'
+        } : undefined;
+        
+        return {
+          ...q,
+          service: queueService
+        };
+      });
+      
+      setQueues(typedQueues);
       
       // Set active queue if there's one already in service
-      const inServiceQueue = pharmacyQueues.find(q => 
-        q.service && q.service.length > 0 && q.service[0].status === 'IN_PROGRESS'
+      const inServiceQueue = typedQueues.find(q => 
+        q.service && q.service.status === 'IN_PROGRESS'
       );
       
       if (inServiceQueue) {
-        setActiveQueue({
-          ...inServiceQueue,
-          service: inServiceQueue.service ? inServiceQueue.service[0] : undefined
-        });
+        setActiveQueue(inServiceQueue);
       } else {
         setActiveQueue(null);
       }
       
-      return pharmacyQueues;
+      return typedQueues;
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch pharmacy queues';
       logger.error('Error fetching pharmacy queues:', err);
@@ -168,9 +180,15 @@ export const usePharmacyQueue = () => {
         throw serviceResult.error;
       }
 
-      const service = serviceResult.data && serviceResult.data.length > 0 
+      const serviceData = serviceResult.data && serviceResult.data.length > 0 
         ? serviceResult.data[0] 
         : undefined;
+
+      // Ensure the service status is correctly typed
+      const service = serviceData ? {
+        ...serviceData,
+        status: serviceData.status as 'IN_PROGRESS' | 'COMPLETED' | 'FORWARDED'
+      } : undefined;
 
       const newActiveQueue = {
         ...activatedQueue,

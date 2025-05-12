@@ -36,8 +36,9 @@ const QueueForwardDialog: React.FC<QueueForwardDialogProps> = ({
     if (!forwardDestination) return;
     
     setIsSubmitting(true);
-    await onForward(forwardDestination);
+    const result = await onForward(forwardDestination);
     setIsSubmitting(false);
+    return result;
   };
   
   return (
