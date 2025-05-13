@@ -1,4 +1,5 @@
 
+// Re-export from the UI components
 import { useToast as useToastUI } from "@/components/ui/use-toast";
 import { toast as sonnerToast } from "sonner";
 

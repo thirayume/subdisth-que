@@ -5,23 +5,21 @@ import { usePatientSearch } from './patient/usePatientSearch';
 import { usePatientSelection } from './patient/usePatientSelection';
 import { useNewPatientCreation } from './patient/useNewPatientCreation';
 import { useQueueCreation } from './queue/useQueueCreation';
-import { usePatientQueueInfo } from './queue/usePatientQueueInfo';
 import { useQueueDialogState } from './queue/useQueueDialogState';
 import { QueueType } from '@/integrations/supabase/schema';
-import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('useCreateQueue');
 
 export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQueue: (queue: any) => void) => {
-  // Custom hooks should be called before all other React hooks
+  // All hooks are called unconditionally at the top level
   const patientSearch = usePatientSearch();
   const patientSelection = usePatientSelection();
   const patientCreation = useNewPatientCreation();
   const queueCreation = useQueueCreation();
   const queueDialogState = useQueueDialogState(onOpenChange);
   
-  // Extract values from custom hooks
+  // Extract values from hooks using destructuring
   const {
     phoneNumber,
     setPhoneNumber,
@@ -70,7 +68,7 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     resetQueueDialog
   } = queueDialogState;
   
-  // Define callbacks using useCallback to prevent unnecessary re-renders
+  // Define all callback functions using useCallback to prevent unnecessary re-renders
   const handleCreateNewPatient = React.useCallback(async () => {
     if (!newPatientName || !phoneNumber) {
       toast.error('กรุณากรอกชื่อและเบอร์โทรศัพท์ของผู้ป่วย');
@@ -84,7 +82,7 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     }
   }, [newPatientName, phoneNumber, createNewPatient, setPatientId, updateFinalPatientInfo]);
   
-  // Handle creating queue
+  // Handle creating queue with proper dependency array
   const handleCreateQueue = React.useCallback(async () => {
     logger.info('Creating queue with patient ID:', patientId);
     

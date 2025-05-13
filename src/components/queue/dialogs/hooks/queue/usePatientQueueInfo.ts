@@ -6,12 +6,12 @@ import { useNewPatientCreation } from '../patient/useNewPatientCreation';
 import { toast } from 'sonner';
 
 export const usePatientQueueInfo = () => {
-  // First, declare all hooks at the top level
+  // First, declare all hooks at the top level to ensure consistent hook calls
   const patientSearch = usePatientSearch();
   const patientSelection = usePatientSelection();
-  const { createNewPatient } = useNewPatientCreation();
+  const patientCreation = useNewPatientCreation();
   
-  // Then, extract values from the hooks
+  // Extract values from hooks using destructuring
   const { 
     phoneNumber, 
     setPhoneNumber, 
@@ -23,10 +23,6 @@ export const usePatientQueueInfo = () => {
     resetPatientSearch
   } = patientSearch;
   
-  // Declare all state at the top level
-  const [matchedPatients, setMatchedPatients] = React.useState<any[]>([]);
-  const [localShowNewPatientForm, setLocalShowNewPatientForm] = React.useState(false);
-
   const {
     patientId,
     setPatientId,
@@ -43,13 +39,21 @@ export const usePatientQueueInfo = () => {
     resetPatientSelection
   } = patientSelection;
 
+  const {
+    createNewPatient
+  } = patientCreation;
+  
+  // Define all state at the top level
+  const [matchedPatients, setMatchedPatients] = React.useState<any[]>([]);
+  const [localShowNewPatientForm, setLocalShowNewPatientForm] = React.useState(false);
+
   // Effects come after all hooks and state declarations
   React.useEffect(() => {
     setMatchedPatients(foundPatients || []);
     setLocalShowNewPatientForm(showNewForm);
   }, [foundPatients, showNewForm]);
 
-  // Define all handlers after hooks and effects
+  // Define all handlers with useCallback
   const handlePhoneSearch = React.useCallback(async () => {
     if (phoneNumber) {
       console.log('⭐ [usePatientQueueInfo] Searching for patients with phone:', phoneNumber);
@@ -88,7 +92,7 @@ export const usePatientQueueInfo = () => {
     setLocalShowNewPatientForm(false);
   }, [resetPatientSearch, resetPatientSelection]);
 
-  // Return a memoized value to prevent unnecessary re-renders
+  // Return a memoized value
   return React.useMemo(() => ({
     phoneNumber,
     setPhoneNumber,
