@@ -1,8 +1,9 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { LineSettings, TextToSpeechConfig } from '../types';
 
 export const useLineSettingsState = () => {
+  // Define default values
   const defaultSettings: LineSettings = {
     channelId: "1234567890",
     channelSecret: "abcdefghijklmnopqrstuvwxyz",
@@ -19,13 +20,29 @@ export const useLineSettingsState = () => {
     language: 'th-TH'
   };
 
+  // Always define state hooks first
   const [isEditing, setIsEditing] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [isTestingMessage, setIsTestingMessage] = useState(false);
   const [lineSettings, setLineSettings] = useState<LineSettings>(defaultSettings);
   const [ttsConfig, setTtsConfig] = useState<TextToSpeechConfig>(defaultTtsConfig);
 
-  // Load saved settings when component mounts
+  // Define callbacks with useCallback before useEffect
+  const handleChange = useCallback((field: keyof LineSettings, value: string) => {
+    setLineSettings(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  }, []);
+
+  const handleTtsConfigChange = useCallback((field: keyof TextToSpeechConfig, value: any) => {
+    setTtsConfig(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  }, []);
+
+  // useEffect should always be at the end
   useEffect(() => {
     const savedSettings = localStorage.getItem('lineSettings');
     if (savedSettings) {
@@ -45,20 +62,6 @@ export const useLineSettingsState = () => {
       }
     }
   }, []);
-
-  const handleChange = (field: keyof LineSettings, value: string) => {
-    setLineSettings(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleTtsConfigChange = (field: keyof TextToSpeechConfig, value: any) => {
-    setTtsConfig(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
 
   return {
     isEditing,

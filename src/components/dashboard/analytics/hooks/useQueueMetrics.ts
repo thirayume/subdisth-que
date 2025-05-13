@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Queue } from '@/integrations/supabase/schema';
 
 export const useQueueMetrics = (completedQueues: Queue[]) => {
+  // Always define state hooks first
   const [metrics, setMetrics] = React.useState({
     averageWaitTime: 0,
     averageServiceTime: 0,
@@ -10,15 +11,15 @@ export const useQueueMetrics = (completedQueues: Queue[]) => {
     elderlyCount: 0
   });
 
-  React.useEffect(() => {
-    if (!completedQueues || completedQueues.length === 0) {
-      setMetrics({
+  // Define callbacks with useCallback before useEffect if needed
+  const calculateMetrics = React.useCallback((queues: Queue[]) => {
+    if (!queues || queues.length === 0) {
+      return {
         averageWaitTime: 0,
         averageServiceTime: 0,
         urgentCount: 0,
         elderlyCount: 0
-      });
-      return;
+      };
     }
 
     // Calculate average wait time (from created to called)
@@ -33,7 +34,7 @@ export const useQueueMetrics = (completedQueues: Queue[]) => {
     let urgentCount = 0;
     let elderlyCount = 0;
 
-    completedQueues.forEach(queue => {
+    queues.forEach(queue => {
       // Count by types
       if (queue.type === 'PRIORITY') urgentCount++;
       if (queue.type === 'ELDERLY') elderlyCount++;
@@ -55,13 +56,18 @@ export const useQueueMetrics = (completedQueues: Queue[]) => {
       }
     });
 
-    setMetrics({
+    return {
       averageWaitTime: waitTimeCount > 0 ? Math.round(totalWaitTime / waitTimeCount) : 0,
       averageServiceTime: serviceTimeCount > 0 ? Math.round(totalServiceTime / serviceTimeCount) : 0,
       urgentCount,
       elderlyCount
-    });
-  }, [completedQueues]);
+    };
+  }, []);
+
+  // useEffect should always be at the end
+  React.useEffect(() => {
+    setMetrics(calculateMetrics(completedQueues));
+  }, [completedQueues, calculateMetrics]);
 
   return metrics;
 };

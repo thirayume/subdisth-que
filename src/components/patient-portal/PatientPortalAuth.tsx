@@ -18,9 +18,13 @@ const PatientPortalAuth: React.FC<PatientPortalAuthProps> = ({
   onLoginSuccess, 
   onPatientSelect 
 }) => {
-  const navigate = useNavigate();
+  // Always define state hooks first
   const [activeTab, setActiveTab] = useState<string>("patient");
+  
+  // Define other hooks like useNavigate after state hooks
+  const navigate = useNavigate();
 
+  // Define callbacks with useCallback if needed
   const handlePatientFound = (patient: Patient) => {
     onPatientSelect(patient);
   };
@@ -33,17 +37,7 @@ const PatientPortalAuth: React.FC<PatientPortalAuthProps> = ({
         </CardHeader>
         <CardContent className="space-y-4">
           <Tabs defaultValue="patient" value={activeTab} onValueChange={setActiveTab}>
-            {/* <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="patient">สำหรับผู้ป่วย</TabsTrigger>
-              <TabsTrigger value="staff">สำหรับเจ้าหน้าที่</TabsTrigger>
-            </TabsList> */}
-            
             <TabsContent value="patient">
-              {/* <div className="text-center mb-6">
-                <QrCode className="mx-auto h-16 w-16 text-pharmacy-600 mb-2" />
-                <p className="text-gray-600 text-sm">กรุณาเข้าสู่ระบบด้วย LINE เพื่อดูข้อมูลคิวและประวัติผู้ป่วย</p>
-              </div> */}
-              
               <LineLoginButton onLoginSuccess={onLoginSuccess} />
             </TabsContent>
             
@@ -55,12 +49,6 @@ const PatientPortalAuth: React.FC<PatientPortalAuthProps> = ({
               <PatientPhoneSearch onPatientFound={handlePatientFound} />
             </TabsContent>
           </Tabs>
-          
-          {/* <div className="text-center mt-6">
-            <Button variant="outline" onClick={() => navigate('/')}>
-              กลับไปหน้าหลัก
-            </Button>
-          </div> */}
         </CardContent>
       </Card>
     </div>

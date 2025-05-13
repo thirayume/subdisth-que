@@ -1,11 +1,12 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { LineSettings, LineSettingsValidation, LineSettingsErrors } from '../types';
 
 export const useLineSettingsValidation = (
   lineSettings: LineSettings,
   isEditing: boolean
 ) => {
+  // Always define state hooks first
   const [errors, setErrors] = useState<LineSettingsErrors>({});
   const [validation, setValidation] = useState<LineSettingsValidation>({
     channelId: true,
@@ -14,14 +15,8 @@ export const useLineSettingsValidation = (
     isFormValid: true
   });
 
-  // Validate settings whenever they change during editing
-  useEffect(() => {
-    if (isEditing) {
-      validateSettings();
-    }
-  }, [lineSettings, isEditing]);
-
-  const validateSettings = () => {
+  // Define callbacks with useCallback before useEffect
+  const validateSettings = useCallback(() => {
     const newErrors: LineSettingsErrors = {};
     let newValidation = {
       channelId: true,
@@ -55,7 +50,14 @@ export const useLineSettingsValidation = (
     setValidation(newValidation);
     
     return newValidation.isFormValid;
-  };
+  }, [lineSettings]);
+
+  // useEffect should always be at the end
+  useEffect(() => {
+    if (isEditing) {
+      validateSettings();
+    }
+  }, [lineSettings, isEditing, validateSettings]);
 
   return {
     errors,

@@ -3,13 +3,21 @@ import * as React from 'react';
 import { QueueAlgorithmType } from '@/utils/queueAlgorithms';
 
 export const useAlgorithmState = (urgentCount: number, elderlyCount: number, waitingQueueCount: number) => {
+  // Always define state hooks first
   const [currentAlgorithm, setCurrentAlgorithm] = React.useState<QueueAlgorithmType>(
     (localStorage.getItem('queue_algorithm') as QueueAlgorithmType) || QueueAlgorithmType.FIFO
   );
   const [recommendedAlgorithm, setRecommendedAlgorithm] = React.useState<QueueAlgorithmType>(currentAlgorithm);
   const [shouldChangeAlgorithm, setShouldChangeAlgorithm] = React.useState(false);
   
-  // Determine the recommended algorithm based on queue composition
+  // Define callbacks with useCallback before useEffect
+  const handleChangeAlgorithm = React.useCallback(() => {
+    localStorage.setItem('queue_algorithm', recommendedAlgorithm);
+    setCurrentAlgorithm(recommendedAlgorithm);
+    setShouldChangeAlgorithm(false);
+  }, [recommendedAlgorithm]);
+  
+  // useEffect should always be at the end
   React.useEffect(() => {
     let recommended = QueueAlgorithmType.FIFO;
     let shouldChange = false;
@@ -33,13 +41,6 @@ export const useAlgorithmState = (urgentCount: number, elderlyCount: number, wai
     setRecommendedAlgorithm(recommended);
     setShouldChangeAlgorithm(shouldChange);
   }, [urgentCount, elderlyCount, waitingQueueCount, currentAlgorithm]);
-  
-  // Handle changing the algorithm
-  const handleChangeAlgorithm = () => {
-    localStorage.setItem('queue_algorithm', recommendedAlgorithm);
-    setCurrentAlgorithm(recommendedAlgorithm);
-    setShouldChangeAlgorithm(false);
-  };
   
   return {
     currentAlgorithm,

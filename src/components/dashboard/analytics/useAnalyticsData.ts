@@ -8,16 +8,18 @@ import { useThroughputData } from './hooks/useThroughputData';
 import { useQueueMetrics } from './hooks/useQueueMetrics';
 import { useAlgorithmState } from './hooks/useAlgorithmState';
 import { createLogger } from '@/utils/logger';
+import * as React from 'react';
 
 const logger = createLogger('AnalyticsData');
 
 export const useAnalyticsData = (completedQueues: Queue[], waitingQueues: Queue[]) => {
-  logger.debug('Hook initialized with completed queue count:', completedQueues?.length);
+  // Always define useState hooks first
+  const [initialized, setInitialized] = React.useState(false);
   
   // Time frame state
   const { timeFrame, setTimeFrame } = useTimeFrameState();
   
-  // Chart data
+  // Chart data hooks
   const waitTimeData = useWaitTimeData(timeFrame);
   const throughputData = useThroughputData(timeFrame);
   
@@ -37,12 +39,19 @@ export const useAnalyticsData = (completedQueues: Queue[], waitingQueues: Queue[
     handleChangeAlgorithm
   } = useAlgorithmState(urgentCount, elderlyCount, waitingQueues.length);
   
-  logger.debug('Analytics data prepared', {
-    timeFrame,
-    averageWaitTime,
-    averageServiceTime,
-    currentAlgorithm
-  });
+  // useEffect should be the last hook
+  React.useEffect(() => {
+    logger.debug('Analytics data prepared', {
+      timeFrame,
+      averageWaitTime,
+      averageServiceTime,
+      currentAlgorithm
+    });
+    
+    setInitialized(true);
+  }, [timeFrame, averageWaitTime, averageServiceTime, currentAlgorithm]);
+  
+  logger.debug('Hook initialized with completed queue count:', completedQueues?.length);
   
   return {
     timeFrame,
