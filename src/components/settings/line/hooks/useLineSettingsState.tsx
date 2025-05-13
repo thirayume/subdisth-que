@@ -20,14 +20,14 @@ export const useLineSettingsState = () => {
     language: 'th-TH'
   };
 
-  // Always define state hooks first
+  // State declarations
   const [isEditing, setIsEditing] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [isTestingMessage, setIsTestingMessage] = useState(false);
   const [lineSettings, setLineSettings] = useState<LineSettings>(defaultSettings);
   const [ttsConfig, setTtsConfig] = useState<TextToSpeechConfig>(defaultTtsConfig);
 
-  // Define callbacks with useCallback before useEffect
+  // Field change handlers
   const handleChange = useCallback((field: keyof LineSettings, value: string) => {
     setLineSettings(prev => ({
       ...prev,
@@ -42,7 +42,7 @@ export const useLineSettingsState = () => {
     }));
   }, []);
 
-  // useEffect should always be at the end
+  // Load saved settings on mount
   useEffect(() => {
     const savedSettings = localStorage.getItem('lineSettings');
     if (savedSettings) {
@@ -64,6 +64,8 @@ export const useLineSettingsState = () => {
   }, []);
 
   return {
+    defaultSettings,
+    defaultTtsConfig,
     isEditing,
     setIsEditing,
     isTesting,

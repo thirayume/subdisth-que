@@ -6,7 +6,7 @@ export const useLineSettingsValidation = (
   lineSettings: LineSettings,
   isEditing: boolean
 ) => {
-  // Always define state hooks first
+  // State hooks
   const [errors, setErrors] = useState<LineSettingsErrors>({});
   const [validation, setValidation] = useState<LineSettingsValidation>({
     channelId: true,
@@ -15,7 +15,7 @@ export const useLineSettingsValidation = (
     isFormValid: true
   });
 
-  // Define callbacks with useCallback before useEffect
+  // Validation function
   const validateSettings = useCallback(() => {
     const newErrors: LineSettingsErrors = {};
     let newValidation = {
@@ -52,7 +52,7 @@ export const useLineSettingsValidation = (
     return newValidation.isFormValid;
   }, [lineSettings]);
 
-  // useEffect should always be at the end
+  // Validate on edit mode change or settings change
   useEffect(() => {
     if (isEditing) {
       validateSettings();

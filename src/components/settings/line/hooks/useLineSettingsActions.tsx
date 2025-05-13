@@ -1,4 +1,5 @@
 
+import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { LineSettings, TextToSpeechConfig } from '../types';
 
@@ -13,13 +14,13 @@ export const useLineSettingsActions = (
   validateSettings: () => boolean,
   setErrors: (errors: any) => void
 ) => {
-  const handleEdit = () => {
+  const handleEdit = useCallback(() => {
     setIsEditing(true);
     // Reset errors when entering edit mode
     setErrors({});
-  };
+  }, [setIsEditing, setErrors]);
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     const isValid = validateSettings();
     
     if (!isValid) {
@@ -32,9 +33,9 @@ export const useLineSettingsActions = (
     localStorage.setItem('lineSettings', JSON.stringify(lineSettings));
     localStorage.setItem('ttsConfig', JSON.stringify(ttsConfig));
     toast.success('บันทึกการตั้งค่า LINE Official Account เรียบร้อยแล้ว');
-  };
+  }, [validateSettings, lineSettings, ttsConfig, setIsEditing]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     // Restore previous settings
     const savedSettings = localStorage.getItem('lineSettings');
     if (savedSettings) {
@@ -49,9 +50,9 @@ export const useLineSettingsActions = (
     setIsEditing(false);
     // Clear any errors
     setErrors({});
-  };
+  }, [setIsEditing, setLineSettings, setTtsConfig, setErrors]);
 
-  const handleTestConnection = async () => {
+  const handleTestConnection = useCallback(async () => {
     const isValid = validateSettings();
     
     if (!isValid) {
@@ -83,9 +84,9 @@ export const useLineSettingsActions = (
     } finally {
       setIsTesting(false);
     }
-  };
+  }, [validateSettings, lineSettings, setIsTesting]);
 
-  const handleTestMessage = async (messageType: 'welcome' | 'queueReceived' | 'queueCalled') => {
+  const handleTestMessage = useCallback(async (messageType: 'welcome' | 'queueReceived' | 'queueCalled') => {
     setIsTestingMessage(true);
     
     try {
@@ -127,7 +128,7 @@ export const useLineSettingsActions = (
     } finally {
       setIsTestingMessage(false);
     }
-  };
+  }, [lineSettings, setIsTestingMessage]);
 
   return {
     handleEdit,
