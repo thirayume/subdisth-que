@@ -1,17 +1,21 @@
 
 import * as React from 'react';
-import { toast } from 'sonner';
-import { usePatientSearch } from './patient/usePatientSearch';
-import { usePatientSelection } from './patient/usePatientSelection';
-import { useNewPatientCreation } from './patient/useNewPatientCreation';
-import { useQueueCreation } from './queue/useQueueCreation';
-import { useQueueDialogState } from './queue/useQueueDialogState';
 import { QueueType } from '@/integrations/supabase/schema';
+import { usePatientSearch } from '../patient/usePatientSearch';
+import { usePatientSelection } from '../patient/usePatientSelection';
+import { useNewPatientCreation } from '../patient/useNewPatientCreation';
+import { useQueueCreation } from '../queue/useQueueCreation';
+import { useQueueDialogState } from '../queue/useQueueDialogState';
+import { UseCreateQueueProps, UseCreateQueueState } from './types';
+import { toast } from 'sonner';
 import { createLogger } from '@/utils/logger';
 
-const logger = createLogger('useCreateQueue');
+const logger = createLogger('useCreateQueueHook');
 
-export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQueue: (queue: any) => void) => {
+export const useCreateQueueHook = (
+  onOpenChange: (open: boolean) => void, 
+  onCreateQueue: (queue: any) => void
+): UseCreateQueueState => {
   // All hooks are called unconditionally at the top level
   const patientSearch = usePatientSearch();
   const patientSelection = usePatientSelection();

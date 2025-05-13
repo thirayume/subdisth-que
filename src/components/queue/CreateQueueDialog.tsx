@@ -14,7 +14,7 @@ import PhoneSearchSection from './dialogs/PhoneSearchSection';
 import PatientResultsList from './dialogs/PatientResultsList';
 import NewPatientForm from './dialogs/NewPatientForm';
 import QueueDetailsForm from './dialogs/QueueDetailsForm';
-import { useCreateQueue } from './dialogs/hooks/useCreateQueue';
+import { useCreateQueue } from './dialogs/hooks/create-queue';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('CreateQueueDialog');
