@@ -1,38 +1,40 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import LineCredentialFields from './line/LineCredentialFields';
 import LineActionButtons from './line/LineActionButtons';
 import LineOfficialAccountIcon from './line/LineOfficialAccountIcon';
 import { useLineSettings } from './line/hooks/useLineSettings';
 import { useLineSettingsData } from '@/hooks/useLineSettingsData';
+import LineMessageTemplates from './line/LineMessageTemplates';
 
 const LineSettings = () => {
-  // Define state hooks first for consistent ordering
-  const [isEditing, setIsEditing] = useState(false);
-  const [isTesting, setIsTesting] = useState(false);
-  const [isTestingMessage, setIsTestingMessage] = useState(false);
-  const [errors, setErrors] = useState({});
-  
   const { 
-    lineSettings, 
-    ttsConfig, 
+    lineSettings: savedLineSettings, 
+    ttsConfig: savedTtsConfig, 
     loading,
     saveLineSettings 
   } = useLineSettingsData();
 
-  // Only use the custom hook after all useState declarations
   const {
-    handleChange,
+    isEditing,
+    isTesting,
+    isTestingMessage,
+    lineSettings,
+    ttsConfig,
+    errors,
+    validation,
     handleEdit,
     handleSave,
     handleCancel,
     handleTestConnection,
-    validation
+    handleTestMessage,
+    handleChange,
+    handleTtsConfigChange,
   } = useLineSettings();
 
   // Initialize with default values if not loaded yet
-  const defaultLineSettings = {
+  const currentLineSettings = lineSettings || {
     channelId: "1234567890",
     channelSecret: "abcdefghijklmnopqrstuvwxyz",
     accessToken: "12345678901234567890123456789012345678901234567890",
@@ -40,8 +42,6 @@ const LineSettings = () => {
     queueReceivedMessage: "คุณได้รับคิวหมายเลข {queueNumber} ประเภท: {queueType}\nระยะเวลารอโดยประมาณ: {estimatedWaitTime} นาที",
     queueCalledMessage: "เรียนคุณ {patientName}\nถึงคิวของคุณแล้ว! กรุณามาที่ช่องบริการ {counter}\nหมายเลขคิวของคุณคือ: {queueNumber}"
   };
-
-  const currentLineSettings = lineSettings || defaultLineSettings;
 
   if (loading) {
     return (
@@ -72,6 +72,14 @@ const LineSettings = () => {
             isEditing={isEditing}
             handleChange={handleChange}
             errors={errors}
+          />
+          
+          <LineMessageTemplates
+            lineSettings={currentLineSettings}
+            isEditing={isEditing}
+            handleChange={handleChange}
+            handleTestMessage={handleTestMessage}
+            isTesting={isTestingMessage}
           />
           
           <LineActionButtons 

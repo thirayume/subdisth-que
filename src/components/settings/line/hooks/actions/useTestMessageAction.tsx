@@ -1,7 +1,7 @@
 
 import { useCallback } from 'react';
 import { toast } from '@/hooks/use-toast';
-import { LineSettings } from '../../../types';
+import { LineSettings } from '../../types';
 
 export const useTestMessageAction = (
   lineSettings: LineSettings,
