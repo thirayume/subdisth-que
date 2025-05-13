@@ -23,8 +23,8 @@ export const usePharmacyQueueActions = ({
   const [loadingNext, setLoadingNext] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  // Call next queue
-  const callNextQueue = async () => {
+  // Call next queue - Define this callback before any useEffects
+  const callNextQueue = React.useCallback(async () => {
     try {
       if (activeQueue) {
         toast.warning('กรุณาดำเนินการกับคิวปัจจุบันให้เสร็จก่อน');
@@ -135,7 +135,7 @@ export const usePharmacyQueueActions = ({
     } finally {
       setLoadingNext(false);
     }
-  };
+  }, [activeQueue, setActiveQueue, fetchPharmacyQueues]);
 
   return {
     loadingNext,

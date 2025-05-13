@@ -16,7 +16,7 @@ export const usePharmacyQueueFetch = () => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  // Transform raw data to ensure type safety
+  // Transform raw data to ensure type safety - Define ALL callback hooks before any effects
   const transformQueueData = React.useCallback((rawData: any[]): PharmacyQueue[] => {
     return rawData.map(q => {
       const queueService = q.service && q.service.length > 0 ? {
@@ -104,7 +104,7 @@ export const usePharmacyQueueFetch = () => {
     }
   }, [fetchQueueData, processQueueData]);
 
-  // Set up real-time subscription for pharmacy queues
+  // Set up real-time subscription for pharmacy queues - Define this before the useEffect that uses it
   const setupRealtimeSubscription = React.useCallback(() => {
     const channel = supabase
       .channel('pharmacy-queue-changes')
@@ -130,7 +130,7 @@ export const usePharmacyQueueFetch = () => {
     };
   }, [fetchPharmacyQueues]);
 
-  // Initialize fetch and subscription - Place all effect hooks AFTER all other hooks
+  // Initialize fetch and subscription - Place this useEffect AFTER all other hook definitions
   React.useEffect(() => {
     fetchPharmacyQueues();
     return setupRealtimeSubscription();

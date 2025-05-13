@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/utils/logger';
@@ -20,8 +21,8 @@ export const usePharmacyServiceActions = ({
 }: UsePharmacyServiceActionsProps) => {
   const [error, setError] = React.useState<string | null>(null);
 
-  // Complete pharmacy service
-  const completeService = async (queueId: string, notes?: string) => {
+  // Complete pharmacy service - Define callbacks before any useEffects
+  const completeService = React.useCallback(async (queueId: string, notes?: string) => {
     try {
       setError(null);
       logger.info(`Completing pharmacy service for queue ${queueId}`);
@@ -83,10 +84,10 @@ export const usePharmacyServiceActions = ({
       toast.error('ไม่สามารถบันทึกการให้บริการได้');
       return false;
     }
-  };
+  }, [activeQueue, setActiveQueue, fetchPharmacyQueues]);
 
   // Forward to another service
-  const forwardService = async (queueId: string, forwardTo: string, notes?: string) => {
+  const forwardService = React.useCallback(async (queueId: string, forwardTo: string, notes?: string) => {
     try {
       setError(null);
       logger.info(`Forwarding queue ${queueId} to ${forwardTo}`);
@@ -147,7 +148,7 @@ export const usePharmacyServiceActions = ({
       toast.error('ไม่สามารถบันทึกการส่งต่อได้');
       return false;
     }
-  };
+  }, [activeQueue, setActiveQueue, fetchPharmacyQueues]);
 
   return {
     error,
