@@ -81,7 +81,7 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
   const handleCreateNewPatient = React.useCallback(async () => {
     if (!newPatientName || !phoneNumber) {
       toast.error('กรุณากรอกชื่อและเบอร์โทรศัพท์ของผู้ป่วย');
-      return;
+      return null;
     }
     
     const newPatient = await createNewPatient(newPatientName, phoneNumber);
@@ -89,22 +89,28 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
       setPatientId(newPatient.id);
       updateFinalPatientInfo(newPatient.name, newPatient.phone, newPatient.line_id || '');
     }
+    return newPatient;
   }, [newPatientName, phoneNumber, createNewPatient, setPatientId, updateFinalPatientInfo]);
   
   const handleCreateQueue = React.useCallback(async () => {
     logger.info('Creating queue with patient ID:', patientId);
     
-    if (!patientId && newPatientName) {
-      await handleCreateNewPatient();
+    let currentPatientId = patientId;
+    
+    if (!currentPatientId && newPatientName) {
+      const newPatient = await handleCreateNewPatient();
+      if (newPatient) {
+        currentPatientId = newPatient.id;
+      }
     }
     
-    if (!patientId) {
+    if (!currentPatientId) {
       toast.error('โปรดเลือกผู้ป่วยหรือสร้างผู้ป่วยใหม่');
       return;
     }
     
     try {
-      const newQueue = await createNewQueue(patientId);
+      const newQueue = await createNewQueue(currentPatientId);
       
       if (newQueue) {
         logger.info('Queue created successfully:', newQueue);

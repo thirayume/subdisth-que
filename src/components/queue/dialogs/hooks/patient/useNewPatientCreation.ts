@@ -22,11 +22,12 @@ export const useNewPatientCreation = () => {
       logger.debug('Inserting patient into database');
       const { data: newPatientData, error } = await supabase
         .from('patients')
-        .insert([{
+        .insert({
           name: newPatientName,
           phone: phoneNumber,
           patient_id: patient_id,
-        }])
+          // Make sure we're only inserting fields that exist in the Patient schema
+        })
         .select();
       
       if (error) {

@@ -10,8 +10,7 @@ export const usePatients = () => {
       patients = [],
       loading = false,
       error = null,
-      fetchPatients = async () => {},
-      updatePatientsState = () => {}
+      fetchPatients = async () => {}
     } = usePatientsState() || {};
 
     const {
@@ -19,7 +18,14 @@ export const usePatients = () => {
       addPatient = async () => null,
       updatePatient = async () => null,
       deletePatient = async () => false
-    } = usePatientsActions(patients, updatePatientsState) || {};
+    } = usePatientsActions(patients, (newPatients) => {
+      // This is a workaround since we can't directly access setPatients
+      // from usePatientsState. In a real application, this should be refactored.
+      const state = usePatientsState();
+      if (state && state.setPatients) {
+        state.setPatients(newPatients);
+      }
+    }) || {};
 
     const {
       searchLoading = false,

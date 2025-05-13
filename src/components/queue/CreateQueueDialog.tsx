@@ -119,7 +119,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
             <PatientResultsList 
               matchedPatients={matchedPatients}
               patientId={patientId}
-              handleSelectPatient={(id) => handleSelectPatient(id, matchedPatients)}
+              handleSelectPatient={handleSelectPatient}
               handleAddNewPatient={handleAddNewPatient}
             />
 

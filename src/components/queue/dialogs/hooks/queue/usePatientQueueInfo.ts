@@ -63,15 +63,17 @@ export const usePatientQueueInfo = () => {
       const patients = await searchPatientsByPhone();
       setMatchedPatients(patients || []);
       
-      if (patients.length === 0) {
+      if (patients && patients.length === 0) {
         setLocalShowNewPatientForm(true);
         setShowNewPatientForm(true);
       } else {
         setLocalShowNewPatientForm(false);
         setShowNewPatientForm(false);
       }
+      return patients;
     } else {
       toast.error('กรุณากรอกเบอร์โทรศัพท์');
+      return [];
     }
   }, [phoneNumber, searchPatientsByPhone, setShowNewPatientForm]);
 

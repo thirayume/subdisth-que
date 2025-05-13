@@ -4,8 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export const usePatientsActions = (
+  patients: Patient[],
   setPatients: React.Dispatch<React.SetStateAction<Patient[]>>
 ) => {
+  const actionError = null;
+
   const addPatient = async (patientData: Partial<Patient>): Promise<Patient | null> => {
     try {
       if (!patientData.name || !patientData.phone) {
@@ -14,15 +17,15 @@ export const usePatientsActions = (
 
       const { data, error } = await supabase
         .from('patients')
-        .insert([{
+        .insert({
           name: patientData.name,
           phone: patientData.phone,
           line_id: patientData.line_id || null,
-          email: patientData.email || null,
+          // Use only fields that exist in the Patient schema
           address: patientData.address || null,
-          birthdate: patientData.birthdate || null,
-          notes: patientData.notes || null,
-        }])
+          birth_date: patientData.birth_date || null,
+          // Add any other required fields that are in the Patient schema
+        })
         .select();
 
       if (error) {
@@ -112,6 +115,7 @@ export const usePatientsActions = (
   };
 
   return {
+    actionError,
     addPatient,
     updatePatient,
     deletePatient
