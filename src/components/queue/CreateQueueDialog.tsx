@@ -61,7 +61,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
     resetState
   } = useCreateQueue(onOpenChange, onCreateQueue);
 
-  // Reset state when dialog is closed - FIX: Adding proper dependency array
+  // Reset state when dialog is closed
   React.useEffect(() => {
     if (!open) {
       logger.debug('Dialog closed, resetting state');
@@ -69,7 +69,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
     } else {
       logger.debug('Dialog opened');
     }
-  }, [open, resetState]); // Add resetState to dependency array
+  }, [open, resetState]);
   
   // Add debug logging for QR dialog state
   React.useEffect(() => {

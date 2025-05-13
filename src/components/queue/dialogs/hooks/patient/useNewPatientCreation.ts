@@ -7,7 +7,7 @@ import { createLogger } from '@/utils/logger';
 const logger = createLogger('useNewPatientCreation');
 
 export const useNewPatientCreation = () => {
-  const createNewPatient = async (
+  const createNewPatient = React.useCallback(async (
     newPatientName: string,
     phoneNumber: string
   ) => {
@@ -26,7 +26,6 @@ export const useNewPatientCreation = () => {
           name: newPatientName,
           phone: phoneNumber,
           patient_id: patient_id,
-          // Make sure we're only inserting fields that exist in the Patient schema
         })
         .select();
       
@@ -48,7 +47,7 @@ export const useNewPatientCreation = () => {
       toast.error('ไม่สามารถสร้างข้อมูลผู้ป่วยใหม่ได้');
       return null;
     }
-  };
+  }, []);
 
   return {
     createNewPatient

@@ -144,7 +144,7 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
   }, [setShowNewPatientForm]);
   
   const handleSelectPatient = React.useCallback((id: string) => {
-    selectPatient(id, foundPatients);
+    selectPatient(id, foundPatients || []);
   }, [selectPatient, foundPatients]);
   
   const resetState = React.useCallback(() => {
@@ -176,7 +176,7 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     phoneNumber,
     setPhoneNumber,
     isSearching,
-    matchedPatients: foundPatients,
+    matchedPatients: foundPatients || [],
     showNewPatientForm,
     newPatientName,
     setNewPatientName,

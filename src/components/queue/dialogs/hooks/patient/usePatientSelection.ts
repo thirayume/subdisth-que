@@ -14,7 +14,7 @@ export const usePatientSelection = () => {
   const [finalPatientPhone, setFinalPatientPhone] = React.useState('');
   const [finalPatientLineId, setFinalPatientLineId] = React.useState('');
 
-  const resetPatientSelection = () => {
+  const resetPatientSelection = React.useCallback(() => {
     logger.debug('Resetting all patient selection state');
     setPatientId('');
     setNewPatientName('');
@@ -24,9 +24,9 @@ export const usePatientSelection = () => {
     setFinalPatientName('');
     setFinalPatientPhone('');
     setFinalPatientLineId('');
-  };
+  }, []);
 
-  const handleSelectPatient = (id: string, patients: any[]) => {
+  const handleSelectPatient = React.useCallback((id: string, patients: any[]) => {
     logger.info(`Selecting patient with ID: ${id}`);
     const selectedPatient = patients.find(p => p.id === id);
     
@@ -46,14 +46,14 @@ export const usePatientSelection = () => {
     } else {
       logger.warn('Selected patient not found in patients array');
     }
-  };
+  }, []);
 
-  const updateFinalPatientInfo = (name: string, phone: string, lineId: string = '') => {
+  const updateFinalPatientInfo = React.useCallback((name: string, phone: string, lineId: string = '') => {
     logger.debug(`Updating final patient info - name: ${name}, phone: ${phone}, lineId: ${lineId}`);
     setFinalPatientName(name);
     setFinalPatientPhone(phone);
     setFinalPatientLineId(lineId);
-  };
+  }, []);
 
   return {
     patientId,

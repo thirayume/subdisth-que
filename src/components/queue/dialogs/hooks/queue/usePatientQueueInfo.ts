@@ -49,7 +49,9 @@ export const usePatientQueueInfo = () => {
   
   // Effects come after hook declarations and state definitions
   React.useEffect(() => {
-    setMatchedPatients(foundPatients || []);
+    if (foundPatients) {
+      setMatchedPatients(foundPatients);
+    }
   }, [foundPatients]);
   
   React.useEffect(() => {
@@ -61,16 +63,18 @@ export const usePatientQueueInfo = () => {
     if (phoneNumber) {
       console.log('⭐ [usePatientQueueInfo] Searching for patients with phone:', phoneNumber);
       const patients = await searchPatientsByPhone();
-      setMatchedPatients(patients || []);
+      if (patients) {
+        setMatchedPatients(patients);
+      }
       
-      if (patients && patients.length === 0) {
+      if (!patients || patients.length === 0) {
         setLocalShowNewPatientForm(true);
         setShowNewPatientForm(true);
       } else {
         setLocalShowNewPatientForm(false);
         setShowNewPatientForm(false);
       }
-      return patients;
+      return patients || [];
     } else {
       toast.error('กรุณากรอกเบอร์โทรศัพท์');
       return [];

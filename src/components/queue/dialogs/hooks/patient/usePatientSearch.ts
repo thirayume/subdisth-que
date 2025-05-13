@@ -13,15 +13,15 @@ export const usePatientSearch = () => {
   const [matchedPatients, setMatchedPatients] = React.useState<Patient[]>([]);
   const [showNewPatientForm, setShowNewPatientForm] = React.useState(false);
   
-  const resetPatientSearch = () => {
+  const resetPatientSearch = React.useCallback(() => {
     logger.debug('Resetting patient search state');
     setPhoneNumber('');
     setIsSearching(false);
     setMatchedPatients([]);
     setShowNewPatientForm(false);
-  };
+  }, []);
 
-  const handlePhoneSearch = async () => {
+  const handlePhoneSearch = React.useCallback(async () => {
     logger.debug(`Starting phone search for: "${phoneNumber}"`);
     
     if (!phoneNumber) {
@@ -66,7 +66,7 @@ export const usePatientSearch = () => {
       logger.debug('Search completed, setting isSearching to false');
       setIsSearching(false);
     }
-  };
+  }, [phoneNumber]);
 
   return {
     phoneNumber,

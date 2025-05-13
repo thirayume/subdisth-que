@@ -15,16 +15,22 @@ export const usePatientsActions = (
         throw new Error('Name and phone are required');
       }
 
+      // Generate a patient_id with format P + 4 digits if not provided
+      if (!patientData.patient_id) {
+        const patientIdNum = Math.floor(1000 + Math.random() * 9000);
+        patientData.patient_id = `P${patientIdNum}`;
+      }
+
       const { data, error } = await supabase
         .from('patients')
         .insert({
           name: patientData.name,
           phone: patientData.phone,
           line_id: patientData.line_id || null,
-          // Use only fields that exist in the Patient schema
           address: patientData.address || null,
           birth_date: patientData.birth_date || null,
-          // Add any other required fields that are in the Patient schema
+          patient_id: patientData.patient_id,
+          gender: patientData.gender || 'ไม่ระบุ',
         })
         .select();
 
