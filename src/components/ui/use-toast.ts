@@ -1,5 +1,6 @@
 
-// Forward imports from the hooks/use-toast.ts to maintain compatibility
-import { useToast, toast } from "@/hooks/use-toast";
+// Re-export from @radix-ui/react-toast
+import { useToast as useToastOriginal, toast as toastOriginal } from "@radix-ui/react-toast";
 
-export { useToast, toast };
+export const useToast = useToastOriginal;
+export const toast = toastOriginal;
