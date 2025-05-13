@@ -26,6 +26,23 @@ export const useTheme = () => {
   const [mounted, setMounted] = React.useState(false);
   const [theme, setThemeState] = React.useState<Theme>("light");
   
+  // Function to set the theme - Define useCallback before useEffect
+  const setTheme = React.useCallback((newTheme: Theme) => {
+    localStorage.setItem("vite-ui-theme", newTheme);
+    setThemeState(newTheme);
+    
+    // Update the class on the document element
+    if (newTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    
+    // Dispatch a storage event to notify other components
+    window.dispatchEvent(new Event("storage"));
+  }, []);
+  
+  // Register effects after all other hook definitions
   React.useEffect(() => {
     // Set mounted state once the component using this hook mounts
     setMounted(true);
@@ -47,22 +64,6 @@ export const useTheme = () => {
     return () => {
       window.removeEventListener("storage", handleStorageChange);
     };
-  }, []);
-  
-  // Function to set the theme - Use useCallback to ensure hook order consistency
-  const setTheme = React.useCallback((newTheme: Theme) => {
-    localStorage.setItem("vite-ui-theme", newTheme);
-    setThemeState(newTheme);
-    
-    // Update the class on the document element
-    if (newTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-    
-    // Dispatch a storage event to notify other components
-    window.dispatchEvent(new Event("storage"));
   }, []);
   
   return {

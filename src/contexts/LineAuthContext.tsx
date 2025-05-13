@@ -68,26 +68,10 @@ const lineAuthReducer = (state: LineState, action: LineAction): LineState => {
 
 // Provider
 export const LineAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Define reducer first to ensure consistent hook order
   const [state, dispatch] = useReducer(lineAuthReducer, initialState);
 
-  // Check if user is already authenticated on mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      const lineProfile = localStorage.getItem('lineProfile');
-      
-      if (lineProfile) {
-        try {
-          const profile = JSON.parse(lineProfile) as LineProfile;
-          dispatch({ type: 'LOGIN_SUCCESS', payload: profile });
-        } catch (error) {
-          localStorage.removeItem('lineProfile');
-        }
-      }
-    };
-
-    checkAuth();
-  }, []);
-
+  // Define all callbacks before any useEffects
   const login = useCallback(() => {
     const stateParam = Math.random().toString(36).substring(2, 15);
     sessionStorage.setItem('lineLoginState', stateParam);
@@ -128,12 +112,31 @@ export const LineAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
+  // Define useMemo before useEffect
   const contextValue = useMemo(() => ({
     state,
     login,
     logout,
     handleCallback
   }), [state, login, logout, handleCallback]);
+
+  // Register effects after all other hook definitions
+  useEffect(() => {
+    const checkAuth = async () => {
+      const lineProfile = localStorage.getItem('lineProfile');
+      
+      if (lineProfile) {
+        try {
+          const profile = JSON.parse(lineProfile) as LineProfile;
+          dispatch({ type: 'LOGIN_SUCCESS', payload: profile });
+        } catch (error) {
+          localStorage.removeItem('lineProfile');
+        }
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   return (
     <LineAuthContext.Provider value={contextValue}>

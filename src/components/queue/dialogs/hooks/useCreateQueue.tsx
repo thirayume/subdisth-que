@@ -14,6 +14,7 @@ import { createLogger } from '@/utils/logger';
 const logger = createLogger('useCreateQueue');
 
 export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQueue: (queue: any) => void) => {
+  // Custom hooks should be called before all other React hooks
   const {
     phoneNumber,
     setPhoneNumber,
@@ -62,8 +63,8 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     resetQueueDialog
   } = useQueueDialogState(onOpenChange);
   
-  // Handle creating new patient
-  const handleCreateNewPatient = async () => {
+  // Define callbacks before any useEffects
+  const handleCreateNewPatient = React.useCallback(async () => {
     if (!newPatientName || !phoneNumber) {
       toast.error('กรุณากรอกชื่อและเบอร์โทรศัพท์ของผู้ป่วย');
       return;
@@ -74,10 +75,10 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
       setPatientId(newPatient.id);
       updateFinalPatientInfo(newPatient.name, newPatient.phone, newPatient.line_id || '');
     }
-  };
+  }, [newPatientName, phoneNumber, createNewPatient, setPatientId, updateFinalPatientInfo]);
   
   // Handle creating queue
-  const handleCreateQueue = async () => {
+  const handleCreateQueue = React.useCallback(async () => {
     logger.info('Creating queue with patient ID:', patientId);
     
     if (!patientId && newPatientName) {
@@ -112,13 +113,24 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
       logger.error('Error in handleCreateQueue:', err);
       toast.error('เกิดข้อผิดพลาดในการสร้างคิว');
     }
-  };
+  }, [
+    patientId, 
+    newPatientName, 
+    handleCreateNewPatient, 
+    createQueue, 
+    setQrDialogOpen, 
+    setCreatedQueueNumber, 
+    setCreatedQueueType, 
+    setCreatedPurpose, 
+    queueTypePurposes,
+    onCreateQueue
+  ]);
   
   // Helper function to handle adding a new patient
-  const handleAddNewPatient = () => {
+  const handleAddNewPatient = React.useCallback(() => {
     logger.debug('Adding new patient, showing form');
     setShowNewPatientForm(true);
-  };
+  }, [setShowNewPatientForm]);
   
   const resetState = React.useCallback(() => {
     logger.debug('Resetting all states');
