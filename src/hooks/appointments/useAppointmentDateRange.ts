@@ -1,36 +1,40 @@
 
-import { Appointment, AppointmentStatus } from '@/integrations/supabase/schema';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
+import { useMemo } from 'react';
+import { Appointment } from '@/integrations/supabase/schema';
+import { toast } from 'sonner';
+import { isWithinInterval, parseISO } from 'date-fns';
 
 export const useAppointmentDateRange = () => {
-  const getAppointmentsByDateRange = async (startDate: Date, endDate: Date) => {
+  const getAppointmentsByDateRange = useMemo(() => (
+    appointments: Appointment[], 
+    startDate?: Date, 
+    endDate?: Date
+  ) => {
     try {
-      const { data, error } = await supabase
-        .from('appointments')
-        .select('*')
-        .gte('date', startDate.toISOString())
-        .lte('date', endDate.toISOString())
-        .order('date', { ascending: true });
-
-      if (error) {
-        throw error;
+      if (!startDate || !endDate) {
+        return appointments;
       }
 
-      return (data || []).map(item => ({
-        ...item,
-        status: item.status as AppointmentStatus
-      }));
-    } catch (err: any) {
-      console.error('Error fetching appointments by date range:', err);
-      toast({
-        title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถดึงข้อมูลการนัดหมายได้',
-        variant: 'destructive'
+      return appointments.filter(appointment => {
+        try {
+          const appointmentDate = parseISO(appointment.date);
+          return isWithinInterval(appointmentDate, { 
+            start: startDate, 
+            end: endDate 
+          });
+        } catch (err) {
+          console.error('Error parsing date:', appointment.date, err);
+          return false;
+        }
       });
+    } catch (err) {
+      console.error('Error filtering appointments by date range:', err);
+      toast.error('ไม่สามารถกรองการนัดหมายตามช่วงวันที่ได้');
       return [];
     }
-  };
+  }, []);
 
-  return { getAppointmentsByDateRange };
+  return {
+    getAppointmentsByDateRange
+  };
 };

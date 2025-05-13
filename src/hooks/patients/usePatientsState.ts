@@ -1,13 +1,13 @@
 
-import * as React from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from 'react';
 import { Patient } from '@/integrations/supabase/schema';
-import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export const usePatientsState = () => {
-  const [patients, setPatients] = React.useState<Patient[]>([]);
-  const [loading, setLoading] = React.useState<boolean>(true);
-  const [error, setError] = React.useState<string | null>(null);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchPatients = async () => {
     try {
@@ -17,53 +17,32 @@ export const usePatientsState = () => {
       const { data, error } = await supabase
         .from('patients')
         .select('*')
-        .order('name', { ascending: true });
+        .order('created_at', { ascending: false });
 
       if (error) {
         throw error;
       }
 
-      setPatients(data || []);
-      console.log(`Fetched ${data?.length || 0} patients from database`);
+      setPatients(data as Patient[]);
+      console.info('Fetched', data?.length, 'patients from database');
     } catch (err: any) {
       console.error('Error fetching patients:', err);
       setError(err.message || 'Failed to fetch patients');
-      toast({
-        title: "Error",
-        description: 'ไม่สามารถโหลดข้อมูลผู้ป่วยได้',
-        variant: "destructive"
-      });
+      toast.error('ไม่สามารถดึงข้อมูลผู้ป่วยได้');
     } finally {
       setLoading(false);
     }
   };
 
-  // Initial data fetch and set up real-time subscription
-  React.useEffect(() => {
+  useEffect(() => {
     fetchPatients();
-
-    // Set up real-time subscription for patients
-    const channel = supabase
-      .channel('patients-state-changes')
-      .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'patients' },
-          (payload) => {
-            console.log('Patient data change detected:', payload);
-            fetchPatients(); // Refresh all patients when changes occur
-          }
-      )
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
   return {
     patients,
+    setPatients,
     loading,
     error,
-    fetchPatients,
-    updatePatientsState: setPatients
+    fetchPatients
   };
 };

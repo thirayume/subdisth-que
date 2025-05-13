@@ -19,15 +19,16 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
   const queueCreation = useQueueCreation();
   const queueDialogState = useQueueDialogState(onOpenChange);
   
-  // Extract values from hooks using destructuring
+  // Extract values using object destructuring to ensure consistent usage
   const {
     phoneNumber,
     setPhoneNumber,
-    handlePhoneSearch,
+    handlePhoneSearch: searchByPhone,
     isSearching,
-    matchedPatients,
+    matchedPatients: foundPatients,
     showNewPatientForm,
-    setShowNewPatientForm
+    setShowNewPatientForm,
+    resetPatientSearch
   } = patientSearch;
   
   const {
@@ -38,7 +39,7 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     finalPatientName,
     finalPatientPhone,
     finalPatientLineId,
-    handleSelectPatient,
+    handleSelectPatient: selectPatient,
     updateFinalPatientInfo,
     resetPatientSelection
   } = patientSelection;
@@ -52,7 +53,7 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     setQueueType,
     notes,
     setNotes,
-    createQueue,
+    createQueue: createNewQueue,
     queueTypePurposes
   } = queueCreation;
   
@@ -68,7 +69,15 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     resetQueueDialog
   } = queueDialogState;
   
-  // Define all callback functions using useCallback to prevent unnecessary re-renders
+  // Define handler functions using useCallback
+  const handlePhoneSearch = React.useCallback(async () => {
+    if (phoneNumber) {
+      await searchByPhone();
+    } else {
+      toast.error('กรุณากรอกเบอร์โทรศัพท์');
+    }
+  }, [phoneNumber, searchByPhone]);
+  
   const handleCreateNewPatient = React.useCallback(async () => {
     if (!newPatientName || !phoneNumber) {
       toast.error('กรุณากรอกชื่อและเบอร์โทรศัพท์ของผู้ป่วย');
@@ -82,7 +91,6 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     }
   }, [newPatientName, phoneNumber, createNewPatient, setPatientId, updateFinalPatientInfo]);
   
-  // Handle creating queue with proper dependency array
   const handleCreateQueue = React.useCallback(async () => {
     logger.info('Creating queue with patient ID:', patientId);
     
@@ -96,22 +104,15 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     }
     
     try {
-      // Create queue using the hook method
-      const newQueue = await createQueue(patientId);
+      const newQueue = await createNewQueue(patientId);
       
       if (newQueue) {
         logger.info('Queue created successfully:', newQueue);
-        
-        // Update QR dialog state
         setQrDialogOpen(true);
         setCreatedQueueNumber(newQueue.number);
         setCreatedQueueType(newQueue.type as QueueType);
         setCreatedPurpose(queueTypePurposes[newQueue.type]);
-        
-        // Notify parent component
         onCreateQueue(newQueue);
-        
-        // Show success toast
         toast.success(`สร้างคิวหมายเลข ${newQueue.number} สำเร็จ`);
       }
     } catch (err) {
@@ -122,7 +123,7 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     patientId, 
     newPatientName, 
     handleCreateNewPatient, 
-    createQueue, 
+    createNewQueue,
     setQrDialogOpen, 
     setCreatedQueueNumber, 
     setCreatedQueueType, 
@@ -131,11 +132,14 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     onCreateQueue
   ]);
   
-  // Helper function to handle adding a new patient
   const handleAddNewPatient = React.useCallback(() => {
     logger.debug('Adding new patient, showing form');
     setShowNewPatientForm(true);
   }, [setShowNewPatientForm]);
+  
+  const handleSelectPatient = React.useCallback((id: string) => {
+    selectPatient(id, foundPatients);
+  }, [selectPatient, foundPatients]);
   
   const resetState = React.useCallback(() => {
     logger.debug('Resetting all states');
@@ -146,24 +150,27 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     setNotes('');
     resetQueueDialog();
     resetPatientSelection();
+    resetPatientSearch();
     setShowNewPatientForm(false);
   }, [
     setPhoneNumber, 
     setPatientId, 
-    setNewPatientName,
+    setNewPatientName, 
     setQueueType, 
     setNotes, 
     resetQueueDialog, 
     resetPatientSelection,
+    resetPatientSearch,
     setShowNewPatientForm
   ]);
 
-  // Return a memoized value to prevent unnecessary re-renders
+  // Return a memoized value to ensure consistent return value
   return React.useMemo(() => ({
+    // State
     phoneNumber,
     setPhoneNumber,
     isSearching,
-    matchedPatients,
+    matchedPatients: foundPatients,
     showNewPatientForm,
     newPatientName,
     setNewPatientName,
@@ -181,6 +188,8 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     finalPatientPhone,
     finalPatientLineId,
     queueTypePurposes,
+    
+    // Actions
     handlePhoneSearch,
     handleAddNewPatient,
     handleSelectPatient,
@@ -190,7 +199,7 @@ export const useCreateQueue = (onOpenChange: (open: boolean) => void, onCreateQu
     phoneNumber,
     setPhoneNumber,
     isSearching,
-    matchedPatients,
+    foundPatients,
     showNewPatientForm,
     newPatientName,
     setNewPatientName,

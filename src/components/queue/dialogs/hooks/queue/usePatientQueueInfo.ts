@@ -6,10 +6,14 @@ import { useNewPatientCreation } from '../patient/useNewPatientCreation';
 import { toast } from 'sonner';
 
 export const usePatientQueueInfo = () => {
-  // First, declare all hooks at the top level to ensure consistent hook calls
+  // First, declare all hooks unconditionally at the top level
   const patientSearch = usePatientSearch();
   const patientSelection = usePatientSelection();
   const patientCreation = useNewPatientCreation();
+  
+  // Now, declare all state variables
+  const [matchedPatients, setMatchedPatients] = React.useState<any[]>([]);
+  const [localShowNewPatientForm, setLocalShowNewPatientForm] = React.useState(false);
   
   // Extract values from hooks using destructuring
   const { 
@@ -18,7 +22,7 @@ export const usePatientQueueInfo = () => {
     isSearching, 
     handlePhoneSearch: searchPatientsByPhone,
     matchedPatients: foundPatients,
-    showNewPatientForm: showNewForm,
+    showNewPatientForm: searchShowNewPatientForm,
     setShowNewPatientForm,
     resetPatientSearch
   } = patientSearch;
@@ -43,15 +47,14 @@ export const usePatientQueueInfo = () => {
     createNewPatient
   } = patientCreation;
   
-  // Define all state at the top level
-  const [matchedPatients, setMatchedPatients] = React.useState<any[]>([]);
-  const [localShowNewPatientForm, setLocalShowNewPatientForm] = React.useState(false);
-
-  // Effects come after all hooks and state declarations
+  // Effects come after hook declarations and state definitions
   React.useEffect(() => {
     setMatchedPatients(foundPatients || []);
-    setLocalShowNewPatientForm(showNewForm);
-  }, [foundPatients, showNewForm]);
+  }, [foundPatients]);
+  
+  React.useEffect(() => {
+    setLocalShowNewPatientForm(searchShowNewPatientForm);
+  }, [searchShowNewPatientForm]);
 
   // Define all handlers with useCallback
   const handlePhoneSearch = React.useCallback(async () => {
@@ -68,7 +71,7 @@ export const usePatientQueueInfo = () => {
         setShowNewPatientForm(false);
       }
     } else {
-      toast.error('กรุณากรอกเบอร์โทรศัพท์', { id: "phone-search" });
+      toast.error('กรุณากรอกเบอร์โทรศัพท์');
     }
   }, [phoneNumber, searchPatientsByPhone, setShowNewPatientForm]);
 
@@ -83,7 +86,7 @@ export const usePatientQueueInfo = () => {
     setShowNewPatientForm(false);
     setPatientId(id);
     selectPatientFromList(id, matchedPatients);
-  }, [setShowNewPatientForm, setPatientId, selectPatientFromList, matchedPatients]);
+  }, [matchedPatients, selectPatientFromList, setPatientId, setShowNewPatientForm]);
 
   const resetAll = React.useCallback(() => {
     resetPatientSearch();
@@ -92,7 +95,7 @@ export const usePatientQueueInfo = () => {
     setLocalShowNewPatientForm(false);
   }, [resetPatientSearch, resetPatientSelection]);
 
-  // Return a memoized value
+  // Return a memoized object to prevent unnecessary re-renders
   return React.useMemo(() => ({
     phoneNumber,
     setPhoneNumber,

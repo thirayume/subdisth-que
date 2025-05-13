@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Appointment, AppointmentStatus } from '@/integrations/supabase/schema';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 export const useAppointmentState = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -30,11 +30,7 @@ export const useAppointmentState = () => {
     } catch (err: any) {
       console.error('Error fetching appointments:', err);
       setError(err.message || 'Failed to fetch appointments');
-      toast({
-        title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถดึงข้อมูลการนัดหมายได้',
-        variant: 'destructive'
-      });
+      toast.error('ไม่สามารถดึงข้อมูลการนัดหมายได้');
     } finally {
       setLoading(false);
     }

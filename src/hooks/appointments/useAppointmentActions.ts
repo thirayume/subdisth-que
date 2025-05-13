@@ -1,7 +1,7 @@
 
 import { Appointment, AppointmentStatus } from '@/integrations/supabase/schema';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 export const useAppointmentActions = (
   setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>
@@ -37,21 +37,14 @@ export const useAppointmentActions = (
           new Date(a.date).getTime() - new Date(b.date).getTime()
         ));
         
-        toast({
-          title: 'สำเร็จ',
-          description: 'เพิ่มการนัดหมายเรียบร้อยแล้ว'
-        });
+        toast.success('เพิ่มการนัดหมายเรียบร้อยแล้ว');
         
         return newAppointment;
       }
       return null;
     } catch (err: any) {
       console.error('Error adding appointment:', err);
-      toast({
-        title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถเพิ่มการนัดหมายได้',
-        variant: 'destructive'
-      });
+      toast.error('ไม่สามารถเพิ่มการนัดหมายได้');
       return null;
     }
   };
@@ -81,21 +74,14 @@ export const useAppointmentActions = (
           appointment.id === id ? updatedAppointment : appointment
         ));
         
-        toast({
-          title: 'สำเร็จ',
-          description: 'อัปเดตการนัดหมายเรียบร้อยแล้ว'
-        });
+        toast.success('อัปเดตการนัดหมายเรียบร้อยแล้ว');
         
         return updatedAppointment;
       }
       return null;
     } catch (err: any) {
       console.error('Error updating appointment:', err);
-      toast({
-        title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถอัปเดตการนัดหมายได้',
-        variant: 'destructive'
-      });
+      toast.error('ไม่สามารถอัปเดตการนัดหมายได้');
       return null;
     }
   };
@@ -113,19 +99,12 @@ export const useAppointmentActions = (
 
       setAppointments(prev => prev.filter(appointment => appointment.id !== id));
       
-      toast({
-        title: 'สำเร็จ',
-        description: 'ลบการนัดหมายเรียบร้อยแล้ว'
-      });
+      toast.success('ลบการนัดหมายเรียบร้อยแล้ว');
       
       return true;
     } catch (err: any) {
       console.error('Error deleting appointment:', err);
-      toast({
-        title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถลบการนัดหมายได้',
-        variant: 'destructive'
-      });
+      toast.error('ไม่สามารถลบการนัดหมายได้');
       return false;
     }
   };

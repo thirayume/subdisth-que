@@ -1,36 +1,27 @@
 
-import * as React from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/integrations/supabase/schema';
-import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export const usePatientsActions = (
-  patients: Patient[],
-  updatePatientsState: (patients: Patient[]) => void
+  setPatients: React.Dispatch<React.SetStateAction<Patient[]>>
 ) => {
-  const [actionError, setActionError] = React.useState<string | null>(null);
-
-  // Add a new patient
-  const addPatient = async (patientData: Partial<Patient>) => {
+  const addPatient = async (patientData: Partial<Patient>): Promise<Patient | null> => {
     try {
-      setActionError(null);
-      
-      // Generate a patient_id with format P + 4 digits
-      const patientIdNum = Math.floor(1000 + Math.random() * 9000); // Random 4-digit number
-      const patient_id = `P${patientIdNum}`;
-      
-      // Ensure required fields are present
       if (!patientData.name || !patientData.phone) {
-        throw new Error('Name and phone are required fields');
+        throw new Error('Name and phone are required');
       }
-      
+
       const { data, error } = await supabase
         .from('patients')
-        .insert([{ 
-          ...patientData, 
-          patient_id,
+        .insert([{
           name: patientData.name,
-          phone: patientData.phone
+          phone: patientData.phone,
+          line_id: patientData.line_id || null,
+          email: patientData.email || null,
+          address: patientData.address || null,
+          birthdate: patientData.birthdate || null,
+          notes: patientData.notes || null,
         }])
         .select();
 
@@ -39,33 +30,34 @@ export const usePatientsActions = (
       }
 
       if (data && data.length > 0) {
-        updatePatientsState([data[0], ...patients]);
-        toast({
-          title: "Success",
-          description: `เพิ่มข้อมูลผู้ป่วย ${patientData.name} เรียบร้อยแล้ว`
-        });
-        return data[0];
+        const newPatient = data[0] as Patient;
+        
+        setPatients(prev => [...prev, newPatient]);
+        
+        toast.success('เพิ่มผู้ป่วยสำเร็จ');
+        
+        return newPatient;
       }
+      return null;
     } catch (err: any) {
       console.error('Error adding patient:', err);
-      setActionError(err.message || 'Failed to add patient');
-      toast({
-        title: "Error",
-        description: 'ไม่สามารถเพิ่มข้อมูลผู้ป่วยได้',
-        variant: "destructive"
-      });
+      toast.error('ไม่สามารถเพิ่มผู้ป่วยได้');
       return null;
     }
   };
 
-  // Update an existing patient
-  const updatePatient = async (id: string, patientData: Partial<Patient>) => {
+  const updatePatient = async (id: string, patientData: Partial<Patient>): Promise<Patient | null> => {
     try {
-      setActionError(null);
-      
+      if (!id) {
+        throw new Error('Patient ID is required');
+      }
+
       const { data, error } = await supabase
         .from('patients')
-        .update(patientData)
+        .update({
+          ...patientData,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', id)
         .select();
 
@@ -74,33 +66,30 @@ export const usePatientsActions = (
       }
 
       if (data && data.length > 0) {
-        const updatedPatients = patients.map(patient => 
-          patient.id === id ? { ...patient, ...data[0] } : patient
-        );
-        updatePatientsState(updatedPatients);
-        toast({
-          title: "Success",
-          description: `อัปเดตข้อมูลผู้ป่วย ${patientData.name} เรียบร้อยแล้ว`
-        });
-        return data[0];
+        const updatedPatient = data[0] as Patient;
+        
+        setPatients(prev => prev.map(patient => 
+          patient.id === id ? updatedPatient : patient
+        ));
+        
+        toast.success('อัปเดตข้อมูลผู้ป่วยสำเร็จ');
+        
+        return updatedPatient;
       }
+      return null;
     } catch (err: any) {
       console.error('Error updating patient:', err);
-      setActionError(err.message || 'Failed to update patient');
-      toast({
-        title: "Error",
-        description: 'ไม่สามารถอัปเดตข้อมูลผู้ป่วยได้',
-        variant: "destructive"
-      });
+      toast.error('ไม่สามารถอัปเดตข้อมูลผู้ป่วยได้');
       return null;
     }
   };
 
-  // Delete a patient
-  const deletePatient = async (id: string) => {
+  const deletePatient = async (id: string): Promise<boolean> => {
     try {
-      setActionError(null);
-      
+      if (!id) {
+        throw new Error('Patient ID is required');
+      }
+
       const { error } = await supabase
         .from('patients')
         .delete()
@@ -110,27 +99,19 @@ export const usePatientsActions = (
         throw error;
       }
 
-      const filteredPatients = patients.filter(patient => patient.id !== id);
-      updatePatientsState(filteredPatients);
-      toast({
-        title: "Success",
-        description: 'ลบข้อมูลผู้ป่วยเรียบร้อยแล้ว'
-      });
+      setPatients(prev => prev.filter(patient => patient.id !== id));
+      
+      toast.success('ลบข้อมูลผู้ป่วยสำเร็จ');
+      
       return true;
     } catch (err: any) {
       console.error('Error deleting patient:', err);
-      setActionError(err.message || 'Failed to delete patient');
-      toast({
-        title: "Error",
-        description: 'ไม่สามารถลบข้อมูลผู้ป่วยได้',
-        variant: "destructive"
-      });
+      toast.error('ไม่สามารถลบข้อมูลผู้ป่วยได้');
       return false;
     }
   };
 
   return {
-    actionError,
     addPatient,
     updatePatient,
     deletePatient
