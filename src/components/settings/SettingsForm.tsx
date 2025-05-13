@@ -8,20 +8,34 @@ import LineSettings from '@/components/settings/LineSettings';
 import SettingsFormActions from '@/components/settings/SettingsFormActions';
 import { formatOptions } from '@/components/settings/schemas';
 import { useSettingsContext } from '@/contexts/SettingsContext';
-import { useQueueTypeActions } from '@/hooks/useQueueTypeActions';
 
 const SettingsForm: React.FC = () => {
   const { 
     form, 
-    isSubmitting, 
+    isSubmitting,
     editingQueueType,
     setEditingQueueType,
     newQueueType,
     setNewQueueType,
-    onSubmit 
+    onSubmit,
+    handleAddQueueType,
+    handleRemoveQueueType,
+    handleEditQueueType,
+    handleSaveQueueType,
+    handleCancelEdit,
+    handleDuplicateQueueType,
+    handleQueueTypeChange
   } = useSettingsContext();
   
-  const queueTypeActions = useQueueTypeActions();
+  const queueTypeActions = {
+    handleAddQueueType,
+    handleRemoveQueueType,
+    handleEditQueueType,
+    handleSaveQueueType,
+    handleCancelEdit,
+    handleDuplicateQueueType,
+    handleQueueTypeChange
+  };
 
   return (
     <Form {...form}>

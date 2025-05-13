@@ -1,17 +1,28 @@
 
 import { useCallback } from 'react';
-import { useSettingsContext } from '@/contexts/SettingsContext';
+import { UseFormReturn } from 'react-hook-form';
 import { QueueType } from '@/hooks/useQueueTypes';
 import { v4 as uuidv4 } from 'uuid';
 import { QueueAlgorithmType } from '@/utils/queueAlgorithms';
 
-export const useQueueTypeActions = () => {
-  const { form, setEditingQueueType, setNewQueueType } = useSettingsContext();
+interface UseQueueTypeActionsProps {
+  form: UseFormReturn<any>;
+  setEditingQueueType: React.Dispatch<React.SetStateAction<string | null>>;
+  setNewQueueType: React.Dispatch<React.SetStateAction<boolean>>;
+  newQueueType: boolean;
+}
+
+export const useQueueTypeActions = ({
+  form,
+  setEditingQueueType,
+  setNewQueueType,
+  newQueueType
+}: UseQueueTypeActionsProps) => {
   
   const queueTypes = form.watch('queue_types') as QueueType[];
   
   const handleAddQueueType = useCallback(() => {
-    const newQueueType: QueueType = {
+    const newQueueTypeItem: QueueType = {
       id: uuidv4(),
       code: 'NEW',
       name: 'ประเภทคิวใหม่',
@@ -23,8 +34,8 @@ export const useQueueTypeActions = () => {
       priority: 5
     };
     
-    form.setValue('queue_types', [...queueTypes, newQueueType]);
-    setEditingQueueType(newQueueType.id);
+    form.setValue('queue_types', [...queueTypes, newQueueTypeItem]);
+    setEditingQueueType(newQueueTypeItem.id);
     setNewQueueType(true);
   }, [queueTypes, form, setEditingQueueType, setNewQueueType]);
 
