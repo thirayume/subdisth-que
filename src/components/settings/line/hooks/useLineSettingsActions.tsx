@@ -1,4 +1,5 @@
 
+import { useCallback } from 'react';
 import { useEditSaveActions } from './actions/useEditSaveActions';
 import { useTestConnectionAction } from './actions/useTestConnectionAction';
 import { useTestMessageAction } from './actions/useTestMessageAction';
@@ -15,6 +16,7 @@ export const useLineSettingsActions = (
   validateSettings: () => boolean,
   setErrors: (errors: any) => void
 ) => {
+  // Fetch all action handlers from the individual hook files
   const { handleEdit, handleSave, handleCancel } = useEditSaveActions(
     lineSettings,
     ttsConfig,
@@ -36,6 +38,7 @@ export const useLineSettingsActions = (
     setIsTestingMessage
   );
 
+  // Return a stable object with all actions
   return {
     handleEdit,
     handleSave,
