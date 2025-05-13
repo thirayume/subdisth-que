@@ -2,13 +2,15 @@
 import { useLineSettingsState } from './useLineSettingsState';
 import { useLineSettingsValidation } from './useLineSettingsValidation';
 import { useLineSettingsActions } from './useLineSettingsActions';
-import { useState, useEffect } from 'react'; 
+import { useState, useEffect, useMemo } from 'react'; 
 
 export const useLineSettings = () => {
-  // Fixed state declarations - must be at the top level of the hook
+  // All state declarations first, before any other hooks
   const [initialized, setInitialized] = useState(false);
-
-  // Get state management functionality
+  
+  // Use useMemo for the state management to ensure consistent hook ordering
+  const stateManagement = useLineSettingsState();
+  
   const {
     isEditing,
     setIsEditing,
@@ -22,9 +24,9 @@ export const useLineSettings = () => {
     setTtsConfig,
     handleChange,
     handleTtsConfigChange
-  } = useLineSettingsState();
+  } = stateManagement;
 
-  // Get validation functionality
+  // Get validation functionality - order is important
   const {
     errors,
     validation,
@@ -32,7 +34,7 @@ export const useLineSettings = () => {
     setErrors
   } = useLineSettingsValidation(lineSettings, isEditing);
 
-  // Get action functionality
+  // Get action functionality - must come after validation
   const {
     handleEdit,
     handleSave,
@@ -51,14 +53,15 @@ export const useLineSettings = () => {
     setErrors
   );
 
-  // Mark as initialized after first render
+  // Effects always after all other hook calls
   useEffect(() => {
     if (!initialized) {
       setInitialized(true);
     }
   }, [initialized]);
 
-  return {
+  // Use useMemo for the return object to ensure stability
+  return useMemo(() => ({
     // State
     isEditing,
     isTesting,
@@ -75,5 +78,20 @@ export const useLineSettings = () => {
     handleTestMessage,
     handleChange,
     handleTtsConfigChange,
-  };
+  }), [
+    isEditing,
+    isTesting,
+    isTestingMessage,
+    lineSettings,
+    ttsConfig,
+    errors,
+    validation,
+    handleEdit,
+    handleSave,
+    handleCancel,
+    handleTestConnection,
+    handleTestMessage,
+    handleChange,
+    handleTtsConfigChange,
+  ]);
 };

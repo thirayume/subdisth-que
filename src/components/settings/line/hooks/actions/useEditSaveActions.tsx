@@ -1,6 +1,6 @@
 
 import { useCallback } from 'react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { LineSettings, TextToSpeechConfig } from '../../types';
 
 export const useEditSaveActions = (

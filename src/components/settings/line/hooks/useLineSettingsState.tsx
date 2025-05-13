@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { LineSettings, TextToSpeechConfig } from '../types';
 
 export const useLineSettingsState = () => {
@@ -42,7 +42,7 @@ export const useLineSettingsState = () => {
     }));
   }, []);
 
-  // Load saved settings on mount
+  // Load saved settings on mount - effects after callbacks
   useEffect(() => {
     const savedSettings = localStorage.getItem('lineSettings');
     if (savedSettings) {
@@ -63,7 +63,8 @@ export const useLineSettingsState = () => {
     }
   }, []);
 
-  return {
+  // Return a stable object using useMemo
+  return useMemo(() => ({
     defaultSettings,
     defaultTtsConfig,
     isEditing,
@@ -78,5 +79,13 @@ export const useLineSettingsState = () => {
     setTtsConfig,
     handleChange,
     handleTtsConfigChange,
-  };
+  }), [
+    isEditing,
+    isTesting,
+    isTestingMessage,
+    lineSettings,
+    ttsConfig,
+    handleChange,
+    handleTtsConfigChange
+  ]);
 };

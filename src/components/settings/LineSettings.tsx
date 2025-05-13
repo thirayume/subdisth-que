@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import LineCredentialFields from './line/LineCredentialFields';
 import LineActionButtons from './line/LineActionButtons';
@@ -16,7 +16,10 @@ const LineSettings = () => {
     loading
   } = useLineSettingsData();
 
-  // Then use the settings hook
+  // Then use the settings hook - must come after data fetching
+  const lineSettingsHook = useLineSettings();
+  
+  // Destructure values from the hook with useMemo to ensure stability
   const {
     isEditing,
     isTesting,
@@ -32,18 +35,9 @@ const LineSettings = () => {
     handleTestMessage,
     handleChange,
     handleTtsConfigChange,
-  } = useLineSettings();
+  } = lineSettingsHook;
 
-  // Initialize with default values if not loaded yet
-  const currentLineSettings = lineSettings || {
-    channelId: "1234567890",
-    channelSecret: "abcdefghijklmnopqrstuvwxyz",
-    accessToken: "12345678901234567890123456789012345678901234567890",
-    welcomeMessage: "ยินดีต้อนรับสู่ระบบคิวห้องยา โรงพยาบาลชุมชนตัวอย่าง",
-    queueReceivedMessage: "คุณได้รับคิวหมายเลข {queueNumber} ประเภท: {queueType}\nระยะเวลารอโดยประมาณ: {estimatedWaitTime} นาที",
-    queueCalledMessage: "เรียนคุณ {patientName}\nถึงคิวของคุณแล้ว! กรุณามาที่ช่องบริการ {counter}\nหมายเลขคิวของคุณคือ: {queueNumber}"
-  };
-
+  // Separate loading state handling from main rendering logic
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -54,6 +48,16 @@ const LineSettings = () => {
       </div>
     );
   }
+
+  // Default settings if not available
+  const currentLineSettings = lineSettings || {
+    channelId: "1234567890",
+    channelSecret: "abcdefghijklmnopqrstuvwxyz",
+    accessToken: "12345678901234567890123456789012345678901234567890",
+    welcomeMessage: "ยินดีต้อนรับสู่ระบบคิวห้องยา โรงพยาบาลชุมชนตัวอย่าง",
+    queueReceivedMessage: "คุณได้รับคิวหมายเลข {queueNumber} ประเภท: {queueType}\nระยะเวลารอโดยประมาณ: {estimatedWaitTime} นาที",
+    queueCalledMessage: "เรียนคุณ {patientName}\nถึงคิวของคุณแล้ว! กรุณามาที่ช่องบริการ {counter}\nหมายเลขคิวของคุณคือ: {queueNumber}"
+  };
 
   return (
     <>

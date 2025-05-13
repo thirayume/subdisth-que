@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { LineSettings, LineSettingsValidation, LineSettingsErrors } from '../types';
 
 export const useLineSettingsValidation = (
@@ -15,7 +15,7 @@ export const useLineSettingsValidation = (
     isFormValid: true
   });
 
-  // Validation function - defined using useCallback after all state declarations
+  // Validation function - defined using useCallback
   const validateSettings = useCallback(() => {
     const newErrors: LineSettingsErrors = {};
     let newValidation = {
@@ -52,17 +52,18 @@ export const useLineSettingsValidation = (
     return newValidation.isFormValid;
   }, [lineSettings]);
 
-  // Effects after all callback definitions
+  // Effects come after all declarations
   useEffect(() => {
     if (isEditing) {
       validateSettings();
     }
   }, [lineSettings, isEditing, validateSettings]);
 
-  return {
+  // Return a stable object using useMemo
+  return useMemo(() => ({
     errors,
     validation,
     validateSettings,
     setErrors
-  };
+  }), [errors, validation, validateSettings]);
 };

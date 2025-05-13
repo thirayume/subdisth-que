@@ -1,5 +1,5 @@
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useEditSaveActions } from './actions/useEditSaveActions';
 import { useTestConnectionAction } from './actions/useTestConnectionAction';
 import { useTestMessageAction } from './actions/useTestMessageAction';
@@ -38,12 +38,12 @@ export const useLineSettingsActions = (
     setIsTestingMessage
   );
 
-  // Return a stable object with all actions
-  return useCallback(() => ({
+  // Return a stable object with all actions using useMemo instead of useCallback
+  return useMemo(() => ({
     handleEdit,
     handleSave,
     handleCancel,
     handleTestConnection,
     handleTestMessage
-  }), [handleEdit, handleSave, handleCancel, handleTestConnection, handleTestMessage])();
+  }), [handleEdit, handleSave, handleCancel, handleTestConnection, handleTestMessage]);
 };
