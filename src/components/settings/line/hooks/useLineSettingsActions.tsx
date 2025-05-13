@@ -39,11 +39,11 @@ export const useLineSettingsActions = (
   );
 
   // Return a stable object with all actions
-  return {
+  return useCallback(() => ({
     handleEdit,
     handleSave,
     handleCancel,
     handleTestConnection,
     handleTestMessage
-  };
+  }), [handleEdit, handleSave, handleCancel, handleTestConnection, handleTestMessage])();
 };

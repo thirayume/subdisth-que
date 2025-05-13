@@ -9,13 +9,14 @@ import { useLineSettingsData } from '@/hooks/useLineSettingsData';
 import LineMessageTemplates from './line/LineMessageTemplates';
 
 const LineSettings = () => {
+  // First fetch the data
   const { 
     lineSettings: savedLineSettings, 
     ttsConfig: savedTtsConfig, 
-    loading,
-    saveLineSettings 
+    loading
   } = useLineSettingsData();
 
+  // Then use the settings hook
   const {
     isEditing,
     isTesting,

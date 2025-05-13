@@ -20,14 +20,14 @@ export const useLineSettingsState = () => {
     language: 'th-TH'
   };
 
-  // State declarations
+  // State declarations - these must all be at the top level of the hook
   const [isEditing, setIsEditing] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [isTestingMessage, setIsTestingMessage] = useState(false);
   const [lineSettings, setLineSettings] = useState<LineSettings>(defaultSettings);
   const [ttsConfig, setTtsConfig] = useState<TextToSpeechConfig>(defaultTtsConfig);
 
-  // Field change handlers
+  // Field change handlers - defined using useCallback after all state declarations
   const handleChange = useCallback((field: keyof LineSettings, value: string) => {
     setLineSettings(prev => ({
       ...prev,

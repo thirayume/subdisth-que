@@ -6,7 +6,7 @@ export const useLineSettingsValidation = (
   lineSettings: LineSettings,
   isEditing: boolean
 ) => {
-  // State hooks
+  // State hooks - must be at the top level
   const [errors, setErrors] = useState<LineSettingsErrors>({});
   const [validation, setValidation] = useState<LineSettingsValidation>({
     channelId: true,
@@ -15,7 +15,7 @@ export const useLineSettingsValidation = (
     isFormValid: true
   });
 
-  // Validation function
+  // Validation function - defined using useCallback after all state declarations
   const validateSettings = useCallback(() => {
     const newErrors: LineSettingsErrors = {};
     let newValidation = {
@@ -52,7 +52,7 @@ export const useLineSettingsValidation = (
     return newValidation.isFormValid;
   }, [lineSettings]);
 
-  // Validate on edit mode change or settings change
+  // Effects after all callback definitions
   useEffect(() => {
     if (isEditing) {
       validateSettings();

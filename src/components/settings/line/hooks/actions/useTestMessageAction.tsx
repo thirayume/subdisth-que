@@ -37,6 +37,8 @@ export const useTestMessageAction = (
             .replace('{queueNumber}', 'A001');
           sampleMessage = "ตัวอย่างข้อความ: " + messageText;
           break;
+        default:
+          sampleMessage = "ไม่พบข้อความตัวอย่าง";
       }
       
       toast.success(`ส่งข้อความทดสอบสำเร็จ\n${sampleMessage}`, {

@@ -2,8 +2,13 @@
 import { useLineSettingsState } from './useLineSettingsState';
 import { useLineSettingsValidation } from './useLineSettingsValidation';
 import { useLineSettingsActions } from './useLineSettingsActions';
+import { useState, useEffect } from 'react'; 
 
 export const useLineSettings = () => {
+  // Fixed state declarations - must be at the top level of the hook
+  const [initialized, setInitialized] = useState(false);
+
+  // Get state management functionality
   const {
     isEditing,
     setIsEditing,
@@ -19,6 +24,7 @@ export const useLineSettings = () => {
     handleTtsConfigChange
   } = useLineSettingsState();
 
+  // Get validation functionality
   const {
     errors,
     validation,
@@ -26,6 +32,7 @@ export const useLineSettings = () => {
     setErrors
   } = useLineSettingsValidation(lineSettings, isEditing);
 
+  // Get action functionality
   const {
     handleEdit,
     handleSave,
@@ -43,6 +50,13 @@ export const useLineSettings = () => {
     validateSettings,
     setErrors
   );
+
+  // Mark as initialized after first render
+  useEffect(() => {
+    if (!initialized) {
+      setInitialized(true);
+    }
+  }, [initialized]);
 
   return {
     // State
