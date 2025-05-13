@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 const logger = createLogger('usePharmacyQueueFetch');
 
 export const usePharmacyQueueFetch = () => {
+  // State definitions - Always define hooks at the top level
   const [queues, setQueues] = React.useState<PharmacyQueue[]>([]);
   const [activeQueue, setActiveQueue] = React.useState<PharmacyQueue | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -129,7 +130,7 @@ export const usePharmacyQueueFetch = () => {
     };
   }, [fetchPharmacyQueues]);
 
-  // Initialize fetch and subscription
+  // Initialize fetch and subscription - Place all effect hooks AFTER all other hooks
   React.useEffect(() => {
     fetchPharmacyQueues();
     return setupRealtimeSubscription();

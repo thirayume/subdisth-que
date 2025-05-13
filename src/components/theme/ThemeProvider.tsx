@@ -49,7 +49,7 @@ export const useTheme = () => {
     };
   }, []);
   
-  // Function to set the theme
+  // Function to set the theme - Use useCallback to ensure hook order consistency
   const setTheme = React.useCallback((newTheme: Theme) => {
     localStorage.setItem("vite-ui-theme", newTheme);
     setThemeState(newTheme);

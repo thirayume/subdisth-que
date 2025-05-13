@@ -1,6 +1,6 @@
 
 // src/context/LineAuthContext.tsx
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo } from 'react';
 import { LineState, LineProfile } from '../components/settings/types';
 import { lineService } from '../services/line.service';
 
@@ -88,7 +88,7 @@ export const LineAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     checkAuth();
   }, []);
 
-  const login = React.useCallback(() => {
+  const login = useCallback(() => {
     const stateParam = Math.random().toString(36).substring(2, 15);
     sessionStorage.setItem('lineLoginState', stateParam);
     
@@ -96,12 +96,12 @@ export const LineAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     window.location.href = loginUrl;
   }, []);
 
-  const logout = React.useCallback(() => {
+  const logout = useCallback(() => {
     localStorage.removeItem('lineProfile');
     dispatch({ type: 'LOGOUT' });
   }, []);
 
-  const handleCallback = React.useCallback(async (code: string, state: string) => {
+  const handleCallback = useCallback(async (code: string, state: string) => {
     const savedState = sessionStorage.getItem('lineLoginState');
     sessionStorage.removeItem('lineLoginState');
     
@@ -128,7 +128,7 @@ export const LineAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  const contextValue = React.useMemo(() => ({
+  const contextValue = useMemo(() => ({
     state,
     login,
     logout,
