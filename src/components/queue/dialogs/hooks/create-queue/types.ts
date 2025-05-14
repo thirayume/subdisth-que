@@ -37,8 +37,8 @@ export interface UseCreateQueueState {
   createdPurpose: string;
   
   // Actions
-  handlePhoneSearch: () => Promise<void>;
-  handleAddNewPatient: () => void;
+  handlePhoneSearch: () => Promise<any>;  // Updated return type to be more flexible
+  handleAddNewPatient: () => Promise<any>;
   handleSelectPatient: (id: string) => void;
   handleCreateQueue: () => Promise<void>;
   resetState: () => void;

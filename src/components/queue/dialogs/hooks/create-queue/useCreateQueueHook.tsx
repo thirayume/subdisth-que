@@ -44,7 +44,7 @@ export const useCreateQueueHook = (
     setShowNewPatientForm: setNewPatientFormVisible,
     newPatientName,
     setNewPatientName,
-    handleAddNewPatient: createNewPatient
+    createNewPatient
   } = useNewPatientCreation();
 
   // Queue creation state
@@ -87,15 +87,15 @@ export const useCreateQueueHook = (
   const handleAddNewPatient = React.useCallback(async () => {
     if (!newPatientName) {
       toast.error('กรุณากรอกชื่อผู้ป่วย');
-      return;
+      return null;
     }
     
     if (!phoneNumber) {
       toast.error('กรุณากรอกเบอร์โทรศัพท์');
-      return;
+      return null;
     }
     
-    const newPatient = await createNewPatient();
+    const newPatient = await createNewPatient(newPatientName, phoneNumber);
     return newPatient;
   }, [createNewPatient, newPatientName, phoneNumber]);
 

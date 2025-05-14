@@ -20,6 +20,14 @@ export interface PatientSelectionState {
   patientName: string;
   patientPhone: string;
   lineId: string;
+  // Additional fields needed by usePatientQueueInfo
+  newPatientName: string;
+  selectedPatientName: string;
+  selectedPatientPhone: string;
+  selectedPatientLineId: string;
+  finalPatientName: string;
+  finalPatientPhone: string;
+  finalPatientLineId: string;
 }
 
 export interface PatientSelectionActions {
@@ -27,8 +35,11 @@ export interface PatientSelectionActions {
   setPatientName: (value: string) => void;
   setPatientPhone: (value: string) => void;
   setLineId: (value: string) => void;
+  setNewPatientName: (value: string) => void;
   handleSelectPatient: (id: string, patients?: Patient[]) => void;
   resetPatientSelection: () => void;
+  // Additional action needed by usePatientQueueInfo
+  updateFinalPatientInfo: () => void;
 }
 
 export interface NewPatientCreationState {
@@ -40,6 +51,7 @@ export interface NewPatientCreationActions {
   setNewPatientName: (value: string) => void;
   setShowNewPatientForm: (value: boolean) => void;
   handleAddNewPatient: () => Promise<any>;
+  createNewPatient: (name?: string, phone?: string) => Promise<any>;
   resetNewPatientCreation: () => void;
 }
 

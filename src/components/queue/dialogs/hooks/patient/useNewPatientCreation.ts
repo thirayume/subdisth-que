@@ -17,10 +17,17 @@ export const useNewPatientCreation = (): NewPatientCreationState & NewPatientCre
   }, []);
 
   const createNewPatient = React.useCallback(async (
-    name: string,
-    phoneNumber: string
+    name?: string,
+    phoneNumber?: string
   ): Promise<NewPatientCreationResult | null> => {
-    logger.info(`Creating new patient - name: ${name}, phone: ${phoneNumber}`);
+    const patientName = name || newPatientName;
+    
+    if (!patientName || !phoneNumber) {
+      logger.warn('Cannot create patient: Missing name or phone');
+      return null;
+    }
+    
+    logger.info(`Creating new patient - name: ${patientName}, phone: ${phoneNumber}`);
     
     try {
       // Generate a patient_id with format P + 4 digits
@@ -32,7 +39,7 @@ export const useNewPatientCreation = (): NewPatientCreationState & NewPatientCre
       const { data: newPatientData, error } = await supabase
         .from('patients')
         .insert({
-          name: name,
+          name: patientName,
           phone: phoneNumber,
           patient_id: patient_id,
         })
@@ -45,7 +52,7 @@ export const useNewPatientCreation = (): NewPatientCreationState & NewPatientCre
       
       if (newPatientData && newPatientData.length > 0) {
         logger.info('Patient created successfully:', newPatientData[0]);
-        toast.success(`สร้างข้อมูลผู้ป่วยใหม่: ${name}`);
+        toast.success(`สร้างข้อมูลผู้ป่วยใหม่: ${patientName}`);
         return newPatientData[0] as NewPatientCreationResult;
       }
       
@@ -56,12 +63,11 @@ export const useNewPatientCreation = (): NewPatientCreationState & NewPatientCre
       toast.error('ไม่สามารถสร้างข้อมูลผู้ป่วยใหม่ได้');
       return null;
     }
-  }, []);
+  }, [newPatientName]);
 
+  // This function acts as a bridge for older components that use handleAddNewPatient
   const handleAddNewPatient = React.useCallback(async (): Promise<NewPatientCreationResult | null> => {
-    // This will be called from useCreateQueueHook with appropriate validation
-    // The actual implementation is in createNewPatient which requires parameters
-    return null;
+    return null; // Implementation will be provided by parent components
   }, []);
 
   return {
@@ -70,6 +76,7 @@ export const useNewPatientCreation = (): NewPatientCreationState & NewPatientCre
     newPatientName,
     setNewPatientName,
     handleAddNewPatient,
+    createNewPatient,
     resetNewPatientCreation
   };
 };
