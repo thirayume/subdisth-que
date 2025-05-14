@@ -3,18 +3,19 @@ import * as React from 'react';
 import { QueueType } from '@/integrations/supabase/schema';
 import { createLogger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
+import { QueueCreationState, QueueCreationActions, QueueTypePurposes } from './types';
 
 const logger = createLogger('useQueueCreation');
 
 // Define the queue type purposes
-export const queueTypePurposes: Record<string, string> = {
+export const queueTypePurposes: QueueTypePurposes = {
   'GENERAL': 'ทั่วไป',
   'PRIORITY': 'กรณีเร่งด่วน',
   'ELDERLY': 'ผู้สูงอายุ 60 ปีขึ้นไป',
   'FOLLOW_UP': 'ติดตามการรักษา'
 };
 
-export const useQueueCreation = () => {
+export const useQueueCreation = (): QueueCreationState & QueueCreationActions & { queueTypePurposes: QueueTypePurposes } => {
   logger.debug('Hook initialized');
   
   const [queueType, setQueueType] = React.useState<QueueType>('GENERAL');

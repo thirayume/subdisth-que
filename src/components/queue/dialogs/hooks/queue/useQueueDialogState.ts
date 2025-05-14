@@ -2,10 +2,11 @@
 import * as React from 'react';
 import { QueueType } from '@/integrations/supabase/schema';
 import { createLogger } from '@/utils/logger';
+import { QueueDialogState, QueueDialogActions } from './types';
 
 const logger = createLogger('useQueueDialogState');
 
-export const useQueueDialogState = (onOpenChange: (open: boolean) => void) => {
+export const useQueueDialogState = (onOpenChange: (open: boolean) => void): QueueDialogState & QueueDialogActions => {
   const [qrDialogOpen, setQrDialogOpen] = React.useState(false);
   const [createdQueueNumber, setCreatedQueueNumber] = React.useState<number | null>(null);
   const [createdQueueType, setCreatedQueueType] = React.useState<QueueType>('GENERAL');
