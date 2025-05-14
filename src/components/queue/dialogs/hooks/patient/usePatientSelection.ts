@@ -7,65 +7,48 @@ import { PatientSelectionState, PatientSelectionActions } from './types';
 const logger = createLogger('usePatientSelection');
 
 export const usePatientSelection = (): PatientSelectionState & PatientSelectionActions => {
-  const [patientId, setPatientId] = React.useState('');
-  const [newPatientName, setNewPatientName] = React.useState('');
-  const [selectedPatientName, setSelectedPatientName] = React.useState('');
-  const [selectedPatientPhone, setSelectedPatientPhone] = React.useState('');
-  const [selectedPatientLineId, setSelectedPatientLineId] = React.useState('');
-  const [finalPatientName, setFinalPatientName] = React.useState('');
-  const [finalPatientPhone, setFinalPatientPhone] = React.useState('');
-  const [finalPatientLineId, setFinalPatientLineId] = React.useState('');
+  const [patientId, setPatientId] = React.useState<string>('');
+  const [patientName, setPatientName] = React.useState<string>('');
+  const [patientPhone, setPatientPhone] = React.useState<string>('');
+  const [lineId, setLineId] = React.useState<string>('');
 
-  const resetPatientSelection = React.useCallback(() => {
-    logger.debug('Resetting all patient selection state');
-    setPatientId('');
-    setNewPatientName('');
-    setSelectedPatientName('');
-    setSelectedPatientPhone('');
-    setSelectedPatientLineId('');
-    setFinalPatientName('');
-    setFinalPatientPhone('');
-    setFinalPatientLineId('');
-  }, []);
-
-  const handleSelectPatient = React.useCallback((id: string, patients: Patient[]) => {
-    logger.info(`Selecting patient with ID: ${id}`);
-    const selectedPatient = patients.find(p => p.id === id);
-    
-    if (!selectedPatient) {
-      logger.error('Selected patient not found!', { id, patientCount: patients.length });
-      return;
-    }
-    
+  const handleSelectPatient = React.useCallback((id: string, patients?: Patient[]) => {
+    logger.debug(`Selecting patient ID: ${id}`);
     setPatientId(id);
     
-    logger.debug('Patient found:', selectedPatient);
-    setSelectedPatientName(selectedPatient.name);
-    setSelectedPatientPhone(selectedPatient.phone || '');
-    setSelectedPatientLineId(selectedPatient.line_id || '');
-    logger.verbose(`Set name: ${selectedPatient.name}, phone: ${selectedPatient.phone}, lineId: ${selectedPatient.line_id || 'none'}`);
+    if (patients && patients.length > 0) {
+      const patient = patients.find(p => p.id === id);
+      if (patient) {
+        logger.debug(`Found patient:`, patient);
+        setPatientName(patient.name || '');
+        setPatientPhone(patient.phone || '');
+        setLineId(patient.line_id || '');
+      } else {
+        logger.warn(`Patient with ID ${id} not found in the provided list`);
+      }
+    } else {
+      logger.warn('No patients provided to select from');
+    }
   }, []);
 
-  const updateFinalPatientInfo = React.useCallback((name: string, phone: string, lineId: string = '') => {
-    logger.debug(`Updating final patient info - name: ${name}, phone: ${phone}, lineId: ${lineId}`);
-    setFinalPatientName(name);
-    setFinalPatientPhone(phone);
-    setFinalPatientLineId(lineId);
+  const resetPatientSelection = React.useCallback(() => {
+    logger.debug('Resetting patient selection state');
+    setPatientId('');
+    setPatientName('');
+    setPatientPhone('');
+    setLineId('');
   }, []);
 
   return {
     patientId,
+    patientName,
+    patientPhone,
+    lineId,
     setPatientId,
-    newPatientName,
-    setNewPatientName,
-    selectedPatientName,
-    selectedPatientPhone,
-    selectedPatientLineId,
-    finalPatientName,
-    finalPatientPhone,
-    finalPatientLineId,
+    setPatientName,
+    setPatientPhone,
+    setLineId,
     handleSelectPatient,
-    updateFinalPatientInfo,
     resetPatientSelection
   };
 };

@@ -17,21 +17,30 @@ export interface PatientSearchActions {
 
 export interface PatientSelectionState {
   patientId: string;
-  newPatientName: string;
-  selectedPatientName: string;
-  selectedPatientPhone: string;
-  selectedPatientLineId: string;
-  finalPatientName: string;
-  finalPatientPhone: string;
-  finalPatientLineId: string;
+  patientName: string;
+  patientPhone: string;
+  lineId: string;
 }
 
 export interface PatientSelectionActions {
   setPatientId: (value: string) => void;
-  setNewPatientName: (value: string) => void;
-  handleSelectPatient: (id: string, patients: Patient[]) => void;
-  updateFinalPatientInfo: (name: string, phone: string, lineId?: string) => void;
+  setPatientName: (value: string) => void;
+  setPatientPhone: (value: string) => void;
+  setLineId: (value: string) => void;
+  handleSelectPatient: (id: string, patients?: Patient[]) => void;
   resetPatientSelection: () => void;
+}
+
+export interface NewPatientCreationState {
+  newPatientName: string;
+  showNewPatientForm: boolean;
+}
+
+export interface NewPatientCreationActions {
+  setNewPatientName: (value: string) => void;
+  setShowNewPatientForm: (value: boolean) => void;
+  handleAddNewPatient: () => Promise<any>;
+  resetNewPatientCreation: () => void;
 }
 
 export interface NewPatientCreationResult {
@@ -41,8 +50,4 @@ export interface NewPatientCreationResult {
   phone: string;
   line_id?: string;
   [key: string]: any;
-}
-
-export interface NewPatientCreationActions {
-  createNewPatient: (name: string, phone: string) => Promise<NewPatientCreationResult | null>;
 }

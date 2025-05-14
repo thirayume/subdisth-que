@@ -4,14 +4,14 @@ import { toast } from 'sonner';
 import { createLogger } from '@/utils/logger';
 import { usePatientSearch, usePatientSelection, useNewPatientCreation } from '../patient';
 import { useQueueCreation, useQueueDialogState, queueTypePurposes } from '../queue';
-import { CreateQueueHookProps, CreateQueueHookReturn } from './types';
+import { UseCreateQueueProps, UseCreateQueueState } from './types';
 
 const logger = createLogger('useCreateQueueHook');
 
 export const useCreateQueueHook = (
   onOpenChange: (open: boolean) => void,
   onCreateQueue: (queue: any) => void
-): CreateQueueHookReturn => {
+): UseCreateQueueState => {
   logger.verbose('Hook initialized with:', { onOpenChange, onCreateQueue });
 
   // Patient search & selection state
@@ -20,6 +20,8 @@ export const useCreateQueueHook = (
     setPhoneNumber,
     isSearching,
     matchedPatients,
+    showNewPatientForm: searchShowNewPatientForm,
+    setShowNewPatientForm,
     handlePhoneSearch
   } = usePatientSearch();
 
@@ -33,17 +35,17 @@ export const useCreateQueueHook = (
     setPatientPhone,
     lineId,
     setLineId,
-    handleSelectPatient
+    handleSelectPatient: selectPatient
   } = usePatientSelection();
 
   // New patient state
   const {
-    showNewPatientForm,
-    setShowNewPatientForm,
+    showNewPatientForm: newPatientFormVisible,
+    setShowNewPatientForm: setNewPatientFormVisible,
     newPatientName,
     setNewPatientName,
-    handleAddNewPatient
-  } = useNewPatientCreation(setPatientId, setPatientName, setPatientPhone);
+    handleAddNewPatient: createNewPatient
+  } = useNewPatientCreation();
 
   // Queue creation state
   const {
@@ -73,6 +75,30 @@ export const useCreateQueueHook = (
   const finalPatientPhone = patientPhone || phoneNumber;
   const finalPatientLineId = lineId || '';
 
+  // Sync up the showNewPatientForm state between the two hooks
+  React.useEffect(() => {
+    setNewPatientFormVisible(searchShowNewPatientForm);
+  }, [searchShowNewPatientForm, setNewPatientFormVisible]);
+
+  const handleSelectPatient = React.useCallback((id: string) => {
+    selectPatient(id, matchedPatients);
+  }, [selectPatient, matchedPatients]);
+
+  const handleAddNewPatient = React.useCallback(async () => {
+    if (!newPatientName) {
+      toast.error('กรุณากรอกชื่อผู้ป่วย');
+      return;
+    }
+    
+    if (!phoneNumber) {
+      toast.error('กรุณากรอกเบอร์โทรศัพท์');
+      return;
+    }
+    
+    const newPatient = await createNewPatient();
+    return newPatient;
+  }, [createNewPatient, newPatientName, phoneNumber]);
+
   // Method to create a queue
   const handleCreateQueue = async () => {
     logger.verbose('Creating queue');
@@ -81,7 +107,7 @@ export const useCreateQueueHook = (
       let finalPatientId = patientId;
       
       // If we're creating a new patient
-      if (showNewPatientForm) {
+      if (newPatientFormVisible) {
         if (!newPatientName) {
           toast.error('กรุณากรอกชื่อผู้ป่วย');
           return;
@@ -175,7 +201,7 @@ export const useCreateQueueHook = (
     handleSelectPatient,
     
     // New patient
-    showNewPatientForm,
+    showNewPatientForm: newPatientFormVisible,
     newPatientName,
     setNewPatientName,
     handleAddNewPatient,

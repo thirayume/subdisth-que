@@ -3,16 +3,24 @@ import * as React from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/utils/logger';
-import { NewPatientCreationActions, NewPatientCreationResult } from './types';
+import { NewPatientCreationState, NewPatientCreationActions, NewPatientCreationResult } from './types';
 
 const logger = createLogger('useNewPatientCreation');
 
-export const useNewPatientCreation = (): NewPatientCreationActions => {
+export const useNewPatientCreation = (): NewPatientCreationState & NewPatientCreationActions => {
+  const [showNewPatientForm, setShowNewPatientForm] = React.useState(false);
+  const [newPatientName, setNewPatientName] = React.useState('');
+
+  const resetNewPatientCreation = React.useCallback(() => {
+    setShowNewPatientForm(false);
+    setNewPatientName('');
+  }, []);
+
   const createNewPatient = React.useCallback(async (
-    newPatientName: string,
+    name: string,
     phoneNumber: string
   ): Promise<NewPatientCreationResult | null> => {
-    logger.info(`Creating new patient - name: ${newPatientName}, phone: ${phoneNumber}`);
+    logger.info(`Creating new patient - name: ${name}, phone: ${phoneNumber}`);
     
     try {
       // Generate a patient_id with format P + 4 digits
@@ -24,7 +32,7 @@ export const useNewPatientCreation = (): NewPatientCreationActions => {
       const { data: newPatientData, error } = await supabase
         .from('patients')
         .insert({
-          name: newPatientName,
+          name: name,
           phone: phoneNumber,
           patient_id: patient_id,
         })
@@ -37,7 +45,7 @@ export const useNewPatientCreation = (): NewPatientCreationActions => {
       
       if (newPatientData && newPatientData.length > 0) {
         logger.info('Patient created successfully:', newPatientData[0]);
-        toast.success(`สร้างข้อมูลผู้ป่วยใหม่: ${newPatientName}`);
+        toast.success(`สร้างข้อมูลผู้ป่วยใหม่: ${name}`);
         return newPatientData[0] as NewPatientCreationResult;
       }
       
@@ -50,7 +58,18 @@ export const useNewPatientCreation = (): NewPatientCreationActions => {
     }
   }, []);
 
+  const handleAddNewPatient = React.useCallback(async (): Promise<NewPatientCreationResult | null> => {
+    // This will be called from useCreateQueueHook with appropriate validation
+    // The actual implementation is in createNewPatient which requires parameters
+    return null;
+  }, []);
+
   return {
-    createNewPatient
+    showNewPatientForm,
+    setShowNewPatientForm,
+    newPatientName,
+    setNewPatientName,
+    handleAddNewPatient,
+    resetNewPatientCreation
   };
 };
