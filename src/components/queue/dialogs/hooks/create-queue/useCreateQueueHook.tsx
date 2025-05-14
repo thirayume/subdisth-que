@@ -1,10 +1,9 @@
 
 import * as React from 'react';
-import { toast } from 'sonner';
 import { createLogger } from '@/utils/logger';
-import { usePatientSearch, usePatientSelection, useNewPatientCreation } from '../patient';
-import { useQueueCreation, useQueueDialogState, queueTypePurposes } from '../queue';
 import { UseCreateQueueProps, UseCreateQueueState } from './types';
+import { usePatientInfoHook } from './usePatientInfoHook';
+import { useQueueActions } from './useQueueActions';
 
 const logger = createLogger('useCreateQueueHook');
 
@@ -14,179 +13,77 @@ export const useCreateQueueHook = (
 ): UseCreateQueueState => {
   logger.verbose('Hook initialized with:', { onOpenChange, onCreateQueue });
 
-  // Patient search & selection state
+  // Use the patient info hook to handle all patient-related state
+  const {
+    patientSearchState,
+    patientSelectionState,
+    newPatientCreationState,
+    patientInfo,
+    handleSelectPatient,
+    resetPatientState
+  } = usePatientInfoHook();
+
   const {
     phoneNumber,
     setPhoneNumber,
     isSearching,
     matchedPatients,
-    showNewPatientForm: searchShowNewPatientForm,
-    setShowNewPatientForm,
+    showNewPatientForm,
     handlePhoneSearch
-  } = usePatientSearch();
+  } = patientSearchState;
 
-  // Patient selection state
+  const { patientId } = patientSelectionState;
+  
   const {
-    patientId,
-    setPatientId,
-    patientName,
-    setPatientName,
-    patientPhone,
-    setPatientPhone,
-    lineId,
-    setLineId,
-    handleSelectPatient: selectPatient
-  } = usePatientSelection();
-
-  // New patient state
-  const {
-    showNewPatientForm: newPatientFormVisible,
-    setShowNewPatientForm: setNewPatientFormVisible,
     newPatientName,
     setNewPatientName,
     createNewPatient
-  } = useNewPatientCreation();
+  } = newPatientCreationState;
 
-  // Queue creation state
+  // Use the queue actions hook for all queue-related logic
+  const queueActions = useQueueActions({
+    onOpenChange,
+    onCreateQueue,
+    createNewPatient,
+    patientInfo,
+    showNewPatientForm,
+    phoneNumber
+  });
+
   const {
     queueType,
     setQueueType,
     notes,
     setNotes,
-    resetQueueCreation,
-    createQueue
-  } = useQueueCreation();
-
-  // Queue dialog state
-  const {
+    queueTypePurposes,
     qrDialogOpen,
     setQrDialogOpen,
-    createdQueueNumber,
-    setCreatedQueueNumber,
-    createdQueueType,
-    setCreatedQueueType,
-    createdPurpose,
-    setCreatedPurpose,
-    resetQueueDialog
-  } = useQueueDialogState(onOpenChange);
+    createdQueueInfo,
+    handleAddNewPatient,
+    handleCreateQueue,
+    resetQueueState
+  } = queueActions;
 
-  // Create the final values for the patient information
-  const finalPatientName = patientName || newPatientName;
-  const finalPatientPhone = patientPhone || phoneNumber;
-  const finalPatientLineId = lineId || '';
+  // Extract created queue info
+  const { queueNumber: createdQueueNumber, queueType: createdQueueType, purpose: createdPurpose } = createdQueueInfo;
 
-  // Sync up the showNewPatientForm state between the two hooks
-  React.useEffect(() => {
-    setNewPatientFormVisible(searchShowNewPatientForm);
-  }, [searchShowNewPatientForm, setNewPatientFormVisible]);
-
-  const handleSelectPatient = React.useCallback((id: string) => {
-    selectPatient(id, matchedPatients);
-  }, [selectPatient, matchedPatients]);
-
-  const handleAddNewPatient = React.useCallback(async () => {
-    if (!newPatientName) {
-      toast.error('กรุณากรอกชื่อผู้ป่วย');
-      return null;
-    }
-    
-    if (!phoneNumber) {
-      toast.error('กรุณากรอกเบอร์โทรศัพท์');
-      return null;
-    }
-    
-    const newPatient = await createNewPatient(newPatientName, phoneNumber);
-    return newPatient;
-  }, [createNewPatient, newPatientName, phoneNumber]);
-
-  // Method to create a queue
-  const handleCreateQueue = async () => {
-    logger.verbose('Creating queue');
-    
-    try {
-      let finalPatientId = patientId;
-      
-      // If we're creating a new patient
-      if (newPatientFormVisible) {
-        if (!newPatientName) {
-          toast.error('กรุณากรอกชื่อผู้ป่วย');
-          return;
-        }
-        
-        if (!phoneNumber) {
-          toast.error('กรุณากรอกเบอร์โทรศัพท์');
-          return;
-        }
-        
-        const newPatient = await handleAddNewPatient();
-        if (!newPatient) {
-          logger.error('Failed to create patient');
-          toast.error('ไม่สามารถสร้างผู้ป่วยใหม่ได้');
-          return;
-        }
-        
-        finalPatientId = newPatient.id;
-      }
-      
-      // Create the queue
-      logger.debug('Creating queue for patient ID:', finalPatientId);
-      const queue = await createQueue(finalPatientId);
-      
-      if (queue) {
-        logger.info('Queue created successfully:', queue);
-        toast.success('สร้างคิวสำเร็จ');
-        
-        // Set the info for the QR dialog
-        const queueTypeName = queueTypePurposes[queue.type] || '';
-        
-        setCreatedQueueNumber(queue.number);
-        setCreatedQueueType(queue.type);
-        setCreatedPurpose(queueTypeName);
-        setQrDialogOpen(true);
-        
-        // Call the callback
-        onCreateQueue(queue);
-      } else {
-        logger.error('No queue returned from createQueue');
-        toast.error('ไม่สามารถสร้างคิวได้');
-      }
-    } catch (error) {
-      logger.error('Error creating queue:', error);
-      toast.error('เกิดข้อผิดพลาดในการสร้างคิว');
-    }
-  };
+  // Extract patient info
+  const { finalPatientName, finalPatientPhone, finalPatientLineId } = patientInfo;
 
   // Reset all state when unmounting
   React.useEffect(() => {
     return () => {
-      resetQueueCreation();
-      resetQueueDialog();
+      resetPatientState();
+      resetQueueState();
     };
-  }, [resetQueueCreation, resetQueueDialog]);
+  }, [resetPatientState, resetQueueState]);
 
   // Reset all state for a new create operation
   const resetState = React.useCallback(() => {
     logger.debug('Resetting all state');
-    setPhoneNumber('');
-    setPatientId('');
-    setPatientName('');
-    setPatientPhone('');
-    setLineId('');
-    setShowNewPatientForm(false);
-    setNewPatientName('');
-    resetQueueCreation();
-    resetQueueDialog();
-  }, [
-    setPhoneNumber, 
-    setPatientId, 
-    setPatientName, 
-    setPatientPhone, 
-    setLineId,
-    setShowNewPatientForm, 
-    setNewPatientName, 
-    resetQueueCreation, 
-    resetQueueDialog
-  ]);
+    resetPatientState();
+    resetQueueState();
+  }, [resetPatientState, resetQueueState]);
 
   return {
     // Patient search
@@ -201,7 +98,7 @@ export const useCreateQueueHook = (
     handleSelectPatient,
     
     // New patient
-    showNewPatientForm: newPatientFormVisible,
+    showNewPatientForm,
     newPatientName,
     setNewPatientName,
     handleAddNewPatient,

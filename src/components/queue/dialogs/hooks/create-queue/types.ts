@@ -43,3 +43,20 @@ export interface UseCreateQueueState {
   handleCreateQueue: () => Promise<void>;
   resetState: () => void;
 }
+
+export interface CreatedQueueInfo {
+  queueNumber: number | null;
+  queueType: QueueType;
+  purpose: string;
+}
+
+export interface PatientInfo {
+  patientId: string;
+  patientName: string;
+  patientPhone: string;
+  lineId: string;
+  newPatientName: string;
+  finalPatientName: string;
+  finalPatientPhone: string;
+  finalPatientLineId: string;
+}
