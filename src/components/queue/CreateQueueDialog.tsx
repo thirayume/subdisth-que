@@ -14,7 +14,8 @@ import PhoneSearchSection from './dialogs/PhoneSearchSection';
 import PatientResultsList from './dialogs/PatientResultsList';
 import NewPatientForm from './dialogs/NewPatientForm';
 import QueueDetailsForm from './dialogs/QueueDetailsForm';
-import { useCreateQueue } from './dialogs/hooks/create-queue';
+import { usePatientQueueInfo } from './dialogs/hooks/queue';
+import { useQueueHandler } from './dialogs/hooks/queue';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('CreateQueueDialog');
@@ -32,6 +33,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
 }) => {
   logger.verbose(`Rendering with open=${open}`);
   
+  // Use the patient queue info hook to manage patient state
   const {
     phoneNumber,
     setPhoneNumber,
@@ -41,35 +43,46 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
     newPatientName,
     setNewPatientName,
     patientId,
+    handlePhoneSearch,
+    handleAddNewPatient,
+    handleSelectPatient,
+    finalPatientName,
+    finalPatientPhone,
+    finalPatientLineId,
+    resetAll: resetPatientState
+  } = usePatientQueueInfo();
+  
+  // Use the queue handler hook to manage queue state
+  const {
     queueType,
     setQueueType,
     notes,
     setNotes,
-    qrDialogOpen,
-    setQrDialogOpen,
-    createdQueueNumber,
-    createdQueueType,
-    createdPurpose,
-    finalPatientName,
-    finalPatientPhone,
-    finalPatientLineId,
-    queueTypePurposes,
-    handlePhoneSearch,
-    handleAddNewPatient,
-    handleSelectPatient,
-    handleCreateQueue,
-    resetState
-  } = useCreateQueue(onOpenChange, onCreateQueue);
+    handleQueueTypeChange,
+    handleNotesChange,
+    resetQueueCreation,
+    createQueue,
+    queueTypePurposes
+  } = useQueueHandler();
+  
+  // State for QR dialog
+  const [qrDialogOpen, setQrDialogOpen] = React.useState(false);
+  const [createdQueueNumber, setCreatedQueueNumber] = React.useState<number | null>(null);
+  const [createdQueueType, setCreatedQueueType] = React.useState(queueType);
+  const [createdPurpose, setCreatedPurpose] = React.useState('');
 
   // Reset state when dialog is closed
   React.useEffect(() => {
     if (!open) {
       logger.debug('Dialog closed, resetting state');
-      resetState();
+      resetPatientState();
+      resetQueueCreation();
+      setQrDialogOpen(false);
+      setCreatedQueueNumber(null);
     } else {
       logger.debug('Dialog opened');
     }
-  }, [open, resetState]);
+  }, [open, resetPatientState, resetQueueCreation]);
   
   // Add debug logging for QR dialog state
   React.useEffect(() => {
@@ -81,7 +94,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
 
   const shouldShowQueueDetails = Boolean(patientId) || (showNewPatientForm && Boolean(newPatientName));
 
-  const handleSubmit = async () => {
+  const handleCreateQueue = async () => {
     logger.info('Create queue button clicked');
     logger.debug(`Patient ID: ${patientId}`);
     logger.debug(`New patient form shown: ${showNewPatientForm}`);
@@ -92,7 +105,57 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
       return;
     }
     
-    await handleCreateQueue();
+    try {
+      let finalPatientId = patientId;
+      
+      // If we're creating a new patient
+      if (showNewPatientForm) {
+        if (!newPatientName) {
+          toast.error('กรุณากรอกชื่อผู้ป่วย');
+          return;
+        }
+        
+        if (!phoneNumber) {
+          toast.error('กรุณากรอกเบอร์โทรศัพท์');
+          return;
+        }
+        
+        const newPatient = await handleAddNewPatient();
+        if (!newPatient) {
+          logger.error('Failed to create patient');
+          toast.error('ไม่สามารถสร้างผู้ป่วยใหม่ได้');
+          return;
+        }
+        
+        finalPatientId = newPatient.id;
+      }
+      
+      // Create the queue
+      logger.debug('Creating queue for patient ID:', finalPatientId);
+      const queue = await createQueue(finalPatientId);
+      
+      if (queue) {
+        logger.info('Queue created successfully:', queue);
+        toast.success('สร้างคิวสำเร็จ');
+        
+        // Set the info for the QR dialog
+        const queueTypeName = queueTypePurposes[queue.type] || '';
+        
+        setCreatedQueueNumber(queue.number);
+        setCreatedQueueType(queue.type);
+        setCreatedPurpose(queueTypeName);
+        setQrDialogOpen(true);
+        
+        // Call the callback
+        onCreateQueue(queue);
+      } else {
+        logger.error('No queue returned from createQueue');
+        toast.error('ไม่สามารถสร้างคิวได้');
+      }
+    } catch (error) {
+      logger.error('Error creating queue:', error);
+      toast.error('เกิดข้อผิดพลาดในการสร้างคิว');
+    }
   };
 
   return (
@@ -147,7 +210,7 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
             </Button>
             <Button 
               className="bg-pharmacy-600 hover:bg-pharmacy-700" 
-              onClick={handleSubmit}
+              onClick={handleCreateQueue}
               disabled={!patientId && !(showNewPatientForm && newPatientName)}
             >
               สร้างคิว
