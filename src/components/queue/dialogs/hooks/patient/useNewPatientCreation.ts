@@ -3,14 +3,15 @@ import * as React from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/utils/logger';
+import { NewPatientCreationActions, NewPatientCreationResult } from './types';
 
 const logger = createLogger('useNewPatientCreation');
 
-export const useNewPatientCreation = () => {
+export const useNewPatientCreation = (): NewPatientCreationActions => {
   const createNewPatient = React.useCallback(async (
     newPatientName: string,
     phoneNumber: string
-  ) => {
+  ): Promise<NewPatientCreationResult | null> => {
     logger.info(`Creating new patient - name: ${newPatientName}, phone: ${phoneNumber}`);
     
     try {
@@ -37,7 +38,7 @@ export const useNewPatientCreation = () => {
       if (newPatientData && newPatientData.length > 0) {
         logger.info('Patient created successfully:', newPatientData[0]);
         toast.success(`สร้างข้อมูลผู้ป่วยใหม่: ${newPatientName}`);
-        return newPatientData[0];
+        return newPatientData[0] as NewPatientCreationResult;
       }
       
       logger.warn('No patient data returned after insert');

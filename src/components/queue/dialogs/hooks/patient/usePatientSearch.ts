@@ -4,10 +4,11 @@ import { toast } from 'sonner';
 import { Patient } from '@/integrations/supabase/schema';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/utils/logger';
+import { PatientSearchState, PatientSearchActions } from './types';
 
 const logger = createLogger('usePatientSearch');
 
-export const usePatientSearch = () => {
+export const usePatientSearch = (): PatientSearchState & PatientSearchActions => {
   const [phoneNumber, setPhoneNumber] = React.useState('');
   const [isSearching, setIsSearching] = React.useState(false);
   const [matchedPatients, setMatchedPatients] = React.useState<Patient[]>([]);

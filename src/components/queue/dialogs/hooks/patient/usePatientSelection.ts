@@ -1,10 +1,12 @@
 
 import * as React from 'react';
 import { createLogger } from '@/utils/logger';
+import { Patient } from '@/integrations/supabase/schema';
+import { PatientSelectionState, PatientSelectionActions } from './types';
 
 const logger = createLogger('usePatientSelection');
 
-export const usePatientSelection = () => {
+export const usePatientSelection = (): PatientSelectionState & PatientSelectionActions => {
   const [patientId, setPatientId] = React.useState('');
   const [newPatientName, setNewPatientName] = React.useState('');
   const [selectedPatientName, setSelectedPatientName] = React.useState('');
@@ -26,26 +28,22 @@ export const usePatientSelection = () => {
     setFinalPatientLineId('');
   }, []);
 
-  const handleSelectPatient = React.useCallback((id: string, patients: any[]) => {
+  const handleSelectPatient = React.useCallback((id: string, patients: Patient[]) => {
     logger.info(`Selecting patient with ID: ${id}`);
     const selectedPatient = patients.find(p => p.id === id);
     
     if (!selectedPatient) {
-      logger.error('Selected patient not found!', { id, patients });
+      logger.error('Selected patient not found!', { id, patientCount: patients.length });
       return;
     }
     
     setPatientId(id);
     
-    if (selectedPatient) {
-      logger.debug('Patient found:', selectedPatient);
-      setSelectedPatientName(selectedPatient.name);
-      setSelectedPatientPhone(selectedPatient.phone || '');
-      setSelectedPatientLineId(selectedPatient.line_id || '');
-      logger.verbose(`Set name: ${selectedPatient.name}, phone: ${selectedPatient.phone}, lineId: ${selectedPatient.line_id || 'none'}`);
-    } else {
-      logger.warn('Selected patient not found in patients array');
-    }
+    logger.debug('Patient found:', selectedPatient);
+    setSelectedPatientName(selectedPatient.name);
+    setSelectedPatientPhone(selectedPatient.phone || '');
+    setSelectedPatientLineId(selectedPatient.line_id || '');
+    logger.verbose(`Set name: ${selectedPatient.name}, phone: ${selectedPatient.phone}, lineId: ${selectedPatient.line_id || 'none'}`);
   }, []);
 
   const updateFinalPatientInfo = React.useCallback((name: string, phone: string, lineId: string = '') => {
