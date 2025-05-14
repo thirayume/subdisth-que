@@ -1,32 +1,28 @@
 
 import * as React from 'react';
-import { usePatientSearch } from '../patient/usePatientSearch';
-import { usePatientSelection } from '../patient/usePatientSelection';
-import { useNewPatientCreation } from '../patient/useNewPatientCreation';
 import { toast } from 'sonner';
+import { createLogger } from '@/utils/logger';
+import { useQueuePatientSearch } from './useQueuePatientSearch';
+import { useQueuePatientSelection } from './useQueuePatientSelection';
+import { useQueueNewPatient } from './useQueueNewPatient';
+
+const logger = createLogger('usePatientQueueInfo');
 
 export const usePatientQueueInfo = () => {
-  // First, declare all hooks unconditionally at the top level
-  const patientSearch = usePatientSearch();
-  const patientSelection = usePatientSelection();
-  const patientCreation = useNewPatientCreation();
-  
-  // Now, declare all state variables
-  const [matchedPatients, setMatchedPatients] = React.useState<any[]>([]);
+  // Local state for better control over the UI
   const [localShowNewPatientForm, setLocalShowNewPatientForm] = React.useState(false);
   
-  // Extract values from hooks using destructuring
-  const { 
-    phoneNumber, 
-    setPhoneNumber, 
-    isSearching, 
-    handlePhoneSearch: searchPatientsByPhone,
-    matchedPatients: foundPatients,
-    showNewPatientForm: searchShowNewPatientForm,
-    setShowNewPatientForm,
+  // Initialize search hook
+  const {
+    phoneNumber,
+    setPhoneNumber,
+    isSearching,
+    matchedPatients,
+    handlePhoneSearch,
     resetPatientSearch
-  } = patientSearch;
+  } = useQueuePatientSearch();
   
+  // Initialize patient selection hook
   const {
     patientId,
     setPatientId,
@@ -38,66 +34,22 @@ export const usePatientQueueInfo = () => {
     finalPatientName,
     finalPatientPhone,
     finalPatientLineId,
-    handleSelectPatient: selectPatientFromList,
+    handleSelectPatient,
     updateFinalPatientInfo,
     resetPatientSelection
-  } = patientSelection;
-
+  } = useQueuePatientSelection(matchedPatients);
+  
+  // Initialize new patient creation hook
   const {
-    createNewPatient
-  } = patientCreation;
+    createNewPatient,
+    handleAddNewPatient,
+  } = useQueueNewPatient(setLocalShowNewPatientForm, setPatientId);
   
-  // Effects come after hook declarations and state definitions
-  React.useEffect(() => {
-    if (foundPatients) {
-      setMatchedPatients(foundPatients);
-    }
-  }, [foundPatients]);
-  
-  React.useEffect(() => {
-    setLocalShowNewPatientForm(searchShowNewPatientForm);
-  }, [searchShowNewPatientForm]);
-
-  // Define all handlers with useCallback
-  const handlePhoneSearch = React.useCallback(async () => {
-    if (phoneNumber) {
-      console.log('⭐ [usePatientQueueInfo] Searching for patients with phone:', phoneNumber);
-      const patients = await searchPatientsByPhone();
-      if (patients) {
-        setMatchedPatients(patients);
-      }
-      
-      if (!patients || patients.length === 0) {
-        setLocalShowNewPatientForm(true);
-        setShowNewPatientForm(true);
-      } else {
-        setLocalShowNewPatientForm(false);
-        setShowNewPatientForm(false);
-      }
-      return patients || [];
-    } else {
-      toast.error('กรุณากรอกเบอร์โทรศัพท์');
-      return [];
-    }
-  }, [phoneNumber, searchPatientsByPhone, setShowNewPatientForm]);
-
-  const handleAddNewPatient = React.useCallback(() => {
-    setLocalShowNewPatientForm(true);
-    setShowNewPatientForm(true);
-    setPatientId('');
-  }, [setShowNewPatientForm, setPatientId]);
-
-  const handleSelectPatient = React.useCallback((id: string) => {
-    setLocalShowNewPatientForm(false);
-    setShowNewPatientForm(false);
-    setPatientId(id);
-    selectPatientFromList(id, matchedPatients);
-  }, [matchedPatients, selectPatientFromList, setPatientId, setShowNewPatientForm]);
-
+  // Reset all state
   const resetAll = React.useCallback(() => {
+    logger.debug('Resetting all patient queue info state');
     resetPatientSearch();
     resetPatientSelection();
-    setMatchedPatients([]);
     setLocalShowNewPatientForm(false);
   }, [resetPatientSearch, resetPatientSelection]);
 
