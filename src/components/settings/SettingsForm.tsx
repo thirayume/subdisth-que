@@ -1,68 +1,37 @@
 
 import React from 'react';
 import { Form } from '@/components/ui/form';
-import { TabsContent } from '@/components/ui/tabs';
-import GeneralSettings from '@/components/settings/GeneralSettings';
-import QueueSettings from '@/components/settings/QueueSettings';
-import LineSettings from '@/components/settings/LineSettings';
-import SettingsFormActions from '@/components/settings/SettingsFormActions';
-import { formatOptions } from '@/components/settings/schemas';
+import QueueSettings from './QueueSettings';
+import GeneralSettings from './GeneralSettings';
+import LineSettings from './LineSettings';
 import { useSettingsContext } from '@/contexts/SettingsContext';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { queueSettingsSchema } from './schemas';
+import SettingsFormActions from './SettingsFormActions';
+import ServicePointSettings from './ServicePointSettings';
+import ServicePointQueueTypeSettings from './ServicePointQueueTypeSettings';
 
 const SettingsForm: React.FC = () => {
-  const { 
-    form, 
-    isSubmitting,
-    editingQueueType,
-    setEditingQueueType,
-    newQueueType,
-    setNewQueueType,
-    onSubmit,
-    handleAddQueueType,
-    handleRemoveQueueType,
-    handleEditQueueType,
-    handleSaveQueueType,
-    handleCancelEdit,
-    handleDuplicateQueueType,
-    handleQueueTypeChange
-  } = useSettingsContext();
-  
-  const queueTypeActions = {
-    handleAddQueueType,
-    handleRemoveQueueType,
-    handleEditQueueType,
-    handleSaveQueueType,
-    handleCancelEdit,
-    handleDuplicateQueueType,
-    handleQueueTypeChange
-  };
+  const { settings, onSubmit, isSubmitting } = useSettingsContext();
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <TabsContent value="general" className="space-y-6">
-          <GeneralSettings form={form} />
-        </TabsContent>
-        
-        <TabsContent value="queue" className="space-y-6">
-          <QueueSettings 
-            form={form}
-            formatOptions={formatOptions}
-            editingQueueType={editingQueueType}
-            setEditingQueueType={setEditingQueueType}
-            newQueueType={newQueueType}
-            setNewQueueType={setNewQueueType}
-            {...queueTypeActions}
-          />
-        </TabsContent>
-        
-        <TabsContent value="line" className="space-y-6">
-          <LineSettings />
-        </TabsContent>
-        
-        <SettingsFormActions isSubmitting={isSubmitting} />
-      </form>
-    </Form>
+    <div className="space-y-6">
+      <GeneralSettings />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ServicePointSettings />
+        <ServicePointQueueTypeSettings />
+      </div>
+      <Form {...settings.form}>
+        <form onSubmit={settings.form.handleSubmit(onSubmit)} className="space-y-6">
+          <QueueSettings />
+          <SettingsFormActions isSubmitting={isSubmitting} />
+        </form>
+      </Form>
+      <div className="space-y-6">
+        <LineSettings />
+      </div>
+    </div>
   );
 };
 

@@ -330,6 +330,7 @@ export type Database = {
           patient_id: string
           pharmacy_status: string | null
           queue_date: string
+          service_point_id: string | null
           status: string
           type: string
           updated_at: string
@@ -344,6 +345,7 @@ export type Database = {
           patient_id: string
           pharmacy_status?: string | null
           queue_date?: string
+          service_point_id?: string | null
           status: string
           type: string
           updated_at?: string
@@ -358,6 +360,7 @@ export type Database = {
           patient_id?: string
           pharmacy_status?: string | null
           queue_date?: string
+          service_point_id?: string | null
           status?: string
           type?: string
           updated_at?: string
@@ -370,7 +373,83 @@ export type Database = {
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "queues_service_point_id_fkey"
+            columns: ["service_point_id"]
+            isOneToOne: false
+            referencedRelation: "service_points"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      service_point_queue_types: {
+        Row: {
+          created_at: string
+          id: string
+          queue_type_id: string
+          service_point_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          queue_type_id: string
+          service_point_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          queue_type_id?: string
+          service_point_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_point_queue_types_queue_type_id_fkey"
+            columns: ["queue_type_id"]
+            isOneToOne: false
+            referencedRelation: "queue_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_point_queue_types_service_point_id_fkey"
+            columns: ["service_point_id"]
+            isOneToOne: false
+            referencedRelation: "service_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_points: {
+        Row: {
+          code: string
+          created_at: string
+          enabled: boolean
+          id: string
+          location: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          location?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          location?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       settings: {
         Row: {

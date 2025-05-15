@@ -1,4 +1,3 @@
-
 export interface Patient {
   id: string;
   patient_id: string;
@@ -27,6 +26,7 @@ export interface Queue {
   patient_id: string;
   type: QueueTypeEnum;
   status: QueueStatus;
+  service_point_id?: string;
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -93,6 +93,25 @@ export interface QueueTypeConfig {
   enabled: boolean;
   algorithm: string;
   priority: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// New types for service points
+export interface ServicePoint {
+  id: string;
+  code: string;
+  name: string;
+  location?: string;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ServicePointQueueType {
+  id: string;
+  service_point_id: string;
+  queue_type_id: string;
   created_at: string;
   updated_at: string;
 }

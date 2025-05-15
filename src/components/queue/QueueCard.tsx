@@ -1,170 +1,103 @@
 
 import React from 'react';
-import { cn } from '@/lib/utils';
-import { Card, CardContent } from '@/components/ui/card';
-import { Queue, QueueStatus, QueueType, Patient } from '@/integrations/supabase/schema';
-import { Clock, AlertCircle, CheckCircle, ArrowRightCircle } from 'lucide-react';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Check, SkipForward, PhoneCall, PhoneForwarded, InfoIcon } from 'lucide-react';
+import { Queue } from '@/integrations/supabase/schema';
+import { formatRelativeTime } from '@/utils/dateUtils';
+import { formatQueueNumber } from '@/utils/queueFormatters';
+import QueueTypeLabel from './QueueTypeLabel';
+import QueueTimeInfo from './QueueTimeInfo';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface QueueCardProps {
   queue: Queue;
-  patient: Patient | undefined;
-  className?: string;
+  patientName: string;
+  onComplete?: () => Promise<Queue | null> | void;
+  onSkip?: () => Promise<Queue | null> | void;
+  onCall?: () => Promise<Queue | null> | void;
+  onRecall?: () => void;
+  servicePointId?: string;
+  servicePointName?: string;
 }
 
-const QueueCard: React.FC<QueueCardProps> = ({ queue, patient, className }) => {
-  // Safeguard: If patient is undefined (should never happen due to our filter in QueueList)
-  if (!patient) {
-    console.error('QueueCard received undefined patient for queue:', queue.number);
-    return (
-      <Card className="border-red-200 bg-red-50/50">
-        <CardContent className="p-4">
-          <div className="flex justify-between items-start">
-            <div>
-              <div className="queue-number text-4xl font-bold mb-2 text-pharmacy-700">{queue.number}</div>
-              <div className="font-medium text-gray-900">ข้อมูลผู้ป่วยไม่พบ</div>
-              <div className="text-sm text-red-500">รหัสผู้ป่วย: {queue.patient_id}</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const getStatusIcon = () => {
-    switch (queue.status) {
-      case 'WAITING':
-        return <Clock className="text-blue-500 h-5 w-5" />;
-      case 'ACTIVE':
-        return <AlertCircle className="text-green-500 h-5 w-5 animate-pulse-gentle" />;
-      case 'COMPLETED':
-        return <CheckCircle className="text-gray-500 h-5 w-5" />;
-      case 'SKIPPED':
-        return <ArrowRightCircle className="text-amber-500 h-5 w-5" />;
-      default:
-        return <Clock className="text-blue-500 h-5 w-5" />;
-    }
-  };
-
-  const getStatusClass = () => {
-    switch (queue.status) {
-      case 'WAITING':
-        return 'border-blue-200 bg-blue-50/50';
-      case 'ACTIVE':
-        return 'border-green-200 bg-green-50/50 shadow-md';
-      case 'COMPLETED':
-        return 'border-gray-200 bg-gray-50/50';
-      case 'SKIPPED':
-        return 'border-amber-200 bg-amber-50/50';
-      default:
-        return 'border-blue-200 bg-blue-50/50';
-    }
-  };
-
-  const getTypeLabel = () => {
-    switch (queue.type) {
-      case 'GENERAL':
-        return 'ทั่วไป';
-      case 'PRIORITY':
-        return 'ด่วน';
-      case 'FOLLOW_UP':
-        return 'ติดตามอาการ';
-      case 'ELDERLY':
-        return 'ผู้สูงอายุ';
-      default:
-        return 'ทั่วไป';
-    }
-  };
-
-  const getTypeClass = () => {
-    switch (queue.type) {
-      case 'GENERAL':
-        return 'bg-blue-100 text-blue-800';
-      case 'PRIORITY':
-        return 'bg-red-100 text-red-800';
-      case 'FOLLOW_UP':
-        return 'bg-purple-100 text-purple-800';
-      case 'ELDERLY':
-        return 'bg-amber-100 text-amber-800';
-      default:
-        return 'bg-blue-100 text-blue-800';
-    }
-  };
-
-  const getStatusLabel = () => {
-    switch (queue.status) {
-      case 'WAITING':
-        return 'รอเรียก';
-      case 'ACTIVE':
-        return 'กำลังให้บริการ';
-      case 'COMPLETED':
-        return 'เสร็จสิ้น';
-      case 'SKIPPED':
-        return 'ข้าม';
-      default:
-        return 'รอเรียก';
-    }
-  };
-
-  // Calculate waiting time
-  const getWaitingTime = () => {
-    const now = new Date();
-    const created = new Date(queue.created_at);
-    const diffMs = now.getTime() - created.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    
-    if (diffMins < 60) {
-      return `${diffMins} นาที`;
-    } else {
-      const hours = Math.floor(diffMins / 60);
-      const mins = diffMins % 60;
-      return `${hours} ชั่วโมง ${mins} นาที`;
-    }
-  };
-
+const QueueCard: React.FC<QueueCardProps> = ({
+  queue,
+  patientName,
+  onComplete,
+  onSkip,
+  onCall,
+  onRecall,
+  servicePointName
+}) => {
+  const formattedNumber = formatQueueNumber(queue.type, queue.number);
+  
   return (
-    <Card 
-      className={cn(
-        'transition-all duration-300 overflow-hidden border-2',
-        getStatusClass(),
-        queue.status === 'ACTIVE' && 'scale-in',
-        className
-      )}
-    >
+    <Card>
       <CardContent className="p-4">
         <div className="flex justify-between items-start">
-          <div>
-            <div className="flex items-center space-x-2 mb-2">
-              <span className={cn("queue-badge", getTypeClass())}>{getTypeLabel()}</span>
-              <span className={cn(
-                "queue-badge",
-                queue.status === 'WAITING' && "queue-badge-waiting",
-                queue.status === 'ACTIVE' && "queue-badge-active",
-                queue.status === 'COMPLETED' && "queue-badge-completed",
-                queue.status === 'SKIPPED' && "queue-badge-skipped",
-              )}>
-                {getStatusLabel()}
-              </span>
+          <div className="space-y-2">
+            <div className="text-xl sm:text-2xl font-bold">{formattedNumber}</div>
+            <div className="text-gray-600">{patientName}</div>
+            <div className="flex items-center">
+              <QueueTypeLabel queueType={queue.type} />
+              {queue.notes && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <InfoIcon className="w-4 h-4 ml-2 text-gray-500" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{queue.notes}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              
+              {servicePointName && (
+                <span className="ml-2 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                  {servicePointName}
+                </span>
+              )}
             </div>
-            <div className="queue-number text-4xl font-bold mb-2 text-pharmacy-700">{queue.number}</div>
-            <div className="font-medium text-gray-900">{patient.name}</div>
-            <div className="text-sm text-gray-500">{patient.phone}</div>
           </div>
-
-          <div className="flex flex-col items-end">
-            {getStatusIcon()}
-            <div className="text-xs text-gray-500 mt-2 flex items-center">
-              <Clock className="h-3 w-3 mr-1" />
-              {getWaitingTime()}
-            </div>
-          </div>
+          
+          <QueueTimeInfo queue={queue} />
         </div>
-        
-        {queue.notes && (
-          <div className="mt-3 p-2 bg-amber-50 border border-amber-100 rounded-md text-sm text-amber-800">
-            <span className="font-medium">หมายเหตุ:</span> {queue.notes}
-          </div>
-        )}
       </CardContent>
+      
+      {/* Only show actions if any of the handlers are provided */}
+      {(onComplete || onSkip || onCall || onRecall) && (
+        <CardFooter className="px-4 py-3 bg-gray-50 flex justify-end gap-2">
+          {onComplete && (
+            <Button variant="outline" size="sm" onClick={onComplete}>
+              <Check className="h-4 w-4 mr-1" />
+              เสร็จสิ้น
+            </Button>
+          )}
+          
+          {onSkip && (
+            <Button variant="outline" size="sm" onClick={onSkip}>
+              <SkipForward className="h-4 w-4 mr-1" />
+              ข้าม
+            </Button>
+          )}
+          
+          {onCall && (
+            <Button variant="default" size="sm" onClick={onCall}>
+              <PhoneCall className="h-4 w-4 mr-1" />
+              เรียกคิว
+            </Button>
+          )}
+          
+          {onRecall && (
+            <Button variant="outline" size="sm" onClick={onRecall}>
+              <PhoneForwarded className="h-4 w-4 mr-1" />
+              เรียกซ้ำ
+            </Button>
+          )}
+        </CardFooter>
+      )}
     </Card>
   );
 };

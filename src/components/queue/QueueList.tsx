@@ -1,68 +1,87 @@
 
 import React from 'react';
-import { cn } from '@/lib/utils';
-import { Queue, Patient, QueueStatus } from '@/integrations/supabase/schema';
+import { Queue, QueueStatus, ServicePoint } from '@/integrations/supabase/schema';
 import QueueCard from './QueueCard';
-import QueueControls from './QueueControls';
 
 interface QueueListProps {
   queues: Queue[];
-  patients: Patient[];
-  title: string;
-  emptyMessage?: string;
-  className?: string;
-  onUpdateStatus: (queueId: string, status: QueueStatus) => void;
-  onCallQueue: (queueId: string) => void;
-  onRecallQueue: (queueId: string) => void;
+  getPatientName: (patientId: string) => string;
+  status: QueueStatus;
+  onUpdateStatus?: (queueId: string, status: QueueStatus) => Promise<Queue | null>;
+  onCallQueue?: (queueId: string) => Promise<Queue | null>;
+  onRecallQueue?: (queueId: string) => void;
+  selectedServicePoint?: ServicePoint | null;
 }
 
 const QueueList: React.FC<QueueListProps> = ({
   queues,
-  patients,
-  title,
-  emptyMessage = "ไม่มีคิวในขณะนี้",
-  className,
+  getPatientName,
+  status,
   onUpdateStatus,
   onCallQueue,
   onRecallQueue,
+  selectedServicePoint
 }) => {
-  // Function to find patient by ID
-  const findPatient = (patientId: string): Patient | undefined => {
-    return patients.find((p) => p.id === patientId);
+  // Show empty state if no queues
+  if (queues.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center p-8">
+          <p className="text-gray-500 mb-2">ไม่มีคิวในสถานะนี้</p>
+          {status === 'WAITING' && selectedServicePoint && (
+            <p className="text-sm text-gray-400">
+              ไม่พบคิวที่รอดำเนินการสำหรับจุดบริการ {selectedServicePoint.name}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+  
+  // Get service point information
+  const getServicePointInfo = async (servicePointId?: string) => {
+    if (servicePointId) {
+      // We could fetch service point info here if needed
+      return selectedServicePoint?.name || null;
+    }
+    return null;
   };
 
   return (
-    <div className={cn("space-y-4", className)}>
-      <h3 className="font-semibold text-gray-900 sticky top-0 bg-white py-2 z-10">{title}</h3>
-      
-      {queues.length === 0 ? (
-        <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-100">
-          <p className="text-gray-500">{emptyMessage}</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {queues.map((queue) => {
-            const patient = findPatient(queue.patient_id);
-            
-            return (
-              <div key={queue.id} className="animate-fade-in">
-                <QueueCard
-                  queue={queue}
-                  patient={patient}
-                />
-                <div className="mt-2 ml-1">
-                  <QueueControls
-                    queue={queue}
-                    onUpdateStatus={onUpdateStatus}
-                    onCallQueue={onCallQueue}
-                    onRecallQueue={onRecallQueue}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+    <div className="space-y-3 p-4">
+      {queues.map(queue => (
+        <QueueCard
+          key={queue.id}
+          queue={queue}
+          patientName={getPatientName(queue.patient_id)}
+          onComplete={
+            onUpdateStatus && status !== 'COMPLETED'
+              ? () => onUpdateStatus(queue.id, 'COMPLETED')
+              : undefined
+          }
+          onSkip={
+            onUpdateStatus && status === 'WAITING'
+              ? () => onUpdateStatus(queue.id, 'SKIPPED')
+              : undefined
+          }
+          onCall={
+            onCallQueue && status === 'WAITING'
+              ? () => onCallQueue(queue.id)
+              : undefined
+          }
+          onRecall={
+            onRecallQueue && status === 'ACTIVE'
+              ? () => onRecallQueue(queue.id)
+              : undefined
+          }
+          servicePointId={queue.service_point_id}
+          servicePointName={
+            queue.service_point_id && selectedServicePoint?.id === queue.service_point_id
+              ? selectedServicePoint.name
+              : undefined
+          }
+        />
+      ))}
     </div>
   );
 };

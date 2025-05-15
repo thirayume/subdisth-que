@@ -5,10 +5,12 @@ import Layout from '@/components/layout/Layout';
 import { Queue, QueueType, QueueStatus } from '@/integrations/supabase/schema';
 import { useQueues } from '@/hooks/useQueues';
 import { usePatients } from '@/hooks/usePatients';
+import { useServicePointContext } from '@/contexts/ServicePointContext';
 import QueueManagementHeader from '@/components/queue/management/QueueManagementHeader';
 import QueueTabsContainer from '@/components/queue/management/QueueTabsContainer';
-import { lineNotificationService } from '@/services/line-notification.service';
-import { supabase } from '@/integrations/supabase/client';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { ServicePointCapability } from '@/utils/queueAlgorithms';
+import { useServicePointQueueTypes } from '@/hooks/useServicePointQueueTypes';
 
 const QueueManagement = () => {
   const { 
@@ -19,11 +21,42 @@ const QueueManagement = () => {
     sortQueues 
   } = useQueues();
   const { patients } = usePatients();
+  const { mappings } = useServicePointQueueTypes();
+  const { 
+    selectedServicePoint,
+    setSelectedServicePoint,
+    servicePoints
+  } = useServicePointContext();
   
   const [waitingQueues, setWaitingQueues] = useState<Queue[]>([]);
   const [activeQueues, setActiveQueues] = useState<Queue[]>([]);
   const [completedQueues, setCompletedQueues] = useState<Queue[]>([]);
   const [skippedQueues, setSkippedQueues] = useState<Queue[]>([]);
+
+  // Extract service point capabilities for queue algorithm
+  const [servicePointCapabilities, setServicePointCapabilities] = useState<ServicePointCapability[]>([]);
+  
+  useEffect(() => {
+    if (mappings.length > 0) {
+      // Group mappings by service point ID
+      const capabilities: Record<string, string[]> = {};
+      
+      mappings.forEach(mapping => {
+        if (!capabilities[mapping.service_point_id]) {
+          capabilities[mapping.service_point_id] = [];
+        }
+        capabilities[mapping.service_point_id].push(mapping.queue_type_id);
+      });
+      
+      // Convert to array format
+      const capabilitiesArray = Object.entries(capabilities).map(([servicePointId, queueTypeIds]) => ({
+        servicePointId,
+        queueTypeIds
+      }));
+      
+      setServicePointCapabilities(capabilitiesArray);
+    }
+  }, [mappings]);
 
   // Update filtered queues when the main queues array changes
   useEffect(() => {
@@ -33,13 +66,15 @@ const QueueManagement = () => {
       const completed = queues.filter(q => q.status === 'COMPLETED');
       const skipped = queues.filter(q => q.status === 'SKIPPED');
       
-      // Apply sorting algorithm to waiting queues
-      setWaitingQueues(sortQueues(waiting));
+      // Apply sorting algorithm to waiting queues based on service point selection
+      setWaitingQueues(
+        sortQueues(waiting, servicePointCapabilities, selectedServicePoint?.id)
+      );
       setActiveQueues(active);
       setCompletedQueues(completed);
       setSkippedQueues(skipped);
     }
-  }, [queues, sortQueues]);
+  }, [queues, sortQueues, servicePointCapabilities, selectedServicePoint]);
   
   // Handler for recalling queue
   const handleRecallQueue = (queueId: string) => {
@@ -57,11 +92,53 @@ const QueueManagement = () => {
       }
     }
   };
+  
+  // Handler for calling queue with service point ID
+  const handleCallQueue = async (queueId: string) => {
+    if (!selectedServicePoint) {
+      toast.warning('กรุณาเลือกจุดบริการก่อนเรียกคิว');
+      return null;
+    }
+    
+    // Add service point ID to the queue call
+    return await callQueue(queueId, selectedServicePoint.id);
+  };
+  
+  // Handler for service point change
+  const handleServicePointChange = (value: string) => {
+    const servicePoint = servicePoints.find(sp => sp.id === value);
+    if (servicePoint) {
+      setSelectedServicePoint(servicePoint);
+    }
+  };
 
   return (
     <Layout className="overflow-hidden">
       <div className="flex flex-col h-[calc(100vh-2rem)]">
-        <QueueManagementHeader />
+        <div className="flex items-center justify-between mb-4">
+          <QueueManagementHeader />
+          
+          <div className="flex items-center">
+            <span className="text-sm mr-2">จุดบริการ:</span>
+            <Select 
+              value={selectedServicePoint?.id || ''} 
+              onValueChange={handleServicePointChange}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="เลือกจุดบริการ" />
+              </SelectTrigger>
+              <SelectContent>
+                {servicePoints
+                  .filter(sp => sp.enabled)
+                  .map(sp => (
+                    <SelectItem key={sp.id} value={sp.id}>
+                      {sp.code} - {sp.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
         
         <div className="flex-1 overflow-hidden">
           <QueueTabsContainer
@@ -71,8 +148,9 @@ const QueueManagement = () => {
             skippedQueues={skippedQueues}
             patients={patients}
             onUpdateStatus={updateQueueStatus}
-            onCallQueue={callQueue}
+            onCallQueue={handleCallQueue}
             onRecallQueue={handleRecallQueue}
+            selectedServicePoint={selectedServicePoint}
           />
         </div>
       </div>
@@ -81,75 +159,3 @@ const QueueManagement = () => {
 };
 
 export default QueueManagement;
-
-
-// Inside the component, add a function to notify patients
-const notifyUpcomingQueue = async (queue: Queue) => {
-  try {
-    // Get the patient associated with this queue
-    const { data: patient, error } = await supabase
-      .from('patients')
-      .select('*')
-      .eq('id', queue.patient_id)
-      .single();
-      
-    if (error || !patient) {
-      console.error('Error fetching patient for notification:', error);
-      return;
-    }
-    
-    // Check if patient has a LINE ID
-    if (patient.line_id) {
-      // Calculate estimated wait time (this is an example, adjust based on your logic)
-      const estimatedWaitTime = 5; // 5 minutes
-      
-      // Send notification
-      const success = await lineNotificationService.sendQueueNotification(
-        patient.line_id,
-        queue,
-        estimatedWaitTime
-      );
-      
-      if (success) {
-        toast.success(`แจ้งเตือนคิว ${queue.number} ทาง LINE แล้ว`);
-      }
-    }
-  } catch (error) {
-    console.error('Error sending notification:', error);
-  }
-};
-
-// When calling the next queue or when a queue is about to be called,
-// add logic to notify the upcoming patients
-const handleCallNext = async () => {
-  // ... existing code ...
-  
-  // After calling the current queue, notify the next 2-3 patients in line
-  const { data: rawQueues } = await supabase
-    .from('queues')
-    .select('*')
-    .eq('status', 'WAITING')
-    .order('created_at', { ascending: true })
-    .limit(3);
-    
-  if (rawQueues && rawQueues.length > 0) {
-    // Convert the raw data to Queue type
-    const upcomingQueues = rawQueues.map(q => ({
-      ...q,
-      type: q.type as QueueType,
-      status: q.status as QueueStatus
-    }));
-    
-    // Notify the next patient immediately
-    await notifyUpcomingQueue(upcomingQueues[0]);
-    
-    // Optionally notify other upcoming patients
-    if (upcomingQueues.length > 1) {
-      setTimeout(() => {
-        notifyUpcomingQueue(upcomingQueues[1]);
-      }, 10000); // 10 seconds delay between notifications
-    }
-  }
-  
-  // ... rest of existing code ...
-};

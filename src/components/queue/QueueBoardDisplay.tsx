@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { formatQueueNumber } from '@/utils/queueFormatters';
 import QueueTypeLabel from './QueueTypeLabel';
 import { Queue } from '@/integrations/supabase/schema';
@@ -12,6 +13,7 @@ interface QueueBoardDisplayProps {
   isActive?: boolean;
   className?: string;
   counterName?: string;
+  servicePointName?: string;
   autoAnnounce?: boolean;
 }
 
@@ -21,6 +23,7 @@ const QueueBoardDisplay: React.FC<QueueBoardDisplayProps> = ({
   isActive = false,
   className,
   counterName = '1',
+  servicePointName,
   autoAnnounce = false
 }) => {
   const [hasAnnounced, setHasAnnounced] = useState(false);
@@ -75,6 +78,15 @@ const QueueBoardDisplay: React.FC<QueueBoardDisplayProps> = ({
           {patientName && (
             <p className="text-sm text-gray-600 text-center mt-2">{patientName}</p>
           )}
+          
+          {servicePointName && (
+            <div className="text-center mt-2">
+              <Badge variant="outline" className="bg-gray-50">
+                {servicePointName}
+              </Badge>
+            </div>
+          )}
+          
           {isActive && (
             <div className="mt-3 text-center">
               <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">

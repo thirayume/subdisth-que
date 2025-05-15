@@ -1,15 +1,18 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { PharmacyQueue } from '@/hooks/usePharmacyQueue';
+import { ServicePoint } from '@/integrations/supabase/schema';
 import { formatThaiDateTime } from '@/utils/dateUtils';
 import QueueTypeLabel from '@/components/queue/QueueTypeLabel';
 
 interface ActivePharmacyQueueProps {
   queue: PharmacyQueue;
+  servicePoint?: ServicePoint | null;
 }
 
-const ActivePharmacyQueue: React.FC<ActivePharmacyQueueProps> = ({ queue }) => {
+const ActivePharmacyQueue: React.FC<ActivePharmacyQueueProps> = ({ queue, servicePoint }) => {
   const patient = queue.patient;
   
   return (
@@ -22,6 +25,13 @@ const ActivePharmacyQueue: React.FC<ActivePharmacyQueueProps> = ({ queue }) => {
             <div className="mt-1">
               <QueueTypeLabel queueType={queue.type} />
             </div>
+            {servicePoint && (
+              <div className="mt-2">
+                <Badge variant="outline" className="bg-gray-50">
+                  {servicePoint.name}
+                </Badge>
+              </div>
+            )}
           </div>
           
           <div className="flex-grow md:border-l md:pl-4">

@@ -24,21 +24,68 @@ export const usePharmacyQueueActions = ({
   const [error, setError] = React.useState<string | null>(null);
 
   // Call next queue - Define this callback before any useEffects
-  const callNextQueue = React.useCallback(async () => {
+  const callNextQueue = React.useCallback(async (servicePointId?: string) => {
     try {
       if (activeQueue) {
         toast.warning('กรุณาดำเนินการกับคิวปัจจุบันให้เสร็จก่อน');
         return null;
       }
 
+      // Service point is now required
+      if (!servicePointId) {
+        toast.warning('กรุณาเลือกจุดบริการก่อนเรียกคิว');
+        return null;
+      }
+
       setLoadingNext(true);
       setError(null);
-      logger.info('Fetching next waiting queue');
+      logger.info(`Fetching next waiting queue for service point: ${servicePointId}`);
 
       // Get today's date in yyyy-mm-dd
       const todayDate = new Date().toISOString().slice(0, 10);
 
-      // Get the next waiting queue
+      // First get the service point's allowed queue types
+      const spQueueTypesResult = await queueSupabaseRequest(async () => {
+        return await supabase
+          .from('service_point_queue_types')
+          .select('queue_type_id')
+          .eq('service_point_id', servicePointId);
+      });
+
+      if (spQueueTypesResult.error) {
+        throw spQueueTypesResult.error;
+      }
+
+      // If no queue types are configured for this service point
+      if (!spQueueTypesResult.data || spQueueTypesResult.data.length === 0) {
+        toast.warning('จุดบริการนี้ไม่ได้กำหนดประเภทคิวที่สามารถให้บริการได้');
+        return null;
+      }
+
+      // Extract just the queue type IDs
+      const queueTypeIds = spQueueTypesResult.data.map(item => item.queue_type_id);
+      
+      // Get queue types
+      const queueTypesResult = await queueSupabaseRequest(async () => {
+        return await supabase
+          .from('queue_types')
+          .select('id, code')
+          .in('id', queueTypeIds);
+      });
+
+      if (queueTypesResult.error) {
+        throw queueTypesResult.error;
+      }
+
+      // Map queue type IDs to codes
+      const queueTypeCodes = queueTypesResult.data.map(item => item.code);
+      
+      if (queueTypeCodes.length === 0) {
+        toast.warning('ไม่พบข้อมูลประเภทคิวสำหรับจุดบริการนี้');
+        return null;
+      }
+
+      // Get the next waiting queue that matches the allowed queue types
       const waitingResult = await queueSupabaseRequest(async () => {
         return await supabase
           .from('queues')
@@ -48,6 +95,7 @@ export const usePharmacyQueueActions = ({
           `)
           .eq('queue_date', todayDate)
           .eq('status', 'WAITING')
+          .in('type', queueTypeCodes)
           .order('created_at', { ascending: true })
           .limit(1);
       });
@@ -57,17 +105,21 @@ export const usePharmacyQueueActions = ({
       }
 
       if (!waitingResult.data || waitingResult.data.length === 0) {
-        toast.info('ไม่มีคิวที่รอดำเนินการ');
+        toast.info('ไม่มีคิวที่รอดำเนินการสำหรับจุดบริการนี้');
         return null;
       }
 
       const nextQueue = waitingResult.data[0];
       
-      // Update the queue status to ACTIVE
+      // Update the queue status to ACTIVE and set the service point
       const updateResult = await queueSupabaseRequest(async () => {
         return await supabase
           .from('queues')
-          .update({ status: 'ACTIVE', called_at: new Date().toISOString() })
+          .update({ 
+            status: 'ACTIVE', 
+            called_at: new Date().toISOString(),
+            service_point_id: servicePointId
+          })
           .eq('id', nextQueue.id)
           .select(`
             *,

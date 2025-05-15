@@ -1,54 +1,57 @@
 
-import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Index from './pages/Index';
-import Patients from './pages/Patients';
-import NotFound from './pages/NotFound';
-import Medications from './pages/Medications';
-import QueueManagement from './pages/QueueManagement';
-import QueueBoard from './pages/QueueBoard';
-import QueueTicket from './pages/QueueTicket';
-import Appointments from './pages/Appointments';
-import Settings from './pages/Settings';
-import Analytics from './pages/Analytics';
-import PatientPortal from './pages/PatientPortal';
-import QueueHistory from './pages/QueueHistory';
-import LineCallback from './components/LineCallback';
-import EmailConsentScreen from './components/EmailConsentScreen';
-import PharmacyQueue from './pages/PharmacyQueue';
-import { ThemeProvider } from "./components/theme/ThemeProvider";
-import { Toaster } from 'sonner';
-import { LineAuthProvider } from './contexts/LineAuthContext';
-import './App.css';
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "sonner";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ServicePointProvider } from '@/contexts/ServicePointContext';
+
+// Pages
+import Index from "@/pages/Index";
+import NotFound from "@/pages/NotFound";
+import Patients from "@/pages/Patients";
+import QueueManagement from "@/pages/QueueManagement";
+import PharmacyQueue from "@/pages/PharmacyQueue";
+import QueueBoard from "@/pages/QueueBoard";
+import QueueHistory from "@/pages/QueueHistory";
+import QueueTicket from "@/pages/QueueTicket";
+import Appointments from "@/pages/Appointments";
+import PatientPortal from "@/pages/PatientPortal";
+import Settings from "@/pages/Settings";
+import LineCallback from "@/components/LineCallback";
+import Medications from "@/pages/Medications";
+import Analytics from "@/pages/Analytics";
+
+// Create a client
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <React.StrictMode>
-      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-        <LineAuthProvider>
-          <BrowserRouter>
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+      <QueryClientProvider client={queryClient}>
+        <ServicePointProvider>
+          <Router>
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Navigate to="/dashboard" />} />
+              <Route path="/dashboard" element={<Index />} />
               <Route path="/patients" element={<Patients />} />
-              <Route path="/medications" element={<Medications />} />
-              <Route path="/queue/management" element={<QueueManagement />} />
-              <Route path="/queue/board" element={<QueueBoard />} />
-              <Route path="/queue/ticket/:queueId" element={<QueueTicket />} />
-              <Route path="/queue/history" element={<QueueHistory />} />
-              <Route path="/appointments" element={<Appointments />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/patient-portal" element={<PatientPortal />} />
-              <Route path="/line-callback" element={<LineCallback />} />
-              <Route path="/email-consent" element={<EmailConsentScreen />} />
+              <Route path="/queue" element={<QueueManagement />} />
               <Route path="/pharmacy" element={<PharmacyQueue />} />
+              <Route path="/queue-board" element={<QueueBoard />} />
+              <Route path="/queue-history" element={<QueueHistory />} />
+              <Route path="/queue-ticket/:id" element={<QueueTicket />} />
+              <Route path="/appointments" element={<Appointments />} />
+              <Route path="/patient-portal" element={<PatientPortal />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/line-callback" element={<LineCallback />} />
+              <Route path="/medications" element={<Medications />} />
+              <Route path="/analytics" element={<Analytics />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-            <Toaster richColors position="bottom-right" />
-          </BrowserRouter>
-        </LineAuthProvider>
-      </ThemeProvider>
-    </React.StrictMode>
+            <Toaster position="top-center" richColors />
+          </Router>
+        </ServicePointProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 
