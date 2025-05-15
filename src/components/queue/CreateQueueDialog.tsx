@@ -7,15 +7,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner'; 
 import QueueCreatedDialog from './QueueCreatedDialog';
-import PhoneSearchSection from './dialogs/PhoneSearchSection';
-import PatientResultsList from './dialogs/PatientResultsList';
-import NewPatientForm from './dialogs/NewPatientForm';
-import QueueDetailsForm from './dialogs/QueueDetailsForm';
 import { createLogger } from '@/utils/logger';
 import { useCreateQueue } from './dialogs/hooks/create-queue';
+import CreateQueueDialogContent from './dialog-parts/CreateQueueDialogContent';
+import CreateQueueFooterActions from './dialog-parts/CreateQueueFooterActions';
 
 const logger = createLogger('CreateQueueDialog');
 
@@ -84,16 +80,15 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
       logger.debug('Dialog opened');
     }
   }, [open, resetState]);
-  
-  // Add debug logging for QR dialog state
-  React.useEffect(() => {
-    logger.debug(`QR dialog state changed:`);
-    logger.verbose(`- qrDialogOpen: ${qrDialogOpen}`);
-    logger.verbose(`- createdQueueNumber: ${createdQueueNumber}`);
-    logger.debug(`- QR dialog should show: ${qrDialogOpen && createdQueueNumber !== null}`);
-  }, [qrDialogOpen, createdQueueNumber]);
 
-  const shouldShowQueueDetails = Boolean(patientId) || (showNewPatientForm && Boolean(newPatientName));
+  // Determine if the create queue button should be disabled
+  const isCreateQueueDisabled = !patientId && !(showNewPatientForm && newPatientName);
+  
+  // Handle cancel button click
+  const handleCancel = React.useCallback(() => {
+    logger.debug('Cancel button clicked');
+    onOpenChange(false);
+  }, [onOpenChange]);
 
   return (
     <>
@@ -108,50 +103,32 @@ const CreateQueueDialog: React.FC<CreateQueueDialogProps> = ({
           <DialogHeader>
             <DialogTitle>สร้างคิวใหม่</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <PhoneSearchSection 
-              phoneNumber={phoneNumber}
-              setPhoneNumber={setPhoneNumber}
-              handlePhoneSearch={handlePhoneSearch}
-              isSearching={isSearching}
-            />
-
-            <PatientResultsList 
-              matchedPatients={matchedPatients}
-              patientId={patientId}
-              handleSelectPatient={handleSelectPatient}
-              handleAddNewPatient={handleAddNewPatient}
-            />
-
-            <NewPatientForm 
-              newPatientName={newPatientName}
-              setNewPatientName={setNewPatientName}
-              showNewPatientForm={showNewPatientForm}
-            />
-            
-            <QueueDetailsForm 
-              queueType={queueType}
-              setQueueType={setQueueType}
-              notes={notes}
-              setNotes={setNotes}
-              queueTypePurposes={queueTypePurposes}
-              shouldShow={shouldShowQueueDetails}
-            />
-          </div>
+          
+          <CreateQueueDialogContent 
+            phoneNumber={phoneNumber}
+            setPhoneNumber={setPhoneNumber}
+            isSearching={isSearching}
+            matchedPatients={matchedPatients}
+            handlePhoneSearch={handlePhoneSearch}
+            patientId={patientId}
+            handleSelectPatient={handleSelectPatient}
+            showNewPatientForm={showNewPatientForm}
+            newPatientName={newPatientName}
+            setNewPatientName={setNewPatientName}
+            handleAddNewPatient={handleAddNewPatient}
+            queueType={queueType}
+            setQueueType={setQueueType}
+            notes={notes}
+            setNotes={setNotes}
+            queueTypePurposes={queueTypePurposes}
+          />
+          
           <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              logger.debug('Cancel button clicked');
-              onOpenChange(false);
-            }}>
-              ยกเลิก
-            </Button>
-            <Button 
-              className="bg-pharmacy-600 hover:bg-pharmacy-700" 
-              onClick={() => handleCreateQueue()}
-              disabled={!patientId && !(showNewPatientForm && newPatientName)}
-            >
-              สร้างคิว
-            </Button>
+            <CreateQueueFooterActions 
+              onCancel={handleCancel}
+              onCreateQueue={() => handleCreateQueue()}
+              isDisabled={isCreateQueueDisabled}
+            />
           </DialogFooter>
         </DialogContent>
       </Dialog>

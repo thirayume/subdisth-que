@@ -1,19 +1,25 @@
 
 import * as React from 'react';
+import { toast } from 'sonner';
 import { createLogger } from '@/utils/logger';
-import { UseCreateQueueProps, UseCreateQueueState } from './types';
 import { usePatientInfoHook } from './usePatientInfoHook';
 import { useQueueActions } from './useQueueActions';
+import { CreateQueueHookProps, CreateQueueHookReturn, QueueCreationResult } from '@/components/queue/hooks/types';
+import { QueueType } from '@/integrations/supabase/schema';
 
 const logger = createLogger('useCreateQueueHook');
 
+/**
+ * Main hook for queue creation functionality
+ * Combines patient information, queue dialog state, and queue actions
+ */
 export const useCreateQueueHook = (
   onOpenChange: (open: boolean) => void,
-  onCreateQueue: (queue: any) => void
-): UseCreateQueueState => {
-  logger.verbose('Hook initialized with:', { onOpenChange, onCreateQueue });
-
-  // Use the patient info hook to handle all patient-related state
+  onCreateQueue: (queue: QueueCreationResult) => void
+): CreateQueueHookReturn => {
+  logger.debug('Initializing useCreateQueueHook');
+  
+  // Get patient information from the patient info hook
   const {
     patientSearchState,
     patientSelectionState,
@@ -23,104 +29,100 @@ export const useCreateQueueHook = (
     resetPatientState
   } = usePatientInfoHook();
 
+  // Get queue actions from the queue actions hook
   const {
-    phoneNumber,
-    setPhoneNumber,
-    isSearching,
-    matchedPatients,
-    showNewPatientForm,
-    handlePhoneSearch
-  } = patientSearchState;
+    queueState,
+    dialogState,
+    createQueueForPatient,
+    resetQueueState,
+    resetDialogState,
+  } = useQueueActions();
 
-  const { patientId } = patientSelectionState;
-  
-  const {
-    newPatientName,
-    setNewPatientName,
-    createNewPatient
-  } = newPatientCreationState;
+  // Function to handle queue creation
+  const handleCreateQueue = React.useCallback(async (): Promise<QueueCreationResult | null> => {
+    logger.info('Creating queue...');
+    
+    try {
+      // Validate required fields
+      if (!patientInfo.patientId && !patientInfo.newPatientName) {
+        toast.error('กรุณาเลือกผู้ป่วยหรือสร้างผู้ป่วยใหม่');
+        logger.warn('No patient selected or created');
+        return null;
+      }
+      
+      // Create the queue
+      const createdQueue = await createQueueForPatient(
+        patientInfo.patientId, 
+        patientInfo.newPatientName, 
+        patientSearchState.phoneNumber
+      );
+      
+      if (createdQueue) {
+        // Update parent component with created queue
+        onCreateQueue(createdQueue);
+        logger.info('Queue created successfully', { queueNumber: createdQueue.number });
+        return createdQueue;
+      }
+      
+      return null;
+    } catch (err) {
+      logger.error('Error creating queue:', err);
+      toast.error('เกิดข้อผิดพลาดในการสร้างคิว');
+      return null;
+    }
+  }, [
+    patientInfo.patientId,
+    patientInfo.newPatientName,
+    patientSearchState.phoneNumber,
+    createQueueForPatient,
+    onCreateQueue
+  ]);
 
-  // Use the queue actions hook for all queue-related logic
-  const queueActions = useQueueActions({
-    onOpenChange,
-    onCreateQueue,
-    createNewPatient,
-    patientInfo,
-    showNewPatientForm,
-    phoneNumber
-  });
-
-  const {
-    queueType,
-    setQueueType,
-    notes,
-    setNotes,
-    queueTypePurposes,
-    qrDialogOpen,
-    setQrDialogOpen,
-    createdQueueInfo,
-    handleAddNewPatient,
-    handleCreateQueue,
-    resetQueueState
-  } = queueActions;
-
-  // Extract created queue info
-  const { queueNumber: createdQueueNumber, queueType: createdQueueType, purpose: createdPurpose } = createdQueueInfo;
-
-  // Extract patient info
-  const { finalPatientName, finalPatientPhone, finalPatientLineId } = patientInfo;
-
-  // Reset all state when unmounting
-  React.useEffect(() => {
-    return () => {
-      resetPatientState();
-      resetQueueState();
-    };
-  }, [resetPatientState, resetQueueState]);
-
-  // Reset all state for a new create operation
+  // Function to reset all state
   const resetState = React.useCallback(() => {
     logger.debug('Resetting all state');
     resetPatientState();
     resetQueueState();
-  }, [resetPatientState, resetQueueState]);
+    resetDialogState();
+  }, [resetPatientState, resetQueueState, resetDialogState]);
 
+  // Create the return object with all properties needed by the dialog
   return {
     // Patient search
-    phoneNumber,
-    setPhoneNumber,
-    isSearching,
-    matchedPatients,
-    handlePhoneSearch,
+    phoneNumber: patientSearchState.phoneNumber,
+    setPhoneNumber: patientSearchState.setPhoneNumber,
+    isSearching: patientSearchState.isSearching,
+    matchedPatients: patientSearchState.matchedPatients,
+    handlePhoneSearch: patientSearchState.handlePhoneSearch,
     
     // Patient selection
-    patientId,
+    patientId: patientSelectionState.patientId,
     handleSelectPatient,
     
     // New patient
-    showNewPatientForm,
-    newPatientName,
-    setNewPatientName,
-    handleAddNewPatient,
+    showNewPatientForm: newPatientCreationState.showNewPatientForm,
+    newPatientName: newPatientCreationState.newPatientName,
+    setNewPatientName: newPatientCreationState.setNewPatientName,
+    handleAddNewPatient: newPatientCreationState.handleAddNewPatient,
     
     // Queue creation
-    queueType,
-    setQueueType,
-    notes,
-    setNotes,
-    queueTypePurposes,
+    queueType: queueState.queueType as QueueType,
+    setQueueType: queueState.setQueueType,
+    notes: queueState.notes,
+    setNotes: queueState.setNotes,
+    queueTypePurposes: queueState.queueTypePurposes,
     
     // Queue dialog
-    qrDialogOpen,
-    setQrDialogOpen,
-    createdQueueNumber,
-    createdQueueType,
-    createdPurpose,
+    qrDialogOpen: dialogState.qrDialogOpen,
+    setQrDialogOpen: dialogState.setQrDialogOpen,
+    createdQueueNumber: dialogState.createdQueueNumber,
+    createdQueueType: dialogState.createdQueueType as QueueType,
+    createdPurpose: dialogState.createdPurpose,
     
     // Final patient info
-    finalPatientName,
-    finalPatientPhone,
-    finalPatientLineId,
+    finalPatientName: patientInfo.finalPatientName,
+    finalPatientPhone: patientInfo.finalPatientPhone,
+    finalPatientLineId: patientInfo.finalPatientLineId,
     
     // Actions
     handleCreateQueue,

@@ -2,149 +2,189 @@
 import * as React from 'react';
 import { toast } from 'sonner';
 import { createLogger } from '@/utils/logger';
-import { queueTypePurposes, useQueueCreation, useQueueDialogState } from '../queue';
-import { PatientInfo, CreatedQueueInfo } from './types';
+import { supabase } from '@/integrations/supabase/client';
+import { QueueType } from '@/integrations/supabase/schema';
+import { queueTypePurposes } from '../queue/useQueueCreation';
+import { QueueCreationResult } from '@/components/queue/hooks/types';
 
 const logger = createLogger('useQueueActions');
 
-interface UseQueueActionsProps {
-  onOpenChange: (open: boolean) => void;
-  onCreateQueue: (queue: any) => void;
-  createNewPatient: (name?: string, phone?: string) => Promise<any>;
-  patientInfo: PatientInfo;
-  showNewPatientForm: boolean;
-  phoneNumber: string;
-}
+/**
+ * Hook that manages queue creation actions and related state
+ */
+export const useQueueActions = () => {
+  // Queue state
+  const [queueType, setQueueType] = React.useState<QueueType>('GENERAL');
+  const [notes, setNotes] = React.useState('');
+  
+  // Dialog state
+  const [qrDialogOpen, setQrDialogOpen] = React.useState(false);
+  const [createdQueueNumber, setCreatedQueueNumber] = React.useState<number | null>(null);
+  const [createdQueueType, setCreatedQueueType] = React.useState<QueueType>('GENERAL');
+  const [createdPurpose, setCreatedPurpose] = React.useState('');
 
-export const useQueueActions = ({
-  onOpenChange, 
-  onCreateQueue,
-  createNewPatient,
-  patientInfo,
-  showNewPatientForm,
-  phoneNumber
-}: UseQueueActionsProps) => {
-  // Queue creation state
-  const {
-    queueType,
-    setQueueType,
-    notes,
-    setNotes,
-    resetQueueCreation,
-    createQueue
-  } = useQueueCreation();
-
-  // Queue dialog state
-  const {
-    qrDialogOpen,
-    setQrDialogOpen,
-    createdQueueNumber,
-    setCreatedQueueNumber,
-    createdQueueType,
-    setCreatedQueueType,
-    createdPurpose,
-    setCreatedPurpose,
-    resetQueueDialog
-  } = useQueueDialogState(onOpenChange);
-
-  const createdQueueInfo: CreatedQueueInfo = {
-    queueNumber: createdQueueNumber,
-    queueType: createdQueueType,
-    purpose: createdPurpose
-  };
-
-  const handleAddNewPatient = React.useCallback(async () => {
-    logger.debug('Adding new patient');
-    
-    if (!patientInfo.newPatientName) {
-      toast.error('กรุณากรอกชื่อผู้ป่วย');
-      return null;
-    }
-    
-    if (!phoneNumber) {
-      toast.error('กรุณากรอกเบอร์โทรศัพท์');
-      return null;
-    }
-    
-    const newPatient = await createNewPatient(patientInfo.newPatientName, phoneNumber);
-    return newPatient;
-  }, [createNewPatient, patientInfo.newPatientName, phoneNumber]);
-
-  // Method to create a queue
-  const handleCreateQueue = async () => {
-    logger.verbose('Creating queue');
-    
+  /**
+   * Gets the next queue number from the database
+   */
+  const getNextQueueNumber = React.useCallback(async (): Promise<number> => {
     try {
-      let finalPatientId = patientInfo.patientId;
+      const { data: queueCountData, error } = await supabase
+        .from('queues')
+        .select('number')
+        .order('number', { ascending: false })
+        .limit(1);
       
-      // If we're creating a new patient
-      if (showNewPatientForm) {
-        if (!patientInfo.newPatientName) {
-          toast.error('กรุณากรอกชื่อผู้ป่วย');
-          return;
-        }
-        
-        if (!phoneNumber) {
-          toast.error('กรุณากรอกเบอร์โทรศัพท์');
-          return;
-        }
-        
-        const newPatient = await handleAddNewPatient();
-        if (!newPatient) {
-          logger.error('Failed to create patient');
-          toast.error('ไม่สามารถสร้างผู้ป่วยใหม่ได้');
-          return;
-        }
-        
-        finalPatientId = newPatient.id;
+      if (error) {
+        throw error;
       }
       
-      // Create the queue
-      logger.debug('Creating queue for patient ID:', finalPatientId);
-      const queue = await createQueue(finalPatientId);
-      
-      if (queue) {
-        logger.info('Queue created successfully:', queue);
-        toast.success('สร้างคิวสำเร็จ');
-        
-        // Set the info for the QR dialog
-        const queueTypeName = queueTypePurposes[queue.type] || '';
-        
-        setCreatedQueueNumber(queue.number);
-        setCreatedQueueType(queue.type);
-        setCreatedPurpose(queueTypeName);
-        setQrDialogOpen(true);
-        
-        // Call the callback
-        onCreateQueue(queue);
-      } else {
-        logger.error('No queue returned from createQueue');
-        toast.error('ไม่สามารถสร้างคิวได้');
-      }
-    } catch (error) {
-      logger.error('Error creating queue:', error);
-      toast.error('เกิดข้อผิดพลาดในการสร้างคิว');
+      return queueCountData && queueCountData.length > 0 
+        ? queueCountData[0].number + 1 
+        : 1;
+    } catch (err) {
+      logger.error('Error getting next queue number:', err);
+      throw new Error('Failed to get next queue number');
     }
-  };
+  }, []);
 
-  // Reset all queue state
+  /**
+   * Creates a new queue for an existing patient
+   */
+  const createQueueForExistingPatient = React.useCallback(async (
+    patientId: string
+  ): Promise<QueueCreationResult | null> => {
+    try {
+      const nextQueueNumber = await getNextQueueNumber();
+      
+      const { data, error } = await supabase
+        .from('queues')
+        .insert({
+          patient_id: patientId,
+          number: nextQueueNumber,
+          type: queueType,
+          status: 'WAITING',
+          notes: notes,
+          queue_date: new Date().toISOString().split('T')[0]
+        })
+        .select();
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (!data || data.length === 0) {
+        throw new Error('No data returned after creating queue');
+      }
+      
+      // Update dialog state
+      setCreatedQueueNumber(data[0].number);
+      setCreatedQueueType(data[0].type);
+      setCreatedPurpose(queueTypePurposes[data[0].type]);
+      setQrDialogOpen(true);
+      
+      return data[0] as QueueCreationResult;
+    } catch (err) {
+      logger.error('Error creating queue for existing patient:', err);
+      toast.error('ไม่สามารถสร้างคิวได้');
+      return null;
+    }
+  }, [queueType, notes, getNextQueueNumber]);
+
+  /**
+   * Creates a new patient and then creates a queue for them
+   */
+  const createQueueForNewPatient = React.useCallback(async (
+    patientName: string,
+    phoneNumber: string
+  ): Promise<QueueCreationResult | null> => {
+    try {
+      // Generate a patient ID
+      const patientIdNum = Math.floor(1000 + Math.random() * 9000);
+      const patient_id = `P${patientIdNum}`;
+      
+      // Create the patient
+      const { data: newPatientData, error: patientError } = await supabase
+        .from('patients')
+        .insert({
+          name: patientName,
+          phone: phoneNumber,
+          patient_id: patient_id,
+        })
+        .select();
+      
+      if (patientError) {
+        throw patientError;
+      }
+      
+      if (!newPatientData || newPatientData.length === 0) {
+        throw new Error('No data returned after creating patient');
+      }
+      
+      // Create a queue for the new patient
+      return await createQueueForExistingPatient(newPatientData[0].id);
+    } catch (err) {
+      logger.error('Error creating queue for new patient:', err);
+      toast.error('ไม่สามารถสร้างผู้ป่วยใหม่และคิวได้');
+      return null;
+    }
+  }, [createQueueForExistingPatient]);
+
+  /**
+   * Main function that handles queue creation for either existing or new patients
+   */
+  const createQueueForPatient = React.useCallback(async (
+    patientId: string,
+    newPatientName: string,
+    phoneNumber: string
+  ): Promise<QueueCreationResult | null> => {
+    try {
+      if (patientId) {
+        // Create queue for existing patient
+        return await createQueueForExistingPatient(patientId);
+      } else if (newPatientName && phoneNumber) {
+        // Create queue for new patient
+        return await createQueueForNewPatient(newPatientName, phoneNumber);
+      } else {
+        toast.error('ไม่มีข้อมูลผู้ป่วยที่เพียงพอ');
+        return null;
+      }
+    } catch (err) {
+      logger.error('Error in createQueueForPatient:', err);
+      toast.error('เกิดข้อผิดพลาดในการสร้างคิว');
+      return null;
+    }
+  }, [createQueueForExistingPatient, createQueueForNewPatient]);
+
+  // Reset functions
   const resetQueueState = React.useCallback(() => {
-    logger.debug('Resetting queue state');
-    resetQueueCreation();
-    resetQueueDialog();
-  }, [resetQueueCreation, resetQueueDialog]);
+    setQueueType('GENERAL');
+    setNotes('');
+  }, []);
+
+  const resetDialogState = React.useCallback(() => {
+    setQrDialogOpen(false);
+    setCreatedQueueNumber(null);
+    setCreatedQueueType('GENERAL');
+    setCreatedPurpose('');
+  }, []);
 
   return {
-    queueType,
-    setQueueType,
-    notes,
-    setNotes,
-    queueTypePurposes,
-    qrDialogOpen,
-    setQrDialogOpen,
-    createdQueueInfo,
-    handleAddNewPatient,
-    handleCreateQueue,
-    resetQueueState
+    queueState: {
+      queueType,
+      setQueueType,
+      notes,
+      setNotes,
+      queueTypePurposes
+    },
+    dialogState: {
+      qrDialogOpen,
+      setQrDialogOpen,
+      createdQueueNumber,
+      createdQueueType,
+      createdPurpose
+    },
+    createQueueForPatient,
+    resetQueueState,
+    resetDialogState
   };
 };
