@@ -78,7 +78,7 @@ export const useQueueActions = () => {
       
       // Update dialog state
       setCreatedQueueNumber(data[0].number);
-      setCreatedQueueType(data[0].type);
+      setCreatedQueueType(data[0].type as QueueType);
       setCreatedPurpose(queueTypePurposes[data[0].type]);
       setQrDialogOpen(true);
       

@@ -5,6 +5,7 @@ import PatientResultsList from '../dialogs/PatientResultsList';
 import NewPatientForm from '../dialogs/NewPatientForm';
 import QueueDetailsForm from '../dialogs/QueueDetailsForm';
 import { createLogger } from '@/utils/logger';
+import { QueueType } from '@/integrations/supabase/schema';
 
 const logger = createLogger('CreateQueueDialogContent');
 
@@ -27,8 +28,8 @@ interface CreateQueueDialogContentProps {
   handleAddNewPatient: () => void;
   
   // Queue details
-  queueType: string;
-  setQueueType: (value: any) => void;
+  queueType: QueueType;
+  setQueueType: (value: QueueType) => void;
   notes: string;
   setNotes: (value: string) => void;
   queueTypePurposes: Record<string, string>;
