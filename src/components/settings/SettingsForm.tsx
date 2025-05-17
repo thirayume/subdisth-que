@@ -17,14 +17,27 @@ const SettingsForm: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <GeneralSettings />
+      <GeneralSettings form={settings.form} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ServicePointSettings />
         <ServicePointQueueTypeSettings />
       </div>
       <Form {...settings.form}>
         <form onSubmit={settings.form.handleSubmit(onSubmit)} className="space-y-6">
-          <QueueSettings />
+          <QueueSettings 
+            form={settings.form}
+            editingQueueType={settings.editingQueueType}
+            setEditingQueueType={settings.setEditingQueueType}
+            newQueueType={settings.newQueueType}
+            setNewQueueType={settings.setNewQueueType}
+            handleAddQueueType={settings.handleAddQueueType}
+            handleRemoveQueueType={settings.handleRemoveQueueType}
+            handleEditQueueType={settings.handleEditQueueType}
+            handleSaveQueueType={settings.handleSaveQueueType}
+            handleCancelEdit={settings.handleCancelEdit}
+            handleDuplicateQueueType={settings.handleDuplicateQueueType}
+            handleQueueTypeChange={settings.handleQueueTypeChange}
+          />
           <SettingsFormActions isSubmitting={isSubmitting} />
         </form>
       </Form>

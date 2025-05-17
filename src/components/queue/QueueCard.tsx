@@ -4,7 +4,6 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Check, SkipForward, PhoneCall, PhoneForwarded, InfoIcon } from 'lucide-react';
 import { Queue } from '@/integrations/supabase/schema';
-import { formatRelativeTime } from '@/utils/dateUtils';
 import { formatQueueNumber } from '@/utils/queueFormatters';
 import QueueTypeLabel from './QueueTypeLabel';
 import QueueTimeInfo from './QueueTimeInfo';

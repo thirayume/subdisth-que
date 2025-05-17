@@ -39,9 +39,22 @@ export const useServicePoints = () => {
 
   const saveServicePoint = async (servicePoint: Partial<ServicePoint>) => {
     try {
+      // Ensure required fields are present when creating a new service point
+      if (!servicePoint.id) {
+        if (!servicePoint.code || !servicePoint.name) {
+          throw new Error('Service point code and name are required');
+        }
+      }
+      
       const { data, error } = await supabase
         .from('service_points')
-        .upsert(servicePoint)
+        .upsert({
+          id: servicePoint.id || undefined,
+          code: servicePoint.code || '',  // Ensure required fields are included
+          name: servicePoint.name || '',   // Ensure required fields are included
+          location: servicePoint.location,
+          enabled: servicePoint.enabled !== undefined ? servicePoint.enabled : true
+        })
         .select();
 
       if (error) {

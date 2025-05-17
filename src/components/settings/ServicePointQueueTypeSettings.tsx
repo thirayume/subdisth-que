@@ -32,7 +32,7 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
     if (queueTypes && mappings) {
       const mappedQueueTypeIds = mappings.map(m => m.queue_type_id);
       const available = queueTypes.filter(qt => !mappedQueueTypeIds.includes(qt.id));
-      setAvailableQueueTypes(available);
+      setAvailableQueueTypes(available as QueueTypeConfig[]);
       
       // Reset selected queue type if it's no longer available
       if (selectedQueueTypeId && !available.some(qt => qt.id === selectedQueueTypeId)) {
@@ -138,12 +138,17 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
                       ) : (
                         <div className="space-y-2">
                           {mappings.map(mapping => {
-                            const queueType = mapping.queue_type as any;
+                            // Find the queue type using the ID
+                            const queueType = queueTypes.find(qt => qt.id === mapping.queue_type_id);
                             return (
                               <div key={mapping.id} className="flex items-center justify-between bg-white p-2 rounded border">
                                 <div className="flex items-center">
-                                  <QueueTypeLabel queueType={queueType.code as any} />
-                                  <span className="ml-2">{queueType.name}</span>
+                                  {queueType && (
+                                    <>
+                                      <QueueTypeLabel queueType={queueType.code as any} />
+                                      <span className="ml-2">{queueType.name}</span>
+                                    </>
+                                  )}
                                 </div>
                                 <Button 
                                   variant="ghost" 

@@ -1,120 +1,159 @@
 
-import { Queue, QueueType } from '@/integrations/supabase/schema';
-
-// Define the algorithm enum
 export enum QueueAlgorithmType {
-  FIFO = 'FIFO',
-  WEIGHTED = 'WEIGHTED',
-  PRIORITY = 'PRIORITY',
-  SERVICE_POINT_WEIGHTED = 'SERVICE_POINT_WEIGHTED'
+  FIFO = "FIFO",
+  PRIORITY = "PRIORITY",
+  MULTILEVEL = "MULTILEVEL",
+  MULTILEVEL_FEEDBACK = "MULTILEVEL_FEEDBACK"
 }
 
-// Define the queue type with algorithm
-export interface QueueTypeWithAlgorithm {
-  id: string;
-  code: string;
-  name: string;
-  algorithm: QueueAlgorithmType;
-  priority: number;
-}
-
-// Define service point capabilities
+// Service point capability type for algorithm use
 export interface ServicePointCapability {
   servicePointId: string;
   queueTypeIds: string[];
 }
 
-// FIFO Algorithm (First In, First Out)
-const sortByFIFO = (queues: Queue[]): Queue[] => {
-  return [...queues].sort((a, b) => 
-    new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-  );
+// Extended queue type with algorithm info
+export interface QueueTypeWithAlgorithm {
+  id: string;
+  code: string;
+  priority: number;
+  algorithm: QueueAlgorithmType;
+}
+
+// Sort queues based on the selected algorithm
+export const sortQueuesByAlgorithm = (
+  queues: any[],
+  queueTypes: QueueTypeWithAlgorithm[],
+  algorithm: QueueAlgorithmType = QueueAlgorithmType.FIFO,
+  servicePointCapabilities: ServicePointCapability[] = [],
+  selectedServicePointId?: string
+) => {
+  // Clone the queues array to avoid modifying the original
+  const sortedQueues = [...queues];
+  
+  // If specific service point is selected, filter by queue types it can handle
+  if (selectedServicePointId) {
+    const selectedCapability = servicePointCapabilities.find(
+      cap => cap.servicePointId === selectedServicePointId
+    );
+    
+    if (selectedCapability) {
+      // Sort queues based on whether they can be handled by this service point
+      sortedQueues.sort((a, b) => {
+        const aCanHandle = queueTypeMatchesServicePoint(a.id, selectedCapability.queueTypeIds);
+        const bCanHandle = queueTypeMatchesServicePoint(b.id, selectedCapability.queueTypeIds);
+        
+        if (aCanHandle && !bCanHandle) return -1;
+        if (!aCanHandle && bCanHandle) return 1;
+        return 0;
+      });
+    }
+  }
+  
+  // Sort based on the selected algorithm
+  switch (algorithm) {
+    case QueueAlgorithmType.PRIORITY:
+      return sortByPriority(sortedQueues, queueTypes);
+      
+    case QueueAlgorithmType.MULTILEVEL:
+      return sortByMultilevel(sortedQueues, queueTypes);
+      
+    case QueueAlgorithmType.MULTILEVEL_FEEDBACK:
+      return sortByMultilevelFeedback(sortedQueues, queueTypes);
+      
+    case QueueAlgorithmType.FIFO:
+    default:
+      return sortByFIFO(sortedQueues);
+  }
 };
 
-// Weighted Algorithm (By Queue Type Priority)
-const sortByWeighted = (
-  queues: Queue[], 
-  queueTypes: QueueTypeWithAlgorithm[]
-): Queue[] => {
-  return [...queues].sort((a, b) => {
-    // First sort by queue type priority
-    const typeA = queueTypes.find(type => type.code === a.type);
-    const typeB = queueTypes.find(type => type.code === b.type);
-    
-    const priorityA = typeA?.priority || 5;
-    const priorityB = typeB?.priority || 5;
-    
-    if (priorityA !== priorityB) {
-      return priorityB - priorityA; // Higher priority first
-    }
-    
-    // If same priority, fall back to creation time
+// Check if a queue's type matches any in the service point's capabilities
+const queueTypeMatchesServicePoint = (queueTypeId: string, servicePointQueueTypes: string[]) => {
+  return servicePointQueueTypes.includes(queueTypeId);
+};
+
+// First In, First Out sorting
+const sortByFIFO = (queues: any[]) => {
+  return queues.sort((a, b) => {
     return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
   });
 };
 
-// Priority Algorithm (Manually set priority for each queue)
-const sortByPriority = (queues: Queue[]): Queue[] => {
-  // In future versions, individual queues can have priority values
-  // For now, just use FIFO as fallback
-  return sortByFIFO(queues);
-};
-
-// Service Point Based Weighted Algorithm 
-const sortByServicePointWeighted = (
-  queues: Queue[],
-  queueTypes: QueueTypeWithAlgorithm[],
-  servicePoints: ServicePointCapability[],
-  selectedServicePointId?: string
-): Queue[] => {
-  // Filter queues that can be served by the selected service point
-  if (selectedServicePointId) {
-    const servicePoint = servicePoints.find(sp => sp.servicePointId === selectedServicePointId);
-    if (servicePoint) {
-      // Filter queues by queue types that this service point can handle
-      const serviceableQueueTypes = servicePoint.queueTypeIds;
-      const serviceableQueues = queues.filter(queue => {
-        const queueType = queueTypes.find(type => type.code === queue.type);
-        return queueType && serviceableQueueTypes.includes(queueType.id);
-      });
-      
-      // Then apply weighted algorithm to the filtered queues
-      return sortByWeighted(serviceableQueues, queueTypes);
+// Priority-based sorting
+const sortByPriority = (queues: any[], queueTypes: QueueTypeWithAlgorithm[]) => {
+  return queues.sort((a, b) => {
+    // Find queue type info
+    const aType = queueTypes.find(qt => qt.id === a.type || qt.code === a.type);
+    const bType = queueTypes.find(qt => qt.id === b.type || qt.code === b.type);
+    
+    // Compare by priority (higher priority first)
+    const aPriority = aType ? aType.priority : 0;
+    const bPriority = bType ? bType.priority : 0;
+    
+    if (bPriority !== aPriority) {
+      return bPriority - aPriority;
     }
-  }
-  
-  // If no service point is selected or not found, fall back to regular weighted algorithm
-  return sortByWeighted(queues, queueTypes);
+    
+    // If same priority, sort by creation time (FIFO)
+    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+  });
 };
 
-// Main queue sorting function
-export const sortQueuesByAlgorithm = (
-  queues: Queue[],
-  queueTypes: QueueTypeWithAlgorithm[] | null = null,
-  algorithm: QueueAlgorithmType = QueueAlgorithmType.FIFO,
-  servicePoints: ServicePointCapability[] = [],
-  selectedServicePointId?: string
-): Queue[] => {
-  if (!queues || queues.length === 0) return [];
+// Multilevel queue sorting - groups by type and then sorts within groups
+const sortByMultilevel = (queues: any[], queueTypes: QueueTypeWithAlgorithm[]) => {
+  // First group queues by type
+  const queueGroups: Record<string, any[]> = {};
   
-  console.log(`Sorting ${queues.length} queues using algorithm: ${algorithm}`);
+  queues.forEach(queue => {
+    const type = queue.type;
+    if (!queueGroups[type]) {
+      queueGroups[type] = [];
+    }
+    queueGroups[type].push(queue);
+  });
   
-  switch (algorithm) {
-    case QueueAlgorithmType.FIFO:
-      return sortByFIFO(queues);
-      
-    case QueueAlgorithmType.WEIGHTED:
-      return queueTypes ? sortByWeighted(queues, queueTypes) : sortByFIFO(queues);
-      
-    case QueueAlgorithmType.PRIORITY:
-      return sortByPriority(queues);
-      
-    case QueueAlgorithmType.SERVICE_POINT_WEIGHTED:
-      return queueTypes 
-        ? sortByServicePointWeighted(queues, queueTypes, servicePoints, selectedServicePointId) 
-        : sortByFIFO(queues);
-        
-    default:
-      return sortByFIFO(queues);
-  }
+  // Sort each group by creation time
+  Object.keys(queueGroups).forEach(type => {
+    queueGroups[type].sort((a, b) => 
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+  });
+  
+  // Get queue types in order of priority
+  const typesByPriority = [...queueTypes].sort((a, b) => b.priority - a.priority);
+  
+  // Flatten the groups back to an array in order of priority
+  return typesByPriority.reduce((result, queueType) => {
+    const type = queueType.id || queueType.code;
+    return result.concat(queueGroups[type] || []);
+  }, [] as any[]);
+};
+
+// Multilevel feedback queue - considers waiting time along with priority
+const sortByMultilevelFeedback = (queues: any[], queueTypes: QueueTypeWithAlgorithm[]) => {
+  return queues.sort((a, b) => {
+    const aType = queueTypes.find(qt => qt.id === a.type || qt.code === a.type);
+    const bType = queueTypes.find(qt => qt.id === b.type || qt.code === b.type);
+    
+    // Base priority
+    const aPriority = aType ? aType.priority : 0;
+    const bPriority = bType ? bType.priority : 0;
+    
+    // Calculate waiting time in minutes
+    const now = new Date().getTime();
+    const aWaitTime = (now - new Date(a.created_at).getTime()) / 60000;
+    const bWaitTime = (now - new Date(b.created_at).getTime()) / 60000;
+    
+    // Dynamic priority calculation based on waiting time
+    // Increase priority by 1 for every 10 minutes of waiting
+    const aAdjustedPriority = aPriority + Math.floor(aWaitTime / 10);
+    const bAdjustedPriority = bPriority + Math.floor(bWaitTime / 10);
+    
+    if (aAdjustedPriority !== bAdjustedPriority) {
+      return bAdjustedPriority - aAdjustedPriority;
+    }
+    
+    // If adjusted priority is the same, prioritize the one that's been waiting longer
+    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+  });
 };

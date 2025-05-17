@@ -2,7 +2,7 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import QueueList from '@/components/queue/QueueList';
-import { Queue, QueueStatus, Patient } from '@/integrations/supabase/schema';
+import { Queue, QueueStatus, Patient, ServicePoint } from '@/integrations/supabase/schema';
 
 interface QueueTabsProps {
   waitingQueues: Queue[];
@@ -10,9 +10,10 @@ interface QueueTabsProps {
   completedQueues: Queue[];
   skippedQueues: Queue[];
   patients: Patient[];
-  onUpdateStatus: (queueId: string, status: QueueStatus) => void;
-  onCallQueue: (queueId: string) => void;
+  onUpdateStatus: (queueId: string, status: QueueStatus) => Promise<Queue | null>;
+  onCallQueue: (queueId: string) => Promise<Queue | null>;
   onRecallQueue: (queueId: string) => void;
+  selectedServicePoint?: ServicePoint | null;
 }
 
 const QueueTabs: React.FC<QueueTabsProps> = ({
@@ -23,8 +24,15 @@ const QueueTabs: React.FC<QueueTabsProps> = ({
   patients,
   onUpdateStatus,
   onCallQueue,
-  onRecallQueue
+  onRecallQueue,
+  selectedServicePoint
 }) => {
+  // Function to get patient name by ID
+  const getPatientName = (patientId: string): string => {
+    const patient = patients.find(p => p.id === patientId);
+    return patient ? patient.name : 'ไม่พบชื่อผู้ป่วย';
+  };
+
   return (
     <Tabs defaultValue="waiting" className="w-full">
       <TabsList className="mb-4 w-full justify-start overflow-x-auto pb-1 no-scrollbar sticky top-0 z-10 bg-white">
@@ -37,48 +45,48 @@ const QueueTabs: React.FC<QueueTabsProps> = ({
       <TabsContent value="waiting" className="animate-fade-in">
         <QueueList
           queues={waitingQueues}
-          patients={patients}
-          title="คิวที่รอดำเนินการ"
-          emptyMessage="ไม่มีคิวที่รอดำเนินการ"
+          getPatientName={getPatientName}
+          status="WAITING"
           onUpdateStatus={onUpdateStatus}
           onCallQueue={onCallQueue}
           onRecallQueue={onRecallQueue}
+          selectedServicePoint={selectedServicePoint}
         />
       </TabsContent>
       
       <TabsContent value="active" className="animate-fade-in">
         <QueueList
           queues={activeQueues}
-          patients={patients}
-          title="คิวที่กำลังให้บริการ"
-          emptyMessage="ไม่มีคิวที่กำลังให้บริการ"
+          getPatientName={getPatientName}
+          status="ACTIVE"
           onUpdateStatus={onUpdateStatus}
           onCallQueue={onCallQueue}
           onRecallQueue={onRecallQueue}
+          selectedServicePoint={selectedServicePoint}
         />
       </TabsContent>
       
       <TabsContent value="completed" className="animate-fade-in">
         <QueueList
           queues={completedQueues}
-          patients={patients}
-          title="คิวที่เสร็จสิ้นแล้ว"
-          emptyMessage="ไม่มีคิวที่เสร็จสิ้น"
+          getPatientName={getPatientName}
+          status="COMPLETED"
           onUpdateStatus={onUpdateStatus}
           onCallQueue={onCallQueue}
           onRecallQueue={onRecallQueue}
+          selectedServicePoint={selectedServicePoint}
         />
       </TabsContent>
       
       <TabsContent value="skipped" className="animate-fade-in">
         <QueueList
           queues={skippedQueues}
-          patients={patients}
-          title="คิวที่ถูกข้าม"
-          emptyMessage="ไม่มีคิวที่ถูกข้าม"
+          getPatientName={getPatientName}
+          status="SKIPPED"
           onUpdateStatus={onUpdateStatus}
           onCallQueue={onCallQueue}
           onRecallQueue={onRecallQueue}
+          selectedServicePoint={selectedServicePoint}
         />
       </TabsContent>
     </Tabs>
