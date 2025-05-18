@@ -5,18 +5,16 @@ import QueueSettings from './QueueSettings';
 import GeneralSettings from './GeneralSettings';
 import LineSettings from './LineSettings';
 import { useSettingsContext } from '@/contexts/SettingsContext';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { queueSettingsSchema } from './schemas';
 import SettingsFormActions from './SettingsFormActions';
 import ServicePointSettings from './ServicePointSettings';
 import ServicePointQueueTypeSettings from './ServicePointQueueTypeSettings';
+import { FormatOption } from './schemas';
 
 // Define the format options
-const formatOptions = [
-  { value: '0', label: 'เลขเดี่ยว - เช่น 3, 12, 78' },
-  { value: '00', label: 'เลขสองหลัก - เช่น 01, 12, 99' },
-  { value: '000', label: 'เลขสามหลัก - เช่น 001, 012, 123' }
+const formatOptions: FormatOption[] = [
+  { value: '0', label: 'เลขเดี่ยว - เช่น 3, 12, 78', example: '1, 2, 3...' },
+  { value: '00', label: 'เลขสองหลัก - เช่น 01, 12, 99', example: '01, 02, 03...' },
+  { value: '000', label: 'เลขสามหลัก - เช่น 001, 012, 123', example: '001, 002, 003...' }
 ];
 
 const SettingsForm: React.FC = () => {

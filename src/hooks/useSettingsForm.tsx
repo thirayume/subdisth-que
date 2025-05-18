@@ -8,6 +8,11 @@ import { z } from 'zod';
 import { useQueueTypesData } from './useQueueTypesData';
 import { QueueAlgorithmType } from '@/utils/queueAlgorithms';
 
+type SettingsState = Array<{
+  key: string;
+  value: any;
+}>;
+
 const defaultValues = {
   hospital_name: 'โรงพยาบาลตัวอย่าง',
   hospital_address: '123 ถนนกรุงเทพ เขตปทุมวัน กรุงเทพฯ 10330',
@@ -56,7 +61,7 @@ export const useSettingsForm = () => {
       let mergedValues = { ...defaultValues };
       
       // Process each setting based on its key
-      for (const setting of settings) {
+      for (const setting of settings as SettingsState) {
         try {
           if (setting.key === 'queue_algorithm') {
             // Handle queue algorithm setting
