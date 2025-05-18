@@ -9,7 +9,7 @@ export interface SettingsState {
 }
 
 export const useSettings = (category: string = 'general') => {
-  const [settings, setSettings] = useState<SettingsState>({});
+  const [settings, setSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,19 +28,17 @@ export const useSettings = (category: string = 'general') => {
         throw error;
       }
 
-      // Convert array of {key, value} objects to a single object
-      const settingsObject: SettingsState = {};
+      // Return the array of key-value pairs directly so it's iterable
       if (data) {
-        data.forEach((item: SettingsData) => {
-          settingsObject[item.key] = item.value;
-        });
+        console.log(`Fetched ${data.length || 0} settings for category ${category}`);
+        setSettings(data);
+      } else {
+        // If no data, set an empty array to avoid "not iterable" errors
+        setSettings([]);
       }
-
-      setSettings(settingsObject);
-      console.log(`Fetched ${data?.length || 0} settings for category ${category}`);
       
       // Save to localStorage as a fallback for offline access
-      localStorage.setItem(`settings_${category}`, JSON.stringify(settingsObject));
+      localStorage.setItem(`settings_${category}`, JSON.stringify(data || []));
     } catch (err: any) {
       console.error(`Error fetching settings for ${category}:`, err);
       setError(err.message || `Failed to fetch ${category} settings`);
@@ -49,13 +47,17 @@ export const useSettings = (category: string = 'general') => {
       const savedSettings = localStorage.getItem(`settings_${category}`);
       if (savedSettings) {
         try {
-          setSettings(JSON.parse(savedSettings));
+          const parsedSettings = JSON.parse(savedSettings);
+          setSettings(parsedSettings);
           toast.info('ใช้ข้อมูลการตั้งค่าที่บันทึกไว้ในเครื่อง');
         } catch (parseErr) {
           console.error('Error parsing saved settings:', parseErr);
+          // Set empty array as fallback to avoid "not iterable" errors
+          setSettings([]);
         }
       } else {
         toast.error(`ไม่สามารถโหลดข้อมูลการตั้งค่า ${category} ได้`);
+        setSettings([]);
       }
     } finally {
       setLoading(false);
@@ -69,16 +71,31 @@ export const useSettings = (category: string = 'general') => {
         const { key, value } = data;
         
         // First update local state for immediate UI update
-        setSettings(prev => ({
-          ...prev,
-          [key]: value
-        }));
+        setSettings(prev => {
+          const updatedSettings = Array.isArray(prev) ? [...prev] : [];
+          const existingIndex = updatedSettings.findIndex(item => item.key === key);
+          
+          if (existingIndex >= 0) {
+            updatedSettings[existingIndex] = { ...updatedSettings[existingIndex], value };
+          } else {
+            updatedSettings.push({ category, key, value });
+          }
+          
+          return updatedSettings;
+        });
         
         // Save to localStorage as backup
-        localStorage.setItem(`settings_${category}`, JSON.stringify({
-          ...settings,
-          [key]: value
-        }));
+        const currentSettings = JSON.parse(localStorage.getItem(`settings_${category}`) || '[]');
+        const updatedLocalSettings = [...currentSettings];
+        const existingIndex = updatedLocalSettings.findIndex(item => item.key === key);
+        
+        if (existingIndex >= 0) {
+          updatedLocalSettings[existingIndex] = { ...updatedLocalSettings[existingIndex], value };
+        } else {
+          updatedLocalSettings.push({ category, key, value });
+        }
+        
+        localStorage.setItem(`settings_${category}`, JSON.stringify(updatedLocalSettings));
 
         // Then save to Supabase
         const { error } = await (supabase as any)
@@ -99,16 +116,55 @@ export const useSettings = (category: string = 'general') => {
       // If data is an array of updates
       else if (Array.isArray(data)) {
         // Update local state
-        const updatedSettings = { ...settings };
-        for (const item of data) {
-          if (item.key) {
-            updatedSettings[item.key] = item.value;
+        setSettings(prev => {
+          const updatedSettings = Array.isArray(prev) ? [...prev] : [];
+          
+          for (const item of data) {
+            if (item.key) {
+              const existingIndex = updatedSettings.findIndex(setting => setting.key === item.key);
+              
+              if (existingIndex >= 0) {
+                updatedSettings[existingIndex] = { ...updatedSettings[existingIndex], value: item.value };
+              } else {
+                updatedSettings.push({
+                  category: item.category || category,
+                  key: item.key,
+                  value: item.value
+                });
+              }
+            }
           }
-        }
-        setSettings(updatedSettings);
+          
+          return updatedSettings;
+        });
         
         // Save to localStorage
-        localStorage.setItem(`settings_${category}`, JSON.stringify(updatedSettings));
+        let localStorageData = {};
+        try {
+          localStorageData = JSON.parse(localStorage.getItem(`settings_${category}`) || '[]');
+        } catch (e) {
+          localStorageData = [];
+        }
+        
+        const updatedLocalData = Array.isArray(localStorageData) ? [...localStorageData] : [];
+        
+        for (const item of data) {
+          if (item.key) {
+            const existingIndex = updatedLocalData.findIndex(setting => setting.key === item.key);
+            
+            if (existingIndex >= 0) {
+              updatedLocalData[existingIndex] = { ...updatedLocalData[existingIndex], value: item.value };
+            } else {
+              updatedLocalData.push({
+                category: item.category || category,
+                key: item.key,
+                value: item.value
+              });
+            }
+          }
+        }
+        
+        localStorage.setItem(`settings_${category}`, JSON.stringify(updatedLocalData));
         
         // Save to Supabase
         const { error } = await (supabase as any)
@@ -136,24 +192,45 @@ export const useSettings = (category: string = 'general') => {
 
   const updateMultipleSettings = async (newSettings: SettingsState, category: string = 'general') => {
     try {
-      // First update local state for immediate UI update
-      setSettings(prev => ({
-        ...prev,
-        ...newSettings
-      }));
-      
-      // Save to localStorage as backup
-      localStorage.setItem(`settings_${category}`, JSON.stringify({
-        ...settings,
-        ...newSettings
-      }));
-
       // Prepare data for Supabase
       const upsertData = Object.entries(newSettings).map(([key, value]) => ({
         category,
         key,
         value
       }));
+      
+      // Update local state for immediate UI update
+      setSettings(prev => {
+        const updatedSettings = Array.isArray(prev) ? [...prev] : [];
+        
+        for (const [key, value] of Object.entries(newSettings)) {
+          const existingIndex = updatedSettings.findIndex(item => item.key === key);
+          
+          if (existingIndex >= 0) {
+            updatedSettings[existingIndex] = { ...updatedSettings[existingIndex], value };
+          } else {
+            updatedSettings.push({ category, key, value });
+          }
+        }
+        
+        return updatedSettings;
+      });
+      
+      // Save to localStorage as backup
+      const currentLocalSettings = JSON.parse(localStorage.getItem(`settings_${category}`) || '[]');
+      const updatedLocalSettings = Array.isArray(currentLocalSettings) ? [...currentLocalSettings] : [];
+      
+      for (const [key, value] of Object.entries(newSettings)) {
+        const existingIndex = updatedLocalSettings.findIndex(item => item.key === key);
+        
+        if (existingIndex >= 0) {
+          updatedLocalSettings[existingIndex] = { ...updatedLocalSettings[existingIndex], value };
+        } else {
+          updatedLocalSettings.push({ category, key, value });
+        }
+      }
+      
+      localStorage.setItem(`settings_${category}`, JSON.stringify(updatedLocalSettings));
 
       // Then save to Supabase using any to bypass type checking
       const { error } = await (supabase as any)

@@ -60,28 +60,51 @@ export const useSettingsForm = () => {
     if (settings) {
       let mergedValues = { ...defaultValues };
       
-      // Process each setting based on its key
-      for (const setting of settings as SettingsState) {
-        try {
-          if (setting.key === 'queue_algorithm') {
-            // Handle queue algorithm setting
-            const algorithm = setting.value as unknown as string;
+      // Check if settings is an array (iterable) before trying to loop through it
+      if (Array.isArray(settings)) {
+        // Process each setting based on its key
+        for (const setting of settings) {
+          try {
+            if (setting.key === 'queue_algorithm') {
+              // Handle queue algorithm setting
+              const algorithm = setting.value as unknown as string;
+              if (algorithm && Object.values(QueueAlgorithmType).includes(algorithm as QueueAlgorithmType)) {
+                mergedValues.queue_algorithm = algorithm as QueueAlgorithmType;
+              }
+            } else if (setting.key === 'queue_types') {
+              // Handle queue types if they're in settings
+              // This is just for backward compatibility
+            } else if (setting.key in defaultValues) {
+              // Handle other recognized settings
+              mergedValues = {
+                ...mergedValues,
+                [setting.key]: setting.value,
+              };
+            }
+          } catch (error) {
+            console.error(`Error processing setting ${setting.key}:`, error);
+          }
+        }
+      } else if (typeof settings === 'object' && settings !== null) {
+        // If settings is an object (not array), handle it differently
+        // Convert object format to merged values directly
+        Object.entries(settings).forEach(([key, value]) => {
+          if (key === 'queue_algorithm') {
+            const algorithm = value as string;
             if (algorithm && Object.values(QueueAlgorithmType).includes(algorithm as QueueAlgorithmType)) {
               mergedValues.queue_algorithm = algorithm as QueueAlgorithmType;
             }
-          } else if (setting.key === 'queue_types') {
-            // Handle queue types if they're in settings
-            // This is just for backward compatibility
-          } else if (setting.key in defaultValues) {
-            // Handle other recognized settings
+          } else if (key === 'queue_types') {
+            // Skip queue_types as they're handled separately
+          } else if (key in defaultValues) {
             mergedValues = {
               ...mergedValues,
-              [setting.key]: setting.value,
+              [key]: value,
             };
           }
-        } catch (error) {
-          console.error(`Error processing setting ${setting.key}:`, error);
-        }
+        });
+      } else {
+        console.warn('Settings is not in expected format:', settings);
       }
       
       // Reset form with merged values
