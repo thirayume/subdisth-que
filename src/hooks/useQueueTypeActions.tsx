@@ -27,7 +27,7 @@ export const useQueueTypeActions = ({
       id: newId,
       code: '',
       name: '',
-      prefix: '',
+      prefix: '', // Required field
       purpose: '',
       format: '00',
       enabled: true,
@@ -51,12 +51,12 @@ export const useQueueTypeActions = ({
     
     // Stop editing if we're removing the queue type we're editing
     if (currentQueueType) {
-      // Fixed: Store the editing queue type ID separately instead of trying to access it from form values
-      const editingId = form.getValues().queue_types?.find(qt => 
+      // Get editingQueueType directly from form values
+      const editingQueueTypeId = form.getValues().queue_types?.find(qt => 
         qt.id === currentQueueType.id
       )?.id;
       
-      if (editingId) {
+      if (editingQueueTypeId) {
         setEditingQueueType(null);
       }
     }
@@ -100,7 +100,7 @@ export const useQueueTypeActions = ({
       id: uuidv4(),
       code: `${queueTypeToDuplicate.code}_COPY`,
       name: `${queueTypeToDuplicate.name} (Copy)`,
-      prefix: queueTypeToDuplicate.prefix || '', // Ensure prefix is not undefined
+      prefix: queueTypeToDuplicate.prefix, // Ensure prefix is not undefined
       purpose: queueTypeToDuplicate.purpose || '',
       format: queueTypeToDuplicate.format || '00',
       enabled: queueTypeToDuplicate.enabled !== undefined ? queueTypeToDuplicate.enabled : true,

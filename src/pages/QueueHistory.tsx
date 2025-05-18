@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import Layout from '@/components/layout/Layout';
-import { mockQueues, mockPatients, QueueType, QueueStatus } from '@/lib/mockData';
 import { toast } from 'sonner';
 import { 
   Search, 
@@ -15,7 +15,7 @@ import {
   Calendar as CalendarIcon,
   Download
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, startOfDay, endOfDay } from 'date-fns';
 import { th } from 'date-fns/locale';
 import {
   Select,
@@ -39,86 +39,208 @@ import {
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { DateRange } from "react-day-picker";
+import { supabase } from '@/integrations/supabase/client';
+import { Queue, QueueStatus } from '@/integrations/supabase/schema';
+import { QueueType } from '@/hooks/useQueueTypes';
 
 const QueueHistory = () => {
-  // Add completion time to completed queues for demo purposes
-  const completedQueues = mockQueues
-    .filter(q => q.status === QueueStatus.COMPLETED)
-    .map(q => ({
-      ...q,
-      completedAt: new Date(new Date().getTime() - Math.random() * 10000000).toISOString()
-    }));
+  const [queues, setQueues] = useState<any[]>([]);
+  const [patients, setPatients] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalServed: 0,
+    averageWaitTime: 0,
+    totalPatients: 0
+  });
   
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: new Date(new Date().setHours(0, 0, 0, 0)),
-    to: new Date(new Date().setHours(23, 59, 59, 999)),
+    from: startOfDay(new Date()),
+    to: endOfDay(new Date()),
   });
   const [queueType, setQueueType] = useState<string>("all");
+  const [queueTypes, setQueueTypes] = useState<QueueType[]>([]);
   
-  const filteredQueues = completedQueues.filter(queue => {
+  // Fetch queue types from Supabase
+  useEffect(() => {
+    const fetchQueueTypes = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('queue_types')
+          .select('*');
+          
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          setQueueTypes(data);
+        }
+      } catch (error) {
+        console.error('Error fetching queue types:', error);
+        toast.error('ไม่สามารถดึงข้อมูลประเภทคิวได้');
+        
+        // Try to load from localStorage as fallback
+        const savedQueueTypes = localStorage.getItem('queue_types');
+        if (savedQueueTypes) {
+          setQueueTypes(JSON.parse(savedQueueTypes));
+        }
+      }
+    };
+    
+    fetchQueueTypes();
+  }, []);
+
+  // Fetch completed queues and patients from Supabase
+  useEffect(() => {
+    const fetchQueuesAndPatients = async () => {
+      setLoading(true);
+      try {
+        // Fetch completed queues within date range
+        let query = supabase
+          .from('queues')
+          .select('*, patient:patient_id(id, name, phone)');
+          
+        // Apply date range filter
+        if (dateRange?.from) {
+          const fromDate = format(dateRange.from, 'yyyy-MM-dd');
+          query = query.gte('queue_date', fromDate);
+        }
+        
+        if (dateRange?.to) {
+          const toDate = format(dateRange.to, 'yyyy-MM-dd');
+          query = query.lte('queue_date', toDate);
+        }
+        
+        // Only completed or skipped queues
+        query = query.in('status', ['COMPLETED', 'SKIPPED']);
+        
+        const { data: queueData, error: queueError } = await query;
+        
+        if (queueError) {
+          throw queueError;
+        }
+        
+        if (queueData) {
+          setQueues(queueData);
+          
+          // Calculate statistics
+          const totalServed = queueData.length;
+          
+          // Calculate average wait time
+          let totalWaitTime = 0;
+          let validWaitTimeCount = 0;
+          
+          queueData.forEach(queue => {
+            if (queue.called_at && queue.created_at) {
+              const calledTime = new Date(queue.called_at).getTime();
+              const createdTime = new Date(queue.created_at).getTime();
+              const waitTime = (calledTime - createdTime) / (1000 * 60); // in minutes
+              
+              if (waitTime > 0) {
+                totalWaitTime += waitTime;
+                validWaitTimeCount++;
+              }
+            }
+          });
+          
+          const averageWaitTime = validWaitTimeCount > 0 ? 
+            Math.round(totalWaitTime / validWaitTimeCount) : 0;
+          
+          // Count unique patients
+          const uniquePatients = new Set(queueData.map(q => q.patient_id)).size;
+          
+          setStats({
+            totalServed,
+            averageWaitTime,
+            totalPatients: uniquePatients
+          });
+        }
+        
+        // Fetch all patients mentioned in the queues
+        const patientIds = [...new Set(queueData?.map(q => q.patient_id) || [])];
+        
+        if (patientIds.length > 0) {
+          const { data: patientData, error: patientError } = await supabase
+            .from('patients')
+            .select('*')
+            .in('id', patientIds);
+            
+          if (patientError) {
+            throw patientError;
+          }
+          
+          if (patientData) {
+            setPatients(patientData);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching queue history:', err);
+        toast.error('ไม่สามารถดึงข้อมูลประวัติคิวได้');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchQueuesAndPatients();
+  }, [dateRange]);
+  
+  const filteredQueues = queues.filter(queue => {
     // Filter by search term (queue number or patient name)
-    const patientName = mockPatients.find(p => p.id === queue.patientId)?.name || '';
+    const patientName = queue.patient?.name || '';
     const matchesSearch = searchTerm === '' || 
       queue.number.toString().includes(searchTerm) || 
       patientName.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Filter by date range
-    const completedDate = new Date(queue.completedAt!);
-    const matchesDateRange = 
-      (!dateRange?.from || completedDate >= dateRange.from) && 
-      (!dateRange?.to || completedDate <= dateRange.to);
-    
     // Filter by queue type
     const matchesType = queueType === 'all' || queue.type === queueType;
     
-    return matchesSearch && matchesDateRange && matchesType;
+    return matchesSearch && matchesType;
   });
   
   const sortedQueues = [...filteredQueues].sort((a, b) => 
-    new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime()
+    new Date(b.completed_at || b.created_at).getTime() - 
+    new Date(a.completed_at || a.created_at).getTime()
   );
   
   const getPatientName = (patientId: string) => {
-    const patient = mockPatients.find(p => p.id === patientId);
+    const patient = patients.find(p => p.id === patientId);
     return patient ? patient.name : 'ไม่ระบุชื่อ';
   };
   
-  const getQueueTypeLabel = (type: QueueType) => {
-    switch (type) {
-      case QueueType.GENERAL: return 'ทั่วไป';
-      case QueueType.PRIORITY: return 'ด่วน';
-      case QueueType.ELDERLY: return 'ผู้สูงอายุ';
-      case QueueType.FOLLOW_UP: return 'ติดตามการใช้ยา';
-      default: return 'ไม่ระบุ';
-    }
+  const getQueueTypeLabel = (typeCode: string) => {
+    const queueType = queueTypes.find(qt => qt.code === typeCode);
+    return queueType ? queueType.name : 'ไม่ระบุ';
   };
   
-  const getQueueTypeClass = (type: QueueType) => {
-    switch (type) {
-      case QueueType.GENERAL: return 'text-blue-600 bg-blue-50';
-      case QueueType.PRIORITY: return 'text-red-600 bg-red-50';
-      case QueueType.ELDERLY: return 'text-amber-600 bg-amber-50';
-      case QueueType.FOLLOW_UP: return 'text-purple-600 bg-purple-50';
-      default: return 'text-gray-600 bg-gray-50';
-    }
+  const getQueueTypeClass = (typeCode: string) => {
+    const queueType = queueTypes.find(qt => qt.code === typeCode);
+    if (!queueType) return 'text-gray-600 bg-gray-50';
+    
+    // Assign colors based on priority or other characteristics
+    const priority = queueType.priority || 0;
+    
+    if (priority >= 8) return 'text-red-600 bg-red-50';
+    if (priority >= 6) return 'text-amber-600 bg-amber-50';
+    if (priority >= 4) return 'text-blue-600 bg-blue-50';
+    return 'text-purple-600 bg-purple-50';
   };
   
   const calculateServiceTime = (queue: any) => {
-    if (!queue.calledAt || !queue.completedAt) return '?';
+    if (!queue.called_at || !queue.completed_at) return '?';
     
-    const calledTime = new Date(queue.calledAt).getTime();
-    const completedTime = new Date(queue.completedAt).getTime();
+    const calledTime = new Date(queue.called_at).getTime();
+    const completedTime = new Date(queue.completed_at).getTime();
     const diffMinutes = Math.round((completedTime - calledTime) / (1000 * 60));
     
     return `${diffMinutes} นาที`;
   };
   
   const calculateWaitingTime = (queue: any) => {
-    if (!queue.createdAt || !queue.calledAt) return '?';
+    if (!queue.created_at || !queue.called_at) return '?';
     
-    const createdTime = new Date(queue.createdAt).getTime();
-    const calledTime = new Date(queue.calledAt).getTime();
+    const createdTime = new Date(queue.created_at).getTime();
+    const calledTime = new Date(queue.called_at).getTime();
     const diffMinutes = Math.round((calledTime - createdTime) / (1000 * 60));
     
     return `${diffMinutes} นาที`;
@@ -126,6 +248,36 @@ const QueueHistory = () => {
   
   const handleDateRangeChange = (range: DateRange | undefined) => {
     setDateRange(range);
+  };
+
+  const handleExportData = () => {
+    // Create CSV content
+    let csvContent = "วันที่,เวลา,หมายเลขคิว,ประเภท,ผู้ป่วย,เวลารอคิว,เวลาให้บริการ\n";
+    
+    sortedQueues.forEach(queue => {
+      const date = format(new Date(queue.completed_at || queue.created_at), 'dd/MM/yyyy', { locale: th });
+      const time = format(new Date(queue.completed_at || queue.created_at), 'HH:mm น.', { locale: th });
+      const queueNumber = queue.number;
+      const queueTypeLabel = getQueueTypeLabel(queue.type);
+      const patientName = queue.patient?.name || getPatientName(queue.patient_id);
+      const waitTime = calculateWaitingTime(queue);
+      const serviceTime = calculateServiceTime(queue);
+      
+      csvContent += `${date},${time},${queueNumber},${queueTypeLabel},${patientName},${waitTime},${serviceTime}\n`;
+    });
+    
+    // Create download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `ประวัติคิว_${format(new Date(), 'dd-MM-yyyy')}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success('ดาวน์โหลดข้อมูลเรียบร้อยแล้ว');
   };
   
   return (
@@ -137,7 +289,11 @@ const QueueHistory = () => {
         </div>
         
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2"
+            onClick={handleExportData}
+          >
             <Download className="w-4 h-4" />
             ส่งออกข้อมูล
           </Button>
@@ -150,7 +306,7 @@ const QueueHistory = () => {
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm font-medium text-gray-500">ให้บริการทั้งหมด</p>
-                <h3 className="text-3xl font-bold text-gray-900 mt-1">{completedQueues.length}</h3>
+                <h3 className="text-3xl font-bold text-gray-900 mt-1">{stats.totalServed}</h3>
               </div>
               <div className="bg-blue-100 p-3 rounded-full">
                 <List className="w-6 h-6 text-blue-600" />
@@ -169,7 +325,7 @@ const QueueHistory = () => {
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm font-medium text-gray-500">เวลารอเฉลี่ย</p>
-                <h3 className="text-3xl font-bold text-gray-900 mt-1">15 นาที</h3>
+                <h3 className="text-3xl font-bold text-gray-900 mt-1">{stats.averageWaitTime} นาที</h3>
               </div>
               <div className="bg-amber-100 p-3 rounded-full">
                 <Clock className="w-6 h-6 text-amber-600" />
@@ -177,7 +333,7 @@ const QueueHistory = () => {
             </div>
             <div className="mt-4">
               <div className="text-xs text-gray-500">
-                เปรียบเทียบรายสัปดาห์ <span className="font-medium text-green-600">-12%</span>
+                จากคิวที่ให้บริการแล้วในช่วงเวลาที่เลือก
               </div>
             </div>
           </CardContent>
@@ -188,7 +344,7 @@ const QueueHistory = () => {
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm font-medium text-gray-500">ผู้รับบริการทั้งหมด</p>
-                <h3 className="text-3xl font-bold text-gray-900 mt-1">{mockPatients.length}</h3>
+                <h3 className="text-3xl font-bold text-gray-900 mt-1">{stats.totalPatients}</h3>
               </div>
               <div className="bg-green-100 p-3 rounded-full">
                 <Users className="w-6 h-6 text-green-600" />
@@ -196,7 +352,9 @@ const QueueHistory = () => {
             </div>
             <div className="mt-4">
               <div className="text-xs text-gray-500">
-                เฉลี่ย <span className="font-medium">{Math.round(completedQueues.length / mockPatients.length * 10) / 10}</span> คิว/คน
+                เฉลี่ย <span className="font-medium">
+                  {stats.totalPatients > 0 ? Math.round(stats.totalServed / stats.totalPatients * 10) / 10 : 0}
+                </span> คิว/คน
               </div>
             </div>
           </CardContent>
@@ -256,10 +414,11 @@ const QueueHistory = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">ทั้งหมด</SelectItem>
-                  <SelectItem value={QueueType.GENERAL}>ทั่วไป</SelectItem>
-                  <SelectItem value={QueueType.PRIORITY}>ด่วน</SelectItem>
-                  <SelectItem value={QueueType.ELDERLY}>ผู้สูงอายุ</SelectItem>
-                  <SelectItem value={QueueType.FOLLOW_UP}>ติดตามการใช้ยา</SelectItem>
+                  {queueTypes.map(type => (
+                    <SelectItem key={type.code} value={type.code}>
+                      {type.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -295,7 +454,13 @@ const QueueHistory = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedQueues.length === 0 ? (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-4">
+                    กำลังโหลดข้อมูล...
+                  </TableCell>
+                </TableRow>
+              ) : sortedQueues.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-4">
                     ไม่พบข้อมูลประวัติคิว
@@ -305,10 +470,10 @@ const QueueHistory = () => {
                 sortedQueues.map((queue) => (
                   <TableRow key={queue.id}>
                     <TableCell>
-                      {format(new Date(queue.completedAt!), 'dd MMM yyyy', { locale: th })}
+                      {format(new Date(queue.completed_at || queue.created_at), 'dd MMM yyyy', { locale: th })}
                     </TableCell>
                     <TableCell>
-                      {format(new Date(queue.completedAt!), 'HH:mm น.', { locale: th })}
+                      {format(new Date(queue.completed_at || queue.created_at), 'HH:mm น.', { locale: th })}
                     </TableCell>
                     <TableCell className="font-medium">{queue.number}</TableCell>
                     <TableCell>
@@ -316,7 +481,7 @@ const QueueHistory = () => {
                         {getQueueTypeLabel(queue.type)}
                       </span>
                     </TableCell>
-                    <TableCell>{getPatientName(queue.patientId)}</TableCell>
+                    <TableCell>{queue.patient?.name || getPatientName(queue.patient_id)}</TableCell>
                     <TableCell>{calculateWaitingTime(queue)}</TableCell>
                     <TableCell>{calculateServiceTime(queue)}</TableCell>
                   </TableRow>

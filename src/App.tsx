@@ -34,10 +34,25 @@ function App() {
               <Route path="/" element={<Navigate to="/dashboard" />} />
               <Route path="/dashboard" element={<Index />} />
               <Route path="/patients" element={<Patients />} />
+              
+              {/* Queue Management Routes - Updated to support both formats */}
               <Route path="/queue" element={<QueueManagement />} />
+              <Route path="/queue/management" element={<QueueManagement />} />
+              <Route path="/queue/management/" element={<QueueManagement />} />
+              
+              {/* Pharmacy Queue */}
               <Route path="/pharmacy" element={<PharmacyQueue />} />
+              
+              {/* Queue Board Routes */}
               <Route path="/queue-board" element={<QueueBoard />} />
+              <Route path="/queue/board" element={<QueueBoard />} />
+              <Route path="/queue/board/" element={<QueueBoard />} />
+              
+              {/* Queue History Routes */}
               <Route path="/queue-history" element={<QueueHistory />} />
+              <Route path="/queue/history" element={<QueueHistory />} />
+              <Route path="/queue/history/" element={<QueueHistory />} />
+              
               <Route path="/queue-ticket/:id" element={<QueueTicket />} />
               <Route path="/appointments" element={<Appointments />} />
               <Route path="/patient-portal" element={<PatientPortal />} />
