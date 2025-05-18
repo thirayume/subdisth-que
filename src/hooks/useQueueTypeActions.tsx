@@ -1,14 +1,12 @@
 
-import { useCallback } from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { QueueType } from '@/hooks/useQueueTypes';
 import { v4 as uuidv4 } from 'uuid';
 import { QueueAlgorithmType } from '@/utils/queueAlgorithms';
 
 interface UseQueueTypeActionsProps {
   form: UseFormReturn<any>;
-  setEditingQueueType: React.Dispatch<React.SetStateAction<string | null>>;
-  setNewQueueType: React.Dispatch<React.SetStateAction<boolean>>;
+  setEditingQueueType: (id: string | null) => void;
+  setNewQueueType: (value: boolean) => void;
   newQueueType: boolean;
 }
 
@@ -18,15 +16,16 @@ export const useQueueTypeActions = ({
   setNewQueueType,
   newQueueType
 }: UseQueueTypeActionsProps) => {
-  
-  const queueTypes = form.watch('queue_types') as QueueType[];
-  
-  const handleAddQueueType = useCallback(() => {
-    const newQueueTypeItem: QueueType = {
-      id: uuidv4(),
-      code: 'NEW',
-      name: 'ประเภทคิวใหม่',
-      prefix: 'N',
+  const handleAddQueueType = () => {
+    const queueTypes = form.getValues('queue_types') || [];
+    
+    // Create a new queue type with a random ID
+    const newId = uuidv4();
+    const newQueueType = {
+      id: newId,
+      code: '',
+      name: '',
+      prefix: '',
       purpose: '',
       format: '00',
       enabled: true,
@@ -34,61 +33,75 @@ export const useQueueTypeActions = ({
       priority: 5
     };
     
-    form.setValue('queue_types', [...queueTypes, newQueueTypeItem]);
-    setEditingQueueType(newQueueTypeItem.id);
+    // Update the form with the new queue type
+    form.setValue('queue_types', [...queueTypes, newQueueType]);
+    
+    // Start editing the new queue type
+    setEditingQueueType(newId);
     setNewQueueType(true);
-  }, [queueTypes, form, setEditingQueueType, setNewQueueType]);
+  };
 
-  const handleRemoveQueueType = useCallback((index: number) => {
-    const newQueueTypes = [...queueTypes];
-    newQueueTypes.splice(index, 1);
-    form.setValue('queue_types', newQueueTypes);
-  }, [queueTypes, form]);
+  const handleRemoveQueueType = (index: number) => {
+    const queueTypes = [...form.getValues('queue_types')];
+    queueTypes.splice(index, 1);
+    form.setValue('queue_types', queueTypes);
+    
+    // Stop editing if we're removing the queue type we're editing
+    if (editingQueueType === form.getValues(`queue_types.${index}.id`)) {
+      setEditingQueueType(null);
+    }
+  };
 
-  const handleEditQueueType = useCallback((id: string) => {
+  const handleEditQueueType = (id: string) => {
     setEditingQueueType(id);
     setNewQueueType(false);
-  }, [setEditingQueueType, setNewQueueType]);
+  };
 
-  const handleSaveQueueType = useCallback((index: number) => {
-    setEditingQueueType(null);
-    setNewQueueType(false);
-  }, [setEditingQueueType, setNewQueueType]);
-
-  const handleCancelEdit = useCallback((index: number) => {
-    setEditingQueueType(null);
-    setNewQueueType(false);
-    
-    // If this was a new queue type being added, remove it
-    if (newQueueType) {
-      const newQueueTypes = [...queueTypes];
-      newQueueTypes.splice(index, 1);
-      form.setValue('queue_types', newQueueTypes);
+  const handleSaveQueueType = (index: number) => {
+    // Validate the queue type before saving
+    const queueType = form.getValues(`queue_types.${index}`);
+    if (!queueType.code || !queueType.name || !queueType.prefix) {
+      return;
     }
-  }, [queueTypes, form, newQueueType, setEditingQueueType, setNewQueueType]);
+    
+    setEditingQueueType(null);
+    setNewQueueType(false);
+  };
 
-  const handleDuplicateQueueType = useCallback((index: number) => {
+  const handleCancelEdit = (index: number) => {
+    const queueTypes = [...form.getValues('queue_types')];
+    
+    if (newQueueType) {
+      // If we're canceling a new queue type, remove it
+      queueTypes.splice(index, 1);
+      form.setValue('queue_types', queueTypes);
+    }
+    
+    setEditingQueueType(null);
+    setNewQueueType(false);
+  };
+
+  const handleDuplicateQueueType = (index: number) => {
+    const queueTypes = [...form.getValues('queue_types')];
     const queueTypeToDuplicate = queueTypes[index];
+    
+    // Create a copy with a new ID
     const duplicatedQueueType = {
       ...queueTypeToDuplicate,
       id: uuidv4(),
       code: `${queueTypeToDuplicate.code}_COPY`,
-      name: `${queueTypeToDuplicate.name} (สำเนา)`
+      name: `${queueTypeToDuplicate.name} (Copy)`,
     };
     
-    const newQueueTypes = [...queueTypes];
-    newQueueTypes.splice(index + 1, 0, duplicatedQueueType);
-    form.setValue('queue_types', newQueueTypes);
-  }, [queueTypes, form]);
+    queueTypes.splice(index + 1, 0, duplicatedQueueType);
+    form.setValue('queue_types', queueTypes);
+  };
 
-  const handleQueueTypeChange = useCallback((index: number, field: keyof QueueType, value: any) => {
-    const newQueueTypes = [...queueTypes];
-    newQueueTypes[index] = {
-      ...newQueueTypes[index],
-      [field]: value
-    };
-    form.setValue('queue_types', newQueueTypes);
-  }, [queueTypes, form]);
+  const handleQueueTypeChange = (index: number, field: keyof any, value: any) => {
+    form.setValue(`queue_types.${index}.${field}`, value);
+  };
+
+  const editingQueueType = form.watch('editingQueueType');
 
   return {
     handleAddQueueType,

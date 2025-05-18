@@ -4,14 +4,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { queueSettingsSchema, initialQueueTypes } from '@/components/settings/schemas';
 import { useSettings } from '@/hooks/settings';
-import { z } from 'zod';
-import { useQueueTypesData } from './useQueueTypesData';
 import { QueueAlgorithmType } from '@/utils/queueAlgorithms';
-
-type SettingsState = Array<{
-  key: string;
-  value: any;
-}>;
+import { useQueueTypesData } from './useQueueTypesData';
 
 const defaultValues = {
   hospital_name: 'โรงพยาบาลตัวอย่าง',
@@ -50,7 +44,7 @@ export const useSettingsForm = () => {
   const [queueTypesInitialized, setQueueTypesInitialized] = useState(false);
 
   // Create form with default values
-  const form = useForm<z.infer<typeof queueSettingsSchema>>({
+  const form = useForm({
     resolver: zodResolver(queueSettingsSchema),
     defaultValues,
   });
