@@ -6,6 +6,7 @@ import { queueSettingsSchema, initialQueueTypes } from '@/components/settings/sc
 import { useSettings } from '@/hooks/settings';
 import { QueueAlgorithmType } from '@/utils/queueAlgorithms';
 import { useQueueTypesData } from './useQueueTypesData';
+import { QueueType } from './useQueueTypes';
 
 const defaultValues = {
   hospital_name: 'โรงพยาบาลตัวอย่าง',
@@ -113,9 +114,11 @@ export const useSettingsForm = () => {
       // Ensure format compatibility by standardizing the format property
       const normalizedQueueTypes = queueTypes.map(qt => ({
         ...qt,
-        format: qt.format || '00' // Ensure format is always one of the expected values
+        format: (qt.format || '00') as '0' | '00' | '000',
+        algorithm: qt.algorithm || QueueAlgorithmType.FIFO,
+        priority: typeof qt.priority === 'number' ? qt.priority : 5
       }));
-      form.setValue('queue_types', normalizedQueueTypes);
+      form.setValue('queue_types', normalizedQueueTypes as QueueType[]);
       setQueueTypesInitialized(true);
     }
   }, [loadingQueueTypes, queueTypes, form]);

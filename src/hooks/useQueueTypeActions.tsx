@@ -2,6 +2,7 @@
 import { UseFormReturn } from 'react-hook-form';
 import { v4 as uuidv4 } from 'uuid';
 import { QueueAlgorithmType } from '@/utils/queueAlgorithms';
+import { QueueType } from '@/hooks/useQueueTypes';
 
 interface UseQueueTypeActionsProps {
   form: UseFormReturn<any>;
@@ -21,7 +22,7 @@ export const useQueueTypeActions = ({
     
     // Create a new queue type with a random ID
     const newId = uuidv4();
-    const newQueueType = {
+    const newQueueType: QueueType = {
       id: newId,
       code: '',
       name: '',
@@ -47,8 +48,10 @@ export const useQueueTypeActions = ({
     form.setValue('queue_types', queueTypes);
     
     // Stop editing if we're removing the queue type we're editing
+    const currentEditingId = form.getValues(`queue_types.${index}.id`);
     const editingQueueType = form.getValues('editingQueueType');
-    if (editingQueueType === form.getValues(`queue_types.${index}.id`)) {
+    
+    if (editingQueueType === currentEditingId) {
       setEditingQueueType(null);
     }
   };
@@ -87,7 +90,7 @@ export const useQueueTypeActions = ({
     const queueTypeToDuplicate = queueTypes[index];
     
     // Create a copy with a new ID
-    const duplicatedQueueType = {
+    const duplicatedQueueType: QueueType = {
       ...queueTypeToDuplicate,
       id: uuidv4(),
       code: `${queueTypeToDuplicate.code}_COPY`,
@@ -98,7 +101,7 @@ export const useQueueTypeActions = ({
     form.setValue('queue_types', queueTypes);
   };
 
-  const handleQueueTypeChange = (index: number, field: keyof any, value: any) => {
+  const handleQueueTypeChange = (index: number, field: any, value: any) => {
     // Convert Symbol to String if needed
     const fieldKey = typeof field === 'symbol' ? String(field) : field;
     form.setValue(`queue_types.${index}.${fieldKey}`, value);

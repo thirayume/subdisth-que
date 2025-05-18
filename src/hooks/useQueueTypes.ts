@@ -12,8 +12,8 @@ export type QueueType = {
   purpose: string;
   format: '0' | '00' | '000';
   enabled: boolean;
-  algorithm?: QueueAlgorithmType;
-  priority?: number;
+  algorithm: QueueAlgorithmType;
+  priority: number;
 };
 
 export type UseQueueTypesProps = {
@@ -34,7 +34,7 @@ export const useQueueTypes = ({ queueTypes, setValue }: UseQueueTypesProps) => {
       name: '',
       prefix: '',
       purpose: '',
-      format: '0' as const,
+      format: '00',
       enabled: true,
       algorithm: QueueAlgorithmType.FIFO,
       priority: 5,

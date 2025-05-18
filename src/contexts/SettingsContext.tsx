@@ -7,8 +7,10 @@ import { useSettingsForm } from '@/hooks/useSettingsForm';
 import { useSettingsSubmission } from '@/hooks/useSettingsSubmission';
 import { useQueueTypeState } from '@/hooks/useQueueTypeState';
 import { useQueueTypeActions } from '@/hooks/useQueueTypeActions';
+import { QueueType } from '@/hooks/useQueueTypes';
 
-type FormValues = z.infer<typeof queueSettingsSchema>;
+// Define the form values type from the schema
+export type SettingsFormValues = z.infer<typeof queueSettingsSchema>;
 
 interface SettingsContextType {
   form: UseFormReturn<any>;
@@ -21,7 +23,7 @@ interface SettingsContextType {
   setEditingQueueType: (id: string | null) => void;
   newQueueType: boolean;
   setNewQueueType: (value: boolean) => void;
-  onSubmit: (data: FormValues) => Promise<void>;
+  onSubmit: (data: SettingsFormValues) => Promise<void>;
   updateMultipleSettings: (data: any) => Promise<boolean>;
   handleAddQueueType: () => void;
   handleRemoveQueueType: (index: number) => void;
