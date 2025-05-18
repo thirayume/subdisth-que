@@ -44,7 +44,7 @@ const defaultValues = {
 
 export const useSettingsForm = () => {
   const [loading, setLoading] = useState(true);
-  const { settings, updateSettings } = useSettings();
+  const { settings, updateSettings } = useSettings('general'); // Pass 'general' as the default category
   const { queueTypes, loading: loadingQueueTypes } = useQueueTypesData();
   // Add a state to track if queue types are initialized
   const [queueTypesInitialized, setQueueTypesInitialized] = useState(false);
@@ -113,7 +113,7 @@ export const useSettingsForm = () => {
       }
       
       if (updates.length > 0) {
-        await updateSettings(updates);
+        await updateSettings(updates, category); // Pass the category parameter here
       }
       return true;
     } catch (error) {

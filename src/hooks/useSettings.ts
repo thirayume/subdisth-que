@@ -8,7 +8,7 @@ export interface SettingsState {
   [key: string]: any;
 }
 
-export const useSettings = (category: string) => {
+export const useSettings = (category: string = 'general') => {
   const [settings, setSettings] = useState<SettingsState>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,45 +62,79 @@ export const useSettings = (category: string) => {
     }
   };
 
-  const updateSettings = async (key: string, value: any) => {
+  const updateSettings = async (data: any, category: string = 'general') => {
     try {
-      // First update local state for immediate UI update
-      setSettings(prev => ({
-        ...prev,
-        [key]: value
-      }));
-      
-      // Save to localStorage as backup
-      localStorage.setItem(`settings_${category}`, JSON.stringify({
-        ...settings,
-        [key]: value
-      }));
+      // If data is a key-value pair
+      if (typeof data === 'object' && 'key' in data && 'value' in data) {
+        const { key, value } = data;
+        
+        // First update local state for immediate UI update
+        setSettings(prev => ({
+          ...prev,
+          [key]: value
+        }));
+        
+        // Save to localStorage as backup
+        localStorage.setItem(`settings_${category}`, JSON.stringify({
+          ...settings,
+          [key]: value
+        }));
 
-      // Then save to Supabase
-      const { error } = await (supabase as any)
-        .from('settings')
-        .upsert(
-          { 
-            category,
-            key,
-            value
-          },
-          { onConflict: 'category,key' }
-        );
+        // Then save to Supabase
+        const { error } = await (supabase as any)
+          .from('settings')
+          .upsert(
+            { 
+              category,
+              key,
+              value
+            },
+            { onConflict: 'category,key' }
+          );
 
-      if (error) {
-        throw error;
+        if (error) {
+          throw error;
+        }
+      } 
+      // If data is an array of updates
+      else if (Array.isArray(data)) {
+        // Update local state
+        const updatedSettings = { ...settings };
+        for (const item of data) {
+          if (item.key) {
+            updatedSettings[item.key] = item.value;
+          }
+        }
+        setSettings(updatedSettings);
+        
+        // Save to localStorage
+        localStorage.setItem(`settings_${category}`, JSON.stringify(updatedSettings));
+        
+        // Save to Supabase
+        const { error } = await (supabase as any)
+          .from('settings')
+          .upsert(
+            data.map((item: any) => ({
+              ...item,
+              category: item.category || category
+            })),
+            { onConflict: 'category,key' }
+          );
+
+        if (error) {
+          throw error;
+        }
       }
 
       return true;
     } catch (err: any) {
-      console.error(`Error updating setting ${key}:`, err);
-      toast.error(`ไม่สามารถบันทึกการตั้งค่า ${key} ได้`);
+      console.error(`Error updating setting:`, err);
+      toast.error(`ไม่สามารถบันทึกการตั้งค่าได้`);
       return false;
     }
   };
 
-  const updateMultipleSettings = async (newSettings: SettingsState) => {
+  const updateMultipleSettings = async (newSettings: SettingsState, category: string = 'general') => {
     try {
       // First update local state for immediate UI update
       setSettings(prev => ({
