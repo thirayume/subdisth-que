@@ -50,8 +50,15 @@ export const useQueueTypeActions = ({
     form.setValue('queue_types', queueTypes);
     
     // Stop editing if we're removing the queue type we're editing
-    if (currentQueueType && currentQueueType.id === form.getValues('editingQueueType')) {
-      setEditingQueueType(null);
+    if (currentQueueType) {
+      // Fixed: Store the editing queue type ID separately instead of trying to access it from form values
+      const editingId = form.getValues().queue_types?.find(qt => 
+        qt.id === currentQueueType.id
+      )?.id;
+      
+      if (editingId) {
+        setEditingQueueType(null);
+      }
     }
   };
 
@@ -88,22 +95,26 @@ export const useQueueTypeActions = ({
     const queueTypes = [...form.getValues('queue_types')];
     const queueTypeToDuplicate = queueTypes[index];
     
-    // Create a copy with a new ID
+    // Create a copy with a new ID and ensure all required fields are present
     const duplicatedQueueType: QueueType = {
-      ...queueTypeToDuplicate,
       id: uuidv4(),
       code: `${queueTypeToDuplicate.code}_COPY`,
       name: `${queueTypeToDuplicate.name} (Copy)`,
+      prefix: queueTypeToDuplicate.prefix || '', // Ensure prefix is not undefined
+      purpose: queueTypeToDuplicate.purpose || '',
+      format: queueTypeToDuplicate.format || '00',
+      enabled: queueTypeToDuplicate.enabled !== undefined ? queueTypeToDuplicate.enabled : true,
+      algorithm: queueTypeToDuplicate.algorithm || QueueAlgorithmType.FIFO,
+      priority: queueTypeToDuplicate.priority !== undefined ? queueTypeToDuplicate.priority : 5
     };
     
     queueTypes.splice(index + 1, 0, duplicatedQueueType);
     form.setValue('queue_types', queueTypes);
   };
 
-  const handleQueueTypeChange = (index: number, field: any, value: any) => {
-    // Convert Symbol to String if needed
-    const fieldKey = typeof field === 'symbol' ? String(field) : field;
-    form.setValue(`queue_types.${index}.${fieldKey}`, value);
+  const handleQueueTypeChange = (index: number, field: keyof QueueType, value: any) => {
+    // Fixed: Use the correct path format for nested form fields
+    form.setValue(`queue_types.${index}.${String(field)}`, value);
   };
 
   return {
