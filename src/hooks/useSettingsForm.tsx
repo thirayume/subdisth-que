@@ -40,7 +40,9 @@ const defaultValues = {
 export const useSettingsForm = () => {
   const [loading, setLoading] = useState(true);
   const { settings, updateSettings } = useSettings();
-  const { queueTypes, loading: loadingQueueTypes, initialized } = useQueueTypesData();
+  const { queueTypes, loading: loadingQueueTypes } = useQueueTypesData();
+  // Add a state to track if queue types are initialized
+  const [queueTypesInitialized, setQueueTypesInitialized] = useState(false);
 
   // Create form with default values
   const form = useForm<z.infer<typeof queueSettingsSchema>>({
@@ -85,10 +87,11 @@ export const useSettingsForm = () => {
   
   // Handle queue types from the database
   useEffect(() => {
-    if (initialized && !loadingQueueTypes && queueTypes) {
+    if (!loadingQueueTypes && queueTypes && queueTypes.length > 0) {
       form.setValue('queue_types', queueTypes);
+      setQueueTypesInitialized(true);
     }
-  }, [initialized, loadingQueueTypes, queueTypes, form]);
+  }, [loadingQueueTypes, queueTypes, form]);
 
   // Function to update multiple settings at once
   const updateMultipleSettings = async (data: any) => {
@@ -122,5 +125,6 @@ export const useSettingsForm = () => {
     loading,
     loadingQueueTypes,
     updateMultipleSettings,
+    initialized: queueTypesInitialized, // Add this to track initialization
   };
 };

@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { useServicePoints } from '@/hooks/useServicePoints';
 import { useServicePointQueueTypes } from '@/hooks/useServicePointQueueTypes';
 import { useQueueTypesData } from '@/hooks/useQueueTypesData';
-import { QueueTypeConfig, ServicePoint } from '@/integrations/supabase/schema';
+import { QueueType, ServicePoint } from '@/integrations/supabase/schema';
 import { PlusCircle, XCircle } from 'lucide-react';
 import QueueTypeLabel from '@/components/queue/QueueTypeLabel';
 
@@ -17,7 +17,7 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
   const [selectedServicePointId, setSelectedServicePointId] = useState<string>('');
   const { mappings, loading: loadingMappings, addMapping, removeMapping, fetchMappings } = useServicePointQueueTypes(selectedServicePointId);
   
-  const [availableQueueTypes, setAvailableQueueTypes] = useState<QueueTypeConfig[]>([]);
+  const [availableQueueTypes, setAvailableQueueTypes] = useState<QueueType[]>([]);
   const [selectedQueueTypeId, setSelectedQueueTypeId] = useState<string>('');
 
   // When service point changes, select it
@@ -31,8 +31,9 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
   useEffect(() => {
     if (queueTypes && mappings) {
       const mappedQueueTypeIds = mappings.map(m => m.queue_type_id);
+      // Fix the type issue by explicitly casting queueTypes to the expected type
       const available = queueTypes.filter(qt => !mappedQueueTypeIds.includes(qt.id));
-      setAvailableQueueTypes(available as QueueTypeConfig[]);
+      setAvailableQueueTypes(available);
       
       // Reset selected queue type if it's no longer available
       if (selectedQueueTypeId && !available.some(qt => qt.id === selectedQueueTypeId)) {

@@ -12,6 +12,13 @@ import SettingsFormActions from './SettingsFormActions';
 import ServicePointSettings from './ServicePointSettings';
 import ServicePointQueueTypeSettings from './ServicePointQueueTypeSettings';
 
+// Define the format options
+const formatOptions = [
+  { value: '0', label: 'เลขเดี่ยว - เช่น 3, 12, 78' },
+  { value: '00', label: 'เลขสองหลัก - เช่น 01, 12, 99' },
+  { value: '000', label: 'เลขสามหลัก - เช่น 001, 012, 123' }
+];
+
 const SettingsForm: React.FC = () => {
   const { settings, onSubmit, isSubmitting } = useSettingsContext();
 
@@ -37,6 +44,7 @@ const SettingsForm: React.FC = () => {
             handleCancelEdit={settings.handleCancelEdit}
             handleDuplicateQueueType={settings.handleDuplicateQueueType}
             handleQueueTypeChange={settings.handleQueueTypeChange}
+            formatOptions={formatOptions}
           />
           <SettingsFormActions isSubmitting={isSubmitting} />
         </form>

@@ -11,8 +11,8 @@ interface DashboardContentProps {
   completedQueues: Queue[];
   skippedQueues: Queue[];
   patients: Patient[];
-  onUpdateStatus: (queueId: string, status: QueueStatus) => void;
-  onCallQueue: (queueId: string) => void;
+  onUpdateStatus: (queueId: string, status: QueueStatus) => Promise<Queue | null>;
+  onCallQueue: (queueId: string) => Promise<Queue | null>;
   onRecallQueue: (queueId: string) => void;
 }
 
