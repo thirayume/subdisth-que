@@ -242,6 +242,7 @@ export const useQueues = () => {
         const { data, error } = await supabase
           .from('service_point_queue_types')
           .select(`
+            queue_type_id,
             queue_type:queue_types(id, code)
           `)
           .eq('service_point_id', servicePointId);
@@ -250,8 +251,8 @@ export const useQueues = () => {
           // Transform the data to match the ServicePointCapability type
           const capabilities: ServicePointCapability[] = [];
           
-          // Group by service point ID
-          const queueTypeIds = data.map(item => item.queue_type.id);
+          // Group queue type IDs by service point
+          const queueTypeIds = data.map(item => item.queue_type_id);
           
           if (queueTypeIds.length > 0) {
             capabilities.push({

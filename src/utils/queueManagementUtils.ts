@@ -1,6 +1,5 @@
-
 import { QueueAlgorithmType } from '@/utils/queueAlgorithms';
-import { QueueType } from '@/hooks/useQueueTypes';
+import { QueueType, ensureValidAlgorithm } from '@/hooks/useQueueTypes';
 import { supabase } from '@/integrations/supabase/client';
 import { Queue, QueueStatus, ServicePoint, QueueTypeEnum } from '@/integrations/supabase/schema';
 
@@ -38,6 +37,15 @@ const mapToQueueObject = (queueData: any): Queue => {
   };
 };
 
+// Helper to safely get priority from queue_type data
+const safeGetPriority = (queueType: any): number => {
+  // Check if the queue_type exists and has priority property
+  if (queueType && typeof queueType === 'object') {
+    return typeof queueType.priority === 'number' ? queueType.priority : 5;
+  }
+  return 5; // Default priority if there's an issue
+};
+
 // Function to get next queue based on algorithm type
 export const getNextQueue = async (
   servicePointId: string | null,
@@ -52,7 +60,7 @@ export const getNextQueue = async (
       .from('queues')
       .select(`
         *,
-        queue_type:type(id, name, code, algorithm, priority)
+        queue_type:type
       `)
       .eq('queue_date', today)
       .eq('status', 'WAITING');
@@ -83,6 +91,17 @@ export const getNextQueue = async (
     if (!waitingQueues || waitingQueues.length === 0) {
       return null; // No waiting queues
     }
+
+    // Get queue types to access priority information
+    const { data: queueTypesData } = await supabase
+      .from('queue_types')
+      .select('id, code, priority, algorithm');
+
+    const queueTypeMap = queueTypesData ? 
+      queueTypesData.reduce((map: Record<string, any>, qt) => {
+        map[qt.code] = qt;
+        return map;
+      }, {}) : {};
     
     // Apply queue algorithm
     let nextQueue: Queue | null = null;
@@ -97,10 +116,14 @@ export const getNextQueue = async (
         
       case QueueAlgorithmType.PRIORITY:
         // Use queue type priority - highest priority first, then FIFO
-        const queuesWithPriority = waitingQueues.map(q => ({
-          ...q,
-          calculatedPriority: q.queue_type?.priority || 0
-        }));
+        const queuesWithPriority = waitingQueues.map(q => {
+          // Look up the priority from our queue types map
+          const queueTypeInfo = queueTypeMap[q.type] || { priority: 5 };
+          return {
+            ...q,
+            calculatedPriority: queueTypeInfo.priority || 5
+          };
+        });
         
         const sortedByPriority = [...queuesWithPriority].sort((a, b) => {
           // Sort by priority (high to low)
@@ -119,17 +142,21 @@ export const getNextQueue = async (
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
         
         // Get counts of completed queues by type in the last hour
-        const { data: typeCounts } = await supabase
+        // We need to use a different approach since groupBy isn't available
+        const { data: completedQueues } = await supabase
           .from('queues')
-          .select('type, count(*)')
+          .select('type')
           .eq('queue_date', today)
           .eq('status', 'COMPLETED')
-          .gte('completed_at', oneHourAgo)
-          .groupBy('type');
-        
-        const typeCompletionCounts = typeCounts ? 
-          Object.fromEntries(typeCounts.map(t => [t.type, parseInt(t.count)])) :
-          {};
+          .gte('completed_at', oneHourAgo);
+          
+        // Manually count completions by type
+        const typeCompletionCounts: Record<string, number> = {};
+        if (completedQueues) {
+          completedQueues.forEach(q => {
+            typeCompletionCounts[q.type] = (typeCompletionCounts[q.type] || 0) + 1;
+          });
+        }
         
         // Find queue types with lower completion rates
         const queueTypeFrequency = new Map<string, number>();
@@ -142,7 +169,9 @@ export const getNextQueue = async (
         const queuesWithScore = waitingQueues.map(q => {
           const waitingCountForType = queueTypeFrequency.get(q.type) || 0;
           const completedCountForType = typeCompletionCounts[q.type] || 0;
-          const priority = q.queue_type?.priority || 5;
+          // Look up the priority from our queue types map
+          const queueTypeInfo = queueTypeMap[q.type] || { priority: 5 };
+          const priority = queueTypeInfo.priority || 5;
           const waitTime = new Date().getTime() - new Date(q.created_at).getTime();
           
           // Score favors types with many waiting and few completed, high priority, and long wait time
@@ -155,7 +184,7 @@ export const getNextQueue = async (
         });
         
         // Sort by score (highest first)
-        nextQueue = queuesWithScore[0] ? 
+        nextQueue = queuesWithScore.length > 0 ? 
           mapToQueueObject(queuesWithScore.sort((a, b) => b.score - a.score)[0]) : 
           null;
         break;
@@ -165,7 +194,9 @@ export const getNextQueue = async (
         const queuesWithFeedbackScore = waitingQueues.map(q => {
           const waitTimeMs = new Date().getTime() - new Date(q.created_at).getTime();
           const waitTimeMinutes = waitTimeMs / 60000;
-          const priority = q.queue_type?.priority || 5;
+          // Look up the priority from our queue types map
+          const queueTypeInfo = queueTypeMap[q.type] || { priority: 5 };
+          const priority = queueTypeInfo.priority || 5;
           
           // Waiting time gets more weight over time - after certain thresholds, priority increases
           let effectivePriority = priority;
@@ -179,7 +210,7 @@ export const getNextQueue = async (
         });
         
         // Sort by feedback score (highest first)
-        nextQueue = queuesWithFeedbackScore[0] ?
+        nextQueue = queuesWithFeedbackScore.length > 0 ?
           mapToQueueObject(queuesWithFeedbackScore.sort((a, b) => b.feedbackScore - a.feedbackScore)[0]) :
           null;
         break;

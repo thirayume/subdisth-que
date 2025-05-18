@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,7 +41,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { DateRange } from "react-day-picker";
 import { supabase } from '@/integrations/supabase/client';
 import { Queue, QueueStatus } from '@/integrations/supabase/schema';
-import { QueueType, ensureValidFormat } from '@/hooks/useQueueTypes';
+import { QueueType, ensureValidFormat, ensureValidAlgorithm } from '@/hooks/useQueueTypes';
 
 const QueueHistory = () => {
   const [queues, setQueues] = useState<any[]>([]);
@@ -73,7 +74,7 @@ const QueueHistory = () => {
         }
         
         if (data) {
-          // Transform the data to ensure format is one of the allowed values
+          // Transform the data to ensure format and algorithm use the correct types
           const formattedData: QueueType[] = data.map(item => ({
             id: item.id,
             code: item.code,
@@ -82,7 +83,7 @@ const QueueHistory = () => {
             purpose: item.purpose || '',
             format: ensureValidFormat(item.format),
             enabled: item.enabled,
-            algorithm: item.algorithm,
+            algorithm: ensureValidAlgorithm(item.algorithm),
             priority: item.priority
           }));
           
@@ -97,10 +98,11 @@ const QueueHistory = () => {
         if (savedQueueTypes) {
           try {
             const parsedTypes = JSON.parse(savedQueueTypes);
-            // Ensure the format property is valid
+            // Ensure the format and algorithm properties are valid
             const validTypes: QueueType[] = parsedTypes.map((item: any) => ({
               ...item,
               format: ensureValidFormat(item.format),
+              algorithm: ensureValidAlgorithm(item.algorithm),
               purpose: item.purpose || ''
             }));
             setQueueTypes(validTypes);

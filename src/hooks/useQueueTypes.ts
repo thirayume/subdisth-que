@@ -48,6 +48,14 @@ export const ensureValidFormat = (format: string): '0' | '00' | '000' => {
   return '00'; // Default value
 };
 
+// Helper function to ensure algorithm is a valid QueueAlgorithmType
+export const ensureValidAlgorithm = (algorithm: string): QueueAlgorithmType => {
+  if (Object.values(QueueAlgorithmType).includes(algorithm as QueueAlgorithmType)) {
+    return algorithm as QueueAlgorithmType;
+  }
+  return QueueAlgorithmType.FIFO; // Default value
+};
+
 // Functions to convert between QueueType and QueueTypeSchema
 export const queueTypeToSchema = (queueType: QueueType): QueueTypeSchema => {
   return {
