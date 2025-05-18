@@ -40,6 +40,14 @@ export const getDefaultQueueType = (): QueueType => {
   };
 };
 
+// Helper function to ensure format is a valid QueueType format
+export const ensureValidFormat = (format: string): '0' | '00' | '000' => {
+  if (format === '0' || format === '00' || format === '000') {
+    return format;
+  }
+  return '00'; // Default value
+};
+
 // Functions to convert between QueueType and QueueTypeSchema
 export const queueTypeToSchema = (queueType: QueueType): QueueTypeSchema => {
   return {
@@ -62,7 +70,7 @@ export const schemaToQueueType = (schema: QueueTypeSchema): QueueType => {
     name: schema.name,
     prefix: schema.prefix,
     purpose: schema.purpose,
-    format: schema.format,
+    format: schema.format as '0' | '00' | '000',
     enabled: schema.enabled,
     algorithm: schema.algorithm,
     priority: schema.priority

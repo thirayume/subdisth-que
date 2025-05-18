@@ -2,7 +2,41 @@
 import { QueueAlgorithmType } from '@/utils/queueAlgorithms';
 import { QueueType } from '@/hooks/useQueueTypes';
 import { supabase } from '@/integrations/supabase/client';
-import { Queue, QueueStatus, ServicePoint } from '@/integrations/supabase/schema';
+import { Queue, QueueStatus, ServicePoint, QueueTypeEnum } from '@/integrations/supabase/schema';
+
+// Helper function to safely cast a string to QueueTypeEnum
+const ensureQueueTypeEnum = (type: string): QueueTypeEnum => {
+  const validTypes: QueueTypeEnum[] = ['GENERAL', 'PRIORITY', 'ELDERLY', 'FOLLOW_UP'];
+  return validTypes.includes(type as QueueTypeEnum) 
+    ? type as QueueTypeEnum 
+    : 'GENERAL';
+};
+
+// Helper function to safely cast a string to QueueStatus
+const ensureQueueStatus = (status: string): QueueStatus => {
+  const validStatuses: QueueStatus[] = ['WAITING', 'ACTIVE', 'COMPLETED', 'SKIPPED'];
+  return validStatuses.includes(status as QueueStatus)
+    ? status as QueueStatus
+    : 'WAITING';
+};
+
+// Function to convert a Supabase queue result to a strongly-typed Queue object
+const mapToQueueObject = (queueData: any): Queue => {
+  return {
+    id: queueData.id,
+    number: queueData.number,
+    patient_id: queueData.patient_id,
+    type: ensureQueueTypeEnum(queueData.type),
+    status: ensureQueueStatus(queueData.status),
+    service_point_id: queueData.service_point_id,
+    notes: queueData.notes || null,
+    created_at: queueData.created_at,
+    updated_at: queueData.updated_at,
+    called_at: queueData.called_at || null,
+    completed_at: queueData.completed_at || null,
+    queue_date: queueData.queue_date || null
+  };
+};
 
 // Function to get next queue based on algorithm type
 export const getNextQueue = async (
@@ -56,9 +90,9 @@ export const getNextQueue = async (
     switch (algorithm) {
       case QueueAlgorithmType.FIFO:
         // First in, first out - sort by created_at (oldest first)
-        nextQueue = [...waitingQueues].sort((a, b) => 
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        )[0];
+        nextQueue = [...waitingQueues]
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+          .map(mapToQueueObject)[0] || null;
         break;
         
       case QueueAlgorithmType.PRIORITY:
@@ -77,7 +111,7 @@ export const getNextQueue = async (
           return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         });
         
-        nextQueue = sortedByPriority[0];
+        nextQueue = sortedByPriority[0] ? mapToQueueObject(sortedByPriority[0]) : null;
         break;
         
       case QueueAlgorithmType.MULTILEVEL:
@@ -87,11 +121,11 @@ export const getNextQueue = async (
         // Get counts of completed queues by type in the last hour
         const { data: typeCounts } = await supabase
           .from('queues')
-          .select('type, count')
+          .select('type, count(*)')
           .eq('queue_date', today)
           .eq('status', 'COMPLETED')
           .gte('completed_at', oneHourAgo)
-          .group('type');
+          .groupBy('type');
         
         const typeCompletionCounts = typeCounts ? 
           Object.fromEntries(typeCounts.map(t => [t.type, parseInt(t.count)])) :
@@ -121,7 +155,9 @@ export const getNextQueue = async (
         });
         
         // Sort by score (highest first)
-        nextQueue = [...queuesWithScore].sort((a, b) => b.score - a.score)[0];
+        nextQueue = queuesWithScore[0] ? 
+          mapToQueueObject(queuesWithScore.sort((a, b) => b.score - a.score)[0]) : 
+          null;
         break;
         
       case QueueAlgorithmType.MULTILEVEL_FEEDBACK:
@@ -143,14 +179,16 @@ export const getNextQueue = async (
         });
         
         // Sort by feedback score (highest first)
-        nextQueue = [...queuesWithFeedbackScore].sort((a, b) => b.feedbackScore - a.feedbackScore)[0];
+        nextQueue = queuesWithFeedbackScore[0] ?
+          mapToQueueObject(queuesWithFeedbackScore.sort((a, b) => b.feedbackScore - a.feedbackScore)[0]) :
+          null;
         break;
         
       default:
         // Default to FIFO
-        nextQueue = [...waitingQueues].sort((a, b) => 
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        )[0];
+        nextQueue = [...waitingQueues]
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+          .map(mapToQueueObject)[0] || null;
         break;
     }
     

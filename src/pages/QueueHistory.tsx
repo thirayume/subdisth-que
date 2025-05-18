@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,7 +40,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { DateRange } from "react-day-picker";
 import { supabase } from '@/integrations/supabase/client';
 import { Queue, QueueStatus } from '@/integrations/supabase/schema';
-import { QueueType } from '@/hooks/useQueueTypes';
+import { QueueType, ensureValidFormat } from '@/hooks/useQueueTypes';
 
 const QueueHistory = () => {
   const [queues, setQueues] = useState<any[]>([]);
@@ -74,7 +73,20 @@ const QueueHistory = () => {
         }
         
         if (data) {
-          setQueueTypes(data);
+          // Transform the data to ensure format is one of the allowed values
+          const formattedData: QueueType[] = data.map(item => ({
+            id: item.id,
+            code: item.code,
+            name: item.name,
+            prefix: item.prefix,
+            purpose: item.purpose || '',
+            format: ensureValidFormat(item.format),
+            enabled: item.enabled,
+            algorithm: item.algorithm,
+            priority: item.priority
+          }));
+          
+          setQueueTypes(formattedData);
         }
       } catch (error) {
         console.error('Error fetching queue types:', error);
@@ -83,7 +95,18 @@ const QueueHistory = () => {
         // Try to load from localStorage as fallback
         const savedQueueTypes = localStorage.getItem('queue_types');
         if (savedQueueTypes) {
-          setQueueTypes(JSON.parse(savedQueueTypes));
+          try {
+            const parsedTypes = JSON.parse(savedQueueTypes);
+            // Ensure the format property is valid
+            const validTypes: QueueType[] = parsedTypes.map((item: any) => ({
+              ...item,
+              format: ensureValidFormat(item.format),
+              purpose: item.purpose || ''
+            }));
+            setQueueTypes(validTypes);
+          } catch (parseError) {
+            console.error('Error parsing queue types from localStorage:', parseError);
+          }
         }
       }
     };

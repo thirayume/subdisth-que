@@ -113,13 +113,17 @@ export const useQueueTypeActions = ({
   };
 
   const handleQueueTypeChange = (index: number, field: keyof QueueType, value: any) => {
-    // Fix: Use form.update method for complex nested arrays
+    // Get the current queue types array
     const queueTypes = [...form.getValues('queue_types')];
+    
+    // Update the specific field in the queue type at the given index
     if (queueTypes[index]) {
       queueTypes[index] = {
         ...queueTypes[index],
         [field]: value
       };
+      
+      // Update the entire queue_types array at once
       form.setValue('queue_types', queueTypes);
     }
   };

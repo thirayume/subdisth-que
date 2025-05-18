@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { Queue, QueueStatus } from '@/integrations/supabase/schema';
 import { useQueueState } from './queue/useQueueState';
@@ -248,10 +247,20 @@ export const useQueues = () => {
           .eq('service_point_id', servicePointId);
           
         if (!error && data) {
-          servicePointCapabilities = data.map(item => ({
-            queueTypeCode: item.queue_type.code,
-            queueTypeId: item.queue_type.id
-          }));
+          // Transform the data to match the ServicePointCapability type
+          const capabilities: ServicePointCapability[] = [];
+          
+          // Group by service point ID
+          const queueTypeIds = data.map(item => item.queue_type.id);
+          
+          if (queueTypeIds.length > 0) {
+            capabilities.push({
+              servicePointId,
+              queueTypeIds
+            });
+          }
+          
+          servicePointCapabilities = capabilities;
         }
       }
       
