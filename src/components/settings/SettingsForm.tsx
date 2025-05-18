@@ -20,14 +20,21 @@ const formatOptions: FormatOption[] = [
 const SettingsForm: React.FC = () => {
   const { settings, onSubmit, isSubmitting } = useSettingsContext();
 
+  // Ensure we have a valid form instance before rendering form-dependent components
+  if (!settings.form) {
+    return <div>Loading settings form...</div>;
+  }
+
   return (
-    <div className="space-y-6">
-      <GeneralSettings form={settings.form} />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ServicePointSettings />
-        <ServicePointQueueTypeSettings />
-      </div>
-      <Form {...settings.form}>
+    <Form {...settings.form}>
+      <div className="space-y-6">
+        <GeneralSettings form={settings.form} />
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ServicePointSettings />
+          <ServicePointQueueTypeSettings />
+        </div>
+        
         <form onSubmit={settings.form.handleSubmit(onSubmit)} className="space-y-6">
           <QueueSettings 
             form={settings.form}
@@ -46,11 +53,12 @@ const SettingsForm: React.FC = () => {
           />
           <SettingsFormActions isSubmitting={isSubmitting} />
         </form>
-      </Form>
-      <div className="space-y-6">
-        <LineSettings />
+        
+        <div className="space-y-6">
+          <LineSettings />
+        </div>
       </div>
-    </div>
+    </Form>
   );
 };
 
