@@ -7,8 +7,9 @@ import { useSettings } from '@/hooks/settings';
 import { QueueAlgorithmType } from '@/utils/queueAlgorithms';
 import { useQueueTypesData } from './useQueueTypesData';
 import { QueueType } from './useQueueTypes';
+import { SettingsFormValues } from '@/contexts/SettingsContext';
 
-const defaultValues = {
+const defaultValues: SettingsFormValues = {
   hospital_name: 'โรงพยาบาลตัวอย่าง',
   hospital_address: '123 ถนนกรุงเทพ เขตปทุมวัน กรุงเทพฯ 10330',
   hospital_phone: '02-123-4567',
@@ -45,7 +46,7 @@ export const useSettingsForm = () => {
   const [queueTypesInitialized, setQueueTypesInitialized] = useState(false);
 
   // Create form with default values
-  const form = useForm({
+  const form = useForm<SettingsFormValues>({
     resolver: zodResolver(queueSettingsSchema),
     defaultValues,
   });
@@ -112,7 +113,7 @@ export const useSettingsForm = () => {
   useEffect(() => {
     if (!loadingQueueTypes && queueTypes && queueTypes.length > 0) {
       // Ensure format compatibility by standardizing the format property
-      const normalizedQueueTypes = queueTypes.map(qt => ({
+      const normalizedQueueTypes: QueueType[] = queueTypes.map(qt => ({
         ...qt,
         format: (qt.format || '00') as '0' | '00' | '000',
         algorithm: qt.algorithm || QueueAlgorithmType.FIFO,

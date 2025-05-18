@@ -45,14 +45,12 @@ export const useQueueTypeActions = ({
 
   const handleRemoveQueueType = (index: number) => {
     const queueTypes = [...form.getValues('queue_types')];
+    const currentQueueType = queueTypes[index];
     queueTypes.splice(index, 1);
     form.setValue('queue_types', queueTypes);
     
     // Stop editing if we're removing the queue type we're editing
-    const currentEditingId = form.getValues(`queue_types.${index}.id`);
-    const editingQueueType = form.getValues('editingQueueType');
-    
-    if (editingQueueType === currentEditingId) {
+    if (currentQueueType && currentQueueType.id === form.getValues('editingQueueType')) {
       setEditingQueueType(null);
     }
   };

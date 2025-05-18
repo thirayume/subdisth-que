@@ -43,7 +43,20 @@ export const algorithmOptions: AlgorithmOption[] = [
   },
 ];
 
-// Update the queueSettingsSchema to make all properties optional
+// Create a consistent QueueType type that will be used throughout the application
+export interface QueueTypeSchema {
+  id: string;
+  code: string;
+  name: string;
+  prefix: string;
+  purpose: string;
+  format: '0' | '00' | '000';
+  enabled: boolean;
+  algorithm: QueueAlgorithmType;
+  priority: number;
+}
+
+// Define the queue settings schema
 export const queueSettingsSchema = z.object({
   hospital_name: z.string().min(2, {
     message: "ชื่อโรงพยาบาลต้องมีอย่างน้อย 2 ตัวอักษร",
@@ -140,4 +153,3 @@ export const initialQueueTypes = [
 ];
 
 export type SettingsFormValues = z.infer<typeof queueSettingsSchema>;
-
