@@ -47,6 +47,7 @@ export const useQueueTypeActions = ({
     form.setValue('queue_types', queueTypes);
     
     // Stop editing if we're removing the queue type we're editing
+    const editingQueueType = form.getValues('editingQueueType');
     if (editingQueueType === form.getValues(`queue_types.${index}.id`)) {
       setEditingQueueType(null);
     }
@@ -98,10 +99,10 @@ export const useQueueTypeActions = ({
   };
 
   const handleQueueTypeChange = (index: number, field: keyof any, value: any) => {
-    form.setValue(`queue_types.${index}.${field}`, value);
+    // Convert Symbol to String if needed
+    const fieldKey = typeof field === 'symbol' ? String(field) : field;
+    form.setValue(`queue_types.${index}.${fieldKey}`, value);
   };
-
-  const editingQueueType = form.watch('editingQueueType');
 
   return {
     handleAddQueueType,

@@ -110,7 +110,12 @@ export const useSettingsForm = () => {
   // Handle queue types from the database
   useEffect(() => {
     if (!loadingQueueTypes && queueTypes && queueTypes.length > 0) {
-      form.setValue('queue_types', queueTypes);
+      // Ensure format compatibility by standardizing the format property
+      const normalizedQueueTypes = queueTypes.map(qt => ({
+        ...qt,
+        format: qt.format || '00' // Ensure format is always one of the expected values
+      }));
+      form.setValue('queue_types', normalizedQueueTypes);
       setQueueTypesInitialized(true);
     }
   }, [loadingQueueTypes, queueTypes, form]);

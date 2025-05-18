@@ -8,8 +8,10 @@ import { useSettingsSubmission } from '@/hooks/useSettingsSubmission';
 import { useQueueTypeState } from '@/hooks/useQueueTypeState';
 import { useQueueTypeActions } from '@/hooks/useQueueTypeActions';
 
+type FormValues = z.infer<typeof queueSettingsSchema>;
+
 interface SettingsContextType {
-  form: UseFormReturn<z.infer<typeof queueSettingsSchema>>;
+  form: UseFormReturn<any>;
   isSubmitting: boolean;
   setIsSubmitting: (value: boolean) => void;
   settings: any;
@@ -19,7 +21,7 @@ interface SettingsContextType {
   setEditingQueueType: (id: string | null) => void;
   newQueueType: boolean;
   setNewQueueType: (value: boolean) => void;
-  onSubmit: (data: z.infer<typeof queueSettingsSchema>) => Promise<void>;
+  onSubmit: (data: FormValues) => Promise<void>;
   updateMultipleSettings: (data: any) => Promise<boolean>;
   handleAddQueueType: () => void;
   handleRemoveQueueType: (index: number) => void;
@@ -49,7 +51,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     newQueueType
   });
 
-  const value = {
+  const value: SettingsContextType = {
     form,
     isSubmitting,
     setIsSubmitting,

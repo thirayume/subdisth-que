@@ -1,14 +1,3 @@
 
-import { useState } from 'react';
-
-export const useQueueTypeState = () => {
-  const [editingQueueType, setEditingQueueType] = useState<string | null>(null);
-  const [newQueueType, setNewQueueType] = useState(false);
-
-  return {
-    editingQueueType,
-    setEditingQueueType,
-    newQueueType,
-    setNewQueueType
-  };
-};
+// Re-export from useQueueTypesState for backward compatibility
+export { useQueueTypesState as useQueueTypeState } from './useQueueTypesState';
