@@ -113,8 +113,15 @@ export const useQueueTypeActions = ({
   };
 
   const handleQueueTypeChange = (index: number, field: keyof QueueType, value: any) => {
-    // Fixed: Use the correct path format for nested form fields
-    form.setValue(`queue_types.${index}.${String(field)}`, value);
+    // Fix: Use form.update method for complex nested arrays
+    const queueTypes = [...form.getValues('queue_types')];
+    if (queueTypes[index]) {
+      queueTypes[index] = {
+        ...queueTypes[index],
+        [field]: value
+      };
+      form.setValue('queue_types', queueTypes);
+    }
   };
 
   return {
