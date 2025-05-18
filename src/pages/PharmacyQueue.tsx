@@ -19,7 +19,7 @@ import { Badge } from '@/components/ui/badge';
 const PharmacyQueue = () => {
   const { activeQueue, loading, loadingNext, callNextQueue, completeService, forwardService } = usePharmacyQueue();
   const { patients } = usePatients();
-  const { medications } = useMedications();
+  const { medications, fetchMedications } = useMedications();
   const { medications: patientMedications, addMedication } = usePatientMedications(
     activeQueue?.patient?.id
   );
@@ -33,9 +33,9 @@ const PharmacyQueue = () => {
   React.useEffect(() => {
     // Fetch medications on mount
     if (medications.length === 0) {
-      useMedications().fetchMedications();
+      fetchMedications();
     }
-  }, [medications.length]);
+  }, [medications.length, fetchMedications]);
 
   const handleServicePointChange = (value: string) => {
     const servicePoint = servicePoints.find(sp => sp.id === value);
