@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { queueSettingsSchema, initialQueueTypes } from '@/components/settings/schemas';
-import { useSettings } from './useSettings';
+import { useSettings } from '@/hooks/settings';
 import { z } from 'zod';
 import { useQueueTypesData } from './useQueueTypesData';
 import { QueueAlgorithmType } from '@/utils/queueAlgorithms';
