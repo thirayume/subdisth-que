@@ -1,18 +1,17 @@
 
 import { useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { z } from 'zod';
-import { queueSettingsSchema } from '@/components/settings/schemas';
+import { SettingsFormValues } from '@/contexts/SettingsContext';
 
 interface UseSettingsSubmissionProps {
-  form: UseFormReturn<z.infer<typeof queueSettingsSchema>>;
+  form: UseFormReturn<SettingsFormValues>;
   updateMultipleSettings: (data: any, category?: string) => Promise<boolean>;
 }
 
 export const useSettingsSubmission = ({ form, updateMultipleSettings }: UseSettingsSubmissionProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const onSubmit = async (data: z.infer<typeof queueSettingsSchema>) => {
+  const onSubmit = async (data: SettingsFormValues) => {
     setIsSubmitting(true);
     
     try {

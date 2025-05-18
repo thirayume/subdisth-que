@@ -118,7 +118,7 @@ export const useSettingsForm = () => {
         algorithm: qt.algorithm || QueueAlgorithmType.FIFO,
         priority: typeof qt.priority === 'number' ? qt.priority : 5
       }));
-      form.setValue('queue_types', normalizedQueueTypes as QueueType[]);
+      form.setValue('queue_types', normalizedQueueTypes);
       setQueueTypesInitialized(true);
     }
   }, [loadingQueueTypes, queueTypes, form]);

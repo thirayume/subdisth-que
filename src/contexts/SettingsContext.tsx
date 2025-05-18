@@ -13,7 +13,7 @@ import { QueueType } from '@/hooks/useQueueTypes';
 export type SettingsFormValues = z.infer<typeof queueSettingsSchema>;
 
 interface SettingsContextType {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<SettingsFormValues>;
   isSubmitting: boolean;
   setIsSubmitting: (value: boolean) => void;
   settings: any;

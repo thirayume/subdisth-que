@@ -3,9 +3,10 @@ import { UseFormReturn } from 'react-hook-form';
 import { v4 as uuidv4 } from 'uuid';
 import { QueueAlgorithmType } from '@/utils/queueAlgorithms';
 import { QueueType } from '@/hooks/useQueueTypes';
+import { SettingsFormValues } from '@/contexts/SettingsContext';
 
 interface UseQueueTypeActionsProps {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<SettingsFormValues>;
   setEditingQueueType: (id: string | null) => void;
   setNewQueueType: (value: boolean) => void;
   newQueueType: boolean;

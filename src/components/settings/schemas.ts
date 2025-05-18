@@ -43,7 +43,7 @@ export const algorithmOptions: AlgorithmOption[] = [
   },
 ];
 
-// Add the missing queue settings schema
+// Update the queueSettingsSchema to make all properties optional
 export const queueSettingsSchema = z.object({
   hospital_name: z.string().min(2, {
     message: "ชื่อโรงพยาบาลต้องมีอย่างน้อย 2 ตัวอักษร",
@@ -140,3 +140,4 @@ export const initialQueueTypes = [
 ];
 
 export type SettingsFormValues = z.infer<typeof queueSettingsSchema>;
+
