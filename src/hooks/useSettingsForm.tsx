@@ -99,14 +99,14 @@ export const useSettingsForm = () => {
   }, [loadingQueueTypes, queueTypes, form]);
 
   // Function to update multiple settings at once
-  const updateMultipleSettings = async (data: any) => {
+  const updateMultipleSettings = async (data: any, category: string = 'general') => {
     try {
       const updates = [];
       for (const [key, value] of Object.entries(data)) {
         if (key === 'queue_types') continue; // Skip queue types as they are handled separately
         
         updates.push({
-          category: 'general',
+          category,
           key,
           value,
         });

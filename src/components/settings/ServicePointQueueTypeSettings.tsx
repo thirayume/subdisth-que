@@ -149,7 +149,7 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
                                 <div className="flex items-center">
                                   {queueType && (
                                     <>
-                                      <QueueTypeLabel queueType={queueType.code} />
+                                      <QueueTypeLabel queueType={queueType.code as any} />
                                       <span className="ml-2">{queueType.name}</span>
                                     </>
                                   )}
