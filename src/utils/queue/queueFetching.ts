@@ -68,7 +68,8 @@ export const getNextQueue = async (
       }, {}) : {};
     
     // Apply queue algorithm based on the selected type
-    return applyQueueAlgorithm(waitingQueues, queueTypeMap, algorithm);
+    const nextQueue = await applyQueueAlgorithm(waitingQueues, queueTypeMap, algorithm);
+    return nextQueue;
     
   } catch (error) {
     console.error('Error getting next queue:', error);
@@ -76,12 +77,12 @@ export const getNextQueue = async (
   }
 };
 
-// Private function to apply the queue algorithm
-function applyQueueAlgorithm(
+// Modified function that properly handles the async nature
+async function applyQueueAlgorithm(
   waitingQueues: any[],
   queueTypeMap: Record<string, any>,
   algorithm: QueueAlgorithmType
-): Queue | null {
+): Promise<Queue | null> {
   switch (algorithm) {
     case QueueAlgorithmType.FIFO:
       return applyFifoAlgorithm(waitingQueues);
@@ -98,9 +99,11 @@ function applyQueueAlgorithm(
 
 // FIFO algorithm implementation
 function applyFifoAlgorithm(waitingQueues: any[]): Queue | null {
-  return [...waitingQueues]
-    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-    .map(mapToQueueObject)[0] || null;
+  return waitingQueues.length > 0 ?
+    [...waitingQueues]
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      .map(mapToQueueObject)[0] || null
+    : null;
 }
 
 // Priority algorithm implementation
@@ -123,7 +126,7 @@ function applyPriorityAlgorithm(waitingQueues: any[], queueTypeMap: Record<strin
     return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
   });
   
-  return sortedByPriority[0] ? mapToQueueObject(sortedByPriority[0]) : null;
+  return sortedByPriority.length > 0 ? mapToQueueObject(sortedByPriority[0]) : null;
 }
 
 // Multilevel algorithm implementation
