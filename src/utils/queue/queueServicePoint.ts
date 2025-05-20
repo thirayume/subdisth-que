@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ServicePoint, Queue } from '@/integrations/supabase/schema';
+import { ServicePoint, Queue, QueueTypeEnum, QueueStatus } from '@/integrations/supabase/schema';
+import { ensureQueueTypeEnum, ensureQueueStatus } from './queueTypes';
 
 // Get service points that can handle a specific queue type
 export const getServicePointsForQueueType = async (queueTypeCode: string): Promise<ServicePoint[]> => {
@@ -89,7 +90,12 @@ export const getQueuesByServicePoint = async (
       throw error;
     }
 
-    return data || [];
+    // Transform data to ensure type safety
+    return data ? data.map(queue => ({
+      ...queue,
+      type: ensureQueueTypeEnum(queue.type),
+      status: ensureQueueStatus(queue.status)
+    })) : [];
   } catch (error) {
     console.error('Error getting queues by service point:', error);
     return [];
@@ -123,7 +129,12 @@ export const getNextQueueForServicePoint = async (
       throw error;
     }
 
-    return data || null;
+    // Transform data to ensure type safety
+    return data ? {
+      ...data,
+      type: ensureQueueTypeEnum(data.type),
+      status: ensureQueueStatus(data.status)
+    } : null;
   } catch (error) {
     console.error('Error getting next queue for service point:', error);
     return null;
