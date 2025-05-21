@@ -67,9 +67,13 @@ const QueueManagement = () => {
       const skipped = queues.filter(q => q.status === 'SKIPPED');
       
       // Apply sorting algorithm to waiting queues based on service point selection
-      setWaitingQueues(
-        sortQueues(waiting, servicePointCapabilities, selectedServicePoint?.id)
-      );
+      if (sortQueues) {
+        const sortedQueues = sortQueues(waiting, servicePointCapabilities, selectedServicePoint?.id);
+        setWaitingQueues(sortedQueues);
+      } else {
+        setWaitingQueues(waiting);
+      }
+      
       setActiveQueues(active);
       setCompletedQueues(completed);
       setSkippedQueues(skipped);

@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { useQueues } from '@/hooks/useQueues';
 import { createLogger } from '@/utils/logger';
@@ -62,21 +63,12 @@ export const useDashboardQueues = () => {
       
       if (!hasChanged) return prev;
       
-      const newState = {
-        waiting: sortedWaiting,
+      return {
+        waiting: sortedWaiting as Queue[],  // Explicit type cast to ensure compatibility
         active,
         completed,
         skipped
       };
-      
-      logger.info(
-        `Processed queues - Waiting: ${newState.waiting.length}, ` +
-        `Active: ${newState.active.length}, ` +
-        `Completed: ${newState.completed.length}, ` +
-        `Skipped: ${newState.skipped.length}`
-      );
-      
-      return newState;
     });
   }, [queuesMemoized, sortQueuesMemoized]);
 

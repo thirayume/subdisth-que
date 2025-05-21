@@ -7,6 +7,10 @@ export const applyRoundRobinAlgorithm = (
   waitingQueues: any[],
   queueTypeMap: Record<string, any>
 ): Queue | null => {
+  if (waitingQueues.length === 0) {
+    return null;
+  }
+  
   // Group queues by their type
   const queuesByType = waitingQueues.reduce((groups: Record<string, any[]>, queue) => {
     const type = queue.type;
@@ -19,7 +23,7 @@ export const applyRoundRobinAlgorithm = (
 
   // Sort each queue type by creation time (oldest first)
   Object.keys(queuesByType).forEach(type => {
-    queuesByType[type].sort((a, b) => 
+    queuesByType[type].sort((a: any, b: any) => 
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
   });
@@ -32,7 +36,7 @@ export const applyRoundRobinAlgorithm = (
   // If we have queues, return the absolute oldest one
   return oldestFromEachType.length > 0 ?
     mapToQueueObject(
-      oldestFromEachType.sort((a, b) => 
+      oldestFromEachType.sort((a: any, b: any) => 
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       )[0]
     ) :

@@ -1,3 +1,4 @@
+import { QueueTypeEnum, QueueStatus, Queue as SchemaQueue } from '@/integrations/supabase/schema';
 
 export enum QueueAlgorithmType {
   FIFO = 'fifo',
@@ -23,7 +24,13 @@ export const algorithmDescriptions = {
   [QueueAlgorithmType.ROUND_ROBIN]: 'Round Robin: หมุนเวียนให้บริการทุกประเภทคิว เพื่อความเป็นธรรมในการรอคิว'
 };
 
-// Define the missing types
+// Define the ServicePointCapability interface
+export interface ServicePointCapability {
+  servicePointId: string;
+  queueTypeIds: string[];
+}
+
+// Define the QueueTypeWithAlgorithm interface
 export interface QueueTypeWithAlgorithm {
   id: string;
   code: string;
@@ -33,33 +40,17 @@ export interface QueueTypeWithAlgorithm {
   [key: string]: any; // Allow for other properties
 }
 
-export interface ServicePointCapability {
-  servicePointId: string;
-  queueTypeIds: string[];
-}
-
-export interface Queue {
-  id: string;
-  number: number;
-  status: string;
-  type: string;
-  patient_id: string;
-  created_at: string;
-  updated_at: string;
-  called_at?: string;
-  completed_at?: string;
-  service_point_id?: string;
-  [key: string]: any; // Allow for other properties
-}
+// Use the Queue type from schema to ensure compatibility
+export type Queue = SchemaQueue;
 
 // Implement the sortQueuesByAlgorithm function
 export const sortQueuesByAlgorithm = (
-  queues: Queue[], 
+  queues: SchemaQueue[], 
   queueTypes: QueueTypeWithAlgorithm[], 
   algorithm: QueueAlgorithmType = QueueAlgorithmType.FIFO,
   servicePointCapabilities: ServicePointCapability[] = [],
   selectedServicePointId?: string
-): Queue[] => {
+): SchemaQueue[] => {
   // Filter queues by service point capabilities if specified
   let filteredQueues = [...queues];
   

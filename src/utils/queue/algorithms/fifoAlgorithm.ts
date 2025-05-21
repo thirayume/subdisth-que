@@ -4,9 +4,13 @@ import { mapToQueueObject } from '../queueMapping';
 
 // FIFO algorithm implementation
 export const applyFifoAlgorithm = (waitingQueues: any[]): Queue | null => {
-  return waitingQueues.length > 0 ?
-    [...waitingQueues]
-      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-      .map(mapToQueueObject)[0] || null
-    : null;
+  if (waitingQueues.length === 0) {
+    return null;
+  }
+  
+  const sorted = [...waitingQueues]
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  
+  // Ensure we return a properly typed Queue object
+  return sorted.length > 0 ? mapToQueueObject(sorted[0]) : null;
 };

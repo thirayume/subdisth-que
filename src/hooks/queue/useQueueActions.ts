@@ -1,12 +1,10 @@
-
 import * as React from 'react';
 import { Queue } from '@/integrations/supabase/schema';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createLogger } from '@/utils/logger';
 import { getNextQueue, transferQueue, holdQueue } from '@/utils/queueManagementUtils';
-import { QueueAlgorithmType } from '@/utils/queueAlgorithms';
-import { ServicePointCapability } from '@/utils/queueAlgorithms';
+import { QueueAlgorithmType, ServicePointCapability } from '@/utils/queueAlgorithms';
 
 const logger = createLogger('useQueueActions');
 

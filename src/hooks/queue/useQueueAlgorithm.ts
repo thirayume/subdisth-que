@@ -1,7 +1,5 @@
-
 import * as React from 'react';
-import { QueueAlgorithmType, QueueTypeWithAlgorithm, ServicePointCapability } from '@/utils/queueAlgorithms';
-import { sortQueuesByAlgorithm } from '@/utils/queueAlgorithms';
+import { QueueAlgorithmType, QueueTypeWithAlgorithm, ServicePointCapability, sortQueuesByAlgorithm } from '@/utils/queueAlgorithms';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/utils/logger';
 import { Queue } from '@/integrations/supabase/schema';
@@ -104,14 +102,14 @@ export const useQueueAlgorithm = () => {
     queuesToSort: Queue[],
     servicePointCapabilities: ServicePointCapability[] = [],
     selectedServicePointId?: string
-  ) => {
+  ): Queue[] => {
     return sortQueuesByAlgorithm(
       queuesToSort, 
       queueTypes, 
       queueAlgorithm, 
       servicePointCapabilities,
       selectedServicePointId
-    );
+    ) as Queue[];  // Type assertion to ensure compatibility
   };
 
   return {
