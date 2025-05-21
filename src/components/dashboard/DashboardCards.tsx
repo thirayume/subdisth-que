@@ -21,7 +21,7 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-      <Link to="/queue-management" className="transition-transform hover:scale-105">
+      <Link to="/queue/management" className="transition-transform hover:scale-105">
         <Card className="h-full bg-gradient-to-br from-blue-50 to-purple-50 hover:shadow-md border-blue-100">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center">
@@ -106,7 +106,7 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({
         </Card>
       </Link>
       
-      <Link to="/history" className="transition-transform hover:scale-105">
+      <Link to="/queue/history" className="transition-transform hover:scale-105">
         <Card className="h-full bg-gradient-to-br from-purple-50 to-violet-50 hover:shadow-md border-purple-100">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center">
