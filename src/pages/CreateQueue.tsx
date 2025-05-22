@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreateQueueDialog from '@/components/queue/CreateQueueDialog';
@@ -26,22 +25,21 @@ const CreateQueue: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
   
-  // Handle dialog close by navigating back
+  // Handle dialog close by navigating back to create queue page instead of management
   const handleOpenChange = (open: boolean) => {
     setDialogOpen(open);
     if (!open) {
-      logger.debug('Dialog closed, navigating back to queue management');
-      navigate('/queue/management');
+      logger.debug('Dialog closed, staying on create queue page');
+      // Change navigation to stay on the create queue page
+      navigate('/queue/create');
     }
   };
   
   // Handle successful queue creation
   const handleCreateQueue = (queue: any) => {
     logger.info('Queue created successfully', queue);
-    // Navigate back to queue management after a short delay
-    setTimeout(() => {
-      navigate('/queue/management');
-    }, 500); // Short delay to allow QR dialog to be seen if opened
+    // Keep the user on the create queue page after creation
+    // The QR code dialog will show automatically
   };
   
   return (
