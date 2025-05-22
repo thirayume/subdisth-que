@@ -20,6 +20,7 @@ import Settings from "@/pages/Settings";
 import LineCallback from "@/components/LineCallback";
 import Medications from "@/pages/Medications";
 import Analytics from "@/pages/Analytics";
+import CreateQueue from "@/pages/CreateQueue"; // Add import for the new page
 
 // Create a client
 const queryClient = new QueryClient();
@@ -39,6 +40,10 @@ function App() {
               <Route path="/queue" element={<QueueManagement />} />
               <Route path="/queue/management" element={<QueueManagement />} />
               <Route path="/queue/management/" element={<QueueManagement />} />
+              
+              {/* Queue Creation Routes */}
+              <Route path="/queue/create" element={<CreateQueue />} />
+              <Route path="/create-queue" element={<CreateQueue />} />
               
               {/* Pharmacy Queue */}
               <Route path="/pharmacy" element={<PharmacyQueue />} />

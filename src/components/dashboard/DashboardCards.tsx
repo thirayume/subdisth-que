@@ -1,8 +1,9 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ListChecks, BarChart, Users, Pill, Calendar, Clock } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { ListChecks, BarChart, Users, Pill, Calendar, Clock, PlusCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface DashboardCardsProps {
   waitingQueues: any[];
@@ -21,22 +22,33 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-      <Link to="/queue/management" className="transition-transform hover:scale-105">
-        <Card className="h-full bg-gradient-to-br from-blue-50 to-purple-50 hover:shadow-md border-blue-100">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center">
-              <ListChecks className="mr-2 h-5 w-5 text-blue-600" />
+      <Card className="h-full bg-gradient-to-br from-blue-50 to-purple-50 hover:shadow-md border-blue-100">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center">
+            <ListChecks className="mr-2 h-5 w-5 text-blue-600" />
+            จัดการคิว
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-600">จัดการคิวรอดำเนินการ กำลังให้บริการ และเสร็จสิ้น</p>
+          <div className="mt-4 text-sm text-blue-600">
+            คิวรอดำเนินการ: {waitingQueues.length} | กำลังให้บริการ: {activeQueues.length}
+          </div>
+        </CardContent>
+        <CardFooter className="pt-2 flex justify-between">
+          <Button asChild variant="outline" size="sm" className="text-blue-600 border-blue-200">
+            <Link to="/queue/management">
               จัดการคิว
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600">จัดการคิวรอดำเนินการ กำลังให้บริการ และเสร็จสิ้น</p>
-            <div className="mt-4 text-sm text-blue-600">
-              คิวรอดำเนินการ: {waitingQueues.length} | กำลังให้บริการ: {activeQueues.length}
-            </div>
-          </CardContent>
-        </Card>
-      </Link>
+            </Link>
+          </Button>
+          <Button asChild size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Link to="/queue/create">
+              <PlusCircle className="h-3 w-3 mr-1" />
+              สร้างคิวใหม่
+            </Link>
+          </Button>
+        </CardFooter>
+      </Card>
       
       <Link to="/analytics" className="transition-transform hover:scale-105">
         <Card className="h-full bg-gradient-to-br from-green-50 to-emerald-50 hover:shadow-md border-green-100">
