@@ -13,7 +13,8 @@ import {
   MonitorPlay,
   Clock,
   PanelsTopLeft,
-  Pill
+  Pill,
+  PlusCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -140,6 +141,22 @@ export function Sidebar() {
             >
               <Pill className="mr-3 h-5 w-5" />
               บริการจ่ายยา
+            </NavLink>
+            
+            <NavLink
+              to="/queue/create"
+              onClick={closeSidebar}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  isActiveRoute("/queue/create")
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                )
+              }
+            >
+              <PlusCircle className="mr-3 h-5 w-5" />
+              สร้างคิวใหม่
             </NavLink>
             
             <NavLink
