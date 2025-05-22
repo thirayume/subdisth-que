@@ -1,17 +1,30 @@
 
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Layout from '@/components/layout/Layout';
 import CreateQueueDialog from '@/components/queue/CreateQueueDialog';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { createLogger } from '@/utils/logger';
+import QueueBoardHeader from '@/components/queue/QueueBoardHeader';
+import QueueBoardAlgorithmInfo from '@/components/queue/board/QueueBoardAlgorithmInfo';
+import HospitalFooter from '@/components/queue/HospitalFooter';
 
 const logger = createLogger('CreateQueue');
 
 const CreateQueue: React.FC = () => {
   const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [currentTime, setCurrentTime] = React.useState(new Date());
+  const [soundEnabled, setSoundEnabled] = React.useState(true);
+  
+  // Update the current time every second
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, []);
   
   // Handle dialog close by navigating back
   const handleOpenChange = (open: boolean) => {
@@ -32,18 +45,23 @@ const CreateQueue: React.FC = () => {
   };
   
   return (
-    <Layout>
-      <div className="container px-4 py-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">สร้างคิวใหม่</h1>
-          <p className="text-gray-500">กรุณาคลิกปุ่มด้านล่างเพื่อสร้างคิวใหม่</p>
-        </div>
-        
-        <div className="flex flex-col items-center justify-center py-8">
-          <div className="w-full max-w-lg bg-white rounded-md shadow p-8 text-center">
-            <p className="text-gray-600 mb-8">
-              กดปุ่มด้านล่างเพื่อเริ่มการสร้างคิวใหม่
-            </p>
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      {/* Header - same as QueueBoard */}
+      <QueueBoardHeader 
+        currentTime={currentTime}
+        soundEnabled={soundEnabled}
+        setSoundEnabled={setSoundEnabled}
+      />
+      
+      {/* Algorithm Info Bar - using similar component */}
+      <QueueBoardAlgorithmInfo algorithmName="สร้างคิวใหม่" />
+      
+      {/* Main Content Area */}
+      <main className="container mx-auto p-6 flex-1">
+        <div className="grid grid-cols-1 gap-6">
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">สร้างคิวใหม่</h1>
+            <p className="text-gray-500 mb-8">กรุณาคลิกปุ่มด้านล่างเพื่อสร้างคิวใหม่</p>
             
             <Button 
               onClick={() => setDialogOpen(true)}
@@ -55,15 +73,18 @@ const CreateQueue: React.FC = () => {
             </Button>
           </div>
         </div>
-        
-        {/* Dialog will only open when button is clicked */}
-        <CreateQueueDialog 
-          open={dialogOpen} 
-          onOpenChange={handleOpenChange} 
-          onCreateQueue={handleCreateQueue}
-        />
-      </div>
-    </Layout>
+      </main>
+      
+      {/* Footer - same as QueueBoard */}
+      <HospitalFooter />
+      
+      {/* Dialog will only open when button is clicked */}
+      <CreateQueueDialog 
+        open={dialogOpen} 
+        onOpenChange={handleOpenChange} 
+        onCreateQueue={handleCreateQueue}
+      />
+    </div>
   );
 };
 
