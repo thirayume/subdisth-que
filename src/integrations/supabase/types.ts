@@ -328,10 +328,14 @@ export type Database = {
           notes: string | null
           number: number
           patient_id: string
+          paused_at: string | null
           pharmacy_status: string | null
           queue_date: string
           service_point_id: string | null
+          skipped_at: string | null
           status: string
+          transferred_at: string | null
+          transferred_to_service_point_id: string | null
           type: string
           updated_at: string
         }
@@ -343,10 +347,14 @@ export type Database = {
           notes?: string | null
           number: number
           patient_id: string
+          paused_at?: string | null
           pharmacy_status?: string | null
           queue_date?: string
           service_point_id?: string | null
+          skipped_at?: string | null
           status: string
+          transferred_at?: string | null
+          transferred_to_service_point_id?: string | null
           type: string
           updated_at?: string
         }
@@ -358,10 +366,14 @@ export type Database = {
           notes?: string | null
           number?: number
           patient_id?: string
+          paused_at?: string | null
           pharmacy_status?: string | null
           queue_date?: string
           service_point_id?: string | null
+          skipped_at?: string | null
           status?: string
+          transferred_at?: string | null
+          transferred_to_service_point_id?: string | null
           type?: string
           updated_at?: string
         }

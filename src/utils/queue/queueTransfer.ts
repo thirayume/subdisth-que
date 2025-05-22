@@ -6,7 +6,8 @@ export const transferQueue = async (
   queueId: string, 
   sourceServicePointId: string,
   targetServicePointId: string,
-  notes?: string
+  notes?: string,
+  newQueueType?: string
 ): Promise<boolean> => {
   try {
     const now = new Date().toISOString();
@@ -17,6 +18,8 @@ export const transferQueue = async (
       .update({
         status: 'COMPLETED',
         completed_at: now,
+        transferred_at: now,
+        transferred_to_service_point_id: targetServicePointId,
         notes: notes ? `${notes} (Transferred to another service point)` : 'Transferred to another service point'
       })
       .eq('id', queueId)
@@ -47,7 +50,7 @@ export const transferQueue = async (
       .insert({
         number: queueData.number, // Keep the same queue number
         patient_id: queueData.patient_id,
-        type: queueData.type,
+        type: newQueueType || queueData.type, // Use new queue type if provided
         status: 'WAITING',
         service_point_id: targetServicePointId,
         notes: notes ? `${notes} (Transferred from another service point)` : 'Transferred from another service point'
@@ -76,6 +79,7 @@ export const holdQueue = async (
       .from('queues')
       .update({
         status: 'WAITING',
+        paused_at: new Date().toISOString(),
         // Don't clear called_at to preserve the original call time
         notes: reason ? `[HOLD] ${reason}` : '[HOLD] Queue temporarily on hold'
       })
@@ -90,6 +94,33 @@ export const holdQueue = async (
     return true;
   } catch (error) {
     console.error('Error holding queue:', error);
+    return false;
+  }
+};
+
+// Return a skipped queue to waiting status
+export const returnSkippedQueue = async (
+  queueId: string
+): Promise<boolean> => {
+  try {
+    // Change status from SKIPPED to WAITING
+    const { error } = await supabase
+      .from('queues')
+      .update({
+        status: 'WAITING',
+        skipped_at: null, // Clear the skipped_at timestamp
+        notes: '[RETURNED] Previously skipped queue returned to waiting'
+      })
+      .eq('id', queueId)
+      .eq('status', 'SKIPPED');
+      
+    if (error) {
+      throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error returning skipped queue:', error);
     return false;
   }
 };

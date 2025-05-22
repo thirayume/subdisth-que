@@ -11,6 +11,7 @@ import QueueTabsContainer from '@/components/queue/management/QueueTabsContainer
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { ServicePointCapability } from '@/utils/queueAlgorithms';
 import { useServicePointQueueTypes } from '@/hooks/useServicePointQueueTypes';
+import { useQueueTypes } from '@/hooks/useQueueTypes';
 
 const QueueManagement = () => {
   const { 
@@ -18,10 +19,14 @@ const QueueManagement = () => {
     updateQueueStatus, 
     callQueue, 
     recallQueue, 
-    sortQueues 
+    sortQueues,
+    transferQueueToServicePoint,
+    putQueueOnHold,
+    returnSkippedQueueToWaiting
   } = useQueues();
   const { patients } = usePatients();
   const { mappings } = useServicePointQueueTypes();
+  const { queueTypes } = useQueueTypes();
   const { 
     selectedServicePoint,
     setSelectedServicePoint,
@@ -108,6 +113,33 @@ const QueueManagement = () => {
     return await callQueue(queueId, selectedServicePoint.id);
   };
   
+  // Handler for transferring queue
+  const handleTransferQueue = async (
+    queueId: string, 
+    sourceServicePointId: string,
+    targetServicePointId: string,
+    notes?: string,
+    newQueueType?: string
+  ) => {
+    return await transferQueueToServicePoint(
+      queueId, 
+      sourceServicePointId,
+      targetServicePointId,
+      notes,
+      newQueueType
+    );
+  };
+  
+  // Handler for holding queue
+  const handleHoldQueue = async (queueId: string, servicePointId: string, reason?: string) => {
+    return await putQueueOnHold(queueId, servicePointId, reason);
+  };
+  
+  // Handler for returning skipped queue to waiting
+  const handleReturnToWaiting = async (queueId: string) => {
+    return await returnSkippedQueueToWaiting(queueId);
+  };
+  
   // Handler for service point change
   const handleServicePointChange = (value: string) => {
     const servicePoint = servicePoints.find(sp => sp.id === value);
@@ -151,10 +183,15 @@ const QueueManagement = () => {
             completedQueues={completedQueues}
             skippedQueues={skippedQueues}
             patients={patients}
+            queueTypes={queueTypes}
             onUpdateStatus={updateQueueStatus}
             onCallQueue={handleCallQueue}
             onRecallQueue={handleRecallQueue}
+            onTransferQueue={handleTransferQueue}
+            onHoldQueue={handleHoldQueue}
+            onReturnToWaiting={handleReturnToWaiting}
             selectedServicePoint={selectedServicePoint}
+            servicePoints={servicePoints}
           />
         </div>
       </div>

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Queue, QueueStatus, ServicePoint } from '@/integrations/supabase/schema';
+import { Queue, QueueStatus, ServicePoint, QueueType } from '@/integrations/supabase/schema';
 import QueueCard from './QueueCard';
 
 interface QueueListProps {
@@ -10,6 +10,9 @@ interface QueueListProps {
   onUpdateStatus?: (queueId: string, status: QueueStatus) => Promise<Queue | null>;
   onCallQueue?: (queueId: string) => Promise<Queue | null>;
   onRecallQueue?: (queueId: string) => void;
+  onTransferQueue?: (queueId: string) => void;
+  onHoldQueue?: (queueId: string) => void;
+  onReturnToWaiting?: (queueId: string) => void;
   selectedServicePoint?: ServicePoint | null;
 }
 
@@ -20,6 +23,9 @@ const QueueList: React.FC<QueueListProps> = ({
   onUpdateStatus,
   onCallQueue,
   onRecallQueue,
+  onTransferQueue,
+  onHoldQueue,
+  onReturnToWaiting,
   selectedServicePoint
 }) => {
   // Show empty state if no queues
@@ -37,15 +43,6 @@ const QueueList: React.FC<QueueListProps> = ({
       </div>
     );
   }
-  
-  // Get service point information
-  const getServicePointInfo = async (servicePointId?: string) => {
-    if (servicePointId) {
-      // We could fetch service point info here if needed
-      return selectedServicePoint?.name || null;
-    }
-    return null;
-  };
 
   return (
     <div className="space-y-3 p-4">
@@ -72,6 +69,21 @@ const QueueList: React.FC<QueueListProps> = ({
           onRecall={
             onRecallQueue && status === 'ACTIVE'
               ? () => onRecallQueue(queue.id)
+              : undefined
+          }
+          onTransfer={
+            onTransferQueue && status === 'ACTIVE'
+              ? () => onTransferQueue(queue.id)
+              : undefined
+          }
+          onHold={
+            onHoldQueue && status === 'ACTIVE'
+              ? () => onHoldQueue(queue.id)
+              : undefined
+          }
+          onReturnToWaiting={
+            onReturnToWaiting && status === 'SKIPPED'
+              ? () => onReturnToWaiting(queue.id)
               : undefined
           }
           servicePointId={queue.service_point_id}

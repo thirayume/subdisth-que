@@ -1,9 +1,10 @@
+
 import * as React from 'react';
 import { Queue } from '@/integrations/supabase/schema';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createLogger } from '@/utils/logger';
-import { getNextQueue, transferQueue, holdQueue } from '@/utils/queueManagementUtils';
+import { getNextQueue, transferQueue, holdQueue, returnSkippedQueue } from '@/utils/queueManagementUtils';
 import { QueueAlgorithmType, ServicePointCapability } from '@/utils/queueAlgorithms';
 
 const logger = createLogger('useQueueActions');
@@ -112,18 +113,20 @@ export const useQueueActions = (
     }
   };
 
-  // Transfer a queue to another service point
+  // Transfer a queue to another service point with optional new queue type
   const transferQueueToServicePoint = async (
     queueId: string, 
     sourceServicePointId: string,
     targetServicePointId: string,
-    notes?: string
+    notes?: string,
+    newQueueType?: string
   ) => {
     const result = await transferQueue(
       queueId, 
       sourceServicePointId,
       targetServicePointId,
-      notes
+      notes,
+      newQueueType
     );
     
     if (result) {
@@ -154,10 +157,27 @@ export const useQueueActions = (
     }
   };
 
+  // Return a skipped queue to waiting status
+  const returnSkippedQueueToWaiting = async (
+    queueId: string
+  ) => {
+    const result = await returnSkippedQueue(queueId);
+    
+    if (result) {
+      toast.success('นำคิวกลับสู่สถานะรอแล้ว');
+      fetchQueues(); // Refresh queues after return
+      return true;
+    } else {
+      toast.error('ไม่สามารถนำคิวกลับสู่สถานะรอได้');
+      return false;
+    }
+  };
+
   return {
     callQueue,
     getNextQueueToCall,
     transferQueueToServicePoint,
-    putQueueOnHold
+    putQueueOnHold,
+    returnSkippedQueueToWaiting
   };
 };
