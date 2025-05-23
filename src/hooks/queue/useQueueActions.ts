@@ -57,7 +57,7 @@ export const useQueueActions = (
         }
         
         return updatedQueue;
-      } catch (err) {
+      } catch (err: any) {
         toast.error('ไม่สามารถเรียกคิวได้');
         logger.error('Error calling queue:', err);
         return null;

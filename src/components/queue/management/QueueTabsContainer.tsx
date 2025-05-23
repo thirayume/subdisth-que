@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Queue, Patient, ServicePoint } from '@/integrations/supabase/schema';
