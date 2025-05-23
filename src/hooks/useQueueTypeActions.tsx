@@ -12,6 +12,19 @@ interface UseQueueTypeActionsProps {
   newQueueType: boolean;
 }
 
+// Create a type that ensures algorithm is QueueAlgorithmType
+interface FormQueueType {
+  id: string;
+  code: string;
+  name: string;
+  prefix: string;
+  purpose?: string;
+  format: "0" | "00" | "000";
+  enabled: boolean;
+  algorithm: QueueAlgorithmType;
+  priority: number;
+}
+
 export const useQueueTypeActions = ({
   form,
   setEditingQueueType,
@@ -23,7 +36,7 @@ export const useQueueTypeActions = ({
     
     // Create a new queue type with a random ID
     const newId = uuidv4();
-    const newQueueType: QueueType = {
+    const newQueueType: FormQueueType = {
       id: newId,
       code: '',
       name: '',
@@ -96,15 +109,15 @@ export const useQueueTypeActions = ({
     const queueTypeToDuplicate = queueTypes[index];
     
     // Create a copy with a new ID and ensure all required fields are present
-    const duplicatedQueueType: QueueType = {
+    const duplicatedQueueType: FormQueueType = {
       id: uuidv4(),
       code: `${queueTypeToDuplicate.code}_COPY`,
       name: `${queueTypeToDuplicate.name} (Copy)`,
-      prefix: queueTypeToDuplicate.prefix, // Ensure prefix is not undefined
+      prefix: queueTypeToDuplicate.prefix || '', // Ensure prefix is not undefined
       purpose: queueTypeToDuplicate.purpose || '',
       format: ensureValidFormat(queueTypeToDuplicate.format),
       enabled: queueTypeToDuplicate.enabled !== undefined ? queueTypeToDuplicate.enabled : true,
-      algorithm: ensureValidAlgorithm(queueTypeToDuplicate.algorithm),
+      algorithm: ensureValidAlgorithm(queueTypeToDuplicate.algorithm) as QueueAlgorithmType,
       priority: queueTypeToDuplicate.priority !== undefined ? queueTypeToDuplicate.priority : 5
     };
     

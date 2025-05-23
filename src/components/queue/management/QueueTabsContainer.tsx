@@ -4,7 +4,7 @@ import { Queue, Patient, ServicePoint } from '@/integrations/supabase/schema';
 import { Card } from '@/components/ui/card';
 import QueueList from '../QueueList';
 import { QueueStatus } from '@/integrations/supabase/schema';
-import QueueTransferDialog from '../QueueTransferDialog';
+import { QueueTransferDialog } from '@/components/queue/transfer';
 import { QueueType } from '@/hooks/useQueueTypes';
 
 interface QueueTabsContainerProps {
