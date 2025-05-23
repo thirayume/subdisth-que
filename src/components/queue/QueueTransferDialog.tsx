@@ -12,8 +12,11 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ServicePoint, Queue, QueueType } from '@/integrations/supabase/schema';
+import { ServicePoint, Queue } from '@/integrations/supabase/schema';
 import { createLogger } from '@/utils/logger';
+
+// Import the proper QueueType from useQueueTypes
+import { QueueType } from '@/hooks/useQueueTypes';
 
 interface QueueTransferDialogProps {
   queue: Queue | null;

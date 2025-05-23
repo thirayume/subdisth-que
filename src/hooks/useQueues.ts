@@ -53,7 +53,8 @@ export const useQueues = () => {
     callQueue,
     getNextQueueToCall,
     transferQueueToServicePoint,
-    putQueueOnHold
+    putQueueOnHold,
+    returnSkippedQueueToWaiting
   } = useQueueActions(
     queues,
     updateQueueStatus,
@@ -85,6 +86,7 @@ export const useQueues = () => {
     setQueueAlgorithm,
     getNextQueueToCall,
     transferQueueToServicePoint,
-    putQueueOnHold
+    putQueueOnHold,
+    returnSkippedQueueToWaiting  // Expose this function
   };
 };

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import Layout from '@/components/layout/Layout';
-import { Queue, QueueType, QueueStatus } from '@/integrations/supabase/schema';
+import { Queue, QueueStatus } from '@/integrations/supabase/schema';
 import { useQueues } from '@/hooks/useQueues';
 import { usePatients } from '@/hooks/usePatients';
 import { useServicePointContext } from '@/contexts/ServicePointContext';
@@ -11,7 +11,7 @@ import QueueTabsContainer from '@/components/queue/management/QueueTabsContainer
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { ServicePointCapability } from '@/utils/queueAlgorithms';
 import { useServicePointQueueTypes } from '@/hooks/useServicePointQueueTypes';
-import { useQueueTypes } from '@/hooks/useQueueTypes';
+import useQueueTypes from '@/hooks/useQueueTypes'; // Updated import
 
 const QueueManagement = () => {
   const { 
@@ -26,7 +26,7 @@ const QueueManagement = () => {
   } = useQueues();
   const { patients } = usePatients();
   const { mappings } = useServicePointQueueTypes();
-  const { queueTypes } = useQueueTypes();
+  const { queueTypes } = useQueueTypes(); // Using the imported hook
   const { 
     selectedServicePoint,
     setSelectedServicePoint,

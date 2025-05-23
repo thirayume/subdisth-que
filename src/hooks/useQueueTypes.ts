@@ -1,86 +1,69 @@
 
-import { QueueAlgorithmType } from "@/utils/queueAlgorithms";
-import { QueueTypeSchema } from "@/components/settings/schemas";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { QueueTypeEnum } from '@/integrations/supabase/schema';
+import { toast } from 'sonner';
+import { createLogger } from '@/utils/logger';
 
-// Re-export QueueTypeSchema as QueueType for backward compatibility
-export type QueueType = {
+const logger = createLogger('useQueueTypes');
+
+// Extend the QueueType with additional properties from queue_types table
+export interface QueueType {
   id: string;
   code: string;
   name: string;
-  prefix: string;  // Required field
-  purpose: string;
-  format: '0' | '00' | '000';
+  prefix: string;
+  purpose?: string;
+  format: string;
   enabled: boolean;
-  algorithm: QueueAlgorithmType;
+  algorithm: string;
   priority: number;
-};
+  created_at?: string;
+  updated_at?: string;
+}
 
-// Function to validate queue type
-export const validateQueueType = (queueType: Partial<QueueType>): boolean => {
-  // Required fields: id, code, name, prefix
-  if (!queueType.id || !queueType.code || !queueType.name || !queueType.prefix) {
-    return false;
-  }
-  
-  return true;
-};
+export const useQueueTypes = () => {
+  const [queueTypes, setQueueTypes] = useState<QueueType[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-// Function to get default values for a new queue type
-export const getDefaultQueueType = (): QueueType => {
+  // Fetch queue types from the database
+  const fetchQueueTypes = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error } = await supabase
+        .from('queue_types')
+        .select('*')
+        .order('priority', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
+        setQueueTypes(data as QueueType[]);
+      }
+    } catch (err: any) {
+      logger.error('Error fetching queue types:', err);
+      setError(err.message || 'Error fetching queue types');
+      toast.error('Failed to load queue types');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchQueueTypes();
+  }, []);
+
   return {
-    id: '',
-    code: '',
-    name: '',
-    prefix: '',
-    purpose: '',
-    format: '00',
-    enabled: true,
-    algorithm: QueueAlgorithmType.FIFO,
-    priority: 5
+    queueTypes,
+    loading,
+    error,
+    fetchQueueTypes
   };
 };
 
-// Helper function to ensure format is a valid QueueType format
-export const ensureValidFormat = (format: string): '0' | '00' | '000' => {
-  if (format === '0' || format === '00' || format === '000') {
-    return format;
-  }
-  return '00'; // Default value
-};
-
-// Helper function to ensure algorithm is a valid QueueAlgorithmType
-export const ensureValidAlgorithm = (algorithm: string): QueueAlgorithmType => {
-  if (Object.values(QueueAlgorithmType).includes(algorithm as QueueAlgorithmType)) {
-    return algorithm as QueueAlgorithmType;
-  }
-  return QueueAlgorithmType.FIFO; // Default value
-};
-
-// Functions to convert between QueueType and QueueTypeSchema
-export const queueTypeToSchema = (queueType: QueueType): QueueTypeSchema => {
-  return {
-    id: queueType.id,
-    code: queueType.code,
-    name: queueType.name,
-    prefix: queueType.prefix,
-    purpose: queueType.purpose,
-    format: queueType.format,
-    enabled: queueType.enabled,
-    algorithm: queueType.algorithm,
-    priority: queueType.priority
-  };
-};
-
-export const schemaToQueueType = (schema: QueueTypeSchema): QueueType => {
-  return {
-    id: schema.id,
-    code: schema.code,
-    name: schema.name,
-    prefix: schema.prefix,
-    purpose: schema.purpose,
-    format: schema.format as '0' | '00' | '000',
-    enabled: schema.enabled,
-    algorithm: schema.algorithm,
-    priority: schema.priority
-  };
-};
+export default useQueueTypes;
