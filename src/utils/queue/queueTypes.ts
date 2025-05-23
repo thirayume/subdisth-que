@@ -1,5 +1,6 @@
 
 import { QueueTypeEnum, QueueStatus } from '@/integrations/supabase/schema';
+import { QueueType, ensureValidFormat, ensureValidAlgorithm } from '@/hooks/useQueueTypes';
 
 // Helper function to safely cast a string to QueueTypeEnum
 export const ensureQueueTypeEnum = (type: string): QueueTypeEnum => {
@@ -24,4 +25,12 @@ export const safeGetPriority = (queueType: any): number => {
     return typeof queueType.priority === 'number' ? queueType.priority : 5;
   }
   return 5; // Default priority if there's an issue
+};
+
+// Convert a QueueType to QueueTypeEnum if needed
+export const getQueueTypeCode = (queueType: QueueType | string): string => {
+  if (typeof queueType === 'string') {
+    return queueType;
+  }
+  return queueType.code;
 };

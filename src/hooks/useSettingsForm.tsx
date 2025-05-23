@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,7 +5,7 @@ import { queueSettingsSchema, initialQueueTypes } from '@/components/settings/sc
 import { useSettings } from '@/hooks/settings';
 import { QueueAlgorithmType } from '@/utils/queueAlgorithms';
 import { useQueueTypesData } from './useQueueTypesData';
-import { QueueType } from './useQueueTypes';
+import { QueueType, ensureValidFormat, ensureValidAlgorithm } from './useQueueTypes';
 import { SettingsFormValues } from '@/contexts/SettingsContext';
 
 const defaultValues: SettingsFormValues = {
@@ -115,8 +114,8 @@ export const useSettingsForm = () => {
       // Ensure format compatibility by standardizing the format property
       const normalizedQueueTypes: QueueType[] = queueTypes.map(qt => ({
         ...qt,
-        format: (qt.format || '00') as '0' | '00' | '000',
-        algorithm: qt.algorithm || QueueAlgorithmType.FIFO,
+        format: ensureValidFormat(qt.format), 
+        algorithm: ensureValidAlgorithm(qt.algorithm),
         priority: typeof qt.priority === 'number' ? qt.priority : 5
       }));
       form.setValue('queue_types', normalizedQueueTypes);
@@ -156,6 +155,6 @@ export const useSettingsForm = () => {
     loading,
     loadingQueueTypes,
     updateMultipleSettings,
-    initialized: queueTypesInitialized, // Add this to track initialization
+    initialized: queueTypesInitialized,
   };
 };

@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Check, X } from 'lucide-react';
 import { FormatOption, algorithmOptions } from './schemas';
 import QueueTypeFormats from './QueueTypeFormats';
-import { QueueType } from '@/hooks/useQueueTypes';
+import { QueueType, ensureValidFormat } from '@/hooks/useQueueTypes';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 
@@ -77,7 +77,7 @@ const QueueTypeEditForm: React.FC<QueueTypeEditFormProps> = ({
         <Label htmlFor={`queueType_${index}_format`}>รูปแบบหมายเลขคิว</Label>
         <QueueTypeFormats 
           index={index}
-          format={queueType.format}
+          format={ensureValidFormat(queueType.format)}
           formatOptions={formatOptions}
           onChange={(value) => onQueueTypeChange(index, 'format', value)}
         />

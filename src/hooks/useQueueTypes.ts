@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { QueueTypeEnum } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
 import { createLogger } from '@/utils/logger';
+import { QueueAlgorithmType } from '@/utils/queueAlgorithms';
 
 const logger = createLogger('useQueueTypes');
 
@@ -14,13 +15,49 @@ export interface QueueType {
   name: string;
   prefix: string;
   purpose?: string;
-  format: string;
+  format: '0' | '00' | '000';
   enabled: boolean;
   algorithm: string;
   priority: number;
   created_at?: string;
   updated_at?: string;
 }
+
+// Helper functions for type validations
+export const ensureValidFormat = (format: string | undefined): '0' | '00' | '000' => {
+  if (format === '0' || format === '00' || format === '000') {
+    return format;
+  }
+  return '00'; // Default to '00' format
+};
+
+export const ensureValidAlgorithm = (algorithm: string | undefined): string => {
+  if (!algorithm) return QueueAlgorithmType.FIFO;
+  return algorithm;
+};
+
+// Convert a QueueTypeEnum to QueueType if needed
+export const convertToQueueType = (queueTypeEnum: QueueTypeEnum | QueueType): QueueType => {
+  if (typeof queueTypeEnum === 'string') {
+    // This is a QueueTypeEnum, create a basic QueueType from it
+    return {
+      id: queueTypeEnum,
+      code: queueTypeEnum,
+      name: queueTypeEnum,
+      prefix: queueTypeEnum.charAt(0),
+      format: '00',
+      enabled: true,
+      algorithm: QueueAlgorithmType.FIFO,
+      priority: 5
+    };
+  }
+  // Already a QueueType, ensure format and algorithm are valid
+  return {
+    ...queueTypeEnum,
+    format: ensureValidFormat(queueTypeEnum.format),
+    algorithm: ensureValidAlgorithm(queueTypeEnum.algorithm)
+  };
+};
 
 export const useQueueTypes = () => {
   const [queueTypes, setQueueTypes] = useState<QueueType[]>([]);
@@ -43,7 +80,14 @@ export const useQueueTypes = () => {
       }
 
       if (data) {
-        setQueueTypes(data as QueueType[]);
+        // Ensure format property is correctly typed
+        const typedData = data.map((item) => ({
+          ...item,
+          format: ensureValidFormat(item.format),
+          algorithm: ensureValidAlgorithm(item.algorithm)
+        }));
+        
+        setQueueTypes(typedData as QueueType[]);
       }
     } catch (err: any) {
       logger.error('Error fetching queue types:', err);
@@ -62,7 +106,8 @@ export const useQueueTypes = () => {
     queueTypes,
     loading,
     error,
-    fetchQueueTypes
+    fetchQueueTypes,
+    convertToQueueType
   };
 };
 

@@ -2,7 +2,7 @@
 import { UseFormReturn } from 'react-hook-form';
 import { v4 as uuidv4 } from 'uuid';
 import { QueueAlgorithmType } from '@/utils/queueAlgorithms';
-import { QueueType } from '@/hooks/useQueueTypes';
+import { QueueType, ensureValidFormat, ensureValidAlgorithm } from '@/hooks/useQueueTypes';
 import { SettingsFormValues } from '@/contexts/SettingsContext';
 
 interface UseQueueTypeActionsProps {
@@ -102,9 +102,9 @@ export const useQueueTypeActions = ({
       name: `${queueTypeToDuplicate.name} (Copy)`,
       prefix: queueTypeToDuplicate.prefix, // Ensure prefix is not undefined
       purpose: queueTypeToDuplicate.purpose || '',
-      format: queueTypeToDuplicate.format || '00',
+      format: ensureValidFormat(queueTypeToDuplicate.format),
       enabled: queueTypeToDuplicate.enabled !== undefined ? queueTypeToDuplicate.enabled : true,
-      algorithm: queueTypeToDuplicate.algorithm || QueueAlgorithmType.FIFO,
+      algorithm: ensureValidAlgorithm(queueTypeToDuplicate.algorithm),
       priority: queueTypeToDuplicate.priority !== undefined ? queueTypeToDuplicate.priority : 5
     };
     

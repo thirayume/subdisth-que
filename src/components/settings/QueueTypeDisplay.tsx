@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Pencil, Trash, Copy } from 'lucide-react';
-import { QueueType } from '@/hooks/useQueueTypes';
+import { QueueType, ensureValidFormat } from '@/hooks/useQueueTypes';
 import { Badge } from '@/components/ui/badge';
 import { algorithmOptions } from './schemas';
 
@@ -99,7 +99,7 @@ const QueueTypeDisplay: React.FC<QueueTypeDisplayProps> = ({
           <span className="font-medium text-gray-700">Prefix:</span> {queueType.prefix}
         </div>
         <div>
-          <span className="font-medium text-gray-700">รูปแบบ:</span> {getFormatLabel(queueType.format)}
+          <span className="font-medium text-gray-700">รูปแบบ:</span> {getFormatLabel(ensureValidFormat(queueType.format))}
         </div>
         <div>
           <span className="font-medium text-gray-700">จุดประสงค์:</span> {queueType.purpose}
