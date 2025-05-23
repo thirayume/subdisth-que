@@ -111,14 +111,20 @@ export const useSettingsForm = () => {
   // Handle queue types from the database
   useEffect(() => {
     if (!loadingQueueTypes && queueTypes && queueTypes.length > 0) {
-      // Ensure format compatibility by standardizing the format property
-      const normalizedQueueTypes: QueueType[] = queueTypes.map(qt => ({
-        ...qt,
+      // Convert QueueType[] to the format expected by the form
+      const convertedQueueTypes = queueTypes.map(qt => ({
+        id: qt.id,
+        code: qt.code,
+        name: qt.name,
+        prefix: qt.prefix,
+        purpose: qt.purpose,
         format: ensureValidFormat(qt.format), 
-        algorithm: ensureValidAlgorithm(qt.algorithm),
+        enabled: qt.enabled,
+        algorithm: ensureValidAlgorithm(qt.algorithm) as QueueAlgorithmType,
         priority: typeof qt.priority === 'number' ? qt.priority : 5
       }));
-      form.setValue('queue_types', normalizedQueueTypes);
+      
+      form.setValue('queue_types', convertedQueueTypes);
       setQueueTypesInitialized(true);
     }
   }, [loadingQueueTypes, queueTypes, form]);
