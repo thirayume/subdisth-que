@@ -6,7 +6,7 @@ import { queueSettingsSchema } from '@/components/settings/schemas';
 import { useSettingsForm } from '@/hooks/useSettingsForm';
 import { useSettingsSubmission } from '@/hooks/useSettingsSubmission';
 import { useQueueTypeState } from '@/hooks/useQueueTypeState';
-import { useQueueTypeActions } from '@/hooks/useQueueTypeActions';
+import { useQueueTypeActions } from '@/hooks/queue-type-actions';
 import { QueueType } from '@/hooks/useQueueTypes';
 
 // Define the form values type from the schema
