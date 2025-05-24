@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Queue, Patient, ServicePoint } from '@/integrations/supabase/schema';
+import { formatQueueNumber } from '@/utils/queueFormatters';
 
 interface ActiveQueueSectionProps {
   activeQueues: Queue[];
@@ -37,7 +38,7 @@ const ActiveQueueSection: React.FC<ActiveQueueSectionProps> = ({
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center">
                     <div className="text-sm font-medium text-pharmacy-700 mb-1">กำลังเรียก</div>
-                    <div className="queue-number text-8xl font-bold text-pharmacy-600 mb-4">{queue.number}</div>
+                    <div className="queue-number text-8xl font-bold text-pharmacy-600 mb-4">{formatQueueNumber(queue.type, queue.number)}</div>
                     <div className="text-lg font-medium text-gray-800 mb-1">{patientName}</div>
                     <div className="text-sm text-gray-500">{servicePointName}</div>
                   </div>

@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Queue, Patient } from '@/integrations/supabase/schema';
+import { formatQueueNumber } from '@/utils/queueFormatters';
 
 interface WaitingQueueSectionProps {
   waitingQueues: Queue[];
@@ -39,7 +40,7 @@ const WaitingQueueSection: React.FC<WaitingQueueSectionProps> = ({
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${
                         index === 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
                       }`}>
-                        {queue.number}
+                        {formatQueueNumber(queue.type, queue.number)}
                       </div>
                       <div className="text-sm">
                         <div className="font-medium text-gray-900">{patientName}</div>
