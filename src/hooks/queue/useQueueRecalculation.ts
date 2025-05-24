@@ -54,7 +54,7 @@ export const useQueueRecalculation = () => {
       }
 
       // Process each queue for reassignment
-      const updates: Promise<any>[] = [];
+      const updatePromises: Promise<any>[] = [];
       
       for (const queue of waitingQueues) {
         // Find queue type
@@ -88,21 +88,21 @@ export const useQueueRecalculation = () => {
 
           // Update queue assignment if it needs to change
           if (queue.service_point_id !== selectedServicePoint.id) {
-            updates.push(
-              supabase
-                .from('queues')
-                .update({ service_point_id: selectedServicePoint.id })
-                .eq('id', queue.id)
-            );
+            const updatePromise = supabase
+              .from('queues')
+              .update({ service_point_id: selectedServicePoint.id })
+              .eq('id', queue.id);
+            
+            updatePromises.push(updatePromise);
           }
         }
       }
 
       // Execute all updates
-      if (updates.length > 0) {
-        await Promise.all(updates);
-        logger.info(`Recalculated ${updates.length} queue assignments`);
-        toast.success(`คำนวณการมอบหมายคิวใหม่เรียบร้อย (${updates.length} คิว)`);
+      if (updatePromises.length > 0) {
+        await Promise.all(updatePromises);
+        logger.info(`Recalculated ${updatePromises.length} queue assignments`);
+        toast.success(`คำนวณการมอบหมายคิวใหม่เรียบร้อย (${updatePromises.length} คิว)`);
       } else {
         toast.info('การมอบหมายคิวทั้งหมดเหมาะสมแล้ว');
       }
