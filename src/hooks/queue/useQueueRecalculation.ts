@@ -91,7 +91,8 @@ export const useQueueRecalculation = () => {
             const updatePromise = supabase
               .from('queues')
               .update({ service_point_id: selectedServicePoint.id })
-              .eq('id', queue.id);
+              .eq('id', queue.id)
+              .then(); // Execute the query to return a Promise
             
             updatePromises.push(updatePromise);
           }
