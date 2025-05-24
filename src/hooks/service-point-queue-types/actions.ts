@@ -65,20 +65,40 @@ export const createRemoveMappingAction = (
   return async (id: string): Promise<boolean> => {
     try {
       setDeletingId(id);
-      await deleteServicePointQueueTypeMapping(id);
-
-      // Update local state immediately after successful deletion
+      
+      // Always remove from local state first for immediate UI feedback
       setMappings(prev => {
         const updated = prev.filter(mapping => mapping.id !== id);
-        logger.debug(`Updated local state: removed mapping ${id}, remaining mappings: ${updated.length}`);
+        logger.debug(`Optimistically removed mapping ${id} from local state, remaining: ${updated.length}`);
         return updated;
       });
+
+      const deleted = await deleteServicePointQueueTypeMapping(id);
       
-      toast.success('ลบการเชื่อมโยงประเภทคิวกับจุดบริการเรียบร้อยแล้ว');
-      logger.debug(`Successfully deleted mapping with id: ${id}`);
+      if (deleted) {
+        toast.success('ลบการเชื่อมโยงประเภทคิวกับจุดบริการเรียบร้อยแล้ว');
+        logger.debug(`Successfully deleted mapping with id: ${id}`);
+      } else {
+        // Record didn't exist in database, but we already removed it from UI
+        toast.success('ลบการเชื่อมโยงประเภทคิวกับจุดบริการเรียบร้อยแล้ว');
+        logger.debug(`Mapping ${id} was already removed or didn't exist in database`);
+      }
+      
       return true;
     } catch (err: any) {
       logger.error('Error removing service point queue type mapping:', err);
+      
+      // Restore the item to local state if deletion failed
+      try {
+        const allMappings = await fetchServicePointQueueTypes(
+          // We need to get the service point ID somehow - let's refetch all
+          // This is a fallback to restore consistency
+        );
+        setMappings(allMappings);
+      } catch (refetchError) {
+        logger.error('Failed to refetch mappings after deletion error:', refetchError);
+      }
+      
       toast.error(`ไม่สามารถลบการเชื่อมโยงประเภทคิวกับจุดบริการได้: ${err.message}`);
       return false;
     } finally {

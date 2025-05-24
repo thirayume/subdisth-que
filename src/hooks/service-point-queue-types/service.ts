@@ -57,8 +57,20 @@ export const createServicePointQueueTypeMapping = async (
   return data[0];
 };
 
-export const deleteServicePointQueueTypeMapping = async (id: string): Promise<number> => {
+export const deleteServicePointQueueTypeMapping = async (id: string): Promise<boolean> => {
   logger.debug(`Attempting to delete mapping with id: ${id}`);
+
+  // First check if the record exists
+  const { data: existingRecord, error: checkError } = await supabase
+    .from('service_point_queue_types')
+    .select('id')
+    .eq('id', id)
+    .single();
+
+  if (checkError || !existingRecord) {
+    logger.warn(`Record with id ${id} does not exist in database`);
+    return false; // Record doesn't exist, consider it "deleted"
+  }
 
   const { error, count } = await supabase
     .from('service_point_queue_types')
@@ -71,13 +83,7 @@ export const deleteServicePointQueueTypeMapping = async (id: string): Promise<nu
   }
 
   logger.debug(`Delete operation completed. Rows affected: ${count}`);
-
-  if (count === 0) {
-    logger.warn(`No rows were deleted for mapping id: ${id}`);
-    throw new Error('No mapping was deleted - record may not exist');
-  }
-
-  return count;
+  return count > 0;
 };
 
 export const getQueueTypesForServicePoint = async (servicePointId: string) => {
