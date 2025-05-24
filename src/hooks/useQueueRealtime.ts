@@ -9,13 +9,16 @@ interface UseQueueRealtimeOptions {
   onQueueChange?: () => void;
   servicePointId?: string;
   channelName?: string;
+  enabled?: boolean;
 }
 
 export const useQueueRealtime = (options: UseQueueRealtimeOptions = {}) => {
-  const { onQueueChange, servicePointId, channelName = 'queue-realtime' } = options;
+  const { onQueueChange, servicePointId, channelName = 'queue-realtime', enabled = true } = options;
   const channelRef = useRef<any>(null);
 
   useEffect(() => {
+    if (!enabled) return;
+
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
     }
@@ -59,7 +62,7 @@ export const useQueueRealtime = (options: UseQueueRealtimeOptions = {}) => {
         channelRef.current = null;
       }
     };
-  }, [servicePointId, channelName, onQueueChange]);
+  }, [servicePointId, channelName, onQueueChange, enabled]);
 
   return {
     cleanup: () => {

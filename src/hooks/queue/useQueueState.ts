@@ -17,7 +17,7 @@ export const useQueueState = () => {
   const getTodayDate = () => new Date().toISOString().slice(0,10);
 
   // Fetch all queues for today
-  const fetchQueues = async () => {
+  const fetchQueues = React.useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -36,11 +36,13 @@ export const useQueueState = () => {
         throw result.error;
       }
 
-      setQueues((result.data || []).map(item => ({
+      const typedData = (result.data || []).map(item => ({
         ...item,
         type: item.type as QueueTypeEnum,
         status: item.status as QueueStatus
-      })));
+      }));
+
+      setQueues(typedData);
       
       logger.info(`Fetched ${result.data?.length || 0} queues for ${getTodayDate()} from database`);
     } catch (err: unknown) {
@@ -50,7 +52,7 @@ export const useQueueState = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Get queues by status for today
   const getQueuesByStatus = async (status: QueueStatus | QueueStatus[]) => {
@@ -150,9 +152,11 @@ export const useQueueState = () => {
 
   // Update a queue in state
   const updateQueueInState = React.useCallback((updatedQueue: Queue) => {
-    setQueues(prevQueues => 
-      prevQueues.map(queue => queue.id === updatedQueue.id ? updatedQueue : queue)
-    );
+    setQueues(prevQueues => {
+      const updated = prevQueues.map(queue => queue.id === updatedQueue.id ? updatedQueue : queue);
+      logger.debug(`Updated queue ${updatedQueue.id} in state`);
+      return updated;
+    });
   }, []);
 
   // Initial data fetch and set up real-time subscription
@@ -166,17 +170,18 @@ export const useQueueState = () => {
       .on('postgres_changes', 
           { event: '*', schema: 'public', table: 'queues' },
           (payload) => {
-            logger.debug('Queue change detected:', payload);
-            fetchQueues(); // Refresh all queues when changes occur
+            logger.debug('Queue change detected in useQueueState:', payload);
+            // Always refetch to ensure consistency
+            fetchQueues();
           }
       )
       .subscribe();
       
     return () => {
-      logger.debug('Unmounting, cleaning up subscription');
+      logger.debug('Unmounting useQueueState, cleaning up subscription');
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchQueues]);
 
   return {
     queues,

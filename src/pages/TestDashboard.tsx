@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -8,10 +8,11 @@ import { PlayCircle, Trash2, Settings, RefreshCw } from 'lucide-react';
 import { useServicePoints } from '@/hooks/useServicePoints';
 import { useQueueSimulation } from '@/hooks/queue/useQueueSimulation';
 import { useQueueRecalculation } from '@/hooks/queue/useQueueRecalculation';
+import { useQueues } from '@/hooks/useQueues';
+import { useQueueRealtime } from '@/hooks/useQueueRealtime';
 import QueueManagementContainer from '@/components/queue/management/QueueManagementContainer';
 import QueueBoardContainer from '@/components/queue/board/QueueBoardContainer';
 import PharmacyQueuePanel from '@/components/test/PharmacyQueuePanel';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createLogger } from '@/utils/logger';
 
@@ -21,11 +22,28 @@ const TestDashboard = () => {
   const { servicePoints } = useServicePoints();
   const { simulateQueues, clearTestQueues } = useQueueSimulation();
   const { recalculateAllQueues } = useQueueRecalculation();
+  const { fetchQueues } = useQueues();
   
   // Auto-assign first 3 service points for pharmacy panels
   const enabledServicePoints = servicePoints.filter(sp => sp.enabled);
   const [selectedServicePoints, setSelectedServicePoints] = useState<string[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Force refresh function
+  const forceRefresh = useCallback(() => {
+    logger.debug('Forcing refresh of all components');
+    setRefreshKey(prev => prev + 1);
+    fetchQueues();
+  }, [fetchQueues]);
+
+  // Set up centralized real-time subscription
+  useQueueRealtime({
+    channelName: 'test-dashboard-realtime',
+    onQueueChange: () => {
+      logger.debug('Queue change detected, refreshing dashboard');
+      forceRefresh();
+    }
+  });
 
   // Load saved service point selections from localStorage
   useEffect(() => {
@@ -47,37 +65,6 @@ const TestDashboard = () => {
     }
   }, [enabledServicePoints]);
 
-  // Set up real-time subscription for queue changes
-  useEffect(() => {
-    logger.info('Setting up real-time subscription for queue changes');
-    
-    const channel = supabase
-      .channel('test-dashboard-queue-changes')
-      .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'queues' },
-          (payload) => {
-            logger.debug('Queue change detected in test dashboard:', payload);
-            // Force refresh of all pharmacy panels
-            setRefreshKey(prev => prev + 1);
-            
-            // Show toast for queue operations
-            if (payload.eventType === 'INSERT') {
-              toast.success('คิวใหม่ถูกสร้างแล้ว');
-            } else if (payload.eventType === 'DELETE') {
-              toast.info('คิวถูกลบแล้ว');
-            } else if (payload.eventType === 'UPDATE') {
-              toast.info('คิวถูกอัปเดตแล้ว');
-            }
-          }
-      )
-      .subscribe();
-
-    return () => {
-      logger.debug('Cleaning up test dashboard subscription');
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
   const handleServicePointChange = (index: number, servicePointId: string) => {
     const updated = [...selectedServicePoints];
     updated[index] = servicePointId;
@@ -86,12 +73,17 @@ const TestDashboard = () => {
     // Save to localStorage
     localStorage.setItem('test-dashboard-service-points', JSON.stringify(updated));
     logger.debug(`Updated service point ${index} to:`, servicePointId);
+    
+    // Force refresh after service point change
+    setTimeout(() => forceRefresh(), 100);
   };
 
   const handleSimulate = async () => {
     try {
+      logger.info('Starting queue simulation');
       await simulateQueues(15);
-      // The real-time subscription will handle the UI updates
+      // Force refresh after simulation
+      setTimeout(() => forceRefresh(), 500);
       logger.info('Queue simulation completed');
     } catch (error) {
       logger.error('Error during simulation:', error);
@@ -100,8 +92,10 @@ const TestDashboard = () => {
 
   const handleRecalculate = async () => {
     try {
+      logger.info('Starting queue recalculation');
       await recalculateAllQueues();
-      // The real-time subscription will handle the UI updates
+      // Force refresh after recalculation
+      setTimeout(() => forceRefresh(), 500);
       logger.info('Queue recalculation completed');
     } catch (error) {
       logger.error('Error during recalculation:', error);
@@ -110,8 +104,10 @@ const TestDashboard = () => {
 
   const handleClearQueues = async () => {
     try {
+      logger.info('Starting queue clearing');
       await clearTestQueues();
-      // The real-time subscription will handle the UI updates
+      // Force refresh after clearing
+      setTimeout(() => forceRefresh(), 500);
       logger.info('Test queues cleared');
     } catch (error) {
       logger.error('Error clearing test queues:', error);
@@ -150,6 +146,16 @@ const TestDashboard = () => {
             >
               <Trash2 className="w-4 h-4" />
               ลบคิวทดสอบ
+            </Button>
+
+            <Button 
+              variant="outline"
+              onClick={forceRefresh}
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="w-3 h-3" />
+              รีเฟรช
             </Button>
           </div>
         </div>
@@ -211,9 +217,10 @@ const TestDashboard = () => {
               <div key={index} className="h-1/3 border-b last:border-b-0 overflow-hidden">
                 {selectedServicePoints[index] ? (
                   <PharmacyQueuePanel 
-                    key={`panel-${index}-${selectedServicePoints[index]}-${refreshKey}`}
+                    key={`panel-${index}-${selectedServicePoints[index]}`}
                     servicePointId={selectedServicePoints[index]}
                     title={`จุดบริการ ${index + 1}`}
+                    refreshTrigger={refreshKey}
                   />
                 ) : (
                   <div className="h-full flex items-center justify-center bg-gray-50">
