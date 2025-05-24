@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,6 +5,7 @@ import { useQueues } from '@/hooks/useQueues';
 import { usePatients } from '@/hooks/usePatients';
 import { useQueueTypes } from '@/hooks/useQueueTypes';
 import { useServicePoints } from '@/hooks/useServicePoints';
+import { useServicePointQueueTypes } from '@/hooks/useServicePointQueueTypes';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('useQueueSimulation');
@@ -15,6 +15,7 @@ export const useQueueSimulation = () => {
   const { patients } = usePatients();
   const { queueTypes } = useQueueTypes();
   const { servicePoints } = useServicePoints();
+  const { mappings } = useServicePointQueueTypes();
 
   const simulateQueues = useCallback(async (count: number = 15) => {
     try {
@@ -42,7 +43,16 @@ export const useQueueSimulation = () => {
         return;
       }
 
+      // Filter enabled service points
+      const enabledServicePoints = servicePoints.filter(sp => sp.enabled);
+      if (enabledServicePoints.length === 0) {
+        toast.error('ไม่พบจุดบริการที่เปิดใช้งานสำหรับการสร้างคิว');
+        logger.error('No enabled service points available');
+        return;
+      }
+
       logger.info(`Using ${enabledQueueTypes.length} enabled queue types:`, enabledQueueTypes.map(qt => qt.code));
+      logger.info(`Using ${enabledServicePoints.length} enabled service points:`, enabledServicePoints.map(sp => sp.code));
 
       // Get next queue numbers for each queue type
       const queueNumbers: Record<string, number> = {};
@@ -66,12 +76,32 @@ export const useQueueSimulation = () => {
         }
       }
 
-      // Create test queues
+      // Helper function to find service point for queue type
+      const findServicePointForQueueType = (queueType: any) => {
+        // Find service points that can handle this queue type
+        const compatibleServicePoints = mappings
+          .filter(mapping => mapping.queue_type_id === queueType.id)
+          .map(mapping => enabledServicePoints.find(sp => sp.id === mapping.service_point_id))
+          .filter(Boolean);
+
+        if (compatibleServicePoints.length > 0) {
+          // Use simple round-robin assignment
+          const index = Math.floor(Math.random() * compatibleServicePoints.length);
+          return compatibleServicePoints[index];
+        }
+
+        // Fallback: assign to first available service point
+        logger.warn(`No compatible service points found for queue type ${queueType.code}, using fallback`);
+        return enabledServicePoints[0];
+      };
+
+      // Create test queues with service point assignment
       const newQueues = [];
       for (let i = 0; i < count; i++) {
         // Distribute queue types evenly among enabled types
         const queueType = enabledQueueTypes[i % enabledQueueTypes.length];
         const patient = patients[i % patients.length];
+        const assignedServicePoint = findServicePointForQueueType(queueType);
 
         const queueData = {
           patient_id: patient.id,
@@ -79,11 +109,12 @@ export const useQueueSimulation = () => {
           number: queueNumbers[queueType.code]++,
           status: 'WAITING',
           queue_date: new Date().toISOString().split('T')[0],
-          notes: `คิวทดสอบ #${i + 1} - สร้างโดยระบบ`
+          service_point_id: assignedServicePoint?.id || null,
+          notes: `คิวทดสอบ #${i + 1} - สร้างโดยระบบ${assignedServicePoint ? ` (${assignedServicePoint.name})` : ''}`
         };
 
         newQueues.push(queueData);
-        logger.debug(`Created queue data:`, queueData);
+        logger.debug(`Created queue data with service point:`, queueData);
       }
 
       // Insert all queues with better error handling
@@ -103,8 +134,15 @@ export const useQueueSimulation = () => {
         return;
       }
 
-      logger.info(`Successfully created ${data.length} simulation queues`);
-      toast.success(`สร้างคิวทดสอบเรียบร้อย ${data.length} คิว`);
+      const assignedCount = data.filter(q => q.service_point_id).length;
+      const unassignedCount = data.length - assignedCount;
+
+      logger.info(`Successfully created ${data.length} simulation queues (${assignedCount} assigned, ${unassignedCount} unassigned)`);
+      toast.success(`สร้างคิวทดสอบเรียบร้อย ${data.length} คิว (มอบหมายแล้ว ${assignedCount} คิว)`);
+
+      if (unassignedCount > 0) {
+        toast.info(`มีคิวที่ยังไม่ได้มอบหมายจุดบริการ ${unassignedCount} คิว - ใช้การคำนวณใหม่เพื่อมอบหมาย`);
+      }
 
       // Refresh queue data
       await fetchQueues();
@@ -114,7 +152,7 @@ export const useQueueSimulation = () => {
       const errorMessage = error instanceof Error ? error.message : 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ';
       toast.error(`เกิดข้อผิดพลาดในการสร้างคิวทดสอบ: ${errorMessage}`);
     }
-  }, [patients, queueTypes, servicePoints, fetchQueues]);
+  }, [patients, queueTypes, servicePoints, mappings, fetchQueues]);
 
   const clearTestQueues = useCallback(async () => {
     try {

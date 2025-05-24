@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { PlayCircle, Trash2, Settings } from 'lucide-react';
+import { PlayCircle, Trash2, Settings, RefreshCw } from 'lucide-react';
 import { useServicePoints } from '@/hooks/useServicePoints';
 import { useQueueSimulation } from '@/hooks/queue/useQueueSimulation';
+import { useQueueRecalculation } from '@/hooks/queue/useQueueRecalculation';
 import QueueManagementContainer from '@/components/queue/management/QueueManagementContainer';
 import QueueBoardContainer from '@/components/queue/board/QueueBoardContainer';
 import PharmacyQueuePanel from '@/components/test/PharmacyQueuePanel';
@@ -14,6 +15,7 @@ import PharmacyQueuePanel from '@/components/test/PharmacyQueuePanel';
 const TestDashboard = () => {
   const { servicePoints } = useServicePoints();
   const { simulateQueues, clearTestQueues } = useQueueSimulation();
+  const { recalculateAllQueues } = useQueueRecalculation();
   
   // Auto-assign first 3 service points for pharmacy panels
   const enabledServicePoints = servicePoints.filter(sp => sp.enabled);
@@ -36,6 +38,10 @@ const TestDashboard = () => {
     await simulateQueues(15);
   };
 
+  const handleRecalculate = async () => {
+    await recalculateAllQueues();
+  };
+
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gray-50">
       {/* Header */}
@@ -50,6 +56,15 @@ const TestDashboard = () => {
             >
               <PlayCircle className="w-4 h-4" />
               สร้างคิวทดสอบ (15 คิว)
+            </Button>
+            
+            <Button 
+              onClick={handleRecalculate}
+              variant="outline"
+              className="flex items-center gap-2 text-green-600 border-green-200 hover:bg-green-50"
+            >
+              <RefreshCw className="w-4 h-4" />
+              คำนวณการมอบหมายใหม่
             </Button>
             
             <Button 

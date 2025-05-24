@@ -79,7 +79,11 @@ export const useQueueManagement = () => {
 
     // Find queue type for this queue
     const queueType = queueTypes.find(qt => qt.code === queue.type);
-    if (!queueType) return null;
+    if (!queueType) {
+      logger.warn(`Queue type not found for queue ${queue.id}: ${queue.type}`);
+      // Fallback: suggest first available service point
+      return servicePoints.find(sp => sp.enabled) || null;
+    }
 
     // Find service points that can handle this queue type
     const compatibleServicePoints = servicePointCapabilities
@@ -87,7 +91,13 @@ export const useQueueManagement = () => {
       .map(cap => servicePoints.find(sp => sp.id === cap.servicePointId))
       .filter(Boolean);
 
-    // Return the first compatible service point, or null if none found
+    if (compatibleServicePoints.length === 0) {
+      logger.warn(`No compatible service points found for queue type ${queueType.code}, suggesting fallback`);
+      // Fallback: suggest first available service point
+      return servicePoints.find(sp => sp.enabled) || null;
+    }
+
+    // Return the first compatible service point
     return compatibleServicePoints[0] || null;
   }, [servicePoints, queueTypes, servicePointCapabilities]);
 
@@ -105,12 +115,22 @@ export const useQueueManagement = () => {
     const completed = queues.filter(q => q.status === 'COMPLETED');
     const skipped = queues.filter(q => q.status === 'SKIPPED');
     
+    // Count assigned vs unassigned queues
+    const assignedWaiting = waiting.filter(q => q.service_point_id);
+    const unassignedWaiting = waiting.filter(q => !q.service_point_id);
+    
     logger.debug('Showing all queues (no service point filtering):', {
       totalWaiting: waiting.length,
+      assignedWaiting: assignedWaiting.length,
+      unassignedWaiting: unassignedWaiting.length,
       totalActive: active.length,
       totalCompleted: completed.length,
       totalSkipped: skipped.length
     });
+    
+    if (unassignedWaiting.length > 0) {
+      logger.info(`Found ${unassignedWaiting.length} unassigned waiting queues`);
+    }
     
     // Apply sorting algorithm to waiting queues (but show all)
     if (sortQueues) {
@@ -161,6 +181,7 @@ export const useQueueManagement = () => {
       const suggestedServicePoint = getIntelligentServicePointSuggestion(queue);
       if (suggestedServicePoint) {
         targetServicePointId = suggestedServicePoint.id;
+        logger.info(`Auto-assigning queue ${queue.id} to suggested service point ${suggestedServicePoint.code}`);
       }
     }
     
