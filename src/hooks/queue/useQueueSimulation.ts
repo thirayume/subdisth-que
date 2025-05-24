@@ -5,7 +5,7 @@ import { useQueues } from '@/hooks/useQueues';
 import { usePatients } from '@/hooks/usePatients';
 import { useQueueTypes } from '@/hooks/useQueueTypes';
 import { useServicePoints } from '@/hooks/useServicePoints';
-import { useServicePointQueueTypes } from '@/hooks/useServicePointQueueTypes';
+import { useAllServicePointQueueTypes } from '@/hooks/useServicePointQueueTypes';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('useQueueSimulation');
@@ -15,7 +15,7 @@ export const useQueueSimulation = () => {
   const { patients } = usePatients();
   const { queueTypes } = useQueueTypes();
   const { servicePoints } = useServicePoints();
-  const { mappings } = useServicePointQueueTypes();
+  const { mappings } = useAllServicePointQueueTypes();
 
   const simulateQueues = useCallback(async (count: number = 15) => {
     try {
@@ -53,6 +53,7 @@ export const useQueueSimulation = () => {
 
       logger.info(`Using ${enabledQueueTypes.length} enabled queue types:`, enabledQueueTypes.map(qt => qt.code));
       logger.info(`Using ${enabledServicePoints.length} enabled service points:`, enabledServicePoints.map(sp => sp.code));
+      logger.info(`Using ${mappings.length} service point mappings`);
 
       // Get next queue numbers for each queue type
       const queueNumbers: Record<string, number> = {};
@@ -78,7 +79,7 @@ export const useQueueSimulation = () => {
 
       // Helper function to find service point for queue type
       const findServicePointForQueueType = (queueType: any) => {
-        // Find service points that can handle this queue type
+        // Find service points that can handle this queue type using mappings
         const compatibleServicePoints = mappings
           .filter(mapping => mapping.queue_type_id === queueType.id)
           .map(mapping => enabledServicePoints.find(sp => sp.id === mapping.service_point_id))
@@ -87,11 +88,12 @@ export const useQueueSimulation = () => {
         if (compatibleServicePoints.length > 0) {
           // Use simple round-robin assignment
           const index = Math.floor(Math.random() * compatibleServicePoints.length);
+          logger.debug(`Found ${compatibleServicePoints.length} compatible service points for ${queueType.code}, selecting:`, compatibleServicePoints[index]?.code);
           return compatibleServicePoints[index];
         }
 
         // Fallback: assign to first available service point
-        logger.warn(`No compatible service points found for queue type ${queueType.code}, using fallback`);
+        logger.warn(`No compatible service points found for queue type ${queueType.code}, using fallback:`, enabledServicePoints[0]?.code);
         return enabledServicePoints[0];
       };
 

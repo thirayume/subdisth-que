@@ -26,6 +26,27 @@ export const fetchServicePointQueueTypes = async (servicePointId: string): Promi
   return data || [];
 };
 
+// New function to fetch ALL mappings across all service points
+export const fetchAllServicePointQueueTypes = async (): Promise<ServicePointQueueType[]> => {
+  logger.debug('Fetching all service point queue type mappings');
+
+  const { data, error } = await supabase
+    .from('service_point_queue_types')
+    .select(`
+      *,
+      queue_type:queue_types(id, name, code),
+      service_point:service_points(id, name, code)
+    `);
+
+  if (error) {
+    logger.error('Supabase error during fetch all:', error);
+    throw error;
+  }
+
+  logger.debug(`Successfully fetched ${data?.length || 0} total mappings:`, data);
+  return data || [];
+};
+
 export const createServicePointQueueTypeMapping = async (
   servicePointId: string, 
   queueTypeId: string

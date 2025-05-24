@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 import { createLogger } from '@/utils/logger';
 import { ServicePointQueueType } from '@/integrations/supabase/schema';
@@ -126,6 +125,34 @@ export const createGetServicePointsForQueueTypeAction = () => {
     } catch (err: any) {
       logger.error('Error fetching service points for queue type:', err);
       toast.error('ไม่สามารถดึงข้อมูลจุดบริการสำหรับประเภทคิวได้');
+      return [];
+    }
+  };
+};
+
+// New action to fetch ALL mappings across all service points
+export const createFetchAllMappingsAction = () => {
+  return async (): Promise<ServicePointQueueType[]> => {
+    try {
+      logger.debug('Fetching all service point queue type mappings');
+      
+      const { data, error } = await supabase
+        .from('service_point_queue_types')
+        .select(`
+          *,
+          queue_type:queue_types(id, name, code),
+          service_point:service_points(id, name, code)
+        `);
+
+      if (error) {
+        logger.error('Supabase error during fetch all mappings:', error);
+        throw error;
+      }
+
+      logger.debug(`Successfully fetched ${data?.length || 0} total mappings:`, data);
+      return data || [];
+    } catch (err: any) {
+      logger.error('Error fetching all service point queue type mappings:', err);
       return [];
     }
   };
