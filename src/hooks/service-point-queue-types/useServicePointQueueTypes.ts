@@ -19,7 +19,7 @@ export const useServicePointQueueTypes = (servicePointId?: string): UseServicePo
   // Create action functions
   const fetchMappings = createFetchMappingsAction(servicePointId, setMappings, setLoading, setError);
   const addMapping = createAddMappingAction(setMappings);
-  const removeMapping = createRemoveMappingAction(setMappings, setDeletingId);
+  const removeMapping = createRemoveMappingAction(servicePointId, setMappings, setDeletingId);
   const getQueueTypesForServicePoint = createGetQueueTypesForServicePointAction();
   const getServicePointsForQueueType = createGetServicePointsForQueueTypeAction();
 

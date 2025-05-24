@@ -59,6 +59,7 @@ export const createAddMappingAction = (
 };
 
 export const createRemoveMappingAction = (
+  servicePointId: string | undefined,
   setMappings: (updater: (prev: ServicePointQueueType[]) => ServicePointQueueType[]) => void,
   setDeletingId: (id: string | null) => void
 ) => {
@@ -89,14 +90,13 @@ export const createRemoveMappingAction = (
       logger.error('Error removing service point queue type mapping:', err);
       
       // Restore the item to local state if deletion failed
-      try {
-        const allMappings = await fetchServicePointQueueTypes(
-          // We need to get the service point ID somehow - let's refetch all
-          // This is a fallback to restore consistency
-        );
-        setMappings(allMappings);
-      } catch (refetchError) {
-        logger.error('Failed to refetch mappings after deletion error:', refetchError);
+      if (servicePointId) {
+        try {
+          const allMappings = await fetchServicePointQueueTypes(servicePointId);
+          setMappings(() => allMappings);
+        } catch (refetchError) {
+          logger.error('Failed to refetch mappings after deletion error:', refetchError);
+        }
       }
       
       toast.error(`ไม่สามารถลบการเชื่อมโยงประเภทคิวกับจุดบริการได้: ${err.message}`);
