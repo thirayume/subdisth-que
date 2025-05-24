@@ -23,7 +23,7 @@ export const useQueueAlgorithm = () => {
           .select('value')
           .eq('category', 'queue')
           .eq('key', 'queue_algorithm')
-          .maybeSingle(); // Use maybeSingle instead of single to handle no results
+          .maybeSingle();
           
         if (error) {
           logger.error('Error fetching queue algorithm from database:', error);
@@ -36,25 +36,26 @@ export const useQueueAlgorithm = () => {
         }
         
         if (data?.value) {
-          // Handle JSON value from database with proper type conversion
           let algorithm: QueueAlgorithmType;
           
+          // Fix: Handle both string and JSON values properly
           if (typeof data.value === 'string') {
-            // If it's a JSON string, parse it
-            try {
-              algorithm = JSON.parse(data.value) as QueueAlgorithmType;
-            } catch (parseError) {
-              logger.error('Error parsing queue algorithm JSON:', parseError);
-              algorithm = QueueAlgorithmType.FIFO;
-            }
+            // If it's already a string, use it directly (no JSON parsing needed)
+            algorithm = data.value as QueueAlgorithmType;
           } else {
-            // If it's already a value, convert through unknown for type safety
+            // If it's a JSON object, extract the value
             algorithm = data.value as unknown as QueueAlgorithmType;
           }
           
-          setQueueAlgorithm(algorithm);
-          // Update localStorage as well
-          localStorage.setItem('queue_algorithm', algorithm);
+          // Validate that the algorithm is a valid enum value
+          if (Object.values(QueueAlgorithmType).includes(algorithm)) {
+            setQueueAlgorithm(algorithm);
+            localStorage.setItem('queue_algorithm', algorithm);
+          } else {
+            logger.warn('Invalid algorithm value from database, using default FIFO');
+            setQueueAlgorithm(QueueAlgorithmType.FIFO);
+            localStorage.setItem('queue_algorithm', QueueAlgorithmType.FIFO);
+          }
         } else {
           // No data found, use default FIFO algorithm
           logger.info('No queue algorithm setting found, using default FIFO');
@@ -128,13 +129,20 @@ export const useQueueAlgorithm = () => {
     servicePointCapabilities: ServicePointCapability[] = [],
     selectedServicePointId?: string
   ): Queue[] => {
-    return sortQueuesByAlgorithm(
+    logger.debug('Sorting queues with algorithm:', queueAlgorithm, 'for service point:', selectedServicePointId);
+    logger.debug('Service point capabilities:', servicePointCapabilities);
+    logger.debug('Queue types available:', queueTypes);
+    
+    const result = sortQueuesByAlgorithm(
       queuesToSort, 
       queueTypes, 
       queueAlgorithm, 
       servicePointCapabilities,
       selectedServicePointId
-    ) as Queue[];  // Type assertion to ensure compatibility
+    ) as Queue[];
+    
+    logger.debug('Sorted queues result:', result);
+    return result;
   };
 
   return {

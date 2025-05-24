@@ -1,4 +1,8 @@
+
 import { QueueTypeEnum, QueueStatus, Queue as SchemaQueue } from '@/integrations/supabase/schema';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('QueueAlgorithms');
 
 export enum QueueAlgorithmType {
   FIFO = 'fifo',
@@ -51,6 +55,13 @@ export const sortQueuesByAlgorithm = (
   servicePointCapabilities: ServicePointCapability[] = [],
   selectedServicePointId?: string
 ): SchemaQueue[] => {
+  logger.debug('sortQueuesByAlgorithm called with:', {
+    queuesCount: queues.length,
+    algorithm,
+    selectedServicePointId,
+    servicePointCapabilities
+  });
+  
   // Filter queues by service point capabilities if specified
   let filteredQueues = [...queues];
   
@@ -60,15 +71,38 @@ export const sortQueuesByAlgorithm = (
       cap => cap.servicePointId === selectedServicePointId
     );
     
+    logger.debug('Found capability for service point:', capability);
+    
     // If we found capabilities and they have queue types
     if (capability && capability.queueTypeIds.length > 0) {
       // Filter queues to only include those with types the service point can handle
       filteredQueues = filteredQueues.filter(queue => {
         // Find the queue type object for this queue
         const queueType = queueTypes.find(type => type.code === queue.type);
-        return queueType && capability.queueTypeIds.includes(queueType.id);
+        const canHandle = queueType && capability.queueTypeIds.includes(queueType.id);
+        
+        logger.debug('Queue filtering:', {
+          queueId: queue.id,
+          queueNumber: queue.number,
+          queueType: queue.type,
+          queueTypeId: queueType?.id,
+          canHandle,
+          capabilityQueueTypeIds: capability.queueTypeIds
+        });
+        
+        return canHandle;
       });
+      
+      logger.debug('Filtered queues by service point capability:', {
+        originalCount: queues.length,
+        filteredCount: filteredQueues.length,
+        servicePointId: selectedServicePointId
+      });
+    } else {
+      logger.warn('No capabilities found for service point or no queue types configured:', selectedServicePointId);
     }
+  } else {
+    logger.debug('No service point selected or no capabilities configured, showing all queues');
   }
   
   // Create a map for quick lookup of queue type priorities

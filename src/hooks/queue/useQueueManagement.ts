@@ -8,6 +8,9 @@ import { useServicePointContext } from '@/contexts/ServicePointContext';
 import { useServicePointQueueTypes } from '@/hooks/useServicePointQueueTypes';
 import { useQueueTypes } from '@/hooks/useQueueTypes';
 import { ServicePointCapability } from '@/utils/queueAlgorithms';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('useQueueManagement');
 
 export const useQueueManagement = () => {
   const { 
@@ -22,13 +25,15 @@ export const useQueueManagement = () => {
   } = useQueues();
   
   const { patients } = usePatients();
-  const { mappings } = useServicePointQueueTypes();
   const { queueTypes } = useQueueTypes();
   const { 
     selectedServicePoint,
     setSelectedServicePoint,
     servicePoints
   } = useServicePointContext();
+  
+  // Get mappings for all service points, not just the selected one
+  const { mappings } = useServicePointQueueTypes();
   
   const [waitingQueues, setWaitingQueues] = useState<Queue[]>([]);
   const [activeQueues, setActiveQueues] = useState<Queue[]>([]);
@@ -38,6 +43,8 @@ export const useQueueManagement = () => {
   
   // Extract service point capabilities for queue algorithm
   useEffect(() => {
+    logger.debug('Processing mappings for service point capabilities:', mappings);
+    
     if (mappings.length > 0) {
       // Group mappings by service point ID
       const capabilities: Record<string, string[]> = {};
@@ -55,7 +62,11 @@ export const useQueueManagement = () => {
         queueTypeIds
       }));
       
+      logger.debug('Service point capabilities processed:', capabilitiesArray);
       setServicePointCapabilities(capabilitiesArray);
+    } else {
+      logger.debug('No mappings found, clearing capabilities');
+      setServicePointCapabilities([]);
     }
   }, [mappings]);
 
@@ -67,9 +78,19 @@ export const useQueueManagement = () => {
       const completed = queues.filter(q => q.status === 'COMPLETED');
       const skipped = queues.filter(q => q.status === 'SKIPPED');
       
+      logger.debug('Queue filtering for service point:', selectedServicePoint?.id, {
+        totalWaiting: waiting.length,
+        totalActive: active.length,
+        servicePointCapabilities
+      });
+      
       // Apply sorting algorithm to waiting queues based on service point selection
       if (sortQueues) {
         const sortedQueues = sortQueues(waiting, servicePointCapabilities, selectedServicePoint?.id);
+        logger.debug('Sorted waiting queues for service point:', selectedServicePoint?.id, {
+          originalCount: waiting.length,
+          sortedCount: sortedQueues.length
+        });
         setWaitingQueues(sortedQueues);
       } else {
         setWaitingQueues(waiting);
@@ -140,6 +161,7 @@ export const useQueueManagement = () => {
   const handleServicePointChange = (value: string) => {
     const servicePoint = servicePoints.find(sp => sp.id === value);
     if (servicePoint) {
+      logger.debug('Service point changed to:', servicePoint);
       setSelectedServicePoint(servicePoint);
     }
   };
