@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -24,95 +24,136 @@ const TestDashboard = () => {
   const { recalculateAllQueues } = useQueueRecalculation();
   const { fetchQueues } = useQueues();
   
-  // Auto-assign first 3 service points for pharmacy panels
-  const enabledServicePoints = servicePoints.filter(sp => sp.enabled);
+  // State management with better persistence
   const [selectedServicePoints, setSelectedServicePoints] = useState<string[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Force refresh function
+  // Memoize enabled service points to prevent unnecessary re-renders
+  const enabledServicePoints = useMemo(() => {
+    return servicePoints.filter(sp => sp.enabled);
+  }, [servicePoints]);
+
+  // Centralized refresh function
   const forceRefresh = useCallback(() => {
     logger.debug('Forcing refresh of all components');
-    setRefreshKey(prev => prev + 1);
+    setRefreshKey(prev => {
+      const newKey = prev + 1;
+      logger.debug('New refresh key:', newKey);
+      return newKey;
+    });
     fetchQueues();
   }, [fetchQueues]);
 
   // Set up centralized real-time subscription
   useQueueRealtime({
     channelName: 'test-dashboard-realtime',
-    onQueueChange: () => {
+    onQueueChange: useCallback(() => {
       logger.debug('Queue change detected, refreshing dashboard');
       forceRefresh();
-    }
+    }, [forceRefresh])
   });
 
-  // Load saved service point selections from localStorage
+  // Initialize service point selections
   useEffect(() => {
-    const savedSelections = localStorage.getItem('test-dashboard-service-points');
-    if (savedSelections) {
-      try {
-        const parsed = JSON.parse(savedSelections);
-        setSelectedServicePoints(parsed);
-        logger.debug('Loaded saved service point selections:', parsed);
-      } catch (error) {
-        logger.warn('Failed to parse saved service points:', error);
-      }
-    } else if (enabledServicePoints.length > 0 && selectedServicePoints.length === 0) {
-      // Auto-assign first 3 service points if no saved selections
-      const autoAssigned = enabledServicePoints.slice(0, 3).map(sp => sp.id);
-      setSelectedServicePoints(autoAssigned);
-      localStorage.setItem('test-dashboard-service-points', JSON.stringify(autoAssigned));
-      logger.debug('Auto-assigned service points:', autoAssigned);
-    }
-  }, [enabledServicePoints]);
+    if (enabledServicePoints.length > 0 && !isInitialized) {
+      const savedSelections = localStorage.getItem('test-dashboard-service-points');
+      let newSelections: string[] = [];
 
-  const handleServicePointChange = (index: number, servicePointId: string) => {
-    const updated = [...selectedServicePoints];
-    updated[index] = servicePointId;
-    setSelectedServicePoints(updated);
-    
-    // Save to localStorage
-    localStorage.setItem('test-dashboard-service-points', JSON.stringify(updated));
-    logger.debug(`Updated service point ${index} to:`, servicePointId);
-    
+      if (savedSelections) {
+        try {
+          const parsed = JSON.parse(savedSelections);
+          // Validate that saved service points still exist and are enabled
+          newSelections = parsed.filter((id: string) => 
+            enabledServicePoints.some(sp => sp.id === id)
+          );
+          logger.debug('Loaded saved service point selections:', newSelections);
+        } catch (error) {
+          logger.warn('Failed to parse saved service points:', error);
+        }
+      }
+
+      // If we don't have 3 valid selections, auto-assign from available
+      while (newSelections.length < 3 && newSelections.length < enabledServicePoints.length) {
+        const availableServicePoints = enabledServicePoints.filter(
+          sp => !newSelections.includes(sp.id)
+        );
+        if (availableServicePoints.length > 0) {
+          newSelections.push(availableServicePoints[0].id);
+        } else {
+          break;
+        }
+      }
+
+      setSelectedServicePoints(newSelections);
+      localStorage.setItem('test-dashboard-service-points', JSON.stringify(newSelections));
+      setIsInitialized(true);
+      logger.debug('Initialized service point selections:', newSelections);
+    }
+  }, [enabledServicePoints, isInitialized]);
+
+  // Handle service point changes
+  const handleServicePointChange = useCallback((index: number, servicePointId: string) => {
+    setSelectedServicePoints(prev => {
+      const updated = [...prev];
+      updated[index] = servicePointId;
+      
+      // Save to localStorage
+      localStorage.setItem('test-dashboard-service-points', JSON.stringify(updated));
+      logger.debug(`Updated service point ${index} to:`, servicePointId);
+      
+      return updated;
+    });
+
     // Force refresh after service point change
     setTimeout(() => forceRefresh(), 100);
-  };
+  }, [forceRefresh]);
 
-  const handleSimulate = async () => {
+  // Action handlers with proper error handling and refresh
+  const handleSimulate = useCallback(async () => {
     try {
       logger.info('Starting queue simulation');
+      toast.loading('กำลังสร้างคิวทดสอบ...', { id: 'simulate' });
       await simulateQueues(15);
+      toast.success('สร้างคิวทดสอบเรียบร้อยแล้ว', { id: 'simulate' });
       // Force refresh after simulation
       setTimeout(() => forceRefresh(), 500);
       logger.info('Queue simulation completed');
     } catch (error) {
       logger.error('Error during simulation:', error);
+      toast.error('เกิดข้อผิดพลาดในการสร้างคิวทดสอบ', { id: 'simulate' });
     }
-  };
+  }, [simulateQueues, forceRefresh]);
 
-  const handleRecalculate = async () => {
+  const handleRecalculate = useCallback(async () => {
     try {
       logger.info('Starting queue recalculation');
+      toast.loading('กำลังคำนวณการมอบหมายใหม่...', { id: 'recalculate' });
       await recalculateAllQueues();
+      toast.success('คำนวณการมอบหมายใหม่เรียบร้อยแล้ว', { id: 'recalculate' });
       // Force refresh after recalculation
       setTimeout(() => forceRefresh(), 500);
       logger.info('Queue recalculation completed');
     } catch (error) {
       logger.error('Error during recalculation:', error);
+      toast.error('เกิดข้อผิดพลาดในการคำนวณการมอบหมายใหม่', { id: 'recalculate' });
     }
-  };
+  }, [recalculateAllQueues, forceRefresh]);
 
-  const handleClearQueues = async () => {
+  const handleClearQueues = useCallback(async () => {
     try {
       logger.info('Starting queue clearing');
+      toast.loading('กำลังลบคิวทดสอบ...', { id: 'clear' });
       await clearTestQueues();
+      toast.success('ลบคิวทดสอบเรียบร้อยแล้ว', { id: 'clear' });
       // Force refresh after clearing
       setTimeout(() => forceRefresh(), 500);
       logger.info('Test queues cleared');
     } catch (error) {
       logger.error('Error clearing test queues:', error);
+      toast.error('เกิดข้อผิดพลาดในการลบคิวทดสอบ', { id: 'clear' });
     }
-  };
+  }, [clearTestQueues, forceRefresh]);
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gray-50">
@@ -217,7 +258,7 @@ const TestDashboard = () => {
               <div key={index} className="h-1/3 border-b last:border-b-0 overflow-hidden">
                 {selectedServicePoints[index] ? (
                   <PharmacyQueuePanel 
-                    key={`panel-${index}-${selectedServicePoints[index]}`}
+                    key={`panel-${index}-${selectedServicePoints[index]}-${refreshKey}`}
                     servicePointId={selectedServicePoints[index]}
                     title={`จุดบริการ ${index + 1}`}
                     refreshTrigger={refreshKey}

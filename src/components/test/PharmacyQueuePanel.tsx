@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -30,24 +30,38 @@ const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
     transferQueueToServicePoint,
     putQueueOnHold,
     returnSkippedQueueToWaiting,
-    fetchQueues
+    fetchQueues,
+    loading
   } = useQueues();
   
   const { patients } = usePatients();
   const { servicePoints } = useServicePoints();
 
-  const selectedServicePoint = servicePoints.find(sp => sp.id === servicePointId);
+  // Memoize the selected service point to prevent unnecessary re-renders
+  const selectedServicePoint = useMemo(() => {
+    return servicePoints.find(sp => sp.id === servicePointId);
+  }, [servicePoints, servicePointId]);
 
-  // Force refresh when refreshTrigger changes
-  useEffect(() => {
+  // Stable refresh function
+  const refreshData = useCallback(async () => {
     if (refreshTrigger > 0) {
       logger.debug(`Refresh trigger fired for service point ${selectedServicePoint?.code}: ${refreshTrigger}`);
-      fetchQueues();
+      try {
+        await fetchQueues();
+        logger.debug(`Successfully refreshed data for service point ${selectedServicePoint?.code}`);
+      } catch (error) {
+        logger.error(`Error refreshing data for service point ${selectedServicePoint?.code}:`, error);
+      }
     }
   }, [refreshTrigger, fetchQueues, selectedServicePoint?.code]);
 
-  // Filter queues for the selected service point with detailed logging
-  const servicePointQueues = React.useMemo(() => {
+  // Handle refresh trigger changes
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
+
+  // Memoize filtered queues with detailed logging
+  const servicePointQueues = useMemo(() => {
     if (!selectedServicePoint) {
       logger.debug('No selected service point, returning empty array');
       return [];
@@ -58,51 +72,77 @@ const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
       totalQueues: queues.length,
       filteredQueues: filtered.length,
       servicePointId: selectedServicePoint.id,
-      queueDetails: filtered.map(q => ({ id: q.id, number: q.number, status: q.status, type: q.type }))
+      queueDetails: filtered.map(q => ({ 
+        id: q.id, 
+        number: q.number, 
+        status: q.status, 
+        type: q.type,
+        service_point_id: q.service_point_id 
+      }))
     });
     
     return filtered;
   }, [queues, selectedServicePoint]);
 
-  const waitingQueues = servicePointQueues.filter(q => q.status === 'WAITING');
-  const activeQueues = servicePointQueues.filter(q => q.status === 'ACTIVE');
-  const completedQueues = servicePointQueues.filter(q => q.status === 'COMPLETED');
+  // Memoize queue status groups
+  const { waitingQueues, activeQueues, completedQueues } = useMemo(() => {
+    return {
+      waitingQueues: servicePointQueues.filter(q => q.status === 'WAITING'),
+      activeQueues: servicePointQueues.filter(q => q.status === 'ACTIVE'),
+      completedQueues: servicePointQueues.filter(q => q.status === 'COMPLETED')
+    };
+  }, [servicePointQueues]);
 
   // Log queue counts for debugging
   useEffect(() => {
-    logger.debug(`Queue counts for ${selectedServicePoint?.code}:`, {
-      waiting: waitingQueues.length,
-      active: activeQueues.length,
-      completed: completedQueues.length,
-      total: servicePointQueues.length
-    });
-  }, [waitingQueues.length, activeQueues.length, completedQueues.length, servicePointQueues.length, selectedServicePoint?.code]);
+    if (selectedServicePoint) {
+      logger.debug(`Queue counts for ${selectedServicePoint.code}:`, {
+        waiting: waitingQueues.length,
+        active: activeQueues.length,
+        completed: completedQueues.length,
+        total: servicePointQueues.length,
+        refreshTrigger
+      });
+    }
+  }, [waitingQueues.length, activeQueues.length, completedQueues.length, servicePointQueues.length, selectedServicePoint, refreshTrigger]);
 
-  // Get patient name by ID
-  const getPatientName = (patientId: string) => {
+  // Stable patient name getter
+  const getPatientName = useCallback((patientId: string) => {
     const patient = patients.find(p => p.id === patientId);
     return patient ? patient.name : 'ไม่พบข้อมูลผู้ป่วย';
-  };
+  }, [patients]);
 
-  const handleCallQueue = async (queueId: string): Promise<any> => {
+  // Stable queue action handlers
+  const handleCallQueue = useCallback(async (queueId: string): Promise<any> => {
     if (!selectedServicePoint) return null;
+    logger.debug(`Calling queue ${queueId} for service point ${selectedServicePoint.code}`);
     const result = await callQueue(queueId, selectedServicePoint.id);
     return result;
-  };
+  }, [selectedServicePoint, callQueue]);
 
-  const handleUpdateStatus = async (queueId: string, status: any) => {
+  const handleUpdateStatus = useCallback(async (queueId: string, status: any) => {
+    logger.debug(`Updating queue ${queueId} status to ${status}`);
     const result = await updateQueueStatus(queueId, status);
     return result;
-  };
+  }, [updateQueueStatus]);
 
-  const handleRecallQueue = (queueId: string) => {
+  const handleRecallQueue = useCallback((queueId: string) => {
+    logger.debug(`Recalling queue ${queueId}`);
     recallQueue(queueId);
-  };
+  }, [recallQueue]);
 
   if (!selectedServicePoint) {
     return (
       <div className="h-full flex items-center justify-center bg-gray-50">
         <p className="text-gray-500">ไม่พบจุดบริการ</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center bg-gray-50">
+        <p className="text-gray-500">กำลังโหลด...</p>
       </div>
     );
   }
