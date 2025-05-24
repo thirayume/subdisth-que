@@ -102,7 +102,8 @@ export const useQueueSimulation = () => {
       for (let i = 0; i < count; i++) {
         // Distribute queue types evenly among enabled types
         const queueType = enabledQueueTypes[i % enabledQueueTypes.length];
-        const patient = patients[i % patients.length];
+        // Use random patient selection to avoid duplicates
+        const patient = patients[Math.floor(Math.random() * patients.length)];
         const assignedServicePoint = findServicePointForQueueType(queueType);
 
         const queueData = {
