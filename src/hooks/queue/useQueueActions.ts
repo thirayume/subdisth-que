@@ -1,183 +1,284 @@
 
-import * as React from 'react';
-import { Queue } from '@/integrations/supabase/schema';
-import { supabase } from '@/integrations/supabase/client';
+import { useCallback } from 'react';
 import { toast } from 'sonner';
-import { createLogger } from '@/utils/logger';
-import { getNextQueue, transferQueue, holdQueue, returnSkippedQueue } from '@/utils/queueManagementUtils';
+import { Queue, QueueStatus } from '@/integrations/supabase/schema';
+import { supabase } from '@/integrations/supabase/client';
+import { announceQueue } from '@/utils/textToSpeech';
 import { QueueAlgorithmType, ServicePointCapability } from '@/utils/queueAlgorithms';
+import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('useQueueActions');
 
 export const useQueueActions = (
   queues: Queue[],
-  updateQueueStatus: (queueId: string, newStatus: Queue['status']) => Promise<Queue | null>,
-  updateQueueInState: (updatedQueue: Queue) => void,
+  updateQueueStatus: (queueId: string, status: QueueStatus) => Promise<Queue | null>,
+  updateQueueInState: (queue: Queue) => void,
   fetchQueues: () => Promise<void>,
-  sortQueues: (queues: Queue[], capabilities?: ServicePointCapability[], servicePointId?: string) => Queue[],
+  sortQueues: (queues: Queue[], servicePointCapabilities: ServicePointCapability[], selectedServicePointId?: string) => Queue[],
   queueAlgorithm: QueueAlgorithmType,
-  announceQueue: (queueId: string, getQueueById: (id: string) => Queue | undefined) => Promise<boolean>,
+  recallQueue: (queueId: string, getQueueById: (id: string) => Queue | undefined) => void,
   voiceEnabled: boolean
 ) => {
-  // Call a queue and update its status
-  const callQueue = async (queueId: string, servicePointId?: string) => {
-    const queueToCall = queues.find(q => q.id === queueId);
-    if (queueToCall) {
-      try {
-        // If a service point ID is provided, update the queue with it
-        let updatedQueue: Queue | null;
-        
-        if (servicePointId) {
-          const { data, error } = await supabase
-            .from('queues')
-            .update({
-              status: 'ACTIVE',
-              called_at: new Date().toISOString(),
-              service_point_id: servicePointId
-            })
-            .eq('id', queueId)
-            .select();
-            
-          if (error) throw error;
-          if (!data || data.length === 0) throw new Error('No queue returned from update');
-          
-          updatedQueue = data[0] as Queue;
-          
-          // Update the queue in state
-          updateQueueInState(updatedQueue);
-        } else {
-          // Fall back to the original update method if no service point ID
-          updatedQueue = await updateQueueStatus(queueId, 'ACTIVE');
-        }
-        
-        if (updatedQueue && voiceEnabled) {
-          // Get queue by ID function for announcement
-          const getQueueById = (id: string) => queues.find(q => q.id === id);
-          await announceQueue(queueId, getQueueById);
-        }
-        
-        return updatedQueue;
-      } catch (err: any) {
-        toast.error('ไม่สามารถเรียกคิวได้');
-        logger.error('Error calling queue:', err);
+  // Get intelligent service point suggestion for a queue
+  const getIntelligentServicePointSuggestion = useCallback(async (queueTypeCode: string) => {
+    try {
+      // Get service points that can handle this queue type
+      const { data: servicePointQueueTypes, error } = await supabase
+        .from('service_point_queue_types')
+        .select(`
+          service_point_id,
+          service_point:service_points!inner(*)
+        `)
+        .eq('service_point.enabled', true);
+
+      if (error) {
+        logger.error('Error fetching service point mappings:', error);
         return null;
       }
-    }
-    return null;
-  };
 
-  // Get next queue to call based on the selected algorithm and service point
-  const getNextQueueToCall = async (servicePointId?: string) => {
-    try {
-      // First try the utility function that uses database-level sorting
-      const nextQueue = await getNextQueue(servicePointId || null, queueAlgorithm);
-      
-      // If we have a result from the database, use it
-      if (nextQueue) return nextQueue;
-      
-      // Fall back to client-side sorting if needed
-      const waitingQueues = queues.filter(q => q.status === 'WAITING');
-      if (waitingQueues.length === 0) return null;
-      
-      // Get service point capabilities if we have a service point ID
-      let servicePointCapabilities: ServicePointCapability[] = [];
-      
-      if (servicePointId) {
-        const { data, error } = await supabase
-          .from('service_point_queue_types')
-          .select(`
-            queue_type_id,
-            queue_type:queue_types(id, code)
-          `)
-          .eq('service_point_id', servicePointId);
-          
-        if (!error && data) {
-          // Group queue type IDs by service point
-          const queueTypeIds = data.map(item => item.queue_type_id);
-          
-          if (queueTypeIds.length > 0) {
-            servicePointCapabilities.push({
-              servicePointId,
-              queueTypeIds
-            });
-          }
-        }
+      // Get queue type ID
+      const { data: queueTypes, error: queueTypeError } = await supabase
+        .from('queue_types')
+        .select('id')
+        .eq('code', queueTypeCode)
+        .single();
+
+      if (queueTypeError || !queueTypes) {
+        logger.error('Error fetching queue type:', queueTypeError);
+        return null;
       }
-      
-      const sortedQueues = sortQueues(waitingQueues, servicePointCapabilities, servicePointId);
-      return sortedQueues[0] || null;
-      
+
+      // Find service points that can handle this queue type
+      const compatibleServicePoints = servicePointQueueTypes?.filter(spqt => 
+        spqt.service_point_id === queueTypes.id
+      );
+
+      if (compatibleServicePoints && compatibleServicePoints.length > 0) {
+        // Return the first compatible service point
+        return compatibleServicePoints[0].service_point;
+      }
+
+      return null;
     } catch (error) {
-      logger.error('Error in getNextQueueToCall:', error);
+      logger.error('Error in getIntelligentServicePointSuggestion:', error);
       return null;
     }
-  };
+  }, []);
 
-  // Transfer a queue to another service point with optional new queue type
-  const transferQueueToServicePoint = async (
-    queueId: string, 
+  // Call next queue for a specific service point
+  const callQueue = useCallback(async (queueId: string, servicePointId?: string) => {
+    try {
+      const queue = queues.find(q => q.id === queueId);
+      if (!queue) {
+        toast.error('ไม่พบคิวที่ต้องการเรียก');
+        return null;
+      }
+
+      let targetServicePointId = servicePointId;
+
+      // If no service point specified, try to get intelligent suggestion
+      if (!targetServicePointId && !queue.service_point_id) {
+        const suggestedServicePoint = await getIntelligentServicePointSuggestion(queue.type);
+        if (suggestedServicePoint) {
+          targetServicePointId = suggestedServicePoint.id;
+        }
+      } else if (queue.service_point_id) {
+        targetServicePointId = queue.service_point_id;
+      }
+
+      const updateData: any = {
+        status: 'ACTIVE',
+        called_at: new Date().toISOString()
+      };
+
+      // Add service point assignment if we have one
+      if (targetServicePointId) {
+        updateData.service_point_id = targetServicePointId;
+      }
+
+      const { data, error } = await supabase
+        .from('queues')
+        .update(updateData)
+        .eq('id', queueId)
+        .select()
+        .single();
+
+      if (error) {
+        logger.error('Error calling queue:', error);
+        toast.error('ไม่สามารถเรียกคิวได้');
+        return null;
+      }
+
+      if (data) {
+        updateQueueInState(data);
+        
+        // Announce queue if voice is enabled
+        if (voiceEnabled) {
+          await announceQueue(queue.number, '1', queue.type);
+        }
+        
+        toast.success(`เรียกคิวหมายเลข ${queue.number} เรียบร้อยแล้ว`);
+        return data;
+      }
+
+      return null;
+    } catch (error) {
+      logger.error('Error in callQueue:', error);
+      toast.error('เกิดข้อผิดพลาดในการเรียกคิว');
+      return null;
+    }
+  }, [queues, updateQueueInState, voiceEnabled, getIntelligentServicePointSuggestion]);
+
+  // Get next queue to call for a specific service point
+  const getNextQueueToCall = useCallback(async (servicePointId: string) => {
+    try {
+      // Get waiting queues for this service point
+      const waitingQueues = queues.filter(q => 
+        q.status === 'WAITING' && 
+        (q.service_point_id === servicePointId || !q.service_point_id)
+      );
+
+      if (waitingQueues.length === 0) {
+        return null;
+      }
+
+      // Use the sorting algorithm to get the next queue
+      const sortedQueues = sortQueues(waitingQueues, [], servicePointId);
+      return sortedQueues[0] || null;
+    } catch (error) {
+      logger.error('Error getting next queue:', error);
+      return null;
+    }
+  }, [queues, sortQueues]);
+
+  // Transfer queue to another service point
+  const transferQueueToServicePoint = useCallback(async (
+    queueId: string,
     sourceServicePointId: string,
     targetServicePointId: string,
     notes?: string,
     newQueueType?: string
   ) => {
-    const result = await transferQueue(
-      queueId, 
-      sourceServicePointId,
-      targetServicePointId,
-      notes,
-      newQueueType
-    );
-    
-    if (result) {
-      toast.success('โอนคิวไปยังจุดบริการอื่นเรียบร้อยแล้ว');
-      fetchQueues(); // Refresh queues after transfer
-      return true;
-    } else {
-      toast.error('ไม่สามารถโอนคิวไปยังจุดบริการอื่นได้');
-      return false;
-    }
-  };
-  
-  // Hold a queue
-  const putQueueOnHold = async (
-    queueId: string, 
-    servicePointId: string,
-    reason?: string
-  ) => {
-    const result = await holdQueue(queueId, servicePointId, reason);
-    
-    if (result) {
-      toast.success('พักคิวเรียบร้อยแล้ว');
-      fetchQueues(); // Refresh queues after hold
-      return true;
-    } else {
-      toast.error('ไม่สามารถพักคิวได้');
-      return false;
-    }
-  };
+    try {
+      const updateData: any = {
+        service_point_id: targetServicePointId,
+        transferred_to_service_point_id: sourceServicePointId,
+        transferred_at: new Date().toISOString()
+      };
 
-  // Return a skipped queue to waiting status
-  const returnSkippedQueueToWaiting = async (
-    queueId: string
-  ) => {
-    const result = await returnSkippedQueue(queueId);
-    
-    if (result) {
-      toast.success('นำคิวกลับสู่สถานะรอแล้ว');
-      fetchQueues(); // Refresh queues after return
-      return true;
-    } else {
-      toast.error('ไม่สามารถนำคิวกลับสู่สถานะรอได้');
-      return false;
+      if (notes) {
+        updateData.notes = notes;
+      }
+
+      if (newQueueType) {
+        updateData.type = newQueueType;
+      }
+
+      const { data, error } = await supabase
+        .from('queues')
+        .update(updateData)
+        .eq('id', queueId)
+        .select()
+        .single();
+
+      if (error) {
+        logger.error('Error transferring queue:', error);
+        toast.error('ไม่สามารถโอนคิวได้');
+        return null;
+      }
+
+      if (data) {
+        updateQueueInState(data);
+        toast.success('โอนคิวเรียบร้อยแล้ว');
+        return data;
+      }
+
+      return null;
+    } catch (error) {
+      logger.error('Error in transferQueueToServicePoint:', error);
+      toast.error('เกิดข้อผิดพลาดในการโอนคิว');
+      return null;
     }
-  };
+  }, [updateQueueInState]);
+
+  // Put queue on hold
+  const putQueueOnHold = useCallback(async (queueId: string, servicePointId: string, reason?: string) => {
+    try {
+      const updateData: any = {
+        status: 'WAITING',
+        paused_at: new Date().toISOString()
+      };
+
+      if (reason) {
+        updateData.notes = reason;
+      }
+
+      const { data, error } = await supabase
+        .from('queues')
+        .update(updateData)
+        .eq('id', queueId)
+        .select()
+        .single();
+
+      if (error) {
+        logger.error('Error putting queue on hold:', error);
+        toast.error('ไม่สามารถพักคิวได้');
+        return null;
+      }
+
+      if (data) {
+        updateQueueInState(data);
+        toast.success('พักคิวเรียบร้อยแล้ว');
+        return data;
+      }
+
+      return null;
+    } catch (error) {
+      logger.error('Error in putQueueOnHold:', error);
+      toast.error('เกิดข้อผิดพลาดในการพักคิว');
+      return null;
+    }
+  }, [updateQueueInState]);
+
+  // Return skipped queue to waiting
+  const returnSkippedQueueToWaiting = useCallback(async (queueId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('queues')
+        .update({
+          status: 'WAITING',
+          skipped_at: null
+        })
+        .eq('id', queueId)
+        .select()
+        .single();
+
+      if (error) {
+        logger.error('Error returning skipped queue to waiting:', error);
+        toast.error('ไม่สามารถนำคิวกลับมารอได้');
+        return null;
+      }
+
+      if (data) {
+        updateQueueInState(data);
+        toast.success('นำคิวกลับมารอเรียบร้อยแล้ว');
+        return data;
+      }
+
+      return null;
+    } catch (error) {
+      logger.error('Error in returnSkippedQueueToWaiting:', error);
+      toast.error('เกิดข้อผิดพลาดในการนำคิวกลับมารอ');
+      return null;
+    }
+  }, [updateQueueInState]);
 
   return {
     callQueue,
     getNextQueueToCall,
     transferQueueToServicePoint,
     putQueueOnHold,
-    returnSkippedQueueToWaiting
+    returnSkippedQueueToWaiting,
+    getIntelligentServicePointSuggestion
   };
 };

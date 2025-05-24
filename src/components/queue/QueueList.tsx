@@ -1,7 +1,8 @@
 
-import React from 'react';
-import { Queue, QueueStatus, ServicePoint, QueueType } from '@/integrations/supabase/schema';
+import React, { useState } from 'react';
+import { Queue, QueueStatus, ServicePoint } from '@/integrations/supabase/schema';
 import QueueCard from './QueueCard';
+import ServicePointQueueSelector from './ServicePointQueueSelector';
 
 interface QueueListProps {
   queues: Queue[];
@@ -16,6 +17,7 @@ interface QueueListProps {
   selectedServicePoint?: ServicePoint | null;
   servicePoints?: ServicePoint[];
   getIntelligentServicePointSuggestion?: (queue: Queue) => ServicePoint | null;
+  showServicePointInfo?: boolean;
 }
 
 const QueueList: React.FC<QueueListProps> = ({
@@ -30,8 +32,12 @@ const QueueList: React.FC<QueueListProps> = ({
   onReturnToWaiting,
   selectedServicePoint,
   servicePoints = [],
-  getIntelligentServicePointSuggestion
+  getIntelligentServicePointSuggestion,
+  showServicePointInfo = true
 }) => {
+  const [selectorQueue, setSelectorQueue] = useState<Queue | null>(null);
+  const [suggestedServicePoint, setSuggestedServicePoint] = useState<ServicePoint | null>(null);
+
   // Show empty state if no queues
   if (queues.length === 0) {
     return (
@@ -48,67 +54,111 @@ const QueueList: React.FC<QueueListProps> = ({
     );
   }
 
-  return (
-    <div className="space-y-3 p-4">
-      {queues.map(queue => {
-        // Get current service point for this queue
-        const currentServicePoint = queue.service_point_id 
-          ? servicePoints.find(sp => sp.id === queue.service_point_id)
-          : null;
-          
-        // Get intelligent suggestion for unassigned queues
-        const suggestedServicePoint = !currentServicePoint && getIntelligentServicePointSuggestion
-          ? getIntelligentServicePointSuggestion(queue)
-          : null;
+  const handleCallQueue = async (queue: Queue) => {
+    // If queue already has service point or if we're in a service point view, call directly
+    if (queue.service_point_id || selectedServicePoint) {
+      return onCallQueue?.(queue.id);
+    }
 
-        return (
-          <QueueCard
-            key={queue.id}
-            queue={queue}
-            patientName={getPatientName(queue.patient_id)}
-            onComplete={
-              onUpdateStatus && status !== 'COMPLETED'
-                ? () => onUpdateStatus(queue.id, 'COMPLETED')
-                : undefined
-            }
-            onSkip={
-              onUpdateStatus && status === 'WAITING'
-                ? () => onUpdateStatus(queue.id, 'SKIPPED')
-                : undefined
-            }
-            onCall={
-              onCallQueue && status === 'WAITING'
-                ? () => onCallQueue(queue.id)
-                : undefined
-            }
-            onRecall={
-              onRecallQueue && status === 'ACTIVE'
-                ? () => onRecallQueue(queue.id)
-                : undefined
-            }
-            onTransfer={
-              onTransferQueue && status === 'ACTIVE'
-                ? () => onTransferQueue(queue.id)
-                : undefined
-            }
-            onHold={
-              onHoldQueue && status === 'ACTIVE'
-                ? () => onHoldQueue(queue.id)
-                : undefined
-            }
-            onReturnToWaiting={
-              onReturnToWaiting && status === 'SKIPPED'
-                ? () => onReturnToWaiting(queue.id)
-                : undefined
-            }
-            servicePointId={queue.service_point_id}
-            servicePointName={currentServicePoint?.name}
-            suggestedServicePointName={suggestedServicePoint?.name}
-            showServicePointInfo={true}
-          />
-        );
-      })}
-    </div>
+    // If we're in global management and queue has no service point, show selector
+    if (getIntelligentServicePointSuggestion && servicePoints.length > 0) {
+      const suggestion = getIntelligentServicePointSuggestion(queue);
+      setSuggestedServicePoint(suggestion);
+      setSelectorQueue(queue);
+    } else {
+      // Fallback to direct call
+      return onCallQueue?.(queue.id);
+    }
+  };
+
+  const handleServicePointConfirm = async (servicePointId: string) => {
+    if (selectorQueue && onCallQueue) {
+      await onCallQueue(selectorQueue.id, servicePointId);
+      setSelectorQueue(null);
+      setSuggestedServicePoint(null);
+    }
+  };
+
+  const handleSelectorClose = () => {
+    setSelectorQueue(null);
+    setSuggestedServicePoint(null);
+  };
+
+  return (
+    <>
+      <div className="space-y-3 p-4">
+        {queues.map(queue => {
+          // Get current service point for this queue
+          const currentServicePoint = queue.service_point_id 
+            ? servicePoints.find(sp => sp.id === queue.service_point_id)
+            : null;
+            
+          // Get intelligent suggestion for unassigned queues
+          const suggestedServicePoint = !currentServicePoint && getIntelligentServicePointSuggestion
+            ? getIntelligentServicePointSuggestion(queue)
+            : null;
+
+          return (
+            <QueueCard
+              key={queue.id}
+              queue={queue}
+              patientName={getPatientName(queue.patient_id)}
+              onComplete={
+                onUpdateStatus && status !== 'COMPLETED'
+                  ? () => onUpdateStatus(queue.id, 'COMPLETED')
+                  : undefined
+              }
+              onSkip={
+                onUpdateStatus && status === 'WAITING'
+                  ? () => onUpdateStatus(queue.id, 'SKIPPED')
+                  : undefined
+              }
+              onCall={
+                onCallQueue && status === 'WAITING'
+                  ? () => handleCallQueue(queue)
+                  : undefined
+              }
+              onRecall={
+                onRecallQueue && status === 'ACTIVE'
+                  ? () => onRecallQueue(queue.id)
+                  : undefined
+              }
+              onTransfer={
+                onTransferQueue && status === 'ACTIVE'
+                  ? () => onTransferQueue(queue.id)
+                  : undefined
+              }
+              onHold={
+                onHoldQueue && status === 'ACTIVE'
+                  ? () => onHoldQueue(queue.id)
+                  : undefined
+              }
+              onReturnToWaiting={
+                onReturnToWaiting && status === 'SKIPPED'
+                  ? () => onReturnToWaiting(queue.id)
+                  : undefined
+              }
+              servicePointId={queue.service_point_id}
+              servicePointName={currentServicePoint?.name}
+              suggestedServicePointName={suggestedServicePoint?.name}
+              showServicePointInfo={showServicePointInfo}
+            />
+          );
+        })}
+      </div>
+
+      {/* Service Point Selector Dialog */}
+      {selectorQueue && (
+        <ServicePointQueueSelector
+          isOpen={true}
+          onClose={handleSelectorClose}
+          onConfirm={handleServicePointConfirm}
+          queue={selectorQueue}
+          servicePoints={servicePoints}
+          suggestedServicePoint={suggestedServicePoint}
+        />
+      )}
+    </>
   );
 };
 

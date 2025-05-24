@@ -127,7 +127,7 @@ export const useQueueManagement = () => {
     setActiveQueues(active);
     setCompletedQueues(completed);
     setSkippedQueues(skipped);
-  }, [queues, sortQueues, servicePointCapabilities]); // Stable dependencies now
+  }, [queues, sortQueues, servicePointCapabilities]);
   
   // Handler for recalling queue
   const handleRecallQueue = useCallback((queueId: string) => {
@@ -157,13 +157,11 @@ export const useQueueManagement = () => {
     // Use manual service point if provided, otherwise get intelligent suggestion
     let targetServicePointId = manualServicePointId;
     
-    if (!targetServicePointId) {
+    if (!targetServicePointId && !queue.service_point_id) {
       const suggestedServicePoint = getIntelligentServicePointSuggestion(queue);
-      if (!suggestedServicePoint) {
-        toast.warning('ไม่พบจุดบริการที่เหมาะสมสำหรับคิวนี้ กรุณาเลือกจุดบริการด้วยตนเอง');
-        return null;
+      if (suggestedServicePoint) {
+        targetServicePointId = suggestedServicePoint.id;
       }
-      targetServicePointId = suggestedServicePoint.id;
     }
     
     // Call queue with the determined service point
