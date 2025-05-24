@@ -93,29 +93,10 @@ export const useServicePointQueueTypes = (servicePointId?: string) => {
       setDeletingId(id);
       logger.debug(`Attempting to delete mapping with id: ${id}`);
 
-      // First, verify the mapping exists
-      const { data: existingData, error: checkError } = await supabase
+      // Perform the delete operation with a more direct approach
+      const { error, count } = await supabase
         .from('service_point_queue_types')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (checkError) {
-        logger.error('Error checking existing mapping:', checkError);
-        throw new Error(`Mapping with id ${id} not found: ${checkError.message}`);
-      }
-
-      if (!existingData) {
-        logger.warn(`Mapping with id ${id} does not exist`);
-        throw new Error(`Mapping with id ${id} does not exist`);
-      }
-
-      logger.debug('Found existing mapping to delete:', existingData);
-
-      // Perform the delete operation
-      const { error } = await supabase
-        .from('service_point_queue_types')
-        .delete()
+        .delete({ count: 'exact' })
         .eq('id', id);
 
       if (error) {
@@ -123,22 +104,14 @@ export const useServicePointQueueTypes = (servicePointId?: string) => {
         throw error;
       }
 
-      // Verify the deletion was successful
-      const { data: verifyData, error: verifyError } = await supabase
-        .from('service_point_queue_types')
-        .select('*')
-        .eq('id', id);
+      logger.debug(`Delete operation completed. Rows affected: ${count}`);
 
-      if (verifyError) {
-        logger.error('Error verifying deletion:', verifyError);
-      } else if (verifyData && verifyData.length > 0) {
-        logger.error('Deletion verification failed - mapping still exists:', verifyData);
-        throw new Error('Deletion failed - mapping still exists in database');
-      } else {
-        logger.debug('Deletion verified successfully - mapping no longer exists in database');
+      if (count === 0) {
+        logger.warn(`No rows were deleted for mapping id: ${id}`);
+        throw new Error('No mapping was deleted - record may not exist');
       }
 
-      // Update local state only after successful deletion
+      // Update local state immediately after successful deletion
       setMappings(prev => {
         const updated = prev.filter(mapping => mapping.id !== id);
         logger.debug(`Updated local state: removed mapping ${id}, remaining mappings: ${updated.length}`);

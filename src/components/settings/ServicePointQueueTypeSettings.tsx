@@ -64,10 +64,10 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
   const handleRemoveMapping = async (mappingId: string) => {
     const success = await removeMapping(mappingId);
     if (success) {
-      // Refresh the data to ensure consistency
-      setTimeout(() => {
-        fetchMappings();
-      }, 500);
+      // Force refresh the data after successful deletion to ensure consistency
+      setTimeout(async () => {
+        await fetchMappings();
+      }, 100);
     }
   };
 
