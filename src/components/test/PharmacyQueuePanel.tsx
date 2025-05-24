@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,6 +7,10 @@ import { useQueues } from '@/hooks/useQueues';
 import { usePatients } from '@/hooks/usePatients';
 import { useServicePoints } from '@/hooks/useServicePoints';
 import QueueList from '@/components/queue/QueueList';
+import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('PharmacyQueuePanel');
 
 interface PharmacyQueuePanelProps {
   servicePointId: string;
@@ -24,19 +28,67 @@ const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
     recallQueue,
     transferQueueToServicePoint,
     putQueueOnHold,
-    returnSkippedQueueToWaiting
+    returnSkippedQueueToWaiting,
+    fetchQueues
   } = useQueues();
   
   const { patients } = usePatients();
   const { servicePoints } = useServicePoints();
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const selectedServicePoint = servicePoints.find(sp => sp.id === servicePointId);
+
+  // Set up real-time subscription for this specific service point
+  useEffect(() => {
+    if (!selectedServicePoint) return;
+
+    logger.debug(`Setting up real-time subscription for service point: ${selectedServicePoint.code}`);
+    
+    const channel = supabase
+      .channel(`pharmacy-panel-${servicePointId}`)
+      .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'queues',
+            filter: `service_point_id=eq.${servicePointId}`
+          },
+          (payload) => {
+            logger.debug(`Queue change for service point ${selectedServicePoint.code}:`, payload);
+            // Trigger a refresh of the queue data
+            setRefreshTrigger(prev => prev + 1);
+            fetchQueues();
+          }
+      )
+      .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'queues'
+          },
+          (payload) => {
+            // Also listen for general queue changes that might affect this service point
+            // (like assignments, transfers, etc.)
+            if (payload.new && (payload.new as any).service_point_id === servicePointId) {
+              logger.debug(`Queue assigned to service point ${selectedServicePoint.code}:`, payload);
+              setRefreshTrigger(prev => prev + 1);
+              fetchQueues();
+            }
+          }
+      )
+      .subscribe();
+
+    return () => {
+      logger.debug(`Cleaning up subscription for service point: ${selectedServicePoint.code}`);
+      supabase.removeChannel(channel);
+    };
+  }, [servicePointId, selectedServicePoint, fetchQueues]);
 
   // Filter queues for the selected service point
   const servicePointQueues = React.useMemo(() => {
     if (!selectedServicePoint) return [];
     return queues.filter(q => q.service_point_id === selectedServicePoint.id);
-  }, [queues, selectedServicePoint]);
+  }, [queues, selectedServicePoint, refreshTrigger]);
 
   const waitingQueues = servicePointQueues.filter(q => q.status === 'WAITING');
   const activeQueues = servicePointQueues.filter(q => q.status === 'ACTIVE');
@@ -50,7 +102,23 @@ const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
 
   const handleCallQueue = async (queueId: string): Promise<any> => {
     if (!selectedServicePoint) return null;
-    return await callQueue(queueId, selectedServicePoint.id);
+    const result = await callQueue(queueId, selectedServicePoint.id);
+    // Optimistic update - trigger refresh immediately
+    setRefreshTrigger(prev => prev + 1);
+    return result;
+  };
+
+  const handleUpdateStatus = async (queueId: string, status: any) => {
+    const result = await updateQueueStatus(queueId, status);
+    // Optimistic update - trigger refresh immediately
+    setRefreshTrigger(prev => prev + 1);
+    return result;
+  };
+
+  const handleRecallQueue = (queueId: string) => {
+    recallQueue(queueId);
+    // Optimistic update - trigger refresh immediately
+    setRefreshTrigger(prev => prev + 1);
   };
 
   if (!selectedServicePoint) {
@@ -105,7 +173,7 @@ const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
                 <QueueList
                   queues={waitingQueues}
                   getPatientName={getPatientName}
-                  onUpdateStatus={updateQueueStatus}
+                  onUpdateStatus={handleUpdateStatus}
                   onCallQueue={handleCallQueue}
                   status="WAITING"
                   selectedServicePoint={selectedServicePoint}
@@ -120,8 +188,8 @@ const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
                 <QueueList
                   queues={activeQueues}
                   getPatientName={getPatientName}
-                  onUpdateStatus={updateQueueStatus}
-                  onRecallQueue={recallQueue}
+                  onUpdateStatus={handleUpdateStatus}
+                  onRecallQueue={handleRecallQueue}
                   status="ACTIVE"
                   selectedServicePoint={selectedServicePoint}
                   servicePoints={servicePoints}

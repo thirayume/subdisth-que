@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -11,6 +11,11 @@ import { useQueueRecalculation } from '@/hooks/queue/useQueueRecalculation';
 import QueueManagementContainer from '@/components/queue/management/QueueManagementContainer';
 import QueueBoardContainer from '@/components/queue/board/QueueBoardContainer';
 import PharmacyQueuePanel from '@/components/test/PharmacyQueuePanel';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('TestDashboard');
 
 const TestDashboard = () => {
   const { servicePoints } = useServicePoints();
@@ -20,26 +25,97 @@ const TestDashboard = () => {
   // Auto-assign first 3 service points for pharmacy panels
   const enabledServicePoints = servicePoints.filter(sp => sp.enabled);
   const [selectedServicePoints, setSelectedServicePoints] = useState<string[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  React.useEffect(() => {
-    if (enabledServicePoints.length > 0 && selectedServicePoints.length === 0) {
+  // Load saved service point selections from localStorage
+  useEffect(() => {
+    const savedSelections = localStorage.getItem('test-dashboard-service-points');
+    if (savedSelections) {
+      try {
+        const parsed = JSON.parse(savedSelections);
+        setSelectedServicePoints(parsed);
+        logger.debug('Loaded saved service point selections:', parsed);
+      } catch (error) {
+        logger.warn('Failed to parse saved service points:', error);
+      }
+    } else if (enabledServicePoints.length > 0 && selectedServicePoints.length === 0) {
+      // Auto-assign first 3 service points if no saved selections
       const autoAssigned = enabledServicePoints.slice(0, 3).map(sp => sp.id);
       setSelectedServicePoints(autoAssigned);
+      localStorage.setItem('test-dashboard-service-points', JSON.stringify(autoAssigned));
+      logger.debug('Auto-assigned service points:', autoAssigned);
     }
   }, [enabledServicePoints]);
+
+  // Set up real-time subscription for queue changes
+  useEffect(() => {
+    logger.info('Setting up real-time subscription for queue changes');
+    
+    const channel = supabase
+      .channel('test-dashboard-queue-changes')
+      .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'queues' },
+          (payload) => {
+            logger.debug('Queue change detected in test dashboard:', payload);
+            // Force refresh of all pharmacy panels
+            setRefreshKey(prev => prev + 1);
+            
+            // Show toast for queue operations
+            if (payload.eventType === 'INSERT') {
+              toast.success('คิวใหม่ถูกสร้างแล้ว');
+            } else if (payload.eventType === 'DELETE') {
+              toast.info('คิวถูกลบแล้ว');
+            } else if (payload.eventType === 'UPDATE') {
+              toast.info('คิวถูกอัปเดตแล้ว');
+            }
+          }
+      )
+      .subscribe();
+
+    return () => {
+      logger.debug('Cleaning up test dashboard subscription');
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const handleServicePointChange = (index: number, servicePointId: string) => {
     const updated = [...selectedServicePoints];
     updated[index] = servicePointId;
     setSelectedServicePoints(updated);
+    
+    // Save to localStorage
+    localStorage.setItem('test-dashboard-service-points', JSON.stringify(updated));
+    logger.debug(`Updated service point ${index} to:`, servicePointId);
   };
 
   const handleSimulate = async () => {
-    await simulateQueues(15);
+    try {
+      await simulateQueues(15);
+      // The real-time subscription will handle the UI updates
+      logger.info('Queue simulation completed');
+    } catch (error) {
+      logger.error('Error during simulation:', error);
+    }
   };
 
   const handleRecalculate = async () => {
-    await recalculateAllQueues();
+    try {
+      await recalculateAllQueues();
+      // The real-time subscription will handle the UI updates
+      logger.info('Queue recalculation completed');
+    } catch (error) {
+      logger.error('Error during recalculation:', error);
+    }
+  };
+
+  const handleClearQueues = async () => {
+    try {
+      await clearTestQueues();
+      // The real-time subscription will handle the UI updates
+      logger.info('Test queues cleared');
+    } catch (error) {
+      logger.error('Error clearing test queues:', error);
+    }
   };
 
   return (
@@ -69,7 +145,7 @@ const TestDashboard = () => {
             
             <Button 
               variant="outline"
-              onClick={clearTestQueues}
+              onClick={handleClearQueues}
               className="flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50"
             >
               <Trash2 className="w-4 h-4" />
@@ -86,14 +162,14 @@ const TestDashboard = () => {
           {/* Queue Management */}
           <div className="h-1/2 border-b overflow-hidden">
             <div className="h-full overflow-auto">
-              <QueueManagementContainer />
+              <QueueManagementContainer key={`mgmt-${refreshKey}`} />
             </div>
           </div>
           
           {/* Queue Board */}
           <div className="h-1/2 overflow-hidden">
             <div className="h-full overflow-auto">
-              <QueueBoardContainer />
+              <QueueBoardContainer key={`board-${refreshKey}`} />
             </div>
           </div>
         </div>
@@ -135,6 +211,7 @@ const TestDashboard = () => {
               <div key={index} className="h-1/3 border-b last:border-b-0 overflow-hidden">
                 {selectedServicePoints[index] ? (
                   <PharmacyQueuePanel 
+                    key={`panel-${index}-${selectedServicePoints[index]}-${refreshKey}`}
                     servicePointId={selectedServicePoints[index]}
                     title={`จุดบริการ ${index + 1}`}
                   />
