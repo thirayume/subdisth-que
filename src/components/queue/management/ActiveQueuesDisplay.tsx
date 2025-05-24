@@ -1,14 +1,19 @@
 
 import React from 'react';
-import { Queue } from '@/integrations/supabase/schema';
+import { Queue, ServicePoint } from '@/integrations/supabase/schema';
 import ActiveQueueSection from '@/components/queue/ActiveQueueSection';
 
 interface ActiveQueuesDisplayProps {
   activeQueues: Queue[];
   findPatient: (patientId: string) => any;
+  findServicePoint: (servicePointId: string | null) => ServicePoint | null;
 }
 
-const ActiveQueuesDisplay: React.FC<ActiveQueuesDisplayProps> = ({ activeQueues, findPatient }) => {
+const ActiveQueuesDisplay: React.FC<ActiveQueuesDisplayProps> = ({ 
+  activeQueues, 
+  findPatient, 
+  findServicePoint 
+}) => {
   return (
     <div className="mb-8">
       <h2 className="text-xl font-semibold text-gray-800 mb-4">กำลังให้บริการ</h2>
@@ -23,6 +28,7 @@ const ActiveQueuesDisplay: React.FC<ActiveQueuesDisplayProps> = ({ activeQueues,
               key={queue.id}
               activeQueues={[queue]}
               findPatient={findPatient}
+              findServicePoint={findServicePoint}
             />
           ))
         )}
