@@ -117,10 +117,12 @@ export const useQueueRecalculation = () => {
 
           // Update queue assignment if it needs to change
           if (queue.service_point_id !== selectedServicePoint.id) {
+            // Fix: Execute the Supabase query properly to return a Promise
             const updatePromise = supabase
               .from('queues')
               .update({ service_point_id: selectedServicePoint.id })
-              .eq('id', queue.id);
+              .eq('id', queue.id)
+              .then(result => result); // Convert to proper Promise
             
             updatePromises.push(updatePromise);
             reassignedCount++;
