@@ -36,10 +36,22 @@ export const useQueueAlgorithm = () => {
         }
         
         if (data?.value) {
-          // Handle JSON string value from database
-          const algorithm = typeof data.value === 'string' ? 
-            JSON.parse(data.value) as QueueAlgorithmType : 
-            data.value as QueueAlgorithmType;
+          // Handle JSON value from database with proper type conversion
+          let algorithm: QueueAlgorithmType;
+          
+          if (typeof data.value === 'string') {
+            // If it's a JSON string, parse it
+            try {
+              algorithm = JSON.parse(data.value) as QueueAlgorithmType;
+            } catch (parseError) {
+              logger.error('Error parsing queue algorithm JSON:', parseError);
+              algorithm = QueueAlgorithmType.FIFO;
+            }
+          } else {
+            // If it's already a value, convert through unknown for type safety
+            algorithm = data.value as unknown as QueueAlgorithmType;
+          }
+          
           setQueueAlgorithm(algorithm);
           // Update localStorage as well
           localStorage.setItem('queue_algorithm', algorithm);
