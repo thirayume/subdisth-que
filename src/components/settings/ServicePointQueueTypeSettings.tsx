@@ -8,14 +8,14 @@ import { useServicePoints } from '@/hooks/useServicePoints';
 import { useServicePointQueueTypes } from '@/hooks/useServicePointQueueTypes';
 import { useQueueTypesData } from '@/hooks/useQueueTypesData';
 import { QueueTypeConfig, ServicePoint } from '@/integrations/supabase/schema';
-import { PlusCircle, XCircle } from 'lucide-react';
+import { PlusCircle, XCircle, Loader2 } from 'lucide-react';
 import QueueTypeLabel from '@/components/queue/QueueTypeLabel';
 
 const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ className }) => {
   const { servicePoints, loading: loadingServicePoints } = useServicePoints();
   const { queueTypes, loading: loadingQueueTypes } = useQueueTypesData();
   const [selectedServicePointId, setSelectedServicePointId] = useState<string>('');
-  const { mappings, loading: loadingMappings, addMapping, removeMapping, fetchMappings } = useServicePointQueueTypes(selectedServicePointId);
+  const { mappings, loading: loadingMappings, deletingId, addMapping, removeMapping, fetchMappings } = useServicePointQueueTypes(selectedServicePointId);
   
   const [availableQueueTypes, setAvailableQueueTypes] = useState<QueueTypeConfig[]>([]);
   const [selectedQueueTypeId, setSelectedQueueTypeId] = useState<string>('');
@@ -47,6 +47,7 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
 
   const handleServicePointChange = (value: string) => {
     setSelectedServicePointId(value);
+    setSelectedQueueTypeId(''); // Reset selected queue type when service point changes
   };
 
   const handleQueueTypeSelect = (value: string) => {
@@ -146,6 +147,8 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
                           {mappings.map(mapping => {
                             // Find the queue type using the ID
                             const queueType = queueTypes.find(qt => qt.id === mapping.queue_type_id);
+                            const isDeleting = deletingId === mapping.id;
+                            
                             return (
                               <div key={mapping.id} className="flex items-center justify-between bg-white p-2 rounded border">
                                 <div className="flex items-center">
@@ -160,8 +163,13 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
                                   variant="ghost" 
                                   size="sm" 
                                   onClick={() => handleRemoveMapping(mapping.id)}
+                                  disabled={isDeleting}
                                 >
-                                  <XCircle className="h-4 w-4 text-red-500" />
+                                  {isDeleting ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <XCircle className="h-4 w-4 text-red-500" />
+                                  )}
                                 </Button>
                               </div>
                             );

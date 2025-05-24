@@ -9,37 +9,41 @@ const logger = createLogger('useServicePointQueueTypes');
 
 export const useServicePointQueueTypes = (servicePointId?: string) => {
   const [mappings, setMappings] = useState<ServicePointQueueType[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchMappings = async () => {
+    // Don't fetch if no service point is selected
+    if (!servicePointId) {
+      setMappings([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
 
-      let query = supabase
+      const { data, error } = await supabase
         .from('service_point_queue_types')
         .select(`
           *,
           queue_type:queue_types(id, name, code),
           service_point:service_points(id, name, code)
-        `);
-
-      if (servicePointId) {
-        query = query.eq('service_point_id', servicePointId);
-      }
-
-      const { data, error } = await query;
+        `)
+        .eq('service_point_id', servicePointId);
 
       if (error) {
         throw error;
       }
 
       setMappings(data || []);
-      logger.debug(`Fetched ${data?.length || 0} service point queue type mappings`);
+      logger.debug(`Fetched ${data?.length || 0} service point queue type mappings for service point ${servicePointId}`);
     } catch (err: any) {
       logger.error('Error fetching service point queue type mappings:', err);
       setError(err.message || 'Failed to fetch service point queue type mappings');
+      setMappings([]);
     } finally {
       setLoading(false);
     }
@@ -79,6 +83,9 @@ export const useServicePointQueueTypes = (servicePointId?: string) => {
 
   const removeMapping = async (id: string) => {
     try {
+      setDeletingId(id);
+      logger.debug(`Attempting to delete mapping with id: ${id}`);
+
       const { error } = await supabase
         .from('service_point_queue_types')
         .delete()
@@ -88,13 +95,21 @@ export const useServicePointQueueTypes = (servicePointId?: string) => {
         throw error;
       }
 
-      setMappings(prev => prev.filter(mapping => mapping.id !== id));
+      // Update local state immediately after successful deletion
+      setMappings(prev => {
+        const updated = prev.filter(mapping => mapping.id !== id);
+        logger.debug(`Removed mapping ${id}, remaining mappings: ${updated.length}`);
+        return updated;
+      });
+      
       toast.success('ลบการเชื่อมโยงประเภทคิวกับจุดบริการเรียบร้อยแล้ว');
       return true;
     } catch (err: any) {
       logger.error('Error removing service point queue type mapping:', err);
       toast.error('ไม่สามารถลบการเชื่อมโยงประเภทคิวกับจุดบริการได้');
       return false;
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -152,6 +167,7 @@ export const useServicePointQueueTypes = (servicePointId?: string) => {
     mappings,
     loading,
     error,
+    deletingId,
     fetchMappings,
     addMapping,
     removeMapping,
