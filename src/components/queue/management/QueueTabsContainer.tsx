@@ -16,7 +16,7 @@ interface QueueTabsContainerProps {
   patients: Patient[];
   queueTypes: QueueType[];
   onUpdateStatus: (queueId: string, status: QueueStatus) => Promise<Queue | null>;
-  onCallQueue: (queueId: string) => Promise<Queue | null>;
+  onCallQueue: (queueId: string, manualServicePointId?: string) => Promise<Queue | null>;
   onRecallQueue: (queueId: string) => void;
   onTransferQueue?: (
     queueId: string, 
@@ -29,6 +29,7 @@ interface QueueTabsContainerProps {
   onReturnToWaiting?: (queueId: string) => Promise<boolean>;
   selectedServicePoint?: ServicePoint | null;
   servicePoints: ServicePoint[];
+  getIntelligentServicePointSuggestion?: (queue: Queue) => ServicePoint | null;
 }
 
 const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
@@ -45,7 +46,8 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
   onHoldQueue,
   onReturnToWaiting,
   selectedServicePoint,
-  servicePoints
+  servicePoints,
+  getIntelligentServicePointSuggestion
 }) => {
   const [activeTab, setActiveTab] = React.useState('waiting');
   const waitingCount = waitingQueues.length;
@@ -74,8 +76,9 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
 
   // Handle hold queue
   const handleHoldQueue = (queueId: string) => {
-    if (onHoldQueue && selectedServicePoint) {
-      onHoldQueue(queueId, selectedServicePoint.id);
+    const queue = activeQueues.find(q => q.id === queueId);
+    if (onHoldQueue && queue?.service_point_id) {
+      onHoldQueue(queueId, queue.service_point_id);
     }
   };
 
@@ -129,6 +132,8 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
                 onCallQueue={onCallQueue}
                 status="WAITING"
                 selectedServicePoint={selectedServicePoint}
+                servicePoints={servicePoints}
+                getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
               />
             </Card>
           </TabsContent>
@@ -144,6 +149,8 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
                 onHoldQueue={onHoldQueue ? handleHoldQueue : undefined}
                 status="ACTIVE"
                 selectedServicePoint={selectedServicePoint}
+                servicePoints={servicePoints}
+                getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
               />
             </Card>
           </TabsContent>
@@ -155,6 +162,8 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
                 getPatientName={getPatientName}
                 status="COMPLETED"
                 selectedServicePoint={selectedServicePoint}
+                servicePoints={servicePoints}
+                getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
               />
             </Card>
           </TabsContent>
@@ -168,6 +177,8 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
                 onReturnToWaiting={onReturnToWaiting}
                 status="SKIPPED"
                 selectedServicePoint={selectedServicePoint}
+                servicePoints={servicePoints}
+                getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
               />
             </Card>
           </TabsContent>
@@ -182,7 +193,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
           onOpenChange={setTransferDialogOpen}
           servicePoints={servicePoints}
           queueTypes={queueTypes}
-          currentServicePointId={selectedServicePoint?.id}
+          currentServicePointId={queueToTransfer?.service_point_id}
           onTransfer={onTransferQueue}
         />
       )}

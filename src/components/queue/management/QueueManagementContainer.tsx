@@ -2,7 +2,6 @@
 import React from 'react';
 import QueueManagementHeader from './QueueManagementHeader';
 import QueueTabsContainer from './QueueTabsContainer';
-import ServicePointSelector from './ServicePointSelector';
 import { useQueueManagement } from '@/hooks/queue/useQueueManagement';
 
 const QueueManagementContainer: React.FC = () => {
@@ -21,7 +20,8 @@ const QueueManagementContainer: React.FC = () => {
     handleHoldQueue,
     handleReturnToWaiting,
     handleServicePointChange,
-    updateQueueStatus
+    updateQueueStatus,
+    getIntelligentServicePointSuggestion
   } = useQueueManagement();
 
   return (
@@ -29,11 +29,10 @@ const QueueManagementContainer: React.FC = () => {
       <div className="flex items-center justify-between mb-4">
         <QueueManagementHeader />
         
-        <ServicePointSelector
-          selectedServicePoint={selectedServicePoint}
-          servicePoints={servicePoints}
-          onServicePointChange={handleServicePointChange}
-        />
+        {/* Remove service point selector from main management - now shows ALL queues */}
+        <div className="text-sm text-gray-500">
+          แสดงคิวทั้งหมด - ระบบจะแนะนำจุดบริการที่เหมาะสมอัตโนมัติ
+        </div>
       </div>
       
       <div className="flex-1 overflow-hidden">
@@ -52,6 +51,7 @@ const QueueManagementContainer: React.FC = () => {
           onReturnToWaiting={handleReturnToWaiting}
           selectedServicePoint={selectedServicePoint}
           servicePoints={servicePoints}
+          getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
         />
       </div>
     </div>

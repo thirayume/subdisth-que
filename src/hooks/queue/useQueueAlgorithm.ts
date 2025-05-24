@@ -38,21 +38,26 @@ export const useQueueAlgorithm = () => {
         if (data?.value) {
           let algorithm: QueueAlgorithmType;
           
-          // Fix: Handle both string and JSON values properly
+          // Handle both string and object values properly
           if (typeof data.value === 'string') {
-            // If it's already a string, use it directly (no JSON parsing needed)
+            // If it's a string, use it directly
             algorithm = data.value as QueueAlgorithmType;
+          } else if (typeof data.value === 'object' && data.value !== null) {
+            // If it's an object, try to extract the algorithm value
+            const valueObj = data.value as any;
+            algorithm = valueObj.algorithm || valueObj.value || QueueAlgorithmType.FIFO;
           } else {
-            // If it's a JSON object, extract the value
-            algorithm = data.value as unknown as QueueAlgorithmType;
+            // Fallback to FIFO if we can't determine the value
+            algorithm = QueueAlgorithmType.FIFO;
           }
           
           // Validate that the algorithm is a valid enum value
           if (Object.values(QueueAlgorithmType).includes(algorithm)) {
             setQueueAlgorithm(algorithm);
             localStorage.setItem('queue_algorithm', algorithm);
+            logger.info('Successfully loaded queue algorithm:', algorithm);
           } else {
-            logger.warn('Invalid algorithm value from database, using default FIFO');
+            logger.warn('Invalid algorithm value from database, using default FIFO:', algorithm);
             setQueueAlgorithm(QueueAlgorithmType.FIFO);
             localStorage.setItem('queue_algorithm', QueueAlgorithmType.FIFO);
           }
@@ -66,8 +71,10 @@ export const useQueueAlgorithm = () => {
         logger.error('Error in fetchQueueAlgorithm:', err);
         // Fall back to localStorage
         const savedAlgorithm = localStorage.getItem('queue_algorithm') as QueueAlgorithmType | null;
-        if (savedAlgorithm) {
+        if (savedAlgorithm && Object.values(QueueAlgorithmType).includes(savedAlgorithm)) {
           setQueueAlgorithm(savedAlgorithm);
+        } else {
+          setQueueAlgorithm(QueueAlgorithmType.FIFO);
         }
       }
     };
@@ -99,6 +106,7 @@ export const useQueueAlgorithm = () => {
           setQueueTypes(data as QueueTypeWithAlgorithm[]);
           // Update localStorage as well
           localStorage.setItem('queue_types', JSON.stringify(data));
+          logger.info('Successfully loaded queue types:', data.length);
         } else {
           // No queue types found, log warning
           logger.warn('No enabled queue types found in database');

@@ -32,9 +32,10 @@ export const useQueueManagement = () => {
     servicePoints
   } = useServicePointContext();
   
-  // Get mappings for all service points, not just the selected one
+  // Get mappings for all service points
   const { mappings } = useServicePointQueueTypes();
   
+  // Show ALL queues regardless of service point selection
   const [waitingQueues, setWaitingQueues] = useState<Queue[]>([]);
   const [activeQueues, setActiveQueues] = useState<Queue[]>([]);
   const [completedQueues, setCompletedQueues] = useState<Queue[]>([]);
@@ -70,7 +71,28 @@ export const useQueueManagement = () => {
     }
   }, [mappings]);
 
-  // Update filtered queues when the main queues array changes
+  // Get intelligent service point suggestion for a queue
+  const getIntelligentServicePointSuggestion = (queue: Queue) => {
+    // If queue already has a service point, return it
+    if (queue.service_point_id) {
+      return servicePoints.find(sp => sp.id === queue.service_point_id);
+    }
+
+    // Find queue type for this queue
+    const queueType = queueTypes.find(qt => qt.code === queue.type);
+    if (!queueType) return null;
+
+    // Find service points that can handle this queue type
+    const compatibleServicePoints = servicePointCapabilities
+      .filter(cap => cap.queueTypeIds.includes(queueType.id))
+      .map(cap => servicePoints.find(sp => sp.id === cap.servicePointId))
+      .filter(Boolean);
+
+    // Return the first compatible service point, or null if none found
+    return compatibleServicePoints[0] || null;
+  };
+
+  // Update filtered queues to show ALL queues (no service point filtering)
   useEffect(() => {
     if (queues) {
       const waiting = queues.filter(q => q.status === 'WAITING');
@@ -78,16 +100,17 @@ export const useQueueManagement = () => {
       const completed = queues.filter(q => q.status === 'COMPLETED');
       const skipped = queues.filter(q => q.status === 'SKIPPED');
       
-      logger.debug('Queue filtering for service point:', selectedServicePoint?.id, {
+      logger.debug('Showing all queues (no service point filtering):', {
         totalWaiting: waiting.length,
         totalActive: active.length,
-        servicePointCapabilities
+        totalCompleted: completed.length,
+        totalSkipped: skipped.length
       });
       
-      // Apply sorting algorithm to waiting queues based on service point selection
+      // Apply sorting algorithm to waiting queues (but show all)
       if (sortQueues) {
-        const sortedQueues = sortQueues(waiting, servicePointCapabilities, selectedServicePoint?.id);
-        logger.debug('Sorted waiting queues for service point:', selectedServicePoint?.id, {
+        const sortedQueues = sortQueues(waiting, servicePointCapabilities);
+        logger.debug('Sorted all waiting queues:', {
           originalCount: waiting.length,
           sortedCount: sortedQueues.length
         });
@@ -100,7 +123,7 @@ export const useQueueManagement = () => {
       setCompletedQueues(completed);
       setSkippedQueues(skipped);
     }
-  }, [queues, sortQueues, servicePointCapabilities, selectedServicePoint]);
+  }, [queues, sortQueues, servicePointCapabilities]);
   
   // Handler for recalling queue
   const handleRecallQueue = (queueId: string) => {
@@ -119,18 +142,38 @@ export const useQueueManagement = () => {
     }
   };
   
-  // Handler for calling queue with service point ID
-  const handleCallQueue = async (queueId: string) => {
-    if (!selectedServicePoint) {
-      toast.warning('กรุณาเลือกจุดบริการก่อนเรียกคิว');
+  // Enhanced handler for calling queue with intelligent service point suggestion
+  const handleCallQueue = async (queueId: string, manualServicePointId?: string) => {
+    const queue = queues.find(q => q.id === queueId);
+    if (!queue) {
+      toast.error('ไม่พบคิวที่ต้องการเรียก');
       return null;
     }
+
+    // Use manual service point if provided, otherwise get intelligent suggestion
+    let targetServicePointId = manualServicePointId;
     
-    // Add service point ID to the queue call
-    return await callQueue(queueId, selectedServicePoint.id);
+    if (!targetServicePointId) {
+      const suggestedServicePoint = getIntelligentServicePointSuggestion(queue);
+      if (!suggestedServicePoint) {
+        toast.warning('ไม่พบจุดบริการที่เหมาะสมสำหรับคิวนี้ กรุณาเลือกจุดบริการด้วยตนเอง');
+        return null;
+      }
+      targetServicePointId = suggestedServicePoint.id;
+    }
+    
+    // Call queue with the determined service point
+    const result = await callQueue(queueId, targetServicePointId);
+    
+    if (result) {
+      const servicePoint = servicePoints.find(sp => sp.id === targetServicePointId);
+      toast.success(`เรียกคิวหมายเลข ${queue.number} ไปยัง${servicePoint?.name || 'จุดบริการ'}`);
+    }
+    
+    return result;
   };
   
-  // Handler for transferring queue
+  // Handler for transferring queue with recalculation
   const handleTransferQueue = async (
     queueId: string, 
     sourceServicePointId: string,
@@ -138,13 +181,21 @@ export const useQueueManagement = () => {
     notes?: string,
     newQueueType?: string
   ) => {
-    return await transferQueueToServicePoint(
+    const result = await transferQueueToServicePoint(
       queueId, 
       sourceServicePointId,
       targetServicePointId,
       notes,
       newQueueType
     );
+    
+    if (result) {
+      // Trigger recalculation of queue assignments for affected service points
+      logger.info('Queue transfer completed, triggering algorithm recalculation');
+      toast.success('โอนคิวเรียบร้อยแล้ว และปรับปรุงลำดับคิวอัตโนมัติ');
+    }
+    
+    return result;
   };
   
   // Handler for holding queue
@@ -157,7 +208,7 @@ export const useQueueManagement = () => {
     return await returnSkippedQueueToWaiting(queueId);
   };
   
-  // Handler for service point change
+  // Handler for service point change (for manual assignment)
   const handleServicePointChange = (value: string) => {
     const servicePoint = servicePoints.find(sp => sp.id === value);
     if (servicePoint) {
@@ -167,7 +218,7 @@ export const useQueueManagement = () => {
   };
 
   return {
-    // State
+    // State - now showing ALL queues
     waitingQueues,
     activeQueues,
     completedQueues,
@@ -176,6 +227,7 @@ export const useQueueManagement = () => {
     queueTypes,
     selectedServicePoint,
     servicePoints,
+    servicePointCapabilities,
     
     // Handlers
     handleRecallQueue,
@@ -184,6 +236,9 @@ export const useQueueManagement = () => {
     handleHoldQueue,
     handleReturnToWaiting,
     handleServicePointChange,
-    updateQueueStatus
+    updateQueueStatus,
+    
+    // New utility functions
+    getIntelligentServicePointSuggestion
   };
 };
