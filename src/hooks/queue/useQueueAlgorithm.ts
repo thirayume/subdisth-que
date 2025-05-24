@@ -131,8 +131,8 @@ export const useQueueAlgorithm = () => {
     fetchQueueTypes();
   }, []);
   
-  // Sort queues by the selected algorithm
-  const sortQueues = (
+  // Memoize the sortQueues function to prevent infinite re-renders
+  const sortQueues = React.useCallback((
     queuesToSort: Queue[],
     servicePointCapabilities: ServicePointCapability[] = [],
     selectedServicePointId?: string
@@ -151,7 +151,7 @@ export const useQueueAlgorithm = () => {
     
     logger.debug('Sorted queues result:', result);
     return result;
-  };
+  }, [queueAlgorithm, queueTypes]); // Stable dependencies
 
   return {
     queueAlgorithm,

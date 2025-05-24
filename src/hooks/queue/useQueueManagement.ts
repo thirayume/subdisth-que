@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Queue, QueueStatus } from '@/integrations/supabase/schema';
 import { useQueues } from '@/hooks/useQueues';
@@ -40,39 +40,38 @@ export const useQueueManagement = () => {
   const [activeQueues, setActiveQueues] = useState<Queue[]>([]);
   const [completedQueues, setCompletedQueues] = useState<Queue[]>([]);
   const [skippedQueues, setSkippedQueues] = useState<Queue[]>([]);
-  const [servicePointCapabilities, setServicePointCapabilities] = useState<ServicePointCapability[]>([]);
   
-  // Extract service point capabilities for queue algorithm
-  useEffect(() => {
+  // Memoize service point capabilities to prevent unnecessary recalculations
+  const servicePointCapabilities = useMemo<ServicePointCapability[]>(() => {
     logger.debug('Processing mappings for service point capabilities:', mappings);
     
-    if (mappings.length > 0) {
-      // Group mappings by service point ID
-      const capabilities: Record<string, string[]> = {};
-      
-      mappings.forEach(mapping => {
-        if (!capabilities[mapping.service_point_id]) {
-          capabilities[mapping.service_point_id] = [];
-        }
-        capabilities[mapping.service_point_id].push(mapping.queue_type_id);
-      });
-      
-      // Convert to array format
-      const capabilitiesArray = Object.entries(capabilities).map(([servicePointId, queueTypeIds]) => ({
-        servicePointId,
-        queueTypeIds
-      }));
-      
-      logger.debug('Service point capabilities processed:', capabilitiesArray);
-      setServicePointCapabilities(capabilitiesArray);
-    } else {
-      logger.debug('No mappings found, clearing capabilities');
-      setServicePointCapabilities([]);
+    if (mappings.length === 0) {
+      logger.debug('No mappings found, returning empty capabilities');
+      return [];
     }
+
+    // Group mappings by service point ID
+    const capabilities: Record<string, string[]> = {};
+    
+    mappings.forEach(mapping => {
+      if (!capabilities[mapping.service_point_id]) {
+        capabilities[mapping.service_point_id] = [];
+      }
+      capabilities[mapping.service_point_id].push(mapping.queue_type_id);
+    });
+    
+    // Convert to array format
+    const capabilitiesArray = Object.entries(capabilities).map(([servicePointId, queueTypeIds]) => ({
+      servicePointId,
+      queueTypeIds
+    }));
+    
+    logger.debug('Service point capabilities processed:', capabilitiesArray);
+    return capabilitiesArray;
   }, [mappings]);
 
-  // Get intelligent service point suggestion for a queue
-  const getIntelligentServicePointSuggestion = (queue: Queue) => {
+  // Memoize the intelligent service point suggestion function
+  const getIntelligentServicePointSuggestion = useCallback((queue: Queue) => {
     // If queue already has a service point, return it
     if (queue.service_point_id) {
       return servicePoints.find(sp => sp.id === queue.service_point_id);
@@ -90,47 +89,52 @@ export const useQueueManagement = () => {
 
     // Return the first compatible service point, or null if none found
     return compatibleServicePoints[0] || null;
-  };
+  }, [servicePoints, queueTypes, servicePointCapabilities]);
 
   // Update filtered queues to show ALL queues (no service point filtering)
   useEffect(() => {
-    if (queues) {
-      const waiting = queues.filter(q => q.status === 'WAITING');
-      const active = queues.filter(q => q.status === 'ACTIVE');
-      const completed = queues.filter(q => q.status === 'COMPLETED');
-      const skipped = queues.filter(q => q.status === 'SKIPPED');
-      
-      logger.debug('Showing all queues (no service point filtering):', {
-        totalWaiting: waiting.length,
-        totalActive: active.length,
-        totalCompleted: completed.length,
-        totalSkipped: skipped.length
-      });
-      
-      // Apply sorting algorithm to waiting queues (but show all)
-      if (sortQueues) {
-        const sortedQueues = sortQueues(waiting, servicePointCapabilities);
-        logger.debug('Sorted all waiting queues:', {
-          originalCount: waiting.length,
-          sortedCount: sortedQueues.length
-        });
-        setWaitingQueues(sortedQueues);
-      } else {
-        setWaitingQueues(waiting);
-      }
-      
-      setActiveQueues(active);
-      setCompletedQueues(completed);
-      setSkippedQueues(skipped);
+    logger.debug('useEffect for queue filtering triggered');
+    
+    if (!queues) {
+      logger.debug('No queues available, skipping update');
+      return;
     }
-  }, [queues, sortQueues, servicePointCapabilities]);
+
+    const waiting = queues.filter(q => q.status === 'WAITING');
+    const active = queues.filter(q => q.status === 'ACTIVE');
+    const completed = queues.filter(q => q.status === 'COMPLETED');
+    const skipped = queues.filter(q => q.status === 'SKIPPED');
+    
+    logger.debug('Showing all queues (no service point filtering):', {
+      totalWaiting: waiting.length,
+      totalActive: active.length,
+      totalCompleted: completed.length,
+      totalSkipped: skipped.length
+    });
+    
+    // Apply sorting algorithm to waiting queues (but show all)
+    if (sortQueues) {
+      const sortedQueues = sortQueues(waiting, servicePointCapabilities);
+      logger.debug('Sorted all waiting queues:', {
+        originalCount: waiting.length,
+        sortedCount: sortedQueues.length
+      });
+      setWaitingQueues(sortedQueues);
+    } else {
+      setWaitingQueues(waiting);
+    }
+    
+    setActiveQueues(active);
+    setCompletedQueues(completed);
+    setSkippedQueues(skipped);
+  }, [queues, sortQueues, servicePointCapabilities]); // Stable dependencies now
   
   // Handler for recalling queue
-  const handleRecallQueue = (queueId: string) => {
+  const handleRecallQueue = useCallback((queueId: string) => {
     recallQueue(queueId);
     
     // Find the queue for the toast notification
-    const queue = queues.find(q => q.id === queueId);
+    const queue = queues?.find(q => q.id === queueId);
     if (queue) {
       // Find the patient for this queue
       const patient = patients.find(p => p.id === queue.patient_id);
@@ -140,11 +144,11 @@ export const useQueueManagement = () => {
         toast.info(`เรียกซ้ำคิวหมายเลข ${queue.number}`);
       }
     }
-  };
+  }, [recallQueue, queues, patients]);
   
   // Enhanced handler for calling queue with intelligent service point suggestion
-  const handleCallQueue = async (queueId: string, manualServicePointId?: string) => {
-    const queue = queues.find(q => q.id === queueId);
+  const handleCallQueue = useCallback(async (queueId: string, manualServicePointId?: string) => {
+    const queue = queues?.find(q => q.id === queueId);
     if (!queue) {
       toast.error('ไม่พบคิวที่ต้องการเรียก');
       return null;
@@ -171,10 +175,10 @@ export const useQueueManagement = () => {
     }
     
     return result;
-  };
+  }, [queues, servicePoints, getIntelligentServicePointSuggestion, callQueue]);
   
   // Handler for transferring queue with recalculation
-  const handleTransferQueue = async (
+  const handleTransferQueue = useCallback(async (
     queueId: string, 
     sourceServicePointId: string,
     targetServicePointId: string,
@@ -196,26 +200,26 @@ export const useQueueManagement = () => {
     }
     
     return result;
-  };
+  }, [transferQueueToServicePoint]);
   
   // Handler for holding queue
-  const handleHoldQueue = async (queueId: string, servicePointId: string, reason?: string) => {
+  const handleHoldQueue = useCallback(async (queueId: string, servicePointId: string, reason?: string) => {
     return await putQueueOnHold(queueId, servicePointId, reason);
-  };
+  }, [putQueueOnHold]);
   
   // Handler for returning skipped queue to waiting
-  const handleReturnToWaiting = async (queueId: string) => {
+  const handleReturnToWaiting = useCallback(async (queueId: string) => {
     return await returnSkippedQueueToWaiting(queueId);
-  };
+  }, [returnSkippedQueueToWaiting]);
   
   // Handler for service point change (for manual assignment)
-  const handleServicePointChange = (value: string) => {
+  const handleServicePointChange = useCallback((value: string) => {
     const servicePoint = servicePoints.find(sp => sp.id === value);
     if (servicePoint) {
       logger.debug('Service point changed to:', servicePoint);
       setSelectedServicePoint(servicePoint);
     }
-  };
+  }, [servicePoints, setSelectedServicePoint]);
 
   return {
     // State - now showing ALL queues
