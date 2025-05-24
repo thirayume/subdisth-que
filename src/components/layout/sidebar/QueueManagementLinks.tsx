@@ -4,15 +4,35 @@ import { BarChart3, Monitor, Settings, Clock, Ticket, TestTube } from 'lucide-re
 import SidebarNavLink from './SidebarNavLink';
 import SidebarSection from './SidebarSection';
 
-const QueueManagementLinks: React.FC = () => {
+interface QueueManagementLinksProps {
+  isActiveRoute: (path: string) => boolean;
+  closeSidebar: () => void;
+}
+
+const QueueManagementLinks: React.FC<QueueManagementLinksProps> = ({
+  isActiveRoute,
+  closeSidebar,
+}) => {
   return (
     <SidebarSection title="การจัดการคิว">
-      <SidebarNavLink to="/queue/management" icon={Settings} label="จัดการคิว" />
-      <SidebarNavLink to="/queue/board" icon={Monitor} label="จอแสดงคิว" />
-      <SidebarNavLink to="/queue/create" icon={Ticket} label="สร้างคิว" />
-      <SidebarNavLink to="/pharmacy" icon={BarChart3} label="บริการจ่ายยา" />
-      <SidebarNavLink to="/queue/history" icon={Clock} label="ประวัติคิว" />
-      <SidebarNavLink to="/test-dashboard" icon={TestTube} label="ทดสอบระบบ" />
+      <SidebarNavLink to="/queue/management" icon={Settings} isActive={isActiveRoute} onClick={closeSidebar}>
+        จัดการคิว
+      </SidebarNavLink>
+      <SidebarNavLink to="/queue/board" icon={Monitor} isActive={isActiveRoute} onClick={closeSidebar}>
+        จอแสดงคิว
+      </SidebarNavLink>
+      <SidebarNavLink to="/queue/create" icon={Ticket} isActive={isActiveRoute} onClick={closeSidebar}>
+        สร้างคิว
+      </SidebarNavLink>
+      <SidebarNavLink to="/pharmacy" icon={BarChart3} isActive={isActiveRoute} onClick={closeSidebar}>
+        บริการจ่ายยา
+      </SidebarNavLink>
+      <SidebarNavLink to="/queue/history" icon={Clock} isActive={isActiveRoute} onClick={closeSidebar}>
+        ประวัติคิว
+      </SidebarNavLink>
+      <SidebarNavLink to="/test-dashboard" icon={TestTube} isActive={isActiveRoute} onClick={closeSidebar}>
+        ทดสอบระบบ
+      </SidebarNavLink>
     </SidebarSection>
   );
 };
