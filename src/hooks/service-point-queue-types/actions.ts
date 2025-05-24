@@ -1,0 +1,112 @@
+
+import { toast } from 'sonner';
+import { createLogger } from '@/utils/logger';
+import { ServicePointQueueType } from '@/integrations/supabase/schema';
+import { 
+  fetchServicePointQueueTypes, 
+  createServicePointQueueTypeMapping, 
+  deleteServicePointQueueTypeMapping,
+  getQueueTypesForServicePoint as getQueueTypesService,
+  getServicePointsForQueueType as getServicePointsService
+} from './service';
+
+const logger = createLogger('ServicePointQueueTypesActions');
+
+export const createFetchMappingsAction = (
+  servicePointId: string | undefined,
+  setMappings: (mappings: ServicePointQueueType[]) => void,
+  setLoading: (loading: boolean) => void,
+  setError: (error: string | null) => void
+) => {
+  return async () => {
+    // Don't fetch if no service point is selected
+    if (!servicePointId) {
+      setMappings([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await fetchServicePointQueueTypes(servicePointId);
+      setMappings(data);
+    } catch (err: any) {
+      logger.error('Error fetching service point queue type mappings:', err);
+      setError(err.message || 'Failed to fetch service point queue type mappings');
+      setMappings([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+};
+
+export const createAddMappingAction = (
+  setMappings: (updater: (prev: ServicePointQueueType[]) => ServicePointQueueType[]) => void
+) => {
+  return async (servicePointId: string, queueTypeId: string): Promise<ServicePointQueueType | null> => {
+    try {
+      const newMapping = await createServicePointQueueTypeMapping(servicePointId, queueTypeId);
+      setMappings(prev => [...prev, newMapping]);
+      toast.success('เพิ่มการเชื่อมโยงประเภทคิวกับจุดบริการเรียบร้อยแล้ว');
+      return newMapping;
+    } catch (err: any) {
+      logger.error('Error adding service point queue type mapping:', err);
+      toast.error('ไม่สามารถเพิ่มการเชื่อมโยงประเภทคิวกับจุดบริการได้');
+      return null;
+    }
+  };
+};
+
+export const createRemoveMappingAction = (
+  setMappings: (updater: (prev: ServicePointQueueType[]) => ServicePointQueueType[]) => void,
+  setDeletingId: (id: string | null) => void
+) => {
+  return async (id: string): Promise<boolean> => {
+    try {
+      setDeletingId(id);
+      await deleteServicePointQueueTypeMapping(id);
+
+      // Update local state immediately after successful deletion
+      setMappings(prev => {
+        const updated = prev.filter(mapping => mapping.id !== id);
+        logger.debug(`Updated local state: removed mapping ${id}, remaining mappings: ${updated.length}`);
+        return updated;
+      });
+      
+      toast.success('ลบการเชื่อมโยงประเภทคิวกับจุดบริการเรียบร้อยแล้ว');
+      logger.debug(`Successfully deleted mapping with id: ${id}`);
+      return true;
+    } catch (err: any) {
+      logger.error('Error removing service point queue type mapping:', err);
+      toast.error(`ไม่สามารถลบการเชื่อมโยงประเภทคิวกับจุดบริการได้: ${err.message}`);
+      return false;
+    } finally {
+      setDeletingId(null);
+    }
+  };
+};
+
+export const createGetQueueTypesForServicePointAction = () => {
+  return async (servicePointId: string) => {
+    try {
+      return await getQueueTypesService(servicePointId);
+    } catch (err: any) {
+      logger.error('Error fetching queue types for service point:', err);
+      toast.error('ไม่สามารถดึงข้อมูลประเภทคิวสำหรับจุดบริการได้');
+      return [];
+    }
+  };
+};
+
+export const createGetServicePointsForQueueTypeAction = () => {
+  return async (queueTypeId: string) => {
+    try {
+      return await getServicePointsService(queueTypeId);
+    } catch (err: any) {
+      logger.error('Error fetching service points for queue type:', err);
+      toast.error('ไม่สามารถดึงข้อมูลจุดบริการสำหรับประเภทคิวได้');
+      return [];
+    }
+  };
+};

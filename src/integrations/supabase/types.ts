@@ -442,6 +442,7 @@ export type Database = {
           location: string | null
           name: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           code: string
@@ -451,6 +452,7 @@ export type Database = {
           location?: string | null
           name: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           code?: string
@@ -460,6 +462,7 @@ export type Database = {
           location?: string | null
           name?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
