@@ -1,23 +1,26 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { RefreshCw, Calculator } from 'lucide-react';
+import { useQueueRecalculation } from '@/hooks/queue/useQueueRecalculation';
 
 const QueueManagementHeader: React.FC = () => {
+  const { recalculateAllQueues } = useQueueRecalculation();
+
   return (
-    <div className="mb-6 flex justify-between items-center">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">การจัดการคิว</h1>
-        <p className="text-gray-500">จัดการคิวรอดำเนินการ คิวกำลังให้บริการ และคิวเสร็จสิ้น</p>
-      </div>
+    <div className="flex items-center justify-between">
+      <h1 className="text-2xl font-bold tracking-tight">การจัดการคิว</h1>
       
-      <Button asChild className="bg-pharmacy-600 hover:bg-pharmacy-700">
-        <Link to="/queue/create">
-          <PlusCircle className="h-4 w-4 mr-2" />
-          สร้างคิวใหม่
-        </Link>
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          onClick={recalculateAllQueues}
+          className="flex items-center gap-2"
+        >
+          <Calculator className="w-4 h-4" />
+          คำนวณการมอบหมายคิวใหม่
+        </Button>
+      </div>
     </div>
   );
 };

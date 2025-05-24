@@ -1,64 +1,18 @@
 
 import React from 'react';
-import { ListOrdered, MonitorPlay, Clock, PlusCircle, Pill } from 'lucide-react';
+import { BarChart3, Monitor, Settings, Clock, Ticket, TestTube } from 'lucide-react';
 import SidebarNavLink from './SidebarNavLink';
 import SidebarSection from './SidebarSection';
 
-interface QueueManagementLinksProps {
-  isActiveRoute: (path: string) => boolean;
-  closeSidebar: () => void;
-}
-
-const QueueManagementLinks: React.FC<QueueManagementLinksProps> = ({
-  isActiveRoute,
-  closeSidebar,
-}) => {
+const QueueManagementLinks: React.FC = () => {
   return (
-    <SidebarSection title="จัดการคิว">
-      <SidebarNavLink
-        to="/queue/management"
-        icon={ListOrdered}
-        isActive={isActiveRoute}
-        onClick={closeSidebar}
-      >
-        จัดการคิว
-      </SidebarNavLink>
-      
-      <SidebarNavLink
-        to="/pharmacy"
-        icon={Pill}
-        isActive={isActiveRoute}
-        onClick={closeSidebar}
-      >
-        บริการจ่ายยา
-      </SidebarNavLink>
-      
-      <SidebarNavLink
-        to="/queue/create"
-        icon={PlusCircle}
-        isActive={isActiveRoute}
-        onClick={closeSidebar}
-      >
-        สร้างคิวใหม่
-      </SidebarNavLink>
-      
-      <SidebarNavLink
-        to="/queue/board"
-        icon={MonitorPlay}
-        isActive={isActiveRoute}
-        onClick={closeSidebar}
-      >
-        จอแสดงคิว
-      </SidebarNavLink>
-
-      <SidebarNavLink
-        to="/queue/history"
-        icon={Clock}
-        isActive={isActiveRoute}
-        onClick={closeSidebar}
-      >
-        ประวัติคิว
-      </SidebarNavLink>
+    <SidebarSection title="การจัดการคิว">
+      <SidebarNavLink to="/queue/management" icon={Settings} label="จัดการคิว" />
+      <SidebarNavLink to="/queue/board" icon={Monitor} label="จอแสดงคิว" />
+      <SidebarNavLink to="/queue/create" icon={Ticket} label="สร้างคิว" />
+      <SidebarNavLink to="/pharmacy" icon={BarChart3} label="บริการจ่ายยา" />
+      <SidebarNavLink to="/queue/history" icon={Clock} label="ประวัติคิว" />
+      <SidebarNavLink to="/test-dashboard" icon={TestTube} label="ทดสอบระบบ" />
     </SidebarSection>
   );
 };

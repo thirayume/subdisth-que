@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
@@ -21,6 +20,7 @@ import LineCallback from "@/components/LineCallback";
 import Medications from "@/pages/Medications";
 import Analytics from "@/pages/Analytics";
 import CreateQueue from "@/pages/CreateQueue"; // Add import for the new page
+import TestDashboard from "@/pages/TestDashboard"; // Add import for the new page
 
 // Create a client
 const queryClient = new QueryClient();
@@ -44,6 +44,10 @@ function App() {
               {/* Queue Creation Routes */}
               <Route path="/queue/create" element={<CreateQueue />} />
               <Route path="/create-queue" element={<CreateQueue />} />
+              
+              {/* Test Dashboard */}
+              <Route path="/test-dashboard" element={<TestDashboard />} />
+              <Route path="/test" element={<TestDashboard />} />
               
               {/* Pharmacy Queue */}
               <Route path="/pharmacy" element={<PharmacyQueue />} />
