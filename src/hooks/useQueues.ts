@@ -1,6 +1,7 @@
 
 import * as React from 'react';
 import { Queue } from '@/integrations/supabase/schema';
+import { supabase } from '@/integrations/supabase/client';
 import { useOptimizedQueueState } from './queue/useOptimizedQueueState';
 import { useQueueStatusUpdates } from './queue/useQueueStatusUpdates';
 import { useQueueAnnouncements } from './queue/useQueueAnnouncements';
@@ -87,7 +88,6 @@ export const useQueues = () => {
         updated_at: new Date().toISOString(),
         called_at: null,
         completed_at: null,
-        skipped_at: null,
         paused_at: null,
         transferred_at: null,
         service_point_id: null,
@@ -110,13 +110,16 @@ export const useQueues = () => {
         .select();
 
       if (error) {
-        // Remove temp queue on error
-        setQueues(prev => prev.filter(q => q.id !== tempQueue.id));
+        // Remove temp queue on error by filtering it out
+        const updatedQueues = queues.filter(q => q.id !== tempQueue.id);
+        updatedQueues.forEach(q => updateQueueInState(q));
         throw error;
       }
 
       if (!data || data.length === 0) {
-        setQueues(prev => prev.filter(q => q.id !== tempQueue.id));
+        // Remove temp queue on error by filtering it out
+        const updatedQueues = queues.filter(q => q.id !== tempQueue.id);
+        updatedQueues.forEach(q => updateQueueInState(q));
         throw new Error('No queue data returned from insert');
       }
       
@@ -127,7 +130,7 @@ export const useQueues = () => {
       };
       
       // Replace temp queue with real queue
-      setQueues(prev => prev.map(q => q.id === tempQueue.id ? newQueue : q));
+      updateQueueInState(newQueue);
       
       logger.info('Queue added successfully:', newQueue);
       return newQueue;
@@ -135,7 +138,7 @@ export const useQueues = () => {
       logger.error('Error adding queue:', err);
       return null;
     }
-  }, [updateQueueInState]);
+  }, [updateQueueInState, queues]);
 
   return {
     queues,
