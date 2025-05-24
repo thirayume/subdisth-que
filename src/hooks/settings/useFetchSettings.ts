@@ -24,11 +24,12 @@ export const useFetchSettings = (category: string = 'general') => {
       }
 
       // Return the array of key-value pairs directly so it's iterable
-      if (data) {
-        console.log(`Fetched ${data.length || 0} settings for category ${category}`);
+      if (data && data.length > 0) {
+        console.log(`Fetched ${data.length} settings for category ${category}`);
         setSettings(data);
       } else {
         // If no data, set an empty array to avoid "not iterable" errors
+        console.log(`No settings found for category ${category}, using empty array`);
         setSettings([]);
       }
       
@@ -51,7 +52,7 @@ export const useFetchSettings = (category: string = 'general') => {
           setSettings([]);
         }
       } else {
-        toast.error(`ไม่สามารถโหลดข้อมูลการตั้งค่า ${category} ได้`);
+        console.warn(`No saved settings found for ${category}, using empty array`);
         setSettings([]);
       }
     } finally {

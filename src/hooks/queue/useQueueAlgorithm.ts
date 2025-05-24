@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { QueueAlgorithmType, QueueTypeWithAlgorithm, ServicePointCapability, sortQueuesByAlgorithm } from '@/utils/queueAlgorithms';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,7 +23,7 @@ export const useQueueAlgorithm = () => {
           .select('value')
           .eq('category', 'queue')
           .eq('key', 'queue_algorithm')
-          .single();
+          .maybeSingle(); // Use maybeSingle instead of single to handle no results
           
         if (error) {
           logger.error('Error fetching queue algorithm from database:', error);
@@ -35,10 +36,18 @@ export const useQueueAlgorithm = () => {
         }
         
         if (data?.value) {
-          const algorithm = data.value as QueueAlgorithmType;
+          // Handle JSON string value from database
+          const algorithm = typeof data.value === 'string' ? 
+            JSON.parse(data.value) as QueueAlgorithmType : 
+            data.value as QueueAlgorithmType;
           setQueueAlgorithm(algorithm);
           // Update localStorage as well
           localStorage.setItem('queue_algorithm', algorithm);
+        } else {
+          // No data found, use default FIFO algorithm
+          logger.info('No queue algorithm setting found, using default FIFO');
+          setQueueAlgorithm(QueueAlgorithmType.FIFO);
+          localStorage.setItem('queue_algorithm', QueueAlgorithmType.FIFO);
         }
       } catch (err) {
         logger.error('Error in fetchQueueAlgorithm:', err);
@@ -77,6 +86,10 @@ export const useQueueAlgorithm = () => {
           setQueueTypes(data as QueueTypeWithAlgorithm[]);
           // Update localStorage as well
           localStorage.setItem('queue_types', JSON.stringify(data));
+        } else {
+          // No queue types found, log warning
+          logger.warn('No enabled queue types found in database');
+          setQueueTypes([]);
         }
       } catch (err) {
         logger.error('Error in fetchQueueTypes:', err);
