@@ -3,6 +3,7 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2 } from 'lucide-react';
 import { useQueues } from '@/hooks/useQueues';
 import { usePatients } from '@/hooks/usePatients';
 import { useServicePoints } from '@/hooks/useServicePoints';
@@ -17,11 +18,13 @@ interface PharmacyQueuePanelProps {
   refreshTrigger?: number;
 }
 
-const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
+const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = React.memo(({
   servicePointId,
   title,
   refreshTrigger = 0
 }) => {
+  const [localLoading, setLocalLoading] = useState(false);
+  
   const { 
     queues, 
     updateQueueStatus, 
@@ -31,80 +34,62 @@ const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
     putQueueOnHold,
     returnSkippedQueueToWaiting,
     fetchQueues,
-    loading
+    loading: globalLoading
   } = useQueues();
   
   const { patients } = usePatients();
   const { servicePoints } = useServicePoints();
 
-  // Memoize the selected service point to prevent unnecessary re-renders
+  // Memoize the selected service point
   const selectedServicePoint = useMemo(() => {
     return servicePoints.find(sp => sp.id === servicePointId);
   }, [servicePoints, servicePointId]);
 
-  // Stable refresh function
+  // Optimized refresh function with local loading state
   const refreshData = useCallback(async () => {
-    if (refreshTrigger > 0) {
-      logger.debug(`Refresh trigger fired for service point ${selectedServicePoint?.code}: ${refreshTrigger}`);
+    if (refreshTrigger > 0 && selectedServicePoint) {
+      logger.debug(`Refresh trigger ${refreshTrigger} for service point ${selectedServicePoint.code}`);
+      setLocalLoading(true);
       try {
         await fetchQueues();
-        logger.debug(`Successfully refreshed data for service point ${selectedServicePoint?.code}`);
+        logger.debug(`Successfully refreshed data for service point ${selectedServicePoint.code}`);
       } catch (error) {
-        logger.error(`Error refreshing data for service point ${selectedServicePoint?.code}:`, error);
+        logger.error(`Error refreshing data for service point ${selectedServicePoint.code}:`, error);
+      } finally {
+        setLocalLoading(false);
       }
     }
-  }, [refreshTrigger, fetchQueues, selectedServicePoint?.code]);
+  }, [refreshTrigger, fetchQueues, selectedServicePoint]);
 
-  // Handle refresh trigger changes
+  // Handle refresh trigger changes with debouncing
   useEffect(() => {
-    refreshData();
+    const timeoutId = setTimeout(() => {
+      refreshData();
+    }, 100); // Small delay to batch rapid changes
+
+    return () => clearTimeout(timeoutId);
   }, [refreshData]);
 
-  // Memoize filtered queues with detailed logging
+  // Memoize filtered queues with optimized filtering
   const servicePointQueues = useMemo(() => {
     if (!selectedServicePoint) {
-      logger.debug('No selected service point, returning empty array');
       return [];
     }
     
     const filtered = queues.filter(q => q.service_point_id === selectedServicePoint.id);
-    logger.debug(`Filtered queues for service point ${selectedServicePoint.code}:`, {
-      totalQueues: queues.length,
-      filteredQueues: filtered.length,
-      servicePointId: selectedServicePoint.id,
-      queueDetails: filtered.map(q => ({ 
-        id: q.id, 
-        number: q.number, 
-        status: q.status, 
-        type: q.type,
-        service_point_id: q.service_point_id 
-      }))
-    });
+    logger.debug(`Service point ${selectedServicePoint.code} has ${filtered.length} queues`);
     
     return filtered;
   }, [queues, selectedServicePoint]);
 
   // Memoize queue status groups
-  const { waitingQueues, activeQueues, completedQueues } = useMemo(() => {
-    return {
-      waitingQueues: servicePointQueues.filter(q => q.status === 'WAITING'),
-      activeQueues: servicePointQueues.filter(q => q.status === 'ACTIVE'),
-      completedQueues: servicePointQueues.filter(q => q.status === 'COMPLETED')
-    };
+  const queuesByStatus = useMemo(() => {
+    const waiting = servicePointQueues.filter(q => q.status === 'WAITING');
+    const active = servicePointQueues.filter(q => q.status === 'ACTIVE');
+    const completed = servicePointQueues.filter(q => q.status === 'COMPLETED');
+    
+    return { waiting, active, completed };
   }, [servicePointQueues]);
-
-  // Log queue counts for debugging
-  useEffect(() => {
-    if (selectedServicePoint) {
-      logger.debug(`Queue counts for ${selectedServicePoint.code}:`, {
-        waiting: waitingQueues.length,
-        active: activeQueues.length,
-        completed: completedQueues.length,
-        total: servicePointQueues.length,
-        refreshTrigger
-      });
-    }
-  }, [waitingQueues.length, activeQueues.length, completedQueues.length, servicePointQueues.length, selectedServicePoint, refreshTrigger]);
 
   // Stable patient name getter
   const getPatientName = useCallback((patientId: string) => {
@@ -112,18 +97,16 @@ const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
     return patient ? patient.name : 'ไม่พบข้อมูลผู้ป่วย';
   }, [patients]);
 
-  // Stable queue action handlers
+  // Optimized queue action handlers
   const handleCallQueue = useCallback(async (queueId: string): Promise<any> => {
     if (!selectedServicePoint) return null;
     logger.debug(`Calling queue ${queueId} for service point ${selectedServicePoint.code}`);
-    const result = await callQueue(queueId, selectedServicePoint.id);
-    return result;
+    return await callQueue(queueId, selectedServicePoint.id);
   }, [selectedServicePoint, callQueue]);
 
   const handleUpdateStatus = useCallback(async (queueId: string, status: any) => {
     logger.debug(`Updating queue ${queueId} status to ${status}`);
-    const result = await updateQueueStatus(queueId, status);
-    return result;
+    return await updateQueueStatus(queueId, status);
   }, [updateQueueStatus]);
 
   const handleRecallQueue = useCallback((queueId: string) => {
@@ -131,18 +114,13 @@ const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
     recallQueue(queueId);
   }, [recallQueue]);
 
+  // Loading state check
+  const isLoading = globalLoading || localLoading;
+
   if (!selectedServicePoint) {
     return (
       <div className="h-full flex items-center justify-center bg-gray-50">
-        <p className="text-gray-500">ไม่พบจุดบริการ</p>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="h-full flex items-center justify-center bg-gray-50">
-        <p className="text-gray-500">กำลังโหลด...</p>
+        <p className="text-gray-500 text-sm">ไม่พบจุดบริการ</p>
       </div>
     );
   }
@@ -152,17 +130,22 @@ const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
       {/* Header */}
       <div className="p-3 border-b flex-shrink-0">
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-medium text-sm">{title}</h3>
-            <p className="text-xs text-gray-500">{selectedServicePoint.code} - {selectedServicePoint.name}</p>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium text-sm truncate">{title}</h3>
+            <p className="text-xs text-gray-500 truncate">
+              {selectedServicePoint.code} - {selectedServicePoint.name}
+            </p>
           </div>
           
-          <div className="flex items-center gap-2 text-xs">
-            <Badge variant="outline" className="bg-orange-50 text-orange-700">
-              รอ: {waitingQueues.length}
+          <div className="flex items-center gap-2 text-xs ml-2">
+            {isLoading && (
+              <Loader2 className="w-3 h-3 animate-spin text-gray-500" />
+            )}
+            <Badge variant="outline" className="bg-orange-50 text-orange-700 text-xs">
+              รอ: {queuesByStatus.waiting.length}
             </Badge>
-            <Badge variant="outline" className="bg-green-50 text-green-700">
-              ให้บริการ: {activeQueues.length}
+            <Badge variant="outline" className="bg-green-50 text-green-700 text-xs">
+              ให้บริการ: {queuesByStatus.active.length}
             </Badge>
           </div>
         </div>
@@ -172,24 +155,24 @@ const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
       <div className="flex-1 overflow-hidden">
         <Tabs defaultValue="waiting" className="h-full flex flex-col">
           <div className="border-b px-2 flex-shrink-0">
-            <TabsList className="h-8 text-xs">
-              <TabsTrigger value="waiting" className="text-xs px-2">
-                รอ ({waitingQueues.length})
+            <TabsList className="h-8 text-xs w-full">
+              <TabsTrigger value="waiting" className="text-xs px-2 flex-1">
+                รอ ({queuesByStatus.waiting.length})
               </TabsTrigger>
-              <TabsTrigger value="active" className="text-xs px-2">
-                ให้บริการ ({activeQueues.length})
+              <TabsTrigger value="active" className="text-xs px-2 flex-1">
+                ให้บริการ ({queuesByStatus.active.length})
               </TabsTrigger>
-              <TabsTrigger value="completed" className="text-xs px-2">
-                เสร็จ ({completedQueues.length})
+              <TabsTrigger value="completed" className="text-xs px-2 flex-1">
+                เสร็จ ({queuesByStatus.completed.length})
               </TabsTrigger>
             </TabsList>
           </div>
           
-          <div className="flex-1 overflow-auto">
-            <TabsContent value="waiting" className="mt-0 h-full">
+          <div className="flex-1 overflow-hidden">
+            <TabsContent value="waiting" className="mt-0 h-full overflow-hidden">
               <div className="h-full overflow-auto">
                 <QueueList
-                  queues={waitingQueues}
+                  queues={queuesByStatus.waiting}
                   getPatientName={getPatientName}
                   onUpdateStatus={handleUpdateStatus}
                   onCallQueue={handleCallQueue}
@@ -201,10 +184,10 @@ const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
               </div>
             </TabsContent>
             
-            <TabsContent value="active" className="mt-0 h-full">
+            <TabsContent value="active" className="mt-0 h-full overflow-hidden">
               <div className="h-full overflow-auto">
                 <QueueList
-                  queues={activeQueues}
+                  queues={queuesByStatus.active}
                   getPatientName={getPatientName}
                   onUpdateStatus={handleUpdateStatus}
                   onRecallQueue={handleRecallQueue}
@@ -216,10 +199,10 @@ const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
               </div>
             </TabsContent>
             
-            <TabsContent value="completed" className="mt-0 h-full">
+            <TabsContent value="completed" className="mt-0 h-full overflow-hidden">
               <div className="h-full overflow-auto">
                 <QueueList
-                  queues={completedQueues}
+                  queues={queuesByStatus.completed}
                   getPatientName={getPatientName}
                   status="COMPLETED"
                   selectedServicePoint={selectedServicePoint}
@@ -233,6 +216,8 @@ const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
       </div>
     </div>
   );
-};
+});
+
+PharmacyQueuePanel.displayName = 'PharmacyQueuePanel';
 
 export default PharmacyQueuePanel;

@@ -159,28 +159,10 @@ export const useQueueState = () => {
     });
   }, []);
 
-  // Initial data fetch and set up real-time subscription
+  // Initial data fetch - NO real-time subscription here
   React.useEffect(() => {
     logger.info('Initial mount, fetching queues');
     fetchQueues();
-    
-    // Set up real-time subscription for queues
-    const channel = supabase
-      .channel('queue-state-changes')
-      .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'queues' },
-          (payload) => {
-            logger.debug('Queue change detected in useQueueState:', payload);
-            // Always refetch to ensure consistency
-            fetchQueues();
-          }
-      )
-      .subscribe();
-      
-    return () => {
-      logger.debug('Unmounting useQueueState, cleaning up subscription');
-      supabase.removeChannel(channel);
-    };
   }, [fetchQueues]);
 
   return {

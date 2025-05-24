@@ -10,25 +10,44 @@ interface UseQueueRealtimeOptions {
   servicePointId?: string;
   channelName?: string;
   enabled?: boolean;
+  debounceMs?: number;
 }
 
 export const useQueueRealtime = (options: UseQueueRealtimeOptions = {}) => {
-  const { onQueueChange, servicePointId, channelName = 'queue-realtime', enabled = true } = options;
+  const { 
+    onQueueChange, 
+    servicePointId, 
+    channelName = 'queue-realtime', 
+    enabled = true,
+    debounceMs = 500
+  } = options;
+  
   const channelRef = useRef<any>(null);
   const onQueueChangeRef = useRef(onQueueChange);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Update the callback ref when it changes
   useEffect(() => {
     onQueueChangeRef.current = onQueueChange;
   }, [onQueueChange]);
 
-  // Stable callback that doesn't change on every render
-  const handleQueueChange = useCallback((payload: any) => {
+  // Debounced callback to prevent rapid fire updates
+  const debouncedQueueChange = useCallback((payload: any) => {
     logger.debug(`Queue change detected on channel ${channelName}:`, payload);
-    if (onQueueChangeRef.current) {
-      onQueueChangeRef.current();
+    
+    // Clear existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
     }
-  }, [channelName]);
+    
+    // Set new timeout
+    debounceTimeoutRef.current = setTimeout(() => {
+      if (onQueueChangeRef.current) {
+        logger.debug(`Executing debounced queue change for channel ${channelName}`);
+        onQueueChangeRef.current();
+      }
+    }, debounceMs);
+  }, [channelName, debounceMs]);
 
   useEffect(() => {
     if (!enabled) {
@@ -57,14 +76,14 @@ export const useQueueRealtime = (options: UseQueueRealtimeOptions = {}) => {
           table: 'queues',
           filter: `service_point_id=eq.${servicePointId}`
         },
-        handleQueueChange
+        debouncedQueueChange
       );
       logger.debug(`Subscribed to queue changes for service point: ${servicePointId}`);
     } else {
       // Listen for all queue changes
       channel = channel.on('postgres_changes', 
         { event: '*', schema: 'public', table: 'queues' },
-        handleQueueChange
+        debouncedQueueChange
       );
       logger.debug('Subscribed to all queue changes');
     }
@@ -72,20 +91,37 @@ export const useQueueRealtime = (options: UseQueueRealtimeOptions = {}) => {
     // Subscribe to the channel
     channel.subscribe((status) => {
       logger.debug(`Channel ${channelName} subscription status:`, status);
+      if (status === 'SUBSCRIBED') {
+        logger.info(`Successfully subscribed to channel: ${channelName}`);
+      } else if (status === 'CHANNEL_ERROR') {
+        logger.error(`Channel error for ${channelName}`);
+      }
     });
 
     channelRef.current = channel;
 
     return () => {
+      // Clear debounce timeout
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+        debounceTimeoutRef.current = null;
+      }
+      
       if (channelRef.current) {
         logger.debug(`Cleaning up real-time subscription for channel: ${channelName}`);
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };
-  }, [servicePointId, channelName, enabled, handleQueueChange]);
+  }, [servicePointId, channelName, enabled, debouncedQueueChange]);
 
   const cleanup = useCallback(() => {
+    // Clear debounce timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+      debounceTimeoutRef.current = null;
+    }
+    
     if (channelRef.current) {
       logger.debug(`Manual cleanup for channel: ${channelName}`);
       supabase.removeChannel(channelRef.current);
