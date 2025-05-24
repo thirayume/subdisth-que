@@ -107,26 +107,28 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
                     <div className="flex gap-4 items-end mb-4">
                       <div className="flex-1">
                         <label className="text-sm font-medium">เลือกประเภทคิว</label>
-                        <Select value={selectedQueueTypeId} onValueChange={handleQueueTypeSelect}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="เลือกประเภทคิวที่จะเพิ่ม" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableQueueTypes.length === 0 ? (
-                              <SelectItem value="" disabled>ไม่มีประเภทคิวที่สามารถเพิ่มได้</SelectItem>
-                            ) : (
-                              availableQueueTypes.map(qt => (
+                        {availableQueueTypes.length === 0 ? (
+                          <div className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground">
+                            ไม่มีประเภทคิวที่สามารถเพิ่มได้
+                          </div>
+                        ) : (
+                          <Select value={selectedQueueTypeId} onValueChange={handleQueueTypeSelect}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="เลือกประเภทคิวที่จะเพิ่ม" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableQueueTypes.map(qt => (
                                 <SelectItem key={qt.id} value={qt.id}>
                                   {qt.name}
                                 </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
                       </div>
                       <Button 
                         onClick={handleAddMapping} 
-                        disabled={!selectedQueueTypeId}
+                        disabled={!selectedQueueTypeId || availableQueueTypes.length === 0}
                       >
                         <PlusCircle className="h-4 w-4 mr-2" />
                         เพิ่ม
