@@ -1,7 +1,7 @@
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { useQueues } from '@/hooks/useQueues';
-import { useQueueRealtime } from '@/hooks/useQueueRealtime';
+import { useGlobalRealtime } from '@/hooks/useGlobalRealtime';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('useTestDashboardState');
@@ -31,22 +31,20 @@ export const useTestDashboardState = () => {
     
     // Fetch queues with a small delay to ensure state updates are processed
     setTimeout(() => {
-      fetchQueues();
+      fetchQueues(true); // Force refresh
     }, 100);
   }, [fetchQueues, lastRefreshTime]);
 
-  // Optimized real-time subscription with proper debouncing
-  const realtimeCallback = useCallback(() => {
-    logger.debug('Queue change detected via realtime, refreshing dashboard');
-    forceRefresh();
-  }, [forceRefresh]);
-
-  useQueueRealtime({
-    channelName: 'test-dashboard-realtime',
-    onQueueChange: realtimeCallback,
-    enabled: true,
-    debounceMs: 500
-  });
+  // Use global realtime manager instead of individual subscription
+  useGlobalRealtime(
+    'test-dashboard-realtime',
+    useCallback(() => {
+      logger.debug('Queue change detected via global realtime, refreshing dashboard');
+      forceRefresh();
+    }, [forceRefresh]),
+    undefined,
+    true
+  );
 
   return {
     refreshKey,

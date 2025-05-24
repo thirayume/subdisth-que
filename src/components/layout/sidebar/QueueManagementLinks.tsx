@@ -15,10 +15,10 @@ const QueueManagementLinks: React.FC<QueueManagementLinksProps> = ({
 }) => {
   return (
     <SidebarSection title="การจัดการคิว">
-      <SidebarNavLink to="/queue/management" icon={Settings} isActive={isActiveRoute} onClick={closeSidebar}>
+      <SidebarNavLink to="/queue" icon={Settings} isActive={isActiveRoute} onClick={closeSidebar}>
         จัดการคิว
       </SidebarNavLink>
-      <SidebarNavLink to="/queue/board" icon={Monitor} isActive={isActiveRoute} onClick={closeSidebar}>
+      <SidebarNavLink to="/queue-board" icon={Monitor} isActive={isActiveRoute} onClick={closeSidebar}>
         จอแสดงคิว
       </SidebarNavLink>
       <SidebarNavLink to="/queue/create" icon={Ticket} isActive={isActiveRoute} onClick={closeSidebar}>
@@ -27,12 +27,15 @@ const QueueManagementLinks: React.FC<QueueManagementLinksProps> = ({
       <SidebarNavLink to="/pharmacy" icon={BarChart3} isActive={isActiveRoute} onClick={closeSidebar}>
         บริการจ่ายยา
       </SidebarNavLink>
-      <SidebarNavLink to="/queue/history" icon={Clock} isActive={isActiveRoute} onClick={closeSidebar}>
+      <SidebarNavLink to="/queue-history" icon={Clock} isActive={isActiveRoute} onClick={closeSidebar}>
         ประวัติคิว
       </SidebarNavLink>
-      <SidebarNavLink to="/test-dashboard" icon={TestTube} isActive={isActiveRoute} onClick={closeSidebar}>
-        ทดสอบระบบ
-      </SidebarNavLink>
+      {/* Only show test dashboard in development or for admin users */}
+      {(process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') && (
+        <SidebarNavLink to="/test-dashboard" icon={TestTube} isActive={isActiveRoute} onClick={closeSidebar}>
+          ทดสอบระบบ
+        </SidebarNavLink>
+      )}
     </SidebarSection>
   );
 };

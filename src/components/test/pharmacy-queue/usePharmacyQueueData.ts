@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useQueues } from '@/hooks/useQueues';
 import { usePatients } from '@/hooks/usePatients';
 import { useServicePoints } from '@/hooks/useServicePoints';
+import { useGlobalRealtime } from '@/hooks/useGlobalRealtime';
 import { ServicePoint } from '@/integrations/supabase/schema';
 import { createLogger } from '@/utils/logger';
 
@@ -39,7 +40,7 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
       logger.debug(`Refresh trigger ${refreshTrigger} for service point ${selectedServicePoint.code}`);
       setLocalLoading(true);
       try {
-        await fetchQueues();
+        await fetchQueues(true); // Force refresh
         logger.debug(`Successfully refreshed data for service point ${selectedServicePoint.code}`);
       } catch (error) {
         logger.error(`Error refreshing data for service point ${selectedServicePoint.code}:`, error);
@@ -57,6 +58,17 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
 
     return () => clearTimeout(timeoutId);
   }, [refreshData]);
+
+  // Use global realtime manager for this service point
+  useGlobalRealtime(
+    `pharmacy-queue-${servicePointId}`,
+    useCallback(() => {
+      logger.debug(`Queue change detected for service point ${servicePointId}`);
+      // No need to fetch here as global manager already handles it
+    }, [servicePointId]),
+    servicePointId,
+    true
+  );
 
   // Memoize filtered queues with optimized filtering
   const servicePointQueues = useMemo(() => {
