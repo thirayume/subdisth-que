@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQueues } from '@/hooks/useQueues';
 import { usePatients } from '@/hooks/usePatients';
+import { useServicePoints } from '@/hooks/useServicePoints';
 import { QueueStatus, Patient } from '@/integrations/supabase/schema';
 import { QueueAlgorithmType } from '@/utils/queueAlgorithms';
 import QueueBoardHeader from '@/components/queue/QueueBoardHeader';
@@ -32,6 +33,7 @@ const QueueBoardContainer = () => {
   // Fetch data from Supabase
   const { getQueuesByStatus, sortQueues } = useQueues();
   const { patients } = usePatients();
+  const { servicePoints } = useServicePoints();
   const [activeQueues, setActiveQueues] = useState([]);
   const [waitingQueues, setWaitingQueues] = useState([]);
   const [completedQueues, setCompletedQueues] = useState([]);
@@ -104,6 +106,12 @@ const QueueBoardContainer = () => {
   const findPatient = (patientId: string): Patient | undefined => {
     return patients.find(p => p.id === patientId);
   };
+
+  // Find service point by ID
+  const findServicePoint = (servicePointId: string | null) => {
+    if (!servicePointId) return null;
+    return servicePoints.find(sp => sp.id === servicePointId);
+  };
   
   // Get the current algorithm name for display
   const getCurrentAlgorithmName = () => {
@@ -131,6 +139,7 @@ const QueueBoardContainer = () => {
         waitingQueues={waitingQueues}
         completedQueues={completedQueues}
         findPatient={findPatient}
+        findServicePoint={findServicePoint}
       />
       
       <HospitalFooter />

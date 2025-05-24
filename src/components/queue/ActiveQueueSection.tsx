@@ -1,16 +1,18 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Queue, Patient } from '@/integrations/supabase/schema';
+import { Queue, Patient, ServicePoint } from '@/integrations/supabase/schema';
 
 interface ActiveQueueSectionProps {
   activeQueues: Queue[];
   findPatient: (patientId: string) => Patient | undefined;
+  findServicePoint: (servicePointId: string | null) => ServicePoint | null;
 }
 
 const ActiveQueueSection: React.FC<ActiveQueueSectionProps> = ({ 
   activeQueues, 
-  findPatient 
+  findPatient,
+  findServicePoint
 }) => {
   return (
     <div className="lg:col-span-6 space-y-6">
@@ -27,6 +29,8 @@ const ActiveQueueSection: React.FC<ActiveQueueSectionProps> = ({
           {activeQueues.map(queue => {
             const patient = findPatient(queue.patient_id);
             const patientName = patient ? patient.name : "ไม่พบข้อมูลผู้ป่วย";
+            const servicePoint = findServicePoint(queue.service_point_id);
+            const servicePointName = servicePoint ? servicePoint.name : "ไม่ระบุจุดบริการ";
             
             return (
               <Card key={queue.id} className="bg-white border-2 border-pharmacy-200 shadow-lg animate-pulse-gentle">
@@ -35,7 +39,7 @@ const ActiveQueueSection: React.FC<ActiveQueueSectionProps> = ({
                     <div className="text-sm font-medium text-pharmacy-700 mb-1">กำลังเรียก</div>
                     <div className="queue-number text-8xl font-bold text-pharmacy-600 mb-4">{queue.number}</div>
                     <div className="text-lg font-medium text-gray-800 mb-1">{patientName}</div>
-                    <div className="text-sm text-gray-500">ช่องบริการ: 2</div>
+                    <div className="text-sm text-gray-500">{servicePointName}</div>
                   </div>
                 </CardContent>
               </Card>

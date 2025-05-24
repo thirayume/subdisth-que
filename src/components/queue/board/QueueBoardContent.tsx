@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Queue, Patient } from '@/integrations/supabase/schema';
+import { Queue, Patient, ServicePoint } from '@/integrations/supabase/schema';
 import ActiveQueueSection from '@/components/queue/ActiveQueueSection';
 import WaitingQueueSection from '@/components/queue/WaitingQueueSection';
 import CompletedQueueSection from '@/components/queue/CompletedQueueSection';
@@ -10,13 +10,15 @@ interface QueueBoardContentProps {
   waitingQueues: Queue[];
   completedQueues: Queue[];
   findPatient: (patientId: string) => Patient | undefined;
+  findServicePoint: (servicePointId: string | null) => ServicePoint | null;
 }
 
 const QueueBoardContent: React.FC<QueueBoardContentProps> = ({
   activeQueues,
   waitingQueues,
   completedQueues,
-  findPatient
+  findPatient,
+  findServicePoint
 }) => {
   return (
     <main className="container mx-auto p-6">
@@ -24,6 +26,7 @@ const QueueBoardContent: React.FC<QueueBoardContentProps> = ({
         <ActiveQueueSection 
           activeQueues={activeQueues}
           findPatient={findPatient}
+          findServicePoint={findServicePoint}
         />
         
         <WaitingQueueSection 
