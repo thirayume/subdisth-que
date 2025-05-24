@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { announceQueue } from '@/utils/textToSpeech';
 import { QueueAlgorithmType, ServicePointCapability } from '@/utils/queueAlgorithms';
 import { createLogger } from '@/utils/logger';
+import { mapToQueueObject } from '@/utils/queue/queueMapping';
 
 const logger = createLogger('useQueueActions');
 
@@ -66,7 +67,7 @@ export const useQueueActions = (
   }, []);
 
   // Call next queue for a specific service point
-  const callQueue = useCallback(async (queueId: string, servicePointId?: string) => {
+  const callQueue = useCallback(async (queueId: string, servicePointId?: string): Promise<Queue | null> => {
     try {
       const queue = queues.find(q => q.id === queueId);
       if (!queue) {
@@ -110,7 +111,9 @@ export const useQueueActions = (
       }
 
       if (data) {
-        updateQueueInState(data);
+        // Convert raw data to properly typed Queue object
+        const typedQueue = mapToQueueObject(data);
+        updateQueueInState(typedQueue);
         
         // Announce queue if voice is enabled
         if (voiceEnabled) {
@@ -118,7 +121,7 @@ export const useQueueActions = (
         }
         
         toast.success(`เรียกคิวหมายเลข ${queue.number} เรียบร้อยแล้ว`);
-        return data;
+        return typedQueue;
       }
 
       return null;
@@ -158,7 +161,7 @@ export const useQueueActions = (
     targetServicePointId: string,
     notes?: string,
     newQueueType?: string
-  ) => {
+  ): Promise<Queue | null> => {
     try {
       const updateData: any = {
         service_point_id: targetServicePointId,
@@ -188,9 +191,11 @@ export const useQueueActions = (
       }
 
       if (data) {
-        updateQueueInState(data);
+        // Convert raw data to properly typed Queue object
+        const typedQueue = mapToQueueObject(data);
+        updateQueueInState(typedQueue);
         toast.success('โอนคิวเรียบร้อยแล้ว');
-        return data;
+        return typedQueue;
       }
 
       return null;
@@ -202,7 +207,7 @@ export const useQueueActions = (
   }, [updateQueueInState]);
 
   // Put queue on hold
-  const putQueueOnHold = useCallback(async (queueId: string, servicePointId: string, reason?: string) => {
+  const putQueueOnHold = useCallback(async (queueId: string, servicePointId: string, reason?: string): Promise<Queue | null> => {
     try {
       const updateData: any = {
         status: 'WAITING',
@@ -227,9 +232,11 @@ export const useQueueActions = (
       }
 
       if (data) {
-        updateQueueInState(data);
+        // Convert raw data to properly typed Queue object
+        const typedQueue = mapToQueueObject(data);
+        updateQueueInState(typedQueue);
         toast.success('พักคิวเรียบร้อยแล้ว');
-        return data;
+        return typedQueue;
       }
 
       return null;
@@ -241,7 +248,7 @@ export const useQueueActions = (
   }, [updateQueueInState]);
 
   // Return skipped queue to waiting
-  const returnSkippedQueueToWaiting = useCallback(async (queueId: string) => {
+  const returnSkippedQueueToWaiting = useCallback(async (queueId: string): Promise<Queue | null> => {
     try {
       const { data, error } = await supabase
         .from('queues')
@@ -260,9 +267,11 @@ export const useQueueActions = (
       }
 
       if (data) {
-        updateQueueInState(data);
+        // Convert raw data to properly typed Queue object
+        const typedQueue = mapToQueueObject(data);
+        updateQueueInState(typedQueue);
         toast.success('นำคิวกลับมารอเรียบร้อยแล้ว');
-        return data;
+        return typedQueue;
       }
 
       return null;

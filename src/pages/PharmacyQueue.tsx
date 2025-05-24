@@ -53,9 +53,9 @@ const PharmacyQueue = () => {
     }
   };
 
-  const handleCallQueue = async (queueId: string) => {
+  const handleCallQueue = async (queueId: string, manualServicePointId?: string): Promise<Queue | null> => {
     if (!selectedServicePoint) return null;
-    return await callQueue(queueId, selectedServicePoint.id);
+    return await callQueue(queueId, manualServicePointId || selectedServicePoint.id);
   };
 
   const handleTransferQueue = async (queueId: string) => {

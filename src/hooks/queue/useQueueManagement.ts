@@ -147,7 +147,7 @@ export const useQueueManagement = () => {
   }, [recallQueue, queues, patients]);
   
   // Enhanced handler for calling queue with intelligent service point suggestion
-  const handleCallQueue = useCallback(async (queueId: string, manualServicePointId?: string) => {
+  const handleCallQueue = useCallback(async (queueId: string, manualServicePointId?: string): Promise<Queue | null> => {
     const queue = queues?.find(q => q.id === queueId);
     if (!queue) {
       toast.error('ไม่พบคิวที่ต้องการเรียก');
@@ -182,7 +182,7 @@ export const useQueueManagement = () => {
     targetServicePointId: string,
     notes?: string,
     newQueueType?: string
-  ) => {
+  ): Promise<boolean> => {
     const result = await transferQueueToServicePoint(
       queueId, 
       sourceServicePointId,
@@ -195,19 +195,22 @@ export const useQueueManagement = () => {
       // Trigger recalculation of queue assignments for affected service points
       logger.info('Queue transfer completed, triggering algorithm recalculation');
       toast.success('โอนคิวเรียบร้อยแล้ว และปรับปรุงลำดับคิวอัตโนมัติ');
+      return true;
     }
     
-    return result;
+    return false;
   }, [transferQueueToServicePoint]);
   
   // Handler for holding queue
-  const handleHoldQueue = useCallback(async (queueId: string, servicePointId: string, reason?: string) => {
-    return await putQueueOnHold(queueId, servicePointId, reason);
+  const handleHoldQueue = useCallback(async (queueId: string, servicePointId: string, reason?: string): Promise<boolean> => {
+    const result = await putQueueOnHold(queueId, servicePointId, reason);
+    return !!result;
   }, [putQueueOnHold]);
   
   // Handler for returning skipped queue to waiting
-  const handleReturnToWaiting = useCallback(async (queueId: string) => {
-    return await returnSkippedQueueToWaiting(queueId);
+  const handleReturnToWaiting = useCallback(async (queueId: string): Promise<boolean> => {
+    const result = await returnSkippedQueueToWaiting(queueId);
+    return !!result;
   }, [returnSkippedQueueToWaiting]);
   
   // Handler for service point change (for manual assignment)
