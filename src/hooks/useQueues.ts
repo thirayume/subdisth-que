@@ -88,10 +88,7 @@ export const useQueues = () => {
         updated_at: new Date().toISOString(),
         called_at: null,
         completed_at: null,
-        transferred_at: null,
-        service_point_id: null,
-        transferred_to_service_point_id: null,
-        pharmacy_status: null
+        service_point_id: null
       };
       
       updateQueueInState(tempQueue);
