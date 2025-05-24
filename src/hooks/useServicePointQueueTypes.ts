@@ -25,6 +25,8 @@ export const useServicePointQueueTypes = (servicePointId?: string) => {
       setLoading(true);
       setError(null);
 
+      logger.debug(`Fetching mappings for service point: ${servicePointId}`);
+
       const { data, error } = await supabase
         .from('service_point_queue_types')
         .select(`
@@ -35,11 +37,12 @@ export const useServicePointQueueTypes = (servicePointId?: string) => {
         .eq('service_point_id', servicePointId);
 
       if (error) {
+        logger.error('Supabase error during fetch:', error);
         throw error;
       }
 
+      logger.debug(`Successfully fetched ${data?.length || 0} mappings:`, data);
       setMappings(data || []);
-      logger.debug(`Fetched ${data?.length || 0} service point queue type mappings for service point ${servicePointId}`);
     } catch (err: any) {
       logger.error('Error fetching service point queue type mappings:', err);
       setError(err.message || 'Failed to fetch service point queue type mappings');
@@ -51,6 +54,8 @@ export const useServicePointQueueTypes = (servicePointId?: string) => {
 
   const addMapping = async (servicePointId: string, queueTypeId: string) => {
     try {
+      logger.debug(`Adding mapping: servicePointId=${servicePointId}, queueTypeId=${queueTypeId}`);
+
       const { data, error } = await supabase
         .from('service_point_queue_types')
         .insert({
@@ -64,6 +69,7 @@ export const useServicePointQueueTypes = (servicePointId?: string) => {
         `);
 
       if (error) {
+        logger.error('Supabase error during insert:', error);
         throw error;
       }
 
@@ -71,6 +77,7 @@ export const useServicePointQueueTypes = (servicePointId?: string) => {
         throw new Error('No data returned after adding mapping');
       }
 
+      logger.debug('Successfully added mapping:', data[0]);
       setMappings(prev => [...prev, data[0]]);
       toast.success('เพิ่มการเชื่อมโยงประเภทคิวกับจุดบริการเรียบร้อยแล้ว');
       return data[0];
@@ -86,27 +93,64 @@ export const useServicePointQueueTypes = (servicePointId?: string) => {
       setDeletingId(id);
       logger.debug(`Attempting to delete mapping with id: ${id}`);
 
+      // First, verify the mapping exists
+      const { data: existingData, error: checkError } = await supabase
+        .from('service_point_queue_types')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (checkError) {
+        logger.error('Error checking existing mapping:', checkError);
+        throw new Error(`Mapping with id ${id} not found: ${checkError.message}`);
+      }
+
+      if (!existingData) {
+        logger.warn(`Mapping with id ${id} does not exist`);
+        throw new Error(`Mapping with id ${id} does not exist`);
+      }
+
+      logger.debug('Found existing mapping to delete:', existingData);
+
+      // Perform the delete operation
       const { error } = await supabase
         .from('service_point_queue_types')
         .delete()
         .eq('id', id);
 
       if (error) {
+        logger.error('Supabase error during delete:', error);
         throw error;
       }
 
-      // Update local state immediately after successful deletion
+      // Verify the deletion was successful
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('service_point_queue_types')
+        .select('*')
+        .eq('id', id);
+
+      if (verifyError) {
+        logger.error('Error verifying deletion:', verifyError);
+      } else if (verifyData && verifyData.length > 0) {
+        logger.error('Deletion verification failed - mapping still exists:', verifyData);
+        throw new Error('Deletion failed - mapping still exists in database');
+      } else {
+        logger.debug('Deletion verified successfully - mapping no longer exists in database');
+      }
+
+      // Update local state only after successful deletion
       setMappings(prev => {
         const updated = prev.filter(mapping => mapping.id !== id);
-        logger.debug(`Removed mapping ${id}, remaining mappings: ${updated.length}`);
+        logger.debug(`Updated local state: removed mapping ${id}, remaining mappings: ${updated.length}`);
         return updated;
       });
       
       toast.success('ลบการเชื่อมโยงประเภทคิวกับจุดบริการเรียบร้อยแล้ว');
+      logger.debug(`Successfully deleted mapping with id: ${id}`);
       return true;
     } catch (err: any) {
       logger.error('Error removing service point queue type mapping:', err);
-      toast.error('ไม่สามารถลบการเชื่อมโยงประเภทคิวกับจุดบริการได้');
+      toast.error(`ไม่สามารถลบการเชื่อมโยงประเภทคิวกับจุดบริการได้: ${err.message}`);
       return false;
     } finally {
       setDeletingId(null);

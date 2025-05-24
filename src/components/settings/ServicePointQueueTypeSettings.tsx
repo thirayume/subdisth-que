@@ -62,7 +62,13 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
   };
 
   const handleRemoveMapping = async (mappingId: string) => {
-    await removeMapping(mappingId);
+    const success = await removeMapping(mappingId);
+    if (success) {
+      // Refresh the data to ensure consistency
+      setTimeout(() => {
+        fetchMappings();
+      }, 500);
+    }
   };
 
   // Find selected service point object
