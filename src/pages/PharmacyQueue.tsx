@@ -5,31 +5,9 @@ import { useServicePointContext } from '@/contexts/ServicePointContext';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { usePharmacyQueue } from '@/hooks/usePharmacyQueue';
-import { useMedications } from '@/hooks/useMedications';
-import { usePatientMedications } from '@/hooks/usePatientMedications';
-import NextQueueButton from '@/components/pharmacy/NextQueueButton';
-import PharmacyServiceInterface from '@/components/pharmacy/PharmacyServiceInterface';
-import QueueList from '@/components/queue/QueueList';
-import { usePharmacyErrorHandler } from '@/hooks/pharmacy/core/usePharmacyErrorHandler';
-import { Queue } from '@/integrations/supabase/schema';
+import PharmacyQueuePanel from '@/components/test/PharmacyQueuePanel';
 
 const PharmacyQueue = () => {
-  const { 
-    queues,
-    activeQueue,
-    loading,
-    loadingNext,
-    error,
-    callNextQueue,
-    completeService,
-    forwardService
-  } = usePharmacyQueue();
-  
-  const { medications } = useMedications();
-  const { clearError } = usePharmacyErrorHandler(); // Add error management
-  
   const { 
     selectedServicePoint,
     setSelectedServicePoint,
@@ -37,60 +15,11 @@ const PharmacyQueue = () => {
     loading: loadingServicePoints
   } = useServicePointContext();
 
-  // Initialize patient medications hook with active queue's patient
-  const {
-    medications: patientMedications,
-    loading: loadingPatientMeds,
-    addMedication: dispenseMedication
-  } = usePatientMedications(activeQueue?.patient_id);
-
-  // Convert PharmacyQueue to Queue for compatibility with QueueList
-  const convertToQueue = (pharmacyQueues: any[]): Queue[] => {
-    return pharmacyQueues.map(q => ({
-      id: q.id || '',
-      number: q.number || 0,
-      patient_id: q.patient_id || '',
-      type: q.type || 'GENERAL',
-      status: q.status || 'WAITING',
-      service_point_id: q.service_point_id,
-      notes: q.notes,
-      created_at: q.created_at || new Date().toISOString(),
-      updated_at: q.updated_at || new Date().toISOString(),
-      called_at: q.called_at,
-      completed_at: q.completed_at,
-      queue_date: q.queue_date
-    }));
-  };
-
-  // Filter queues by status
-  const waitingQueues = convertToQueue(queues.filter(q => q.status === 'WAITING'));
-  const completedQueues = convertToQueue(queues.filter(q => q.status === 'COMPLETED'));
-
-  // Get patient name by ID
-  const getPatientName = (patientId: string) => {
-    const queue = queues.find(q => q.patient_id === patientId);
-    return queue?.patient?.name || 'ไม่พบข้อมูลผู้ป่วย';
-  };
-
   const handleServicePointChange = (value: string) => {
     const servicePoint = servicePoints.find(sp => sp.id === value);
     if (servicePoint) {
       setSelectedServicePoint(servicePoint);
-      clearError(); // Clear any previous errors when changing service point
     }
-  };
-
-  const handleCallNextQueue = async () => {
-    if (!selectedServicePoint) return;
-    await callNextQueue(selectedServicePoint.id);
-  };
-
-  const handleCompleteService = async (queueId: string, notes?: string) => {
-    return await completeService(queueId, notes);
-  };
-
-  const handleForwardService = async (queueId: string, forwardTo: string, notes?: string) => {
-    return await forwardService(queueId, forwardTo, notes);
   };
 
   if (loadingServicePoints) {
@@ -147,110 +76,14 @@ const PharmacyQueue = () => {
             </CardContent>
           </Card>
         ) : (
-          <>
-            {/* Queue Statistics and Call Next Button */}
-            <div className="mb-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span>{selectedServicePoint.name}</span>
-                      <span className="text-sm text-gray-500">({selectedServicePoint.code})</span>
-                    </div>
-                    <NextQueueButton
-                      onCallNext={handleCallNextQueue}
-                      isLoading={loadingNext}
-                      disabled={!!activeQueue}
-                    />
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <p className="text-2xl font-bold text-orange-600">{waitingQueues.length}</p>
-                      <p className="text-sm text-gray-500">รอดำเนินการ</p>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-green-600">{activeQueue ? 1 : 0}</p>
-                      <p className="text-sm text-gray-500">กำลังให้บริการ</p>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-gray-600">{completedQueues.length}</p>
-                      <p className="text-sm text-gray-500">เสร็จสิ้น</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Active Queue Service Interface */}
-            {activeQueue ? (
-              <PharmacyServiceInterface
-                activeQueue={activeQueue}
-                servicePoint={selectedServicePoint}
-                medications={medications}
-                patientMedications={patientMedications}
-                loadingPatientMeds={loadingPatientMeds}
-                onDispenseMedication={dispenseMedication}
-                onCompleteService={handleCompleteService}
-                onForwardService={handleForwardService}
-              />
-            ) : (
-              /* Queue Management Tabs */
-              <div className="flex-1 overflow-hidden">
-                <Tabs defaultValue="waiting" className="h-full flex flex-col">
-                  <div className="border-b px-2">
-                    <TabsList className="h-12">
-                      <TabsTrigger value="waiting" className="relative">
-                        คิวที่รอดำเนินการ
-                        {waitingQueues.length > 0 && (
-                          <span className="ml-2 rounded-full bg-primary text-primary-foreground text-xs px-2 py-0.5">
-                            {waitingQueues.length}
-                          </span>
-                        )}
-                      </TabsTrigger>
-                      <TabsTrigger value="completed">
-                        เสร็จสิ้น
-                        {completedQueues.length > 0 && (
-                          <span className="ml-2 rounded-full bg-gray-500 text-white text-xs px-2 py-0.5">
-                            {completedQueues.length}
-                          </span>
-                        )}
-                      </TabsTrigger>
-                    </TabsList>
-                  </div>
-                  
-                  <div className="flex-1 overflow-auto">
-                    <TabsContent value="waiting" className="mt-0 h-full">
-                      <Card className="h-full overflow-auto border-0 shadow-none">
-                        <QueueList
-                          queues={waitingQueues}
-                          getPatientName={getPatientName}
-                          status="WAITING"
-                          selectedServicePoint={selectedServicePoint}
-                          servicePoints={servicePoints}
-                          showServicePointInfo={false}
-                        />
-                      </Card>
-                    </TabsContent>
-                    
-                    <TabsContent value="completed" className="mt-0 h-full">
-                      <Card className="h-full overflow-auto border-0 shadow-none">
-                        <QueueList
-                          queues={completedQueues}
-                          getPatientName={getPatientName}
-                          status="COMPLETED"
-                          selectedServicePoint={selectedServicePoint}
-                          servicePoints={servicePoints}
-                          showServicePointInfo={false}
-                        />
-                      </Card>
-                    </TabsContent>
-                  </div>
-                </Tabs>
-              </div>
-            )}
-          </>
+          <div className="flex-1 overflow-hidden">
+            <PharmacyQueuePanel
+              key={`pharmacy-${selectedServicePoint.id}`}
+              servicePointId={selectedServicePoint.id}
+              title="บริการจ่ายยา"
+              refreshTrigger={Date.now()}
+            />
+          </div>
         )}
       </div>
     </Layout>
