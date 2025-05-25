@@ -10,10 +10,7 @@ import { usePharmacyQueue } from '@/hooks/usePharmacyQueue';
 import { useMedications } from '@/hooks/useMedications';
 import { usePatientMedications } from '@/hooks/usePatientMedications';
 import NextQueueButton from '@/components/pharmacy/NextQueueButton';
-import ActivePharmacyQueue from '@/components/pharmacy/ActivePharmacyQueue';
-import MedicationDispenseForm from '@/components/pharmacy/MedicationDispenseForm';
-import FinishServiceOptions from '@/components/pharmacy/FinishServiceOptions';
-import PatientMedicationHistory from '@/components/pharmacy/PatientMedicationHistory';
+import PharmacyServiceInterface from '@/components/pharmacy/PharmacyServiceInterface';
 import QueueList from '@/components/queue/QueueList';
 
 const PharmacyQueue = () => {
@@ -165,38 +162,16 @@ const PharmacyQueue = () => {
 
             {/* Active Queue Service Interface */}
             {activeQueue ? (
-              <div className="flex-1 overflow-auto">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Left Column - Active Queue and Medication Dispensing */}
-                  <div className="space-y-6">
-                    <ActivePharmacyQueue 
-                      queue={activeQueue} 
-                      servicePoint={selectedServicePoint}
-                    />
-                    
-                    <MedicationDispenseForm
-                      patientId={activeQueue.patient_id}
-                      medications={medications}
-                      onDispenseMedication={dispenseMedication}
-                    />
-                    
-                    <FinishServiceOptions
-                      queueId={activeQueue.id}
-                      onComplete={handleCompleteService}
-                      onForward={handleForwardService}
-                    />
-                  </div>
-                  
-                  {/* Right Column - Patient Medication History */}
-                  <div>
-                    <PatientMedicationHistory
-                      patientName={activeQueue.patient?.name}
-                      medications={patientMedications}
-                      loading={loadingPatientMeds}
-                    />
-                  </div>
-                </div>
-              </div>
+              <PharmacyServiceInterface
+                activeQueue={activeQueue}
+                servicePoint={selectedServicePoint}
+                medications={medications}
+                patientMedications={patientMedications}
+                loadingPatientMeds={loadingPatientMeds}
+                onDispenseMedication={dispenseMedication}
+                onCompleteService={handleCompleteService}
+                onForwardService={handleForwardService}
+              />
             ) : (
               /* Queue Management Tabs */
               <div className="flex-1 overflow-hidden">
@@ -232,7 +207,6 @@ const PharmacyQueue = () => {
                           selectedServicePoint={selectedServicePoint}
                           servicePoints={servicePoints}
                           showServicePointInfo={false}
-                          showActions={false}
                         />
                       </Card>
                     </TabsContent>
@@ -246,7 +220,6 @@ const PharmacyQueue = () => {
                           selectedServicePoint={selectedServicePoint}
                           servicePoints={servicePoints}
                           showServicePointInfo={false}
-                          showActions={false}
                         />
                       </Card>
                     </TabsContent>
