@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Layout from '@/components/layout/Layout';
 import { useServicePointContext } from '@/contexts/ServicePointContext';
@@ -12,6 +11,7 @@ import { usePatientMedications } from '@/hooks/usePatientMedications';
 import NextQueueButton from '@/components/pharmacy/NextQueueButton';
 import PharmacyServiceInterface from '@/components/pharmacy/PharmacyServiceInterface';
 import QueueList from '@/components/queue/QueueList';
+import { usePharmacyErrorHandler } from '@/hooks/pharmacy/core/usePharmacyErrorHandler';
 
 const PharmacyQueue = () => {
   const { 
@@ -26,6 +26,8 @@ const PharmacyQueue = () => {
   } = usePharmacyQueue();
   
   const { medications } = useMedications();
+  const { clearError } = usePharmacyErrorHandler(); // Add error management
+  
   const { 
     selectedServicePoint,
     setSelectedServicePoint,
@@ -54,6 +56,7 @@ const PharmacyQueue = () => {
     const servicePoint = servicePoints.find(sp => sp.id === value);
     if (servicePoint) {
       setSelectedServicePoint(servicePoint);
+      clearError(); // Clear any previous errors when changing service point
     }
   };
 

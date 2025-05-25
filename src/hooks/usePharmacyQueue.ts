@@ -1,15 +1,15 @@
 
 import * as React from 'react';
-import { usePharmacyQueueFetch } from './pharmacy/usePharmacyQueueFetch';
+import { usePharmacyQueueFetch } from './pharmacy/core/usePharmacyQueueFetch';
 import { usePharmacyQueueActions } from './pharmacy/usePharmacyQueueActions';
 import { usePharmacyServiceActions } from './pharmacy/usePharmacyServiceActions';
-import { PharmacyQueue, PharmacyService } from './pharmacy/types';
+import { PharmacyQueue, PharmacyService } from './pharmacy/core/types';
 
-// Re-export the types for backward compatibility
+// Re-export enhanced types
 export type { PharmacyQueue, PharmacyService };
 
 export const usePharmacyQueue = () => {
-  // Get queue state and fetch functionality
+  // Get queue state and fetch functionality using new architecture
   const {
     queues,
     activeQueue,
@@ -41,8 +41,11 @@ export const usePharmacyQueue = () => {
     fetchPharmacyQueues
   });
   
-  // Combine errors to maintain the same API as before
-  const error = fetchError || queueActionError || serviceActionError;
+  // Combine errors using the new error handling system
+  const error = React.useMemo(() => 
+    fetchError || queueActionError || serviceActionError, 
+    [fetchError, queueActionError, serviceActionError]
+  );
 
   return {
     queues,
