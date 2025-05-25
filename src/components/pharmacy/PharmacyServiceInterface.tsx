@@ -2,17 +2,17 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { PharmacyQueue } from '@/hooks/usePharmacyQueue';
-import { ServicePoint, Medication } from '@/integrations/supabase/schema';
+import { ServicePoint } from '@/integrations/supabase/schema';
 import { PatientMedication } from '@/hooks/usePatientMedications';
 import ActivePharmacyQueue from './ActivePharmacyQueue';
 import MedicationDispenseForm from './MedicationDispenseForm';
 import FinishServiceOptions from './FinishServiceOptions';
 import PatientMedicationHistory from './PatientMedicationHistory';
+import { useMedicationsContext } from '@/components/medications/context/MedicationsContext';
 
 interface PharmacyServiceInterfaceProps {
   activeQueue: PharmacyQueue;
   servicePoint: ServicePoint;
-  medications: Medication[];
   patientMedications: PatientMedication[];
   loadingPatientMeds: boolean;
   onDispenseMedication: (data: Omit<PatientMedication, 'id' | 'created_at' | 'updated_at'>) => Promise<PatientMedication | null>;
@@ -23,13 +23,14 @@ interface PharmacyServiceInterfaceProps {
 const PharmacyServiceInterface: React.FC<PharmacyServiceInterfaceProps> = ({
   activeQueue,
   servicePoint,
-  medications,
   patientMedications,
   loadingPatientMeds,
   onDispenseMedication,
   onCompleteService,
   onForwardService
 }) => {
+  const { medications } = useMedicationsContext();
+
   return (
     <div className="flex-1 overflow-auto">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

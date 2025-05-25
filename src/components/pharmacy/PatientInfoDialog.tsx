@@ -10,7 +10,7 @@ import { Phone, MapPin, Calendar, User, Loader2 } from 'lucide-react';
 import PatientMedicationHistory from './PatientMedicationHistory';
 import MedicationDispenseForm from './MedicationDispenseForm';
 import { usePatientMedications } from '@/hooks/usePatientMedications';
-import { useMedications } from '@/hooks/useMedications';
+import { useMedicationsContext } from '@/components/medications/context/MedicationsContext';
 
 interface PatientInfoDialogProps {
   open: boolean;
@@ -31,7 +31,7 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
     addMedication 
   } = usePatientMedications(patient?.id);
   
-  const { medications, loading: medicationsListLoading } = useMedications();
+  const { medications, loading: medicationsListLoading } = useMedicationsContext();
 
   if (!patient) return null;
 

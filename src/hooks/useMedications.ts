@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Medication } from '@/integrations/supabase/schema';
@@ -8,8 +9,8 @@ export const useMedications = () => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  // Fetch all medications
-  const fetchMedications = async () => {
+  // Memoize fetchMedications to prevent infinite loops
+  const fetchMedications = React.useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -34,15 +35,15 @@ export const useMedications = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // Empty dependency array since this function doesn't depend on any external values
 
-  // Auto-fetch medications on mount
+  // Auto-fetch medications on mount only
   React.useEffect(() => {
     fetchMedications();
-  }, []);
+  }, [fetchMedications]);
 
-  // Add a new medication
-  const addMedication = async (medicationData: Partial<Medication>) => {
+  // Memoize addMedication to prevent recreating on every render
+  const addMedication = React.useCallback(async (medicationData: Partial<Medication>) => {
     try {
       setError(null);
       
@@ -78,10 +79,10 @@ export const useMedications = () => {
       toast.error('ไม่สามารถเพิ่มข้อมูลยาได้');
       return null;
     }
-  };
+  }, []);
 
-  // Update medication
-  const updateMedication = async (id: string, medicationData: Partial<Medication>) => {
+  // Memoize updateMedication
+  const updateMedication = React.useCallback(async (id: string, medicationData: Partial<Medication>) => {
     try {
       setError(null);
       
@@ -112,10 +113,10 @@ export const useMedications = () => {
       toast.error('ไม่สามารถอัปเดตข้อมูลยาได้');
       return null;
     }
-  };
+  }, []);
   
-  // Update stock
-  const updateStock = async (id: string, newStock: number) => {
+  // Memoize updateStock
+  const updateStock = React.useCallback(async (id: string, newStock: number) => {
     try {
       setError(null);
       
@@ -146,10 +147,10 @@ export const useMedications = () => {
       toast.error('ไม่สามารถอัปเดตจำนวนยาได้');
       return null;
     }
-  };
+  }, []);
   
-  // Delete medication
-  const deleteMedication = async (id: string) => {
+  // Memoize deleteMedication
+  const deleteMedication = React.useCallback(async (id: string) => {
     try {
       setError(null);
       
@@ -171,7 +172,7 @@ export const useMedications = () => {
       toast.error('ไม่สามารถลบข้อมูลยาได้');
       return false;
     }
-  };
+  }, []);
 
   return {
     medications,

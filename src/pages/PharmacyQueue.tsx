@@ -6,6 +6,7 @@ import PharmacyQueueHeader from '@/components/pharmacy-queue/PharmacyQueueHeader
 import PharmacyQueueEmptyState from '@/components/pharmacy-queue/PharmacyQueueEmptyState';
 import PharmacyQueueContent from '@/components/pharmacy-queue/PharmacyQueueContent';
 import PharmacyQueueLoading from '@/components/pharmacy-queue/PharmacyQueueLoading';
+import { MedicationsProvider } from '@/components/medications/context/MedicationsContext';
 
 const PharmacyQueue = () => {
   const { 
@@ -32,22 +33,24 @@ const PharmacyQueue = () => {
 
   return (
     <Layout className="overflow-hidden">
-      <div className="flex flex-col h-[calc(100vh-2rem)]">
-        <PharmacyQueueHeader
-          selectedServicePoint={selectedServicePoint}
-          servicePoints={servicePoints}
-          onServicePointChange={handleServicePointChange}
-        />
-
-        {!selectedServicePoint ? (
-          <PharmacyQueueEmptyState />
-        ) : (
-          <PharmacyQueueContent
+      <MedicationsProvider>
+        <div className="flex flex-col h-[calc(100vh-2rem)]">
+          <PharmacyQueueHeader
             selectedServicePoint={selectedServicePoint}
-            refreshTrigger={Date.now()}
+            servicePoints={servicePoints}
+            onServicePointChange={handleServicePointChange}
           />
-        )}
-      </div>
+
+          {!selectedServicePoint ? (
+            <PharmacyQueueEmptyState />
+          ) : (
+            <PharmacyQueueContent
+              selectedServicePoint={selectedServicePoint}
+              refreshTrigger={Date.now()}
+            />
+          )}
+        </div>
+      </MedicationsProvider>
     </Layout>
   );
 };

@@ -32,9 +32,7 @@ export const MedicationsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [selectedMedication, setSelectedMedication] = React.useState<Medication | null>(null);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
 
-  React.useEffect(() => {
-    fetchMedications();
-  }, []);
+  // Remove the useEffect that automatically fetches medications since useMedications already does this
 
   const value = {
     medications,
