@@ -1,164 +1,151 @@
 
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Clock, CheckCircle } from 'lucide-react';
 import QueueCard from '@/components/queue/QueueCard';
-import QueueControls from '@/components/queue/QueueControls';
 import PatientInfoDialog from '@/components/pharmacy/PatientInfoDialog';
-import { Queue, ServicePoint } from '@/integrations/supabase/schema';
-import { formatQueueNumber } from '@/utils/queueFormatters';
-import { usePatients } from '@/hooks/usePatients';
+import { Patient } from '@/integrations/supabase/schema';
+import { usePharmacyQueueData } from './usePharmacyQueueData';
 
 interface PharmacyQueueTabsProps {
-  waitingQueues: Queue[];
-  activeQueues: Queue[];
-  completedQueues: Queue[];
-  getPatientName: (patientId: string) => string;
-  onUpdateStatus: (queueId: string, status: any) => Promise<any>;
-  onCallQueue: (queueId: string) => Promise<any>;
-  onRecallQueue: (queueId: string) => void;
-  selectedServicePoint: ServicePoint;
-  servicePoints: ServicePoint[];
+  servicePointId: string;
+  refreshTrigger?: number;
 }
 
 const PharmacyQueueTabs: React.FC<PharmacyQueueTabsProps> = ({
-  waitingQueues,
-  activeQueues,
-  completedQueues,
-  getPatientName,
-  onUpdateStatus,
-  onCallQueue,
-  onRecallQueue,
-  selectedServicePoint
+  servicePointId,
+  refreshTrigger = 0
 }) => {
-  const [patientInfoOpen, setPatientInfoOpen] = useState(false);
-  const [selectedQueue, setSelectedQueue] = useState<Queue | null>(null);
-  const { patients } = usePatients();
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [selectedQueueNumber, setSelectedQueueNumber] = useState<string>('');
+  const [patientDialogOpen, setPatientDialogOpen] = useState(false);
 
-  const handleViewPatientInfo = (queue: Queue) => {
-    setSelectedQueue(queue);
-    setPatientInfoOpen(true);
+  const {
+    queuesByStatus,
+    getPatientName,
+    handleCallQueue,
+    handleUpdateStatus,
+    handleRecallQueue,
+    isLoading
+  } = usePharmacyQueueData({ servicePointId, refreshTrigger });
+
+  const handleViewPatientInfo = (queue: any) => {
+    // This would need to fetch patient data based on queue.patient_id
+    // For now, we'll use a mock patient object
+    const mockPatient: Patient = {
+      id: queue.patient_id,
+      name: getPatientName(queue.patient_id),
+      patient_id: `P${String(queue.number).padStart(4, '0')}`,
+      phone: '',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    setSelectedPatient(mockPatient);
+    setSelectedQueueNumber(String(queue.number));
+    setPatientDialogOpen(true);
   };
 
-  const selectedPatient = selectedQueue ? patients.find(p => p.id === selectedQueue.patient_id) : null;
-  const queueNumber = selectedQueue ? formatQueueNumber(selectedQueue.type as any, selectedQueue.number) : undefined;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="text-gray-500">กำลังโหลดข้อมูลคิว...</div>
+      </div>
+    );
+  }
 
   return (
     <>
-      <Tabs defaultValue="waiting" className="h-full flex flex-col">
-        <TabsList className="grid w-full grid-cols-3 mx-4 mt-2">
+      <Tabs defaultValue="waiting" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="waiting" className="flex items-center gap-2">
-            คิวรอ
-            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-              {waitingQueues.length}
-            </Badge>
+            <Clock className="h-4 w-4" />
+            รอคิว
+            <Badge variant="secondary">{queuesByStatus.waiting.length}</Badge>
           </TabsTrigger>
           <TabsTrigger value="active" className="flex items-center gap-2">
+            <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
             กำลังให้บริการ
-            <Badge variant="secondary" className="bg-green-100 text-green-800">
-              {activeQueues.length}
-            </Badge>
+            <Badge variant="secondary">{queuesByStatus.active.length}</Badge>
           </TabsTrigger>
           <TabsTrigger value="completed" className="flex items-center gap-2">
+            <CheckCircle className="h-4 w-4" />
             เสร็จสิ้น
-            <Badge variant="secondary" className="bg-gray-100 text-gray-800">
-              {completedQueues.length}
-            </Badge>
+            <Badge variant="secondary">{queuesByStatus.completed.length}</Badge>
           </TabsTrigger>
         </TabsList>
 
-        <div className="flex-1 overflow-hidden px-4">
-          <TabsContent value="waiting" className="h-full mt-2">
-            <ScrollArea className="h-full">
-              <div className="space-y-3 pb-4">
-                {waitingQueues.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    ไม่มีคิวรอให้บริการ
-                  </div>
-                ) : (
-                  waitingQueues.map((queue) => (
-                    <div key={queue.id} className="space-y-2">
-                      <QueueCard
-                        queue={queue}
-                        patientName={getPatientName(queue.patient_id)}
-                        onCall={() => onCallQueue(queue.id)}
-                      />
-                      <QueueControls
-                        queue={queue}
-                        onUpdateStatus={onUpdateStatus}
-                        onCallQueue={onCallQueue}
-                        onRecallQueue={onRecallQueue}
-                        patientName={getPatientName(queue.patient_id)}
-                        counterName={selectedServicePoint?.code || "1"}
-                      />
-                    </div>
-                  ))
-                )}
-              </div>
-            </ScrollArea>
-          </TabsContent>
+        <TabsContent value="waiting" className="space-y-4">
+          {queuesByStatus.waiting.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              ไม่มีคิวที่รอการให้บริการ
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {queuesByStatus.waiting.map((queue) => (
+                <QueueCard
+                  key={queue.id}
+                  queue={queue}
+                  patientName={getPatientName(queue.patient_id)}
+                  onCall={() => handleCallQueue(queue.id)}
+                  onSkip={() => handleUpdateStatus(queue.id, 'SKIPPED')}
+                  isPharmacyInterface={true}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
 
-          <TabsContent value="active" className="h-full mt-2">
-            <ScrollArea className="h-full">
-              <div className="space-y-3 pb-4">
-                {activeQueues.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    ไม่มีคิวที่กำลังให้บริการ
-                  </div>
-                ) : (
-                  activeQueues.map((queue) => (
-                    <div key={queue.id} className="space-y-2">
-                      <QueueCard
-                        queue={queue}
-                        patientName={getPatientName(queue.patient_id)}
-                        onComplete={() => onUpdateStatus(queue.id, 'COMPLETED')}
-                        onSkip={() => onUpdateStatus(queue.id, 'SKIPPED')}
-                        onRecall={() => onRecallQueue(queue.id)}
-                        onViewPatientInfo={() => handleViewPatientInfo(queue)}
-                      />
-                      <QueueControls
-                        queue={queue}
-                        onUpdateStatus={onUpdateStatus}
-                        onCallQueue={onCallQueue}
-                        onRecallQueue={onRecallQueue}
-                        patientName={getPatientName(queue.patient_id)}
-                        counterName={selectedServicePoint?.code || "1"}
-                      />
-                    </div>
-                  ))
-                )}
-              </div>
-            </ScrollArea>
-          </TabsContent>
+        <TabsContent value="active" className="space-y-4">
+          {queuesByStatus.active.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              ไม่มีคิวที่กำลังให้บริการ
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {queuesByStatus.active.map((queue) => (
+                <QueueCard
+                  key={queue.id}
+                  queue={queue}
+                  patientName={getPatientName(queue.patient_id)}
+                  onComplete={() => handleUpdateStatus(queue.id, 'COMPLETED')}
+                  onSkip={() => handleUpdateStatus(queue.id, 'SKIPPED')}
+                  onRecall={() => handleRecallQueue(queue.id)}
+                  onViewPatientInfo={() => handleViewPatientInfo(queue)}
+                  isPharmacyInterface={true}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
 
-          <TabsContent value="completed" className="h-full mt-2">
-            <ScrollArea className="h-full">
-              <div className="space-y-3 pb-4">
-                {completedQueues.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    ไม่มีคิวที่เสร็จสิ้นแล้ว
-                  </div>
-                ) : (
-                  completedQueues.map((queue) => (
-                    <QueueCard
-                      key={queue.id}
-                      queue={queue}
-                      patientName={getPatientName(queue.patient_id)}
-                    />
-                  ))
-                )}
-              </div>
-            </ScrollArea>
-          </TabsContent>
-        </div>
+        <TabsContent value="completed" className="space-y-4">
+          {queuesByStatus.completed.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              ไม่มีคิวที่เสร็จสิ้นแล้ว
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {queuesByStatus.completed.map((queue) => (
+                <QueueCard
+                  key={queue.id}
+                  queue={queue}
+                  patientName={getPatientName(queue.patient_id)}
+                  onViewPatientInfo={() => handleViewPatientInfo(queue)}
+                  isPharmacyInterface={true}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
       </Tabs>
 
       <PatientInfoDialog
-        open={patientInfoOpen}
-        onOpenChange={setPatientInfoOpen}
-        patient={selectedPatient || null}
-        queueNumber={queueNumber}
+        open={patientDialogOpen}
+        onOpenChange={setPatientDialogOpen}
+        patient={selectedPatient}
+        queueNumber={selectedQueueNumber}
       />
     </>
   );

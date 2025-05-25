@@ -104,7 +104,7 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     if (!selectedServicePoint) return null;
     
     const queue = servicePointQueues.find(q => q.id === queueId);
-    const formattedNumber = queue ? formatQueueNumber(queue.type as any, queue.number) : queueId;
+    const formattedNumber = queue ? formatQueueNumber(queue.type, queue.number) : queueId;
     
     logger.debug(`Calling queue ${formattedNumber} for service point ${selectedServicePoint.code}`);
     
@@ -122,7 +122,7 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
 
   const handleUpdateStatus = useCallback(async (queueId: string, status: any) => {
     const queue = servicePointQueues.find(q => q.id === queueId);
-    const formattedNumber = queue ? formatQueueNumber(queue.type as any, queue.number) : queueId;
+    const formattedNumber = queue ? formatQueueNumber(queue.type, queue.number) : queueId;
     
     logger.debug(`Updating queue ${formattedNumber} status to ${status}`);
     
@@ -154,7 +154,7 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
 
   const handleRecallQueue = useCallback((queueId: string) => {
     const queue = servicePointQueues.find(q => q.id === queueId);
-    const formattedNumber = queue ? formatQueueNumber(queue.type as any, queue.number) : queueId;
+    const formattedNumber = queue ? formatQueueNumber(queue.type, queue.number) : queueId;
     
     logger.debug(`Recalling queue ${formattedNumber}`);
     recallQueue(queueId);

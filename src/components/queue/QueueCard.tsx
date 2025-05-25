@@ -24,6 +24,7 @@ interface QueueCardProps {
   servicePointName?: string;
   suggestedServicePointName?: string;
   showServicePointInfo?: boolean;
+  isPharmacyInterface?: boolean;
 }
 
 const QueueCard: React.FC<QueueCardProps> = ({
@@ -39,7 +40,8 @@ const QueueCard: React.FC<QueueCardProps> = ({
   onViewPatientInfo,
   servicePointName,
   suggestedServicePointName,
-  showServicePointInfo = false
+  showServicePointInfo = false,
+  isPharmacyInterface = false
 }) => {
   const formattedNumber = formatQueueNumber(queue.type, queue.number);
   
@@ -91,9 +93,10 @@ const QueueCard: React.FC<QueueCardProps> = ({
         </div>
       </CardContent>
       
-      {/* Only show actions if any of the handlers are provided */}
+      {/* Show actions if any handlers are provided */}
       {(onComplete || onSkip || onCall || onRecall || onTransfer || onReturnToWaiting || onHold || onViewPatientInfo) && (
         <CardFooter className="px-4 py-3 bg-gray-50 flex justify-end gap-2 flex-wrap">
+          {/* Patient Info Button - Show for active queues */}
           {onViewPatientInfo && queue.status === 'ACTIVE' && (
             <Button variant="outline" size="sm" onClick={onViewPatientInfo}>
               <User className="h-4 w-4 mr-1" />
@@ -101,6 +104,7 @@ const QueueCard: React.FC<QueueCardProps> = ({
             </Button>
           )}
           
+          {/* Return to Waiting - Show for skipped queues */}
           {onReturnToWaiting && queue.status === 'SKIPPED' && (
             <Button variant="outline" size="sm" onClick={onReturnToWaiting}>
               <RotateCcw className="h-4 w-4 mr-1" />
@@ -108,6 +112,7 @@ const QueueCard: React.FC<QueueCardProps> = ({
             </Button>
           )}
           
+          {/* Hold Queue - Show for active queues */}
           {onHold && queue.status === 'ACTIVE' && (
             <Button variant="outline" size="sm" onClick={onHold}>
               <SkipForward className="h-4 w-4 mr-1" />
@@ -115,6 +120,7 @@ const QueueCard: React.FC<QueueCardProps> = ({
             </Button>
           )}
           
+          {/* Transfer Queue - Show for active queues */}
           {onTransfer && queue.status === 'ACTIVE' && (
             <Button variant="outline" size="sm" onClick={onTransfer}>
               <ArrowRightFromLine className="h-4 w-4 mr-1" />
@@ -122,28 +128,42 @@ const QueueCard: React.FC<QueueCardProps> = ({
             </Button>
           )}
           
-          {onComplete && (
-            <Button variant="outline" size="sm" onClick={onComplete}>
+          {/* Complete Service - Show for active queues */}
+          {onComplete && queue.status === 'ACTIVE' && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onComplete}
+              className={isPharmacyInterface ? "border-green-200 text-green-700 hover:bg-green-50" : ""}
+            >
               <Check className="h-4 w-4 mr-1" />
               เสร็จสิ้น
             </Button>
           )}
           
-          {onSkip && (
+          {/* Skip Queue - Show for waiting and active queues */}
+          {onSkip && (queue.status === 'WAITING' || queue.status === 'ACTIVE') && (
             <Button variant="outline" size="sm" onClick={onSkip}>
               <SkipForward className="h-4 w-4 mr-1" />
               ข้าม
             </Button>
           )}
           
-          {onCall && (
-            <Button variant="default" size="sm" onClick={onCall}>
+          {/* Call Queue - Primary action for waiting queues */}
+          {onCall && queue.status === 'WAITING' && (
+            <Button 
+              variant="default" 
+              size="sm" 
+              onClick={onCall}
+              className={isPharmacyInterface ? "bg-pharmacy-600 hover:bg-pharmacy-700" : ""}
+            >
               <PhoneCall className="h-4 w-4 mr-1" />
               เรียกคิว
             </Button>
           )}
           
-          {onRecall && (
+          {/* Recall Queue - Show for active queues */}
+          {onRecall && queue.status === 'ACTIVE' && (
             <Button variant="outline" size="sm" onClick={onRecall}>
               <PhoneForwarded className="h-4 w-4 mr-1" />
               เรียกซ้ำ

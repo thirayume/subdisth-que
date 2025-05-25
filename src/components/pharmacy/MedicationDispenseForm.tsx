@@ -30,7 +30,7 @@ interface DispensedMedication {
 
 const MedicationDispenseForm: React.FC<MedicationDispenseFormProps> = ({
   patientId,
-  medications = [], // Default to empty array to prevent undefined
+  medications = [],
   onDispenseMedication
 }) => {
   const [open, setOpen] = useState(false);
@@ -41,19 +41,26 @@ const MedicationDispenseForm: React.FC<MedicationDispenseFormProps> = ({
   const [dispensedMedications, setDispensedMedications] = useState<DispensedMedication[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Filter medications based on search with safety check
+  // Enhanced filtering with safety checks
   const filteredMedications = React.useMemo(() => {
-    if (!Array.isArray(medications)) {
-      console.warn("[MedicationDispenseForm] Medications is not an array:", medications);
-      return [];
+    // Ensure medications is always an array
+    const safeMedications = Array.isArray(medications) ? medications : [];
+    
+    if (!search) {
+      return safeMedications;
     }
     
     const searchLower = search.toLowerCase();
-    return medications.filter(med => {
-      if (!med || !med.name || !med.code) return false;
+    return safeMedications.filter(med => {
+      // Safety check for each medication object
+      if (!med || typeof med !== 'object') return false;
+      
+      const name = med.name || '';
+      const code = med.code || '';
+      
       return (
-        med.name.toLowerCase().includes(searchLower) ||
-        med.code.toLowerCase().includes(searchLower)
+        name.toLowerCase().includes(searchLower) ||
+        code.toLowerCase().includes(searchLower)
       );
     });
   }, [medications, search]);
@@ -136,7 +143,7 @@ const MedicationDispenseForm: React.FC<MedicationDispenseFormProps> = ({
     }
   };
 
-  // Show loading state if no medications available
+  // Show loading state if medications are not available
   if (!Array.isArray(medications)) {
     return (
       <Card>
@@ -176,7 +183,7 @@ const MedicationDispenseForm: React.FC<MedicationDispenseFormProps> = ({
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[300px] p-0" align="start">
-                <Command>
+                <Command shouldFilter={false}>
                   <CommandInput 
                     placeholder="ค้นหายา..." 
                     onValueChange={setSearch} 
