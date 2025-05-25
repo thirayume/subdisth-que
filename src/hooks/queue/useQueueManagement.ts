@@ -7,6 +7,7 @@ import { usePatients } from '@/hooks/usePatients';
 import { useServicePointContext } from '@/contexts/ServicePointContext';
 import { useServicePointQueueTypes } from '@/hooks/useServicePointQueueTypes';
 import { useQueueTypes } from '@/hooks/useQueueTypes';
+import { useQueueRealtime } from '@/hooks/useQueueRealtime';
 import { ServicePointCapability } from '@/utils/queueAlgorithms';
 import { createLogger } from '@/utils/logger';
 
@@ -21,7 +22,8 @@ export const useQueueManagement = () => {
     sortQueues,
     transferQueueToServicePoint,
     putQueueOnHold,
-    returnSkippedQueueToWaiting
+    returnSkippedQueueToWaiting,
+    fetchQueues
   } = useQueues();
   
   const { patients } = usePatients();
@@ -40,6 +42,17 @@ export const useQueueManagement = () => {
   const [activeQueues, setActiveQueues] = useState<Queue[]>([]);
   const [completedQueues, setCompletedQueues] = useState<Queue[]>([]);
   const [skippedQueues, setSkippedQueues] = useState<Queue[]>([]);
+  
+  // Add real-time updates specifically for queue management
+  useQueueRealtime({
+    onQueueChange: useCallback(() => {
+      logger.debug('Queue management detected real-time change, refreshing');
+      fetchQueues(true); // Force refresh
+    }, [fetchQueues]),
+    channelName: 'queue-management',
+    enabled: true,
+    debounceMs: 150
+  });
   
   // Memoize service point capabilities to prevent unnecessary recalculations
   const servicePointCapabilities = useMemo<ServicePointCapability[]>(() => {

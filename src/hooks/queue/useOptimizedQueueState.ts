@@ -1,7 +1,7 @@
 
 import * as React from 'react';
 import { Queue, QueueStatus, QueueTypeEnum } from '@/integrations/supabase/schema';
-import { useGlobalRealtime } from '@/hooks/useGlobalRealtime';
+import { useQueueRealtime } from '@/hooks/useQueueRealtime';
 import { queueSupabaseRequest } from '@/utils/requestThrottler';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -15,8 +15,8 @@ export const useOptimizedQueueState = () => {
   const [error, setError] = React.useState<string | null>(null);
   const [lastFetchTime, setLastFetchTime] = React.useState(0);
 
-  // Cache duration - 30 seconds
-  const CACHE_DURATION = 30 * 1000;
+  // Cache duration - 10 seconds (reduced for better real-time feel)
+  const CACHE_DURATION = 10 * 1000;
 
   const getTodayDate = () => new Date().toISOString().slice(0, 10);
 
@@ -66,15 +66,16 @@ export const useOptimizedQueueState = () => {
     }
   }, [lastFetchTime]);
 
-  // Use global realtime manager
-  useGlobalRealtime(
-    'optimized-queue-state',
-    React.useCallback(() => {
+  // Use real-time updates with immediate refresh
+  useQueueRealtime({
+    onQueueChange: React.useCallback(() => {
+      logger.debug('Real-time queue change detected, refreshing data');
       fetchQueues(true); // Force refresh on realtime updates
     }, [fetchQueues]),
-    undefined,
-    true
-  );
+    channelName: 'optimized-queue-state',
+    enabled: true,
+    debounceMs: 100 // Reduced debounce for faster updates
+  });
 
   // Initial fetch
   React.useEffect(() => {
