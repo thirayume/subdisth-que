@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Layout from '@/components/layout/Layout';
 import { useServicePointContext } from '@/contexts/ServicePointContext';
@@ -12,6 +13,7 @@ import NextQueueButton from '@/components/pharmacy/NextQueueButton';
 import PharmacyServiceInterface from '@/components/pharmacy/PharmacyServiceInterface';
 import QueueList from '@/components/queue/QueueList';
 import { usePharmacyErrorHandler } from '@/hooks/pharmacy/core/usePharmacyErrorHandler';
+import { Queue } from '@/integrations/supabase/schema';
 
 const PharmacyQueue = () => {
   const { 
@@ -42,14 +44,32 @@ const PharmacyQueue = () => {
     addMedication: dispenseMedication
   } = usePatientMedications(activeQueue?.patient_id);
 
+  // Convert PharmacyQueue to Queue for compatibility with QueueList
+  const convertToQueue = (pharmacyQueues: any[]): Queue[] => {
+    return pharmacyQueues.map(q => ({
+      id: q.id || '',
+      number: q.number || 0,
+      patient_id: q.patient_id || '',
+      type: q.type || 'GENERAL',
+      status: q.status || 'WAITING',
+      service_point_id: q.service_point_id,
+      notes: q.notes,
+      created_at: q.created_at || new Date().toISOString(),
+      updated_at: q.updated_at || new Date().toISOString(),
+      called_at: q.called_at,
+      completed_at: q.completed_at,
+      queue_date: q.queue_date
+    }));
+  };
+
   // Filter queues by status
-  const waitingQueues = queues.filter(q => q.status === 'WAITING');
-  const completedQueues = queues.filter(q => q.status === 'COMPLETED');
+  const waitingQueues = convertToQueue(queues.filter(q => q.status === 'WAITING'));
+  const completedQueues = convertToQueue(queues.filter(q => q.status === 'COMPLETED'));
 
   // Get patient name by ID
   const getPatientName = (patientId: string) => {
     const queue = queues.find(q => q.patient_id === patientId);
-    return queue?.patient ? queue.patient.name : 'ไม่พบข้อมูลผู้ป่วย';
+    return queue?.patient?.name || 'ไม่พบข้อมูลผู้ป่วย';
   };
 
   const handleServicePointChange = (value: string) => {

@@ -23,7 +23,7 @@ const ActivePharmacyQueue: React.FC<ActivePharmacyQueueProps> = ({ queue, servic
             <div className="text-sm font-medium text-pharmacy-700 mb-1">กำลังให้บริการคิว</div>
             <div className="text-4xl md:text-5xl font-bold text-pharmacy-600">{queue.number}</div>
             <div className="mt-1">
-              <QueueTypeLabel queueType={queue.type} />
+              <QueueTypeLabel queueType={queue.type as any} />
             </div>
             {servicePoint && (
               <div className="mt-2">

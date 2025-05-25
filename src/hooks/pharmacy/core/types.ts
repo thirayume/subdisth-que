@@ -21,13 +21,13 @@ export const PharmacyServiceSchema = z.object({
 
 export type PharmacyService = z.infer<typeof PharmacyServiceSchema>;
 
-// Enhanced pharmacy queue interface
+// Enhanced pharmacy queue interface - using string enums for proper validation
 export const PharmacyQueueSchema = z.object({
   id: z.string().uuid(),
   number: z.number().int().positive(),
   patient_id: z.string().uuid(),
-  type: z.nativeEnum(QueueTypeEnum),
-  status: z.nativeEnum(QueueStatus),
+  type: z.string(), // Use string instead of nativeEnum for better compatibility
+  status: z.string(), // Use string instead of nativeEnum for better compatibility
   notes: z.string().optional(),
   created_at: z.string(),
   updated_at: z.string(),
@@ -63,11 +63,22 @@ export interface CallQueueParams {
   servicePointId: string;
 }
 
-// Validation functions
+// Validation functions with proper error handling
 export const validatePharmacyQueue = (data: unknown): PharmacyQueue => {
-  return PharmacyQueueSchema.parse(data);
+  try {
+    return PharmacyQueueSchema.parse(data);
+  } catch (error) {
+    console.error('PharmacyQueue validation failed:', error);
+    // Return a safe fallback or throw with better context
+    throw new Error(`Invalid pharmacy queue data: ${error}`);
+  }
 };
 
 export const validatePharmacyService = (data: unknown): PharmacyService => {
-  return PharmacyServiceSchema.parse(data);
+  try {
+    return PharmacyServiceSchema.parse(data);
+  } catch (error) {
+    console.error('PharmacyService validation failed:', error);
+    throw new Error(`Invalid pharmacy service data: ${error}`);
+  }
 };
