@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Check, ChevronsUpDown, Plus, X, Search } from 'lucide-react';
+import { Check, ChevronsUpDown, Plus, X, Search, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Medication } from '@/integrations/supabase/schema';
@@ -30,7 +30,7 @@ interface DispensedMedication {
 
 const MedicationDispenseForm: React.FC<MedicationDispenseFormProps> = ({
   patientId,
-  medications,
+  medications = [], // Default to empty array to prevent undefined
   onDispenseMedication
 }) => {
   const [open, setOpen] = useState(false);
@@ -39,18 +39,28 @@ const MedicationDispenseForm: React.FC<MedicationDispenseFormProps> = ({
   const [dosage, setDosage] = useState('');
   const [instructions, setInstructions] = useState('');
   const [dispensedMedications, setDispensedMedications] = useState<DispensedMedication[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Filter medications based on search
-  const filteredMedications = medications.filter(med => {
+  // Filter medications based on search with safety check
+  const filteredMedications = React.useMemo(() => {
+    if (!Array.isArray(medications)) {
+      console.warn("[MedicationDispenseForm] Medications is not an array:", medications);
+      return [];
+    }
+    
     const searchLower = search.toLowerCase();
-    return (
-      med.name.toLowerCase().includes(searchLower) ||
-      med.code.toLowerCase().includes(searchLower)
-    );
-  });
+    return medications.filter(med => {
+      if (!med || !med.name || !med.code) return false;
+      return (
+        med.name.toLowerCase().includes(searchLower) ||
+        med.code.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [medications, search]);
 
   const handleSelectMedication = (medication: Medication) => {
     setSelectedMedication(medication);
+    setSearch('');
     setOpen(false);
   };
 
@@ -95,28 +105,53 @@ const MedicationDispenseForm: React.FC<MedicationDispenseFormProps> = ({
       return;
     }
     
+    setIsLoading(true);
     let success = true;
     
-    // Save all dispensed medications
-    for (const med of dispensedMedications) {
-      const result = await onDispenseMedication({
-        patient_id: patientId,
-        medication_id: med.medication.id,
-        dosage: med.dosage,
-        instructions: med.instructions,
-        start_date: new Date().toISOString()
-      });
-      
-      if (!result) {
-        success = false;
+    try {
+      // Save all dispensed medications
+      for (const med of dispensedMedications) {
+        const result = await onDispenseMedication({
+          patient_id: patientId,
+          medication_id: med.medication.id,
+          dosage: med.dosage,
+          instructions: med.instructions,
+          start_date: new Date().toISOString()
+        });
+        
+        if (!result) {
+          success = false;
+        }
       }
-    }
-    
-    if (success) {
-      toast.success(`บันทึกการจ่ายยาจำนวน ${dispensedMedications.length} รายการเรียบร้อยแล้ว`);
-      setDispensedMedications([]);
+      
+      if (success) {
+        toast.success(`บันทึกการจ่ายยาจำนวน ${dispensedMedications.length} รายการเรียบร้อยแล้ว`);
+        setDispensedMedications([]);
+      }
+    } catch (error) {
+      console.error('Error dispensing medications:', error);
+      toast.error('เกิดข้อผิดพลาดในการบันทึกการจ่ายยา');
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  // Show loading state if no medications available
+  if (!Array.isArray(medications)) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">จ่ายยา</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <div className="flex items-center gap-2 text-gray-500">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            กำลังโหลดข้อมูลยา...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -134,8 +169,9 @@ const MedicationDispenseForm: React.FC<MedicationDispenseFormProps> = ({
                   role="combobox"
                   aria-expanded={open}
                   className="w-full justify-between"
+                  disabled={medications.length === 0}
                 >
-                  {selectedMedication ? selectedMedication.name : "ค้นหายา..."}
+                  {selectedMedication ? selectedMedication.name : medications.length === 0 ? "ไม่มีข้อมูลยา" : "ค้นหายา..."}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
@@ -199,6 +235,7 @@ const MedicationDispenseForm: React.FC<MedicationDispenseFormProps> = ({
           <Button 
             onClick={handleAddMedication}
             className="bg-green-600 hover:bg-green-700"
+            disabled={medications.length === 0}
           >
             <Plus className="h-4 w-4 mr-1" /> เพิ่มยา
           </Button>
@@ -224,6 +261,7 @@ const MedicationDispenseForm: React.FC<MedicationDispenseFormProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => handleRemoveMedication(index)}
+                      disabled={isLoading}
                     >
                       <X className="h-4 w-4 text-red-500" />
                     </Button>
@@ -235,8 +273,16 @@ const MedicationDispenseForm: React.FC<MedicationDispenseFormProps> = ({
                 <Button 
                   onClick={handleSaveDispensing}
                   className="bg-pharmacy-600 hover:bg-pharmacy-700"
+                  disabled={isLoading}
                 >
-                  บันทึกการจ่ายยา
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      กำลังบันทึก...
+                    </>
+                  ) : (
+                    'บันทึกการจ่ายยา'
+                  )}
                 </Button>
               </div>
             </div>

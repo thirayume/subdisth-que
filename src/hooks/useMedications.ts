@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Medication } from '@/integrations/supabase/schema';
@@ -36,6 +35,11 @@ export const useMedications = () => {
       setLoading(false);
     }
   };
+
+  // Auto-fetch medications on mount
+  React.useEffect(() => {
+    fetchMedications();
+  }, []);
 
   // Add a new medication
   const addMedication = async (medicationData: Partial<Medication>) => {

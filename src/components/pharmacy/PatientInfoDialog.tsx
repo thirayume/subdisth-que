@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Patient } from '@/integrations/supabase/schema';
 import { formatThaiDate } from '@/utils/dateUtils';
-import { Phone, MapPin, Calendar, User } from 'lucide-react';
+import { Phone, MapPin, Calendar, User, Loader2 } from 'lucide-react';
 import PatientMedicationHistory from './PatientMedicationHistory';
 import MedicationDispenseForm from './MedicationDispenseForm';
 import { usePatientMedications } from '@/hooks/usePatientMedications';
@@ -31,7 +31,7 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
     addMedication 
   } = usePatientMedications(patient?.id);
   
-  const { medications } = useMedications();
+  const { medications, loading: medicationsListLoading } = useMedications();
 
   if (!patient) return null;
 
@@ -137,11 +137,22 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="dispense">
-            <MedicationDispenseForm
-              patientId={patient.id}
-              medications={medications}
-              onDispenseMedication={addMedication}
-            />
+            {medicationsListLoading ? (
+              <Card>
+                <CardContent className="flex items-center justify-center py-8">
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    กำลังโหลดข้อมูลยา...
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <MedicationDispenseForm
+                patientId={patient.id}
+                medications={medications}
+                onDispenseMedication={addMedication}
+              />
+            )}
           </TabsContent>
         </Tabs>
       </DialogContent>
