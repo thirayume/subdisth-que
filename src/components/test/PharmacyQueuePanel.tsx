@@ -1,66 +1,46 @@
 
 import React from 'react';
-import PharmacyQueuePanelHeader from './pharmacy-queue/PharmacyQueuePanelHeader';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PharmacyQueueTabs from './pharmacy-queue/PharmacyQueueTabs';
-import { usePharmacyQueueData } from './pharmacy-queue/usePharmacyQueueData';
+import { ServicePoint } from '@/integrations/supabase/schema';
 
 interface PharmacyQueuePanelProps {
-  servicePointId: string;
-  title: string;
-  refreshTrigger?: number;
+  selectedServicePoint: ServicePoint | null;
+  refreshTrigger: number;
 }
 
-const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = React.memo(({
-  servicePointId,
-  title,
-  refreshTrigger = 0
+const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
+  selectedServicePoint,
+  refreshTrigger
 }) => {
-  const {
-    selectedServicePoint,
-    queuesByStatus,
-    getPatientName,
-    handleCallQueue,
-    handleUpdateStatus,
-    handleRecallQueue,
-    isLoading,
-    servicePoints
-  } = usePharmacyQueueData({ servicePointId, refreshTrigger });
-
   if (!selectedServicePoint) {
     return (
-      <div className="h-full flex items-center justify-center bg-gray-50">
-        <p className="text-gray-500 text-sm">ไม่พบจุดบริการ</p>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>คิวร้านยา</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-gray-500">
+            กรุณาเลือกจุดบริการ
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="h-full flex flex-col bg-white">
-      <PharmacyQueuePanelHeader
-        title={title}
-        servicePoint={selectedServicePoint}
-        isLoading={isLoading}
-        waitingCount={queuesByStatus.waiting.length}
-        activeCount={queuesByStatus.active.length}
-      />
-
-      <div className="flex-1 overflow-hidden">
+    <Card>
+      <CardHeader>
+        <CardTitle>คิวร้านยา - {selectedServicePoint.name}</CardTitle>
+      </CardHeader>
+      <CardContent>
         <PharmacyQueueTabs
-          waitingQueues={queuesByStatus.waiting}
-          activeQueues={queuesByStatus.active}
-          completedQueues={queuesByStatus.completed}
-          getPatientName={getPatientName}
-          onUpdateStatus={handleUpdateStatus}
-          onCallQueue={handleCallQueue}
-          onRecallQueue={handleRecallQueue}
-          selectedServicePoint={selectedServicePoint}
-          servicePoints={servicePoints}
+          servicePointId={selectedServicePoint.id}
+          refreshTrigger={refreshTrigger}
         />
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
-});
-
-PharmacyQueuePanel.displayName = 'PharmacyQueuePanel';
+};
 
 export default PharmacyQueuePanel;
