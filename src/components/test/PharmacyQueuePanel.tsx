@@ -2,22 +2,23 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PharmacyQueueTabs from './pharmacy-queue/PharmacyQueueTabs';
-import { ServicePoint } from '@/integrations/supabase/schema';
 
 interface PharmacyQueuePanelProps {
-  selectedServicePoint: ServicePoint | null;
+  servicePointId?: string;
+  title?: string;
   refreshTrigger: number;
 }
 
 const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
-  selectedServicePoint,
+  servicePointId,
+  title = "คิวร้านยา",
   refreshTrigger
 }) => {
-  if (!selectedServicePoint) {
+  if (!servicePointId) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>คิวร้านยา</CardTitle>
+          <CardTitle>{title}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-gray-500">
@@ -31,11 +32,11 @@ const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>คิวร้านยา - {selectedServicePoint.name}</CardTitle>
+        <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
         <PharmacyQueueTabs
-          servicePointId={selectedServicePoint.id}
+          servicePointId={servicePointId}
           refreshTrigger={refreshTrigger}
         />
       </CardContent>

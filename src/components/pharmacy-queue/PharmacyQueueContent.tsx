@@ -17,7 +17,7 @@ const PharmacyQueueContent: React.FC<PharmacyQueueContentProps> = ({
       <PharmacyQueuePanel
         key={`pharmacy-${selectedServicePoint.id}`}
         servicePointId={selectedServicePoint.id}
-        title="บริการจ่ายยา"
+        title={`บริการจ่ายยา - ${selectedServicePoint.name}`}
         refreshTrigger={refreshTrigger}
       />
     </div>
