@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, SkipForward, PhoneCall, PhoneForwarded, InfoIcon, RotateCcw, ArrowRightFromLine, MapPin } from 'lucide-react';
+import { Check, SkipForward, PhoneCall, PhoneForwarded, InfoIcon, RotateCcw, ArrowRightFromLine, MapPin, User } from 'lucide-react';
 import { Queue } from '@/integrations/supabase/schema';
 import { formatQueueNumber } from '@/utils/queueFormatters';
 import QueueTypeLabel from './QueueTypeLabel';
@@ -19,6 +19,7 @@ interface QueueCardProps {
   onTransfer?: () => void;
   onReturnToWaiting?: () => void;
   onHold?: () => void;
+  onViewPatientInfo?: () => void;
   servicePointId?: string;
   servicePointName?: string;
   suggestedServicePointName?: string;
@@ -35,6 +36,7 @@ const QueueCard: React.FC<QueueCardProps> = ({
   onTransfer,
   onReturnToWaiting,
   onHold,
+  onViewPatientInfo,
   servicePointName,
   suggestedServicePointName,
   showServicePointInfo = false
@@ -90,8 +92,15 @@ const QueueCard: React.FC<QueueCardProps> = ({
       </CardContent>
       
       {/* Only show actions if any of the handlers are provided */}
-      {(onComplete || onSkip || onCall || onRecall || onTransfer || onReturnToWaiting || onHold) && (
+      {(onComplete || onSkip || onCall || onRecall || onTransfer || onReturnToWaiting || onHold || onViewPatientInfo) && (
         <CardFooter className="px-4 py-3 bg-gray-50 flex justify-end gap-2 flex-wrap">
+          {onViewPatientInfo && queue.status === 'ACTIVE' && (
+            <Button variant="outline" size="sm" onClick={onViewPatientInfo}>
+              <User className="h-4 w-4 mr-1" />
+              ข้อมูลผู้ป่วย
+            </Button>
+          )}
+          
           {onReturnToWaiting && queue.status === 'SKIPPED' && (
             <Button variant="outline" size="sm" onClick={onReturnToWaiting}>
               <RotateCcw className="h-4 w-4 mr-1" />

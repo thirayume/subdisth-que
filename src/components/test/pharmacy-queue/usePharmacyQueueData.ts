@@ -6,6 +6,8 @@ import { useServicePoints } from '@/hooks/useServicePoints';
 import { useGlobalRealtime } from '@/hooks/useGlobalRealtime';
 import { ServicePoint } from '@/integrations/supabase/schema';
 import { createLogger } from '@/utils/logger';
+import { formatQueueNumber } from '@/utils/queueFormatters';
+import { toast } from 'sonner';
 
 const logger = createLogger('usePharmacyQueueData');
 
@@ -97,22 +99,67 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     return patient ? patient.name : 'ไม่พบข้อมูลผู้ป่วย';
   }, [patients]);
 
-  // Optimized queue action handlers
+  // Enhanced queue action handlers with proper formatting
   const handleCallQueue = useCallback(async (queueId: string): Promise<any> => {
     if (!selectedServicePoint) return null;
-    logger.debug(`Calling queue ${queueId} for service point ${selectedServicePoint.code}`);
-    return await callQueue(queueId, selectedServicePoint.id);
-  }, [selectedServicePoint, callQueue]);
+    
+    const queue = servicePointQueues.find(q => q.id === queueId);
+    const formattedNumber = queue ? formatQueueNumber(queue.type as any, queue.number) : queueId;
+    
+    logger.debug(`Calling queue ${formattedNumber} for service point ${selectedServicePoint.code}`);
+    
+    try {
+      const result = await callQueue(queueId, selectedServicePoint.id);
+      if (result) {
+        toast.success(`เรียกคิว ${formattedNumber} เรียบร้อยแล้ว`);
+      }
+      return result;
+    } catch (error) {
+      toast.error(`ไม่สามารถเรียกคิว ${formattedNumber} ได้`);
+      throw error;
+    }
+  }, [selectedServicePoint, callQueue, servicePointQueues]);
 
   const handleUpdateStatus = useCallback(async (queueId: string, status: any) => {
-    logger.debug(`Updating queue ${queueId} status to ${status}`);
-    return await updateQueueStatus(queueId, status);
-  }, [updateQueueStatus]);
+    const queue = servicePointQueues.find(q => q.id === queueId);
+    const formattedNumber = queue ? formatQueueNumber(queue.type as any, queue.number) : queueId;
+    
+    logger.debug(`Updating queue ${formattedNumber} status to ${status}`);
+    
+    try {
+      const result = await updateQueueStatus(queueId, status);
+      if (result) {
+        let message = '';
+        switch (status) {
+          case 'COMPLETED':
+            message = `คิว ${formattedNumber} เสร็จสิ้นการให้บริการแล้ว`;
+            break;
+          case 'SKIPPED':
+            message = `คิว ${formattedNumber} ถูกข้ามแล้ว`;
+            break;
+          case 'WAITING':
+            message = `คิว ${formattedNumber} ถูกนำกลับมารอคิวแล้ว`;
+            break;
+          default:
+            message = `อัปเดตสถานะคิว ${formattedNumber} เรียบร้อยแล้ว`;
+        }
+        toast.success(message);
+      }
+      return result;
+    } catch (error) {
+      toast.error(`ไม่สามารถอัปเดตสถานะคิว ${formattedNumber} ได้`);
+      throw error;
+    }
+  }, [updateQueueStatus, servicePointQueues]);
 
   const handleRecallQueue = useCallback((queueId: string) => {
-    logger.debug(`Recalling queue ${queueId}`);
+    const queue = servicePointQueues.find(q => q.id === queueId);
+    const formattedNumber = queue ? formatQueueNumber(queue.type as any, queue.number) : queueId;
+    
+    logger.debug(`Recalling queue ${formattedNumber}`);
     recallQueue(queueId);
-  }, [recallQueue]);
+    toast.info(`เรียกซ้ำคิว ${formattedNumber}`);
+  }, [recallQueue, servicePointQueues]);
 
   // Loading state check
   const isLoading = globalLoading || localLoading;
