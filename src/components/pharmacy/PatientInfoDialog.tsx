@@ -28,7 +28,7 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
   const { 
     medications: patientMedications, 
     loading: medicationsLoading,
-    addPatientMedication 
+    addMedication 
   } = usePatientMedications(patient?.id);
   
   const { medications } = useMedications();
@@ -140,7 +140,7 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
             <MedicationDispenseForm
               patientId={patient.id}
               medications={medications}
-              onDispenseMedication={addPatientMedication}
+              onDispenseMedication={addMedication}
             />
           </TabsContent>
         </Tabs>
