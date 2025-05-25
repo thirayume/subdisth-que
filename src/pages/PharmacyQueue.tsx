@@ -1,27 +1,34 @@
+
 import React from 'react';
 import Layout from '@/components/layout/Layout';
-import { useQueues } from '@/hooks/useQueues';
-import { usePatients } from '@/hooks/usePatients';
 import { useServicePointContext } from '@/contexts/ServicePointContext';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Queue } from '@/integrations/supabase/schema';
+import { usePharmacyQueue } from '@/hooks/usePharmacyQueue';
+import { useMedications } from '@/hooks/useMedications';
+import { usePatientMedications } from '@/hooks/usePatientMedications';
+import NextQueueButton from '@/components/pharmacy/NextQueueButton';
+import ActivePharmacyQueue from '@/components/pharmacy/ActivePharmacyQueue';
+import MedicationDispenseForm from '@/components/pharmacy/MedicationDispenseForm';
+import FinishServiceOptions from '@/components/pharmacy/FinishServiceOptions';
+import PatientMedicationHistory from '@/components/pharmacy/PatientMedicationHistory';
 import QueueList from '@/components/queue/QueueList';
 
 const PharmacyQueue = () => {
   const { 
-    queues, 
-    updateQueueStatus, 
-    callQueue, 
-    recallQueue,
-    transferQueueToServicePoint,
-    putQueueOnHold,
-    returnSkippedQueueToWaiting
-  } = useQueues();
+    queues,
+    activeQueue,
+    loading,
+    loadingNext,
+    error,
+    callNextQueue,
+    completeService,
+    forwardService
+  } = usePharmacyQueue();
   
-  const { patients } = usePatients();
+  const { medications } = useMedications();
   const { 
     selectedServicePoint,
     setSelectedServicePoint,
@@ -29,21 +36,21 @@ const PharmacyQueue = () => {
     loading: loadingServicePoints
   } = useServicePointContext();
 
-  // Filter queues for the selected service point
-  const servicePointQueues = React.useMemo(() => {
-    if (!selectedServicePoint) return [];
-    return queues.filter(q => q.service_point_id === selectedServicePoint.id);
-  }, [queues, selectedServicePoint]);
+  // Initialize patient medications hook with active queue's patient
+  const {
+    medications: patientMedications,
+    loading: loadingPatientMeds,
+    addMedication: dispenseMedication
+  } = usePatientMedications(activeQueue?.patient_id);
 
-  const waitingQueues = servicePointQueues.filter(q => q.status === 'WAITING');
-  const activeQueues = servicePointQueues.filter(q => q.status === 'ACTIVE');
-  const completedQueues = servicePointQueues.filter(q => q.status === 'COMPLETED');
-  const skippedQueues = servicePointQueues.filter(q => q.status === 'SKIPPED');
+  // Filter queues by status
+  const waitingQueues = queues.filter(q => q.status === 'WAITING');
+  const completedQueues = queues.filter(q => q.status === 'COMPLETED');
 
   // Get patient name by ID
   const getPatientName = (patientId: string) => {
-    const patient = patients.find(p => p.id === patientId);
-    return patient ? patient.name : 'ไม่พบข้อมูลผู้ป่วย';
+    const queue = queues.find(q => q.patient_id === patientId);
+    return queue?.patient ? queue.patient.name : 'ไม่พบข้อมูลผู้ป่วย';
   };
 
   const handleServicePointChange = (value: string) => {
@@ -53,19 +60,17 @@ const PharmacyQueue = () => {
     }
   };
 
-  const handleCallQueue = async (queueId: string, manualServicePointId?: string): Promise<Queue | null> => {
-    if (!selectedServicePoint) return null;
-    return await callQueue(queueId, manualServicePointId || selectedServicePoint.id);
+  const handleCallNextQueue = async () => {
+    if (!selectedServicePoint) return;
+    await callNextQueue(selectedServicePoint.id);
   };
 
-  const handleTransferQueue = async (queueId: string) => {
-    // This would open a transfer dialog - for now just show a message
-    console.log('Transfer queue:', queueId);
+  const handleCompleteService = async (queueId: string, notes?: string) => {
+    return await completeService(queueId, notes);
   };
 
-  const handleHoldQueue = async (queueId: string) => {
-    if (!selectedServicePoint) return null;
-    return await putQueueOnHold(queueId, selectedServicePoint.id);
+  const handleForwardService = async (queueId: string, forwardTo: string, notes?: string) => {
+    return await forwardService(queueId, forwardTo, notes);
   };
 
   if (loadingServicePoints) {
@@ -123,140 +128,132 @@ const PharmacyQueue = () => {
           </Card>
         ) : (
           <>
-            {/* Queue Statistics */}
+            {/* Queue Statistics and Call Next Button */}
             <div className="mb-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <span>{selectedServicePoint.name}</span>
-                    <span className="text-sm text-gray-500">({selectedServicePoint.code})</span>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span>{selectedServicePoint.name}</span>
+                      <span className="text-sm text-gray-500">({selectedServicePoint.code})</span>
+                    </div>
+                    <NextQueueButton
+                      onCallNext={handleCallNextQueue}
+                      isLoading={loadingNext}
+                      disabled={!!activeQueue}
+                    />
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-4 gap-4 text-center">
+                  <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
                       <p className="text-2xl font-bold text-orange-600">{waitingQueues.length}</p>
                       <p className="text-sm text-gray-500">รอดำเนินการ</p>
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-green-600">{activeQueues.length}</p>
+                      <p className="text-2xl font-bold text-green-600">{activeQueue ? 1 : 0}</p>
                       <p className="text-sm text-gray-500">กำลังให้บริการ</p>
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-gray-600">{completedQueues.length}</p>
                       <p className="text-sm text-gray-500">เสร็จสิ้น</p>
                     </div>
-                    <div>
-                      <p className="text-2xl font-bold text-amber-600">{skippedQueues.length}</p>
-                      <p className="text-sm text-gray-500">ข้าม</p>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
-            
-            {/* Queue Management Tabs */}
-            <div className="flex-1 overflow-hidden">
-              <Tabs defaultValue="waiting" className="h-full flex flex-col">
-                <div className="border-b px-2">
-                  <TabsList className="h-12">
-                    <TabsTrigger value="waiting" className="relative">
-                      คิวที่รอดำเนินการ
-                      {waitingQueues.length > 0 && (
-                        <span className="ml-2 rounded-full bg-primary text-primary-foreground text-xs px-2 py-0.5">
-                          {waitingQueues.length}
-                        </span>
-                      )}
-                    </TabsTrigger>
-                    <TabsTrigger value="active" className="relative">
-                      กำลังให้บริการ
-                      {activeQueues.length > 0 && (
-                        <span className="ml-2 rounded-full bg-green-500 text-white text-xs px-2 py-0.5">
-                          {activeQueues.length}
-                        </span>
-                      )}
-                    </TabsTrigger>
-                    <TabsTrigger value="completed">
-                      เสร็จสิ้น
-                      {completedQueues.length > 0 && (
-                        <span className="ml-2 rounded-full bg-gray-500 text-white text-xs px-2 py-0.5">
-                          {completedQueues.length}
-                        </span>
-                      )}
-                    </TabsTrigger>
-                    <TabsTrigger value="skipped">
-                      ข้าม
-                      {skippedQueues.length > 0 && (
-                        <span className="ml-2 rounded-full bg-amber-500 text-white text-xs px-2 py-0.5">
-                          {skippedQueues.length}
-                        </span>
-                      )}
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
-                
-                <div className="flex-1 overflow-auto">
-                  <TabsContent value="waiting" className="mt-0 h-full">
-                    <Card className="h-full overflow-auto border-0 shadow-none">
-                      <QueueList
-                        queues={waitingQueues}
-                        getPatientName={getPatientName}
-                        onUpdateStatus={updateQueueStatus}
-                        onCallQueue={handleCallQueue}
-                        status="WAITING"
-                        selectedServicePoint={selectedServicePoint}
-                        servicePoints={servicePoints}
-                        showServicePointInfo={false}
-                      />
-                    </Card>
-                  </TabsContent>
-                  
-                  <TabsContent value="active" className="mt-0 h-full">
-                    <Card className="h-full overflow-auto border-0 shadow-none">
-                      <QueueList
-                        queues={activeQueues}
-                        getPatientName={getPatientName}
-                        onUpdateStatus={updateQueueStatus}
-                        onRecallQueue={recallQueue}
-                        onTransferQueue={handleTransferQueue}
-                        onHoldQueue={handleHoldQueue}
-                        status="ACTIVE"
-                        selectedServicePoint={selectedServicePoint}
-                        servicePoints={servicePoints}
-                        showServicePointInfo={false}
-                      />
-                    </Card>
-                  </TabsContent>
-                  
-                  <TabsContent value="completed" className="mt-0 h-full">
-                    <Card className="h-full overflow-auto border-0 shadow-none">
-                      <QueueList
-                        queues={completedQueues}
-                        getPatientName={getPatientName}
-                        status="COMPLETED"
-                        selectedServicePoint={selectedServicePoint}
-                        servicePoints={servicePoints}
-                        showServicePointInfo={false}
-                      />
-                    </Card>
-                  </TabsContent>
 
-                  <TabsContent value="skipped" className="mt-0 h-full">
-                    <Card className="h-full overflow-auto border-0 shadow-none">
-                      <QueueList
-                        queues={skippedQueues}
-                        getPatientName={getPatientName}
-                        onReturnToWaiting={returnSkippedQueueToWaiting}
-                        status="SKIPPED"
-                        selectedServicePoint={selectedServicePoint}
-                        servicePoints={servicePoints}
-                        showServicePointInfo={false}
-                      />
-                    </Card>
-                  </TabsContent>
+            {/* Active Queue Service Interface */}
+            {activeQueue ? (
+              <div className="flex-1 overflow-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Left Column - Active Queue and Medication Dispensing */}
+                  <div className="space-y-6">
+                    <ActivePharmacyQueue 
+                      queue={activeQueue} 
+                      servicePoint={selectedServicePoint}
+                    />
+                    
+                    <MedicationDispenseForm
+                      patientId={activeQueue.patient_id}
+                      medications={medications}
+                      onDispenseMedication={dispenseMedication}
+                    />
+                    
+                    <FinishServiceOptions
+                      queueId={activeQueue.id}
+                      onComplete={handleCompleteService}
+                      onForward={handleForwardService}
+                    />
+                  </div>
+                  
+                  {/* Right Column - Patient Medication History */}
+                  <div>
+                    <PatientMedicationHistory
+                      patientName={activeQueue.patient?.name}
+                      medications={patientMedications}
+                      loading={loadingPatientMeds}
+                    />
+                  </div>
                 </div>
-              </Tabs>
-            </div>
+              </div>
+            ) : (
+              /* Queue Management Tabs */
+              <div className="flex-1 overflow-hidden">
+                <Tabs defaultValue="waiting" className="h-full flex flex-col">
+                  <div className="border-b px-2">
+                    <TabsList className="h-12">
+                      <TabsTrigger value="waiting" className="relative">
+                        คิวที่รอดำเนินการ
+                        {waitingQueues.length > 0 && (
+                          <span className="ml-2 rounded-full bg-primary text-primary-foreground text-xs px-2 py-0.5">
+                            {waitingQueues.length}
+                          </span>
+                        )}
+                      </TabsTrigger>
+                      <TabsTrigger value="completed">
+                        เสร็จสิ้น
+                        {completedQueues.length > 0 && (
+                          <span className="ml-2 rounded-full bg-gray-500 text-white text-xs px-2 py-0.5">
+                            {completedQueues.length}
+                          </span>
+                        )}
+                      </TabsTrigger>
+                    </TabsList>
+                  </div>
+                  
+                  <div className="flex-1 overflow-auto">
+                    <TabsContent value="waiting" className="mt-0 h-full">
+                      <Card className="h-full overflow-auto border-0 shadow-none">
+                        <QueueList
+                          queues={waitingQueues}
+                          getPatientName={getPatientName}
+                          status="WAITING"
+                          selectedServicePoint={selectedServicePoint}
+                          servicePoints={servicePoints}
+                          showServicePointInfo={false}
+                          showActions={false}
+                        />
+                      </Card>
+                    </TabsContent>
+                    
+                    <TabsContent value="completed" className="mt-0 h-full">
+                      <Card className="h-full overflow-auto border-0 shadow-none">
+                        <QueueList
+                          queues={completedQueues}
+                          getPatientName={getPatientName}
+                          status="COMPLETED"
+                          selectedServicePoint={selectedServicePoint}
+                          servicePoints={servicePoints}
+                          showServicePointInfo={false}
+                          showActions={false}
+                        />
+                      </Card>
+                    </TabsContent>
+                  </div>
+                </Tabs>
+              </div>
+            )}
           </>
         )}
       </div>
