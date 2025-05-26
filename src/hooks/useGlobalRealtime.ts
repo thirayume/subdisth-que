@@ -20,6 +20,7 @@ class GlobalRealtimeManager {
   private maxReconnectAttempts = 3;
   private isConnecting = false;
   private isDestroyed = false;
+  private isSubscribed = false;
 
   static getInstance(): GlobalRealtimeManager {
     if (!GlobalRealtimeManager.instance) {
@@ -44,11 +45,11 @@ class GlobalRealtimeManager {
           logger.error(`Error in listener ${listener.id}:`, error);
         }
       });
-    }, 1000); // Increased debounce to 1 second for stability
+    }, 1000);
   };
 
   private setupChannel() {
-    if (this.channel || this.isConnecting || this.isDestroyed) return;
+    if (this.channel || this.isConnecting || this.isDestroyed || this.isSubscribed) return;
 
     this.isConnecting = true;
     logger.debug('Setting up global realtime channel');
@@ -72,12 +73,15 @@ class GlobalRealtimeManager {
           if (status === 'SUBSCRIBED') {
             this.reconnectAttempts = 0;
             this.isConnecting = false;
+            this.isSubscribed = true;
           } else if (status === 'CHANNEL_ERROR') {
             logger.error('Global channel error detected');
+            this.isSubscribed = false;
             this.handleConnectionError();
           } else if (status === 'CLOSED') {
             logger.warn('Global channel closed');
             this.isConnecting = false;
+            this.isSubscribed = false;
             if (!this.isDestroyed) {
               this.scheduleReconnect();
             }
@@ -94,6 +98,7 @@ class GlobalRealtimeManager {
 
   private handleConnectionError() {
     this.isConnecting = false;
+    this.isSubscribed = false;
     this.cleanupChannel();
     
     if (this.reconnectAttempts < this.maxReconnectAttempts && !this.isDestroyed) {
@@ -108,13 +113,13 @@ class GlobalRealtimeManager {
       return;
     }
 
-    const delay = Math.min(5000 * Math.pow(2, this.reconnectAttempts), 30000); // Slower reconnection
+    const delay = Math.min(5000 * Math.pow(2, this.reconnectAttempts), 30000);
     this.reconnectAttempts++;
     
     logger.debug(`Scheduling reconnection attempt ${this.reconnectAttempts} in ${delay}ms`);
     
     setTimeout(() => {
-      if (this.listeners.length > 0 && !this.isDestroyed) {
+      if (this.listeners.length > 0 && !this.isDestroyed && !this.isSubscribed) {
         this.setupChannel();
       }
     }, delay);
@@ -129,6 +134,7 @@ class GlobalRealtimeManager {
         logger.error('Error removing channel:', error);
       }
       this.channel = null;
+      this.isSubscribed = false;
     }
     
     if (this.debounceTimeout) {
@@ -141,15 +147,17 @@ class GlobalRealtimeManager {
     if (this.isDestroyed) return;
     
     // Prevent duplicate listeners
-    if (this.listeners.find(l => l.id === listener.id)) {
-      logger.debug(`Listener ${listener.id} already exists, skipping`);
+    const existingIndex = this.listeners.findIndex(l => l.id === listener.id);
+    if (existingIndex !== -1) {
+      logger.debug(`Listener ${listener.id} already exists, updating callback`);
+      this.listeners[existingIndex] = listener;
       return;
     }
     
     logger.debug(`Adding listener: ${listener.id}`);
     this.listeners.push(listener);
     
-    if (this.listeners.length === 1 && !this.isConnecting) {
+    if (this.listeners.length === 1 && !this.isConnecting && !this.isSubscribed) {
       this.setupChannel();
     }
   }

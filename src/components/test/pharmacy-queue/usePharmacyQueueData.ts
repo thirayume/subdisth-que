@@ -22,6 +22,9 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     callQueue, 
     recallQueue,
     fetchQueues,
+    transferQueueToServicePoint,
+    putQueueOnHold,
+    returnSkippedQueueToWaiting,
     loading: globalLoading
   } = useQueues();
   
@@ -33,18 +36,17 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     return servicePoints.find(sp => sp.id === servicePointId);
   }, [servicePoints, servicePointId]);
 
-  // Manual refresh function - only called explicitly
+  // Simple manual refresh function - only fetch when explicitly called
   const handleManualRefresh = useCallback(async () => {
-    if (refreshTrigger > 0 && selectedServicePoint) {
-      logger.debug(`Manual refresh triggered for service point ${selectedServicePoint.code}`);
-      try {
-        await fetchQueues(true);
-        logger.debug(`Successfully refreshed data for service point ${selectedServicePoint.code}`);
-      } catch (error) {
-        logger.error(`Error refreshing data for service point ${selectedServicePoint.code}:`, error);
-      }
+    logger.debug(`Manual refresh requested for service point ${selectedServicePoint?.code}`);
+    try {
+      await fetchQueues(true);
+      toast.success('รีเฟรชข้อมูลเรียบร้อยแล้ว');
+    } catch (error) {
+      logger.error(`Error refreshing data:`, error);
+      toast.error('ไม่สามารถรีเฟรชข้อมูลได้');
     }
-  }, [refreshTrigger, fetchQueues, selectedServicePoint]);
+  }, [fetchQueues, selectedServicePoint]);
 
   // Memoize filtered queues with optimized filtering
   const servicePointQueues = useMemo(() => {
@@ -63,14 +65,21 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     const waiting = servicePointQueues.filter(q => q.status === 'WAITING');
     const active = servicePointQueues.filter(q => q.status === 'ACTIVE');
     const completed = servicePointQueues.filter(q => q.status === 'COMPLETED');
+    const paused = servicePointQueues.filter(q => q.status === 'PAUSED');
+    const skipped = servicePointQueues.filter(q => q.status === 'SKIPPED');
     
-    return { waiting, active, completed };
+    return { waiting, active, completed, paused, skipped };
   }, [servicePointQueues]);
 
   // Stable patient name getter
   const getPatientName = useCallback((patientId: string) => {
     const patient = patients.find(p => p.id === patientId);
     return patient ? patient.name : 'ไม่พบข้อมูลผู้ป่วย';
+  }, [patients]);
+
+  // Get patient data
+  const getPatientData = useCallback((patientId: string) => {
+    return patients.find(p => p.id === patientId) || null;
   }, [patients]);
 
   // Enhanced queue action handlers with proper formatting
@@ -114,6 +123,9 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
           case 'WAITING':
             message = `คิว ${formattedNumber} ถูกนำกลับมารอคิวแล้ว`;
             break;
+          case 'PAUSED':
+            message = `คิว ${formattedNumber} ถูกพักแล้ว`;
+            break;
           default:
             message = `อัปเดตสถานะคิว ${formattedNumber} เรียบร้อยแล้ว`;
         }
@@ -135,13 +147,54 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     toast.info(`เรียกซ้ำคิว ${formattedNumber}`);
   }, [recallQueue, servicePointQueues]);
 
+  const handleHoldQueue = useCallback(async (queueId: string) => {
+    const queue = servicePointQueues.find(q => q.id === queueId);
+    const formattedNumber = queue ? formatQueueNumber(queue.type, queue.number) : queueId;
+    
+    try {
+      await putQueueOnHold(queueId);
+      toast.success(`พักคิว ${formattedNumber} เรียบร้อยแล้ว`);
+    } catch (error) {
+      toast.error(`ไม่สามารถพักคิว ${formattedNumber} ได้`);
+    }
+  }, [putQueueOnHold, servicePointQueues]);
+
+  const handleTransferQueue = useCallback(async (queueId: string, targetServicePointId: string) => {
+    const queue = servicePointQueues.find(q => q.id === queueId);
+    const formattedNumber = queue ? formatQueueNumber(queue.type, queue.number) : queueId;
+    const targetServicePoint = servicePoints.find(sp => sp.id === targetServicePointId);
+    
+    try {
+      await transferQueueToServicePoint(queueId, targetServicePointId);
+      toast.success(`โอนคิว ${formattedNumber} ไปยัง ${targetServicePoint?.name || 'จุดบริการอื่น'} เรียบร้อยแล้ว`);
+    } catch (error) {
+      toast.error(`ไม่สามารถโอนคิว ${formattedNumber} ได้`);
+    }
+  }, [transferQueueToServicePoint, servicePointQueues, servicePoints]);
+
+  const handleReturnToWaiting = useCallback(async (queueId: string) => {
+    const queue = servicePointQueues.find(q => q.id === queueId);
+    const formattedNumber = queue ? formatQueueNumber(queue.type, queue.number) : queueId;
+    
+    try {
+      await returnSkippedQueueToWaiting(queueId);
+      toast.success(`นำคิว ${formattedNumber} กลับมารอเรียบร้อยแล้ว`);
+    } catch (error) {
+      toast.error(`ไม่สามารถนำคิว ${formattedNumber} กลับมารอได้`);
+    }
+  }, [returnSkippedQueueToWaiting, servicePointQueues]);
+
   return {
     selectedServicePoint,
     queuesByStatus,
     getPatientName,
+    getPatientData,
     handleCallQueue,
     handleUpdateStatus,
     handleRecallQueue,
+    handleHoldQueue,
+    handleTransferQueue,
+    handleReturnToWaiting,
     handleManualRefresh,
     isLoading: globalLoading,
     servicePoints
