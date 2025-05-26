@@ -18,7 +18,7 @@ interface UsePharmacyQueueDataProps {
 
 export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: UsePharmacyQueueDataProps) => {
   const { 
-    queues, 
+    queues = [], 
     updateQueueStatus, 
     callQueue, 
     recallQueue,
@@ -29,18 +29,20 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     loading: globalLoading
   } = useQueues();
   
-  const { patients } = usePatients();
-  const { servicePoints } = useServicePoints();
+  const { patients = [] } = usePatients();
+  const { servicePoints = [] } = useServicePoints();
 
-  // Use filtering hook
+  // Use filtering hook with safe defaults
   const { selectedServicePoint, servicePointQueues, queuesByStatus } = useQueueFiltering({
-    queues,
+    queues: Array.isArray(queues) ? queues : [],
     servicePointId,
-    servicePoints
+    servicePoints: Array.isArray(servicePoints) ? servicePoints : []
   });
 
-  // Use patient data hook
-  const { getPatientName, getPatientData } = usePatientData({ patients });
+  // Use patient data hook with safe defaults
+  const { getPatientName, getPatientData } = usePatientData({ 
+    patients: Array.isArray(patients) ? patients : [] 
+  });
 
   // Create wrapper functions that match the expected signatures
   const wrappedTransferQueue = useCallback(async (queueId: string, targetServicePointId: string): Promise<void> => {
@@ -72,7 +74,7 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     }
   }, [removeQueue]);
 
-  // Use queue actions hook
+  // Use queue actions hook with safe defaults
   const {
     handleCallQueue,
     handleUpdateStatus,
@@ -83,8 +85,8 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     handleCancelQueue
   } = useQueueActions({
     selectedServicePoint,
-    servicePointQueues,
-    servicePoints,
+    servicePointQueues: Array.isArray(servicePointQueues) ? servicePointQueues : [],
+    servicePoints: Array.isArray(servicePoints) ? servicePoints : [],
     callQueue,
     updateQueueStatus,
     recallQueue,
@@ -119,6 +121,6 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     handleCancelQueue,
     handleManualRefresh,
     isLoading: globalLoading,
-    servicePoints
+    servicePoints: Array.isArray(servicePoints) ? servicePoints : []
   };
 };

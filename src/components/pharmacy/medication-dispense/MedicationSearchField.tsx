@@ -95,7 +95,7 @@ const MedicationSearchField: React.FC<MedicationSearchFieldProps> = ({
             <CommandEmpty>ไม่พบยา</CommandEmpty>
             <ScrollArea className="h-64">
               <CommandGroup>
-                {filteredMedications.map((med) => (
+                {Array.isArray(filteredMedications) && filteredMedications.map((med) => (
                   <CommandItem
                     key={med.id}
                     onSelect={() => onSelectMedication(med)}

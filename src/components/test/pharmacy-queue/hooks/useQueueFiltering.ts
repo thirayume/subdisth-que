@@ -1,48 +1,59 @@
 
 import { useMemo } from 'react';
-import { createLogger } from '@/utils/logger';
-
-const logger = createLogger('useQueueFiltering');
+import { Queue, ServicePoint, QueueStatus } from '@/integrations/supabase/schema';
 
 interface UseQueueFilteringProps {
-  queues: any[];
+  queues: Queue[];
   servicePointId: string;
-  servicePoints: any[];
+  servicePoints: ServicePoint[];
 }
 
 export const useQueueFiltering = ({ queues, servicePointId, servicePoints }: UseQueueFilteringProps) => {
-  // Memoize the selected service point
+  // Ensure we have safe arrays to work with
+  const safeQueues = Array.isArray(queues) ? queues : [];
+  const safeServicePoints = Array.isArray(servicePoints) ? servicePoints : [];
+
   const selectedServicePoint = useMemo(() => {
-    return servicePoints.find(sp => sp.id === servicePointId);
-  }, [servicePoints, servicePointId]);
+    return safeServicePoints.find(sp => sp.id === servicePointId) || null;
+  }, [safeServicePoints, servicePointId]);
 
-  // Memoize filtered queues with optimized filtering
   const servicePointQueues = useMemo(() => {
-    if (!selectedServicePoint) {
-      return [];
-    }
+    if (!selectedServicePoint) return [];
     
-    const filtered = queues.filter(q => q.service_point_id === selectedServicePoint.id);
-    logger.debug(`Service point ${selectedServicePoint.code} has ${filtered.length} queues`);
-    
-    return filtered;
-  }, [queues, selectedServicePoint]);
+    return safeQueues.filter(queue => {
+      // Filter by service point or show all if no specific service point assigned
+      const matchesServicePoint = !queue.service_point_id || queue.service_point_id === selectedServicePoint.id;
+      // Only show active queues for pharmacy
+      const isActive = queue.status === 'ACTIVE';
+      
+      return matchesServicePoint && isActive;
+    });
+  }, [safeQueues, selectedServicePoint]);
 
-  // Memoize queue status groups
   const queuesByStatus = useMemo(() => {
-    const waiting = servicePointQueues.filter(q => q.status === 'WAITING');
-    const active = servicePointQueues.filter(q => q.status === 'ACTIVE');
-    const completed = servicePointQueues.filter(q => q.status === 'COMPLETED');
-    // Use 'SKIPPED' instead of 'PAUSED' as that's what exists in the schema
-    const paused = servicePointQueues.filter(q => q.status === 'SKIPPED' && q.notes?.includes('PAUSED'));
-    const skipped = servicePointQueues.filter(q => q.status === 'SKIPPED' && !q.notes?.includes('PAUSED'));
+    if (!Array.isArray(servicePointQueues)) return {};
     
-    return { waiting, active, completed, paused, skipped };
+    const grouped: Record<QueueStatus, Queue[]> = {
+      'WAITING': [],
+      'ACTIVE': [],
+      'COMPLETED': [],
+      'SKIPPED': [],
+      'CANCELLED': [],
+      'ON_HOLD': []
+    };
+
+    servicePointQueues.forEach(queue => {
+      if (queue && queue.status && grouped[queue.status as QueueStatus]) {
+        grouped[queue.status as QueueStatus].push(queue);
+      }
+    });
+
+    return grouped;
   }, [servicePointQueues]);
 
   return {
     selectedServicePoint,
-    servicePointQueues,
+    servicePointQueues: Array.isArray(servicePointQueues) ? servicePointQueues : [],
     queuesByStatus
   };
 };

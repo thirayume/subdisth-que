@@ -27,26 +27,26 @@ export const usePharmacyQueueFetch = () => {
       logger.info('Refreshing pharmacy queues');
 
       const queueData = await fetchPharmacyQueues();
-      if (!queueData) return [];
+      // Ensure we always return an array
+      const safeQueueData = Array.isArray(queueData) ? queueData : [];
 
-      setQueues(queueData);
+      setQueues(safeQueueData);
       
       // Set active queue if there's one already in service
-      const inServiceQueue = findActiveServiceQueue(queueData);
+      const inServiceQueue = findActiveServiceQueue(safeQueueData);
       setActiveQueue(inServiceQueue);
       
-      logger.info(`Refreshed ${queueData.length} pharmacy queues`);
-      return queueData;
+      logger.info(`Refreshed ${safeQueueData.length} pharmacy queues`);
+      return safeQueueData;
     } catch (err) {
       logger.error('Error refreshing queues:', err);
+      // Return empty array on error to prevent iteration issues
+      setQueues([]);
       return [];
     } finally {
       setLoading(false);
     }
   }, [fetchPharmacyQueues, findActiveServiceQueue, setQueues, setActiveQueue, setLoading]);
-
-  // Removed usePharmacyRealtime to prevent conflicting subscriptions
-  // Real-time updates are now handled by the global manager
 
   // Initial fetch only
   React.useEffect(() => {
@@ -54,7 +54,7 @@ export const usePharmacyQueueFetch = () => {
   }, [refreshQueues]);
 
   return {
-    queues,
+    queues: Array.isArray(queues) ? queues : [],
     activeQueue,
     setActiveQueue,
     loading,
