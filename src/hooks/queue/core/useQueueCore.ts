@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -49,9 +48,20 @@ export const useQueueCore = () => {
 
   const addQueue = useCallback(async (queueData: Partial<Queue>): Promise<Queue | null> => {
     try {
+      // Ensure required fields are present
+      const insertData = {
+        patient_id: queueData.patient_id!,
+        number: queueData.number!,
+        type: queueData.type || 'GENERAL',
+        status: queueData.status || 'WAITING',
+        service_point_id: queueData.service_point_id,
+        notes: queueData.notes,
+        queue_date: queueData.queue_date || new Date().toISOString().split('T')[0]
+      };
+
       const { data, error } = await supabase
         .from('queues')
-        .insert(queueData)
+        .insert(insertData)
         .select()
         .single();
 

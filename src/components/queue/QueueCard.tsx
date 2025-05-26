@@ -16,6 +16,7 @@ interface QueueCardProps {
   onReturnToWaiting?: () => void;
   onHold?: () => void;
   onViewPatientInfo?: () => void;
+  onCancel?: () => void;
   servicePointId?: string;
   servicePointName?: string;
   suggestedServicePointName?: string;
@@ -34,12 +35,13 @@ const QueueCard: React.FC<QueueCardProps> = ({
   onReturnToWaiting,
   onHold,
   onViewPatientInfo,
+  onCancel,
   servicePointName,
   suggestedServicePointName,
   showServicePointInfo = false,
   isPharmacyInterface = false
 }) => {
-  const hasActions = onComplete || onSkip || onCall || onRecall || onTransfer || onReturnToWaiting || onHold || onViewPatientInfo;
+  const hasActions = onComplete || onSkip || onCall || onRecall || onTransfer || onReturnToWaiting || onHold || onViewPatientInfo || onCancel;
   
   return (
     <Card>
@@ -70,6 +72,7 @@ const QueueCard: React.FC<QueueCardProps> = ({
             onReturnToWaiting={onReturnToWaiting}
             onHold={onHold}
             onViewPatientInfo={onViewPatientInfo}
+            onCancel={onCancel}
             isPharmacyInterface={isPharmacyInterface}
           />
         </CardFooter>
