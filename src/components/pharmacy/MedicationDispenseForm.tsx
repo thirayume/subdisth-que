@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Medication } from '@/integrations/supabase/schema';
 import { PatientMedication } from '@/hooks/usePatientMedications';
 import { toast } from 'sonner';
@@ -14,169 +14,100 @@ import {
 } from './medication-dispense';
 
 interface MedicationDispenseFormProps {
-  patientId?: string;
+  patientId: string;
   medications: Medication[];
   onDispenseMedication: (data: Omit<PatientMedication, 'id' | 'created_at' | 'updated_at'>) => Promise<PatientMedication | null>;
 }
 
-interface DispensedMedication {
-  medication: Medication;
-  dosage: string;
-  instructions?: string;
-}
-
 const MedicationDispenseForm: React.FC<MedicationDispenseFormProps> = ({
   patientId,
-  medications = [],
+  medications = [], // Ensure medications is always an array
   onDispenseMedication
 }) => {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
   const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
   const [dosage, setDosage] = useState('');
   const [instructions, setInstructions] = useState('');
-  const [dispensedMedications, setDispensedMedications] = useState<DispensedMedication[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [dispensedMedications, setDispensedMedications] = useState<PatientMedication[]>([]);
+  const [isDispensing, setIsDispensing] = useState(false);
+  const [open, setOpen] = useState(false);
 
-  const handleSelectMedication = (medication: Medication) => {
-    setSelectedMedication(medication);
-    setSearch('');
-    setOpen(false);
-  };
+  // Ensure medications is a valid array
+  const safeMedications = Array.isArray(medications) ? medications : [];
 
-  const handleAddMedication = () => {
-    if (!selectedMedication) {
-      toast.error('กรุณาเลือกยา');
+  const handleDispense = async () => {
+    if (!selectedMedication || !dosage.trim()) {
+      toast.error('กรุณาเลือกยาและใส่ขนาดยา');
       return;
     }
-    
-    if (!dosage) {
-      toast.error('กรุณาระบุขนาดยา');
-      return;
-    }
-    
-    setDispensedMedications(prev => [
-      ...prev, 
-      { 
-        medication: selectedMedication, 
-        dosage, 
-        instructions 
-      }
-    ]);
-    
-    // Reset form
-    setSelectedMedication(null);
-    setDosage('');
-    setInstructions('');
-  };
 
-  const handleRemoveMedication = (index: number) => {
-    setDispensedMedications(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleSaveDispensing = async () => {
-    if (!patientId) {
-      toast.error('ไม่พบข้อมูลผู้ป่วย');
-      return;
-    }
-    
-    if (dispensedMedications.length === 0) {
-      toast.error('กรุณาเพิ่มรายการยาอย่างน้อย 1 รายการ');
-      return;
-    }
-    
-    setIsLoading(true);
-    let success = true;
-    
+    setIsDispensing(true);
     try {
-      // Save all dispensed medications
-      for (const med of dispensedMedications) {
-        const result = await onDispenseMedication({
-          patient_id: patientId,
-          medication_id: med.medication.id,
-          dosage: med.dosage,
-          instructions: med.instructions,
-          start_date: new Date().toISOString()
-        });
-        
-        if (!result) {
-          success = false;
-        }
-      }
+      const medicationData = {
+        patient_id: patientId,
+        medication_id: selectedMedication.id,
+        dosage: dosage.trim(),
+        instructions: instructions.trim() || undefined,
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: undefined,
+        notes: undefined
+      };
+
+      const result = await onDispenseMedication(medicationData);
       
-      if (success) {
-        toast.success(`บันทึกการจ่ายยาจำนวน ${dispensedMedications.length} รายการเรียบร้อยแล้ว`);
-        setDispensedMedications([]);
+      if (result) {
+        setDispensedMedications(prev => [result, ...prev]);
+        setSelectedMedication(null);
+        setDosage('');
+        setInstructions('');
+        toast.success('จ่ายยาเรียบร้อยแล้ว');
       }
     } catch (error) {
-      console.error('Error dispensing medications:', error);
-      toast.error('เกิดข้อผิดพลาดในการบันทึกการจ่ายยา');
+      console.error('Error dispensing medication:', error);
+      toast.error('เกิดข้อผิดพลาดในการจ่ายยา');
     } finally {
-      setIsLoading(false);
+      setIsDispensing(false);
     }
   };
-
-  // Show loading state if medications are not available
-  if (!Array.isArray(medications)) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">จ่ายยา</CardTitle>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center py-8">
-          <div className="flex items-center gap-2 text-gray-500">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            กำลังโหลดข้อมูลยา...
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">จ่ายยา</CardTitle>
+        <CardTitle>จ่ายยา</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="grid gap-4">
           <MedicationSearchField
-            open={open}
-            onOpenChange={setOpen}
-            search={search}
-            onSearchChange={setSearch}
+            medications={safeMedications}
             selectedMedication={selectedMedication}
-            medications={medications}
-            onSelectMedication={handleSelectMedication}
-            isLoading={medications.length === 0}
+            onSelectMedication={setSelectedMedication}
+            open={open}
+            setOpen={setOpen}
           />
-          
+
           <DosageField
             value={dosage}
             onChange={setDosage}
+            unit={selectedMedication?.unit}
           />
-        </div>
-        
-        <InstructionsField
-          value={instructions}
-          onChange={setInstructions}
-        />
-        
-        <div className="flex justify-end">
+
+          <InstructionsField
+            value={instructions}
+            onChange={setInstructions}
+          />
+
           <Button 
-            onClick={handleAddMedication}
-            className="bg-green-600 hover:bg-green-700"
-            disabled={medications.length === 0}
+            onClick={handleDispense}
+            disabled={!selectedMedication || !dosage.trim() || isDispensing}
+            className="w-full"
           >
-            <Plus className="h-4 w-4 mr-1" /> เพิ่มยา
+            <Plus className="w-4 h-4 mr-2" />
+            {isDispensing ? 'กำลังจ่ายยา...' : 'จ่ายยา'}
           </Button>
         </div>
-        
-        <DispensedMedicationsList
+
+        <DispensedMedicationsList 
           medications={dispensedMedications}
-          onRemoveMedication={handleRemoveMedication}
-          onSaveDispensing={handleSaveDispensing}
-          isLoading={isLoading}
+          allMedications={safeMedications}
         />
       </CardContent>
     </Card>

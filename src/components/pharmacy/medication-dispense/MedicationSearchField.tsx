@@ -1,118 +1,97 @@
 
 import React from 'react';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Medication } from '@/integrations/supabase/schema';
 
 interface MedicationSearchFieldProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  search: string;
-  onSearchChange: (search: string) => void;
-  selectedMedication: Medication | null;
   medications: Medication[];
+  selectedMedication: Medication | null;
   onSelectMedication: (medication: Medication) => void;
-  isLoading?: boolean;
+  open: boolean;
+  setOpen: (open: boolean) => void;
 }
 
 const MedicationSearchField: React.FC<MedicationSearchFieldProps> = ({
-  open,
-  onOpenChange,
-  search,
-  onSearchChange,
+  medications = [], // Ensure medications is always an array
   selectedMedication,
-  medications,
   onSelectMedication,
-  isLoading = false
+  open,
+  setOpen
 }) => {
-  // Ensure medications is always an array and filter safely
-  const safeMedications = React.useMemo(() => {
-    if (!medications || !Array.isArray(medications)) {
-      return [];
-    }
-    return medications.filter(med => med && typeof med === 'object' && med.id);
-  }, [medications]);
-
-  const filteredMedications = React.useMemo(() => {
-    if (!search || search.trim() === '') return safeMedications;
-    
-    const searchLower = search.toLowerCase();
-    return safeMedications.filter(med => {
-      const name = med.name || '';
-      const code = med.code || '';
-      return (
-        name.toLowerCase().includes(searchLower) ||
-        code.toLowerCase().includes(searchLower)
-      );
-    });
-  }, [safeMedications, search]);
-
-  if (isLoading) {
-    return (
-      <div className="flex-1 space-y-2">
-        <Label htmlFor="medication">ยา</Label>
-        <div className="flex items-center justify-center h-10 border rounded-md">
-          <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
-          <span className="ml-2 text-sm text-gray-500">กำลังโหลด...</span>
-        </div>
-      </div>
-    );
-  }
+  // Ensure medications is a valid array before rendering
+  const safeMedications = Array.isArray(medications) ? medications : [];
 
   return (
-    <div className="flex-1 space-y-2">
-      <Label htmlFor="medication">ยา</Label>
-      <Popover open={open} onOpenChange={onOpenChange}>
+    <div className="space-y-2">
+      <label className="text-sm font-medium">ยา</label>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             role="combobox"
             aria-expanded={open}
             className="w-full justify-between"
-            disabled={safeMedications.length === 0}
           >
-            {selectedMedication 
-              ? selectedMedication.name 
-              : safeMedications.length === 0 
-                ? "ไม่มีข้อมูลยา" 
-                : "ค้นหายา..."
-            }
+            {selectedMedication?.name || "เลือกยา..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0" align="start">
-          <Command shouldFilter={false}>
-            <CommandInput 
-              placeholder="ค้นหายา..." 
-              onValueChange={onSearchChange} 
-              value={search}
-              className="h-9"
-            />
-            <CommandEmpty>ไม่พบยา</CommandEmpty>
-            <ScrollArea className="h-64">
-              <CommandGroup>
-                {Array.isArray(filteredMedications) && filteredMedications.map((med) => (
-                  <CommandItem
-                    key={med.id}
-                    onSelect={() => onSelectMedication(med)}
-                    className="flex items-center justify-between"
-                  >
-                    <div>
-                      <span>{med.name}</span>
-                      <span className="ml-2 text-xs text-gray-400">({med.code})</span>
-                    </div>
-                    {selectedMedication?.id === med.id && (
-                      <Check className="h-4 w-4 text-green-600" />
-                    )}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </ScrollArea>
-          </Command>
+        <PopoverContent className="w-full p-0">
+          {/* Only render Command if we have valid medications array */}
+          {safeMedications.length > 0 ? (
+            <Command>
+              <CommandInput placeholder="ค้นหายา..." />
+              <CommandList>
+                <CommandEmpty>ไม่พบยา</CommandEmpty>
+                <CommandGroup>
+                  {safeMedications.map((medication) => (
+                    <CommandItem
+                      key={medication.id}
+                      value={medication.name}
+                      onSelect={() => {
+                        onSelectMedication(medication);
+                        setOpen(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          selectedMedication?.id === medication.id
+                            ? "opacity-100"
+                            : "opacity-0"
+                        )}
+                      />
+                      <div className="flex flex-col">
+                        <span>{medication.name}</span>
+                        <span className="text-xs text-gray-500">
+                          {medication.code} | คงเหลือ: {medication.stock} {medication.unit}
+                        </span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          ) : (
+            <div className="p-4 text-center text-sm text-gray-500">
+              ไม่มีข้อมูลยา
+            </div>
+          )}
         </PopoverContent>
       </Popover>
     </div>

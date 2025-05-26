@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -34,6 +33,10 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
   const { medications, loading: medicationsListLoading } = useMedicationsContext();
 
   if (!patient) return null;
+
+  // Ensure medications is always an array
+  const safeMedications = Array.isArray(medications) ? medications : [];
+  const safePatientMedications = Array.isArray(patientMedications) ? patientMedications : [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -131,7 +134,7 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
           <TabsContent value="history">
             <PatientMedicationHistory
               patientName={patient.name}
-              medications={patientMedications}
+              medications={safePatientMedications}
               loading={medicationsLoading}
             />
           </TabsContent>
@@ -149,7 +152,7 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
             ) : (
               <MedicationDispenseForm
                 patientId={patient.id}
-                medications={medications}
+                medications={safeMedications}
                 onDispenseMedication={addMedication}
               />
             )}
