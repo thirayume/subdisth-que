@@ -36,13 +36,13 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     return servicePoints.find(sp => sp.id === servicePointId);
   }, [servicePoints, servicePointId]);
 
-  // Optimized refresh function with local loading state
+  // Controlled refresh function - only called when refreshTrigger changes
   const refreshData = useCallback(async () => {
     if (refreshTrigger > 0 && selectedServicePoint) {
-      logger.debug(`Refresh trigger ${refreshTrigger} for service point ${selectedServicePoint.code}`);
+      logger.debug(`Manual refresh triggered for service point ${selectedServicePoint.code}`);
       setLocalLoading(true);
       try {
-        await fetchQueues(true); // Force refresh
+        await fetchQueues(true);
         logger.debug(`Successfully refreshed data for service point ${selectedServicePoint.code}`);
       } catch (error) {
         logger.error(`Error refreshing data for service point ${selectedServicePoint.code}:`, error);
@@ -52,21 +52,19 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     }
   }, [refreshTrigger, fetchQueues, selectedServicePoint]);
 
-  // Handle refresh trigger changes with debouncing
+  // Only refresh when refreshTrigger changes (manual refresh or service point change)
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
+    if (refreshTrigger > 0) {
       refreshData();
-    }, 100); // Small delay to batch rapid changes
+    }
+  }, [refreshData, refreshTrigger]);
 
-    return () => clearTimeout(timeoutId);
-  }, [refreshData]);
-
-  // Use global realtime manager for this service point
+  // Use global realtime manager for this service point - no additional refresh logic
   useGlobalRealtime(
     `pharmacy-queue-${servicePointId}`,
     useCallback(() => {
-      logger.debug(`Queue change detected for service point ${servicePointId}`);
-      // No need to fetch here as global manager already handles it
+      logger.debug(`Real-time queue change detected for service point ${servicePointId}`);
+      // Global realtime manager handles the data fetching
     }, [servicePointId]),
     servicePointId,
     true

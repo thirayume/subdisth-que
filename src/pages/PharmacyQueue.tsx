@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import Layout from '@/components/layout/Layout';
 import { useServicePointContext } from '@/contexts/ServicePointContext';
 import PharmacyQueueHeader from '@/components/pharmacy-queue/PharmacyQueueHeader';
@@ -9,6 +9,8 @@ import PharmacyQueueLoading from '@/components/pharmacy-queue/PharmacyQueueLoadi
 import { MedicationsProvider } from '@/components/medications/context/MedicationsContext';
 
 const PharmacyQueue = () => {
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  
   const { 
     selectedServicePoint,
     setSelectedServicePoint,
@@ -20,8 +22,14 @@ const PharmacyQueue = () => {
     const servicePoint = servicePoints.find(sp => sp.id === value);
     if (servicePoint) {
       setSelectedServicePoint(servicePoint);
+      // Only trigger refresh when service point changes
+      setRefreshTrigger(prev => prev + 1);
     }
   };
+
+  const handleManualRefresh = useCallback(() => {
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
 
   if (loadingServicePoints) {
     return (
@@ -39,6 +47,7 @@ const PharmacyQueue = () => {
             selectedServicePoint={selectedServicePoint}
             servicePoints={servicePoints}
             onServicePointChange={handleServicePointChange}
+            onRefresh={handleManualRefresh}
           />
 
           {!selectedServicePoint ? (
@@ -46,7 +55,7 @@ const PharmacyQueue = () => {
           ) : (
             <PharmacyQueueContent
               selectedServicePoint={selectedServicePoint}
-              refreshTrigger={Date.now()}
+              refreshTrigger={refreshTrigger}
             />
           )}
         </div>

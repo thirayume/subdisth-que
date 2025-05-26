@@ -3,7 +3,6 @@ import * as React from 'react';
 import { PharmacyQueue } from '../types';
 import { usePharmacyState } from './usePharmacyState';
 import { usePharmacyDataFetch } from './usePharmacyDataFetch';
-import { usePharmacyRealtime } from './usePharmacyRealtime';
 import { usePharmacyErrorHandler } from './usePharmacyErrorHandler';
 import { createLogger } from '@/utils/logger';
 
@@ -46,17 +45,10 @@ export const usePharmacyQueueFetch = () => {
     }
   }, [fetchPharmacyQueues, findActiveServiceQueue, setQueues, setActiveQueue, setLoading]);
 
-  // Set up real-time subscription
-  usePharmacyRealtime({
-    onQueueChange: React.useCallback(() => {
-      logger.debug('Real-time change detected, refreshing queues');
-      refreshQueues();
-    }, [refreshQueues]),
-    enabled: true,
-    debounceMs: 300
-  });
+  // Removed usePharmacyRealtime to prevent conflicting subscriptions
+  // Real-time updates are now handled by the global manager
 
-  // Initial fetch
+  // Initial fetch only
   React.useEffect(() => {
     refreshQueues();
   }, [refreshQueues]);
