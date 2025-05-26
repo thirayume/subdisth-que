@@ -23,6 +23,7 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     callQueue, 
     recallQueue,
     fetchQueues,
+    removeQueue,
     transferQueueToServicePoint: baseTransferQueue,
     returnSkippedQueueToWaiting: baseReturnQueue,
     loading: globalLoading
@@ -62,6 +63,15 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     }
   }, [baseReturnQueue]);
 
+  const wrappedRemoveQueue = useCallback(async (queueId: string): Promise<void> => {
+    try {
+      await removeQueue(queueId);
+    } catch (error) {
+      logger.error('Error in remove queue wrapper:', error);
+      throw error;
+    }
+  }, [removeQueue]);
+
   // Use queue actions hook
   const {
     handleCallQueue,
@@ -69,7 +79,8 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     handleRecallQueue,
     handleHoldQueue,
     handleTransferQueue,
-    handleReturnToWaiting
+    handleReturnToWaiting,
+    handleCancelQueue
   } = useQueueActions({
     selectedServicePoint,
     servicePointQueues,
@@ -78,7 +89,8 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     updateQueueStatus,
     recallQueue,
     transferQueueToServicePoint: wrappedTransferQueue,
-    returnSkippedQueueToWaiting: wrappedReturnQueue
+    returnSkippedQueueToWaiting: wrappedReturnQueue,
+    removeQueue: wrappedRemoveQueue
   });
 
   // Simple manual refresh function
@@ -104,6 +116,7 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     handleHoldQueue,
     handleTransferQueue,
     handleReturnToWaiting,
+    handleCancelQueue,
     handleManualRefresh,
     isLoading: globalLoading,
     servicePoints

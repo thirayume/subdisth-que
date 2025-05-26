@@ -15,6 +15,7 @@ interface UseQueueActionsProps {
   recallQueue: (queueId: string) => void;
   transferQueueToServicePoint: (queueId: string, targetServicePointId: string) => Promise<void>;
   returnSkippedQueueToWaiting: (queueId: string) => Promise<void>;
+  removeQueue: (queueId: string) => Promise<void>;
 }
 
 export const useQueueActions = ({
@@ -25,7 +26,8 @@ export const useQueueActions = ({
   updateQueueStatus,
   recallQueue,
   transferQueueToServicePoint,
-  returnSkippedQueueToWaiting
+  returnSkippedQueueToWaiting,
+  removeQueue
 }: UseQueueActionsProps) => {
   // Enhanced queue action handlers with proper formatting
   const handleCallQueue = useCallback(async (queueId: string): Promise<any> => {
@@ -131,12 +133,25 @@ export const useQueueActions = ({
     }
   }, [returnSkippedQueueToWaiting, servicePointQueues]);
 
+  const handleCancelQueue = useCallback(async (queueId: string) => {
+    const queue = servicePointQueues.find(q => q.id === queueId);
+    const formattedNumber = queue ? formatQueueNumber(queue.type as any, queue.number) : queueId;
+    
+    try {
+      await removeQueue(queueId);
+      toast.success(`ยกเลิกคิว ${formattedNumber} เรียบร้อยแล้ว`);
+    } catch (error) {
+      toast.error(`ไม่สามารถยกเลิกคิว ${formattedNumber} ได้`);
+    }
+  }, [removeQueue, servicePointQueues]);
+
   return {
     handleCallQueue,
     handleUpdateStatus,
     handleRecallQueue,
     handleHoldQueue,
     handleTransferQueue,
-    handleReturnToWaiting
+    handleReturnToWaiting,
+    handleCancelQueue
   };
 };

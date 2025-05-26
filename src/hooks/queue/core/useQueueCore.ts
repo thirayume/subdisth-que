@@ -1,105 +1,172 @@
 
-import * as React from 'react';
-import { Queue } from '@/integrations/supabase/schema';
+import { useState, useCallback, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useOptimizedQueueState } from '../useOptimizedQueueState';
-import { useQueueStatusUpdates } from '../useQueueStatusUpdates';
+import { Queue, QueueStatus } from '@/integrations/supabase/schema';
+import { toast } from 'sonner';
 import { createLogger } from '@/utils/logger';
+import { mapToQueueObject } from '@/utils/queue/queueMapping';
 
 const logger = createLogger('useQueueCore');
 
 export const useQueueCore = () => {
-  logger.debug('Hook initialized');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   
-  // Use the optimized state hook
-  const { 
-    queues, 
-    loading, 
-    error, 
-    fetchQueues, 
-    getQueuesByStatus,
-    updateQueueInState
-  } = useOptimizedQueueState();
-  
-  const { updateQueueStatus } = useQueueStatusUpdates(updateQueueInState);
-
-  // Optimized addQueue function with immediate state update
-  const addQueue = React.useCallback(async (queueData: Partial<Queue>) => {
-    try {
-      if (!queueData.patient_id || !queueData.number || !queueData.type) {
-        throw new Error('Missing required queue data');
-      }
-      
-      logger.info('Adding queue:', queueData);
-      
-      // Optimistically add to state first
-      const tempQueue: Queue = {
-        id: `temp-${Date.now()}`,
-        patient_id: queueData.patient_id,
-        number: queueData.number,
-        type: queueData.type as any,
-        status: (queueData.status || 'WAITING') as any,
-        notes: queueData.notes || null,
-        queue_date: new Date().toISOString().slice(0, 10),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        called_at: null,
-        completed_at: null,
-        service_point_id: null
-      };
-      
-      updateQueueInState(tempQueue);
-
-      // Then save to database
+  const { data: queues = [], isLoading: queryLoading } = useQuery({
+    queryKey: ['queues'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('queues')
-        .insert([{
-          patient_id: queueData.patient_id,
-          number: queueData.number,
-          type: queueData.type,
-          status: queueData.status || 'WAITING',
-          notes: queueData.notes
-        }])
-        .select();
-
+        .select('*')
+        .order('created_at', { ascending: true });
+      
       if (error) {
-        // Remove temp queue on error by filtering it out
-        const updatedQueues = queues.filter(q => q.id !== tempQueue.id);
-        updatedQueues.forEach(q => updateQueueInState(q));
+        logger.error('Error fetching queues:', error);
         throw error;
       }
+      
+      return data ? data.map(mapToQueueObject) : [];
+    },
+    refetchInterval: 5000,
+  });
 
-      if (!data || data.length === 0) {
-        // Remove temp queue on error by filtering it out
-        const updatedQueues = queues.filter(q => q.id !== tempQueue.id);
-        updatedQueues.forEach(q => updateQueueInState(q));
-        throw new Error('No queue data returned from insert');
+  const fetchQueues = useCallback(async (force = false) => {
+    setLoading(true);
+    try {
+      await queryClient.invalidateQueries({ queryKey: ['queues'] });
+      if (force) {
+        await queryClient.refetchQueries({ queryKey: ['queues'] });
       }
-      
-      const newQueue: Queue = {
-        ...data[0],
-        type: data[0].type as any,
-        status: data[0].status as any
-      };
-      
-      // Replace temp queue with real queue
-      updateQueueInState(newQueue);
-      
-      logger.info('Queue added successfully:', newQueue);
-      return newQueue;
-    } catch (err: unknown) {
-      logger.error('Error adding queue:', err);
+    } catch (error) {
+      logger.error('Error fetching queues:', error);
+      setError('Failed to fetch queues');
+    } finally {
+      setLoading(false);
+    }
+  }, [queryClient]);
+
+  const addQueue = useCallback(async (queueData: Partial<Queue>): Promise<Queue | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('queues')
+        .insert(queueData)
+        .select()
+        .single();
+
+      if (error) {
+        logger.error('Error adding queue:', error);
+        toast.error('ไม่สามารถเพิ่มคิวได้');
+        return null;
+      }
+
+      if (data) {
+        const typedQueue = mapToQueueObject(data);
+        await fetchQueues();
+        toast.success('เพิ่มคิวเรียบร้อยแล้ว');
+        return typedQueue;
+      }
+
+      return null;
+    } catch (error) {
+      logger.error('Error in addQueue:', error);
+      toast.error('เกิดข้อผิดพลาดในการเพิ่มคิว');
       return null;
     }
-  }, [updateQueueInState, queues]);
+  }, [fetchQueues]);
+
+  const updateQueueStatus = useCallback(async (queueId: string, status: QueueStatus): Promise<Queue | null> => {
+    try {
+      const updateData: any = { status };
+      
+      // Add timestamp fields based on status
+      if (status === 'ACTIVE') {
+        updateData.called_at = new Date().toISOString();
+      } else if (status === 'COMPLETED') {
+        updateData.completed_at = new Date().toISOString();
+      } else if (status === 'SKIPPED') {
+        updateData.skipped_at = new Date().toISOString();
+      }
+
+      const { data, error } = await supabase
+        .from('queues')
+        .update(updateData)
+        .eq('id', queueId)
+        .select()
+        .single();
+
+      if (error) {
+        logger.error('Error updating queue status:', error);
+        toast.error('ไม่สามารถอัปเดตสถานะคิวได้');
+        return null;
+      }
+
+      if (data) {
+        const typedQueue = mapToQueueObject(data);
+        await fetchQueues();
+        return typedQueue;
+      }
+
+      return null;
+    } catch (error) {
+      logger.error('Error in updateQueueStatus:', error);
+      toast.error('เกิดข้อผิดพลาดในการอัปเดตสถานะคิว');
+      return null;
+    }
+  }, [fetchQueues]);
+
+  const removeQueue = useCallback(async (queueId: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('queues')
+        .delete()
+        .eq('id', queueId);
+
+      if (error) {
+        logger.error('Error removing queue:', error);
+        toast.error('ไม่สามารถลบคิวได้');
+        return false;
+      }
+
+      await fetchQueues();
+      toast.success('ลบคิวเรียบร้อยแล้ว');
+      return true;
+    } catch (error) {
+      logger.error('Error in removeQueue:', error);
+      toast.error('เกิดข้อผิดพลาดในการลบคิว');
+      return false;
+    }
+  }, [fetchQueues]);
+
+  const updateQueueInState = useCallback((updatedQueue: Queue) => {
+    queryClient.setQueryData(['queues'], (oldQueues: Queue[] = []) => {
+      return oldQueues.map(queue => 
+        queue.id === updatedQueue.id ? updatedQueue : queue
+      );
+    });
+  }, [queryClient]);
+
+  const getQueuesByStatus = useCallback((status: QueueStatus) => {
+    return queues.filter(queue => queue.status === status);
+  }, [queues]);
+
+  useEffect(() => {
+    if (queryLoading) {
+      setLoading(true);
+    } else {
+      setLoading(false);
+    }
+  }, [queryLoading]);
 
   return {
     queues,
-    loading,
+    loading: loading || queryLoading,
     error,
     fetchQueues,
     addQueue,
     updateQueueStatus,
+    removeQueue,
     getQueuesByStatus,
     updateQueueInState
   };

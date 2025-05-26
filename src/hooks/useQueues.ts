@@ -16,6 +16,7 @@ export const useQueues = () => {
     fetchQueues,
     addQueue,
     updateQueueStatus,
+    removeQueue,
     getQueuesByStatus,
     updateQueueInState
   } = useQueueCore();
@@ -45,6 +46,7 @@ export const useQueues = () => {
     fetchQueues,
     addQueue,
     updateQueueStatus,
+    removeQueue,
     getQueuesByStatus,
     callQueue,
     recallQueue,

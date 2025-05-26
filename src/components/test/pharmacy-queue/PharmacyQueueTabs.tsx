@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePharmacyQueueData } from './usePharmacyQueueData';
@@ -29,6 +28,7 @@ const PharmacyQueueTabs: React.FC<PharmacyQueueTabsProps> = ({
     handleHoldQueue,
     handleTransferQueue,
     handleReturnToWaiting,
+    handleCancelQueue,
     handleManualRefresh,
     isLoading,
     servicePoints
@@ -117,6 +117,7 @@ const PharmacyQueueTabs: React.FC<PharmacyQueueTabsProps> = ({
                 patientName={getPatientName(queue.patient_id)}
                 onCall={() => handleCallQueue(queue.id)}
                 onSkip={() => handleUpdateStatus(queue.id, 'SKIPPED')}
+                onCancel={() => handleCancelQueue(queue.id)}
                 onViewPatientInfo={() => handleViewPatientInfo(queue)}
                 isPharmacyInterface={true}
               />

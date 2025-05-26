@@ -29,13 +29,19 @@ const MedicationSearchField: React.FC<MedicationSearchFieldProps> = ({
   onSelectMedication,
   isLoading = false
 }) => {
+  // Ensure medications is always an array and filter safely
+  const safeMedications = React.useMemo(() => {
+    if (!medications || !Array.isArray(medications)) {
+      return [];
+    }
+    return medications.filter(med => med && typeof med === 'object' && med.id);
+  }, [medications]);
+
   const filteredMedications = React.useMemo(() => {
-    if (!Array.isArray(medications)) return [];
-    if (!search) return medications;
+    if (!search || search.trim() === '') return safeMedications;
     
     const searchLower = search.toLowerCase();
-    return medications.filter(med => {
-      if (!med || typeof med !== 'object') return false;
+    return safeMedications.filter(med => {
       const name = med.name || '';
       const code = med.code || '';
       return (
@@ -43,7 +49,7 @@ const MedicationSearchField: React.FC<MedicationSearchFieldProps> = ({
         code.toLowerCase().includes(searchLower)
       );
     });
-  }, [medications, search]);
+  }, [safeMedications, search]);
 
   if (isLoading) {
     return (
@@ -67,11 +73,11 @@ const MedicationSearchField: React.FC<MedicationSearchFieldProps> = ({
             role="combobox"
             aria-expanded={open}
             className="w-full justify-between"
-            disabled={!Array.isArray(medications) || medications.length === 0}
+            disabled={safeMedications.length === 0}
           >
             {selectedMedication 
               ? selectedMedication.name 
-              : !Array.isArray(medications) || medications.length === 0 
+              : safeMedications.length === 0 
                 ? "ไม่มีข้อมูลยา" 
                 : "ค้นหายา..."
             }

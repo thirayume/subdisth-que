@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Check, SkipForward, PhoneCall, PhoneForwarded, RotateCcw, ArrowRightFromLine, User } from 'lucide-react';
+import { Check, SkipForward, PhoneCall, PhoneForwarded, RotateCcw, ArrowRightFromLine, User, X } from 'lucide-react';
 import { Queue } from '@/integrations/supabase/schema';
 
 interface QueueCardActionsProps {
@@ -14,6 +14,7 @@ interface QueueCardActionsProps {
   onReturnToWaiting?: () => void;
   onHold?: () => void;
   onViewPatientInfo?: () => void;
+  onCancel?: () => void;
   isPharmacyInterface?: boolean;
 }
 
@@ -27,15 +28,24 @@ const QueueCardActions: React.FC<QueueCardActionsProps> = ({
   onReturnToWaiting,
   onHold,
   onViewPatientInfo,
+  onCancel,
   isPharmacyInterface = false
 }) => {
   return (
     <>
-      {/* Patient Info Button - Show for active queues */}
-      {onViewPatientInfo && queue.status === 'ACTIVE' && (
+      {/* Patient Info Button - Show for waiting and active queues */}
+      {onViewPatientInfo && (queue.status === 'ACTIVE' || queue.status === 'WAITING') && (
         <Button variant="outline" size="sm" onClick={onViewPatientInfo}>
           <User className="h-4 w-4 mr-1" />
           ข้อมูลผู้ป่วย
+        </Button>
+      )}
+      
+      {/* Cancel Queue - Show for waiting queues */}
+      {onCancel && queue.status === 'WAITING' && (
+        <Button variant="outline" size="sm" onClick={onCancel} className="border-red-200 text-red-700 hover:bg-red-50">
+          <X className="h-4 w-4 mr-1" />
+          ยกเลิก
         </Button>
       )}
       
