@@ -23,8 +23,8 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     callQueue, 
     recallQueue,
     fetchQueues,
-    transferQueueToServicePoint,
-    returnSkippedQueueToWaiting,
+    transferQueueToServicePoint: baseTransferQueue,
+    returnSkippedQueueToWaiting: baseReturnQueue,
     loading: globalLoading
   } = useQueues();
   
@@ -41,6 +41,27 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
   // Use patient data hook
   const { getPatientName, getPatientData } = usePatientData({ patients });
 
+  // Create wrapper functions that match the expected signatures
+  const wrappedTransferQueue = useCallback(async (queueId: string, targetServicePointId: string): Promise<void> => {
+    if (!selectedServicePoint) return;
+    
+    try {
+      await baseTransferQueue(queueId, selectedServicePoint.id, targetServicePointId);
+    } catch (error) {
+      logger.error('Error in transfer queue wrapper:', error);
+      throw error;
+    }
+  }, [baseTransferQueue, selectedServicePoint]);
+
+  const wrappedReturnQueue = useCallback(async (queueId: string): Promise<void> => {
+    try {
+      await baseReturnQueue(queueId);
+    } catch (error) {
+      logger.error('Error in return queue wrapper:', error);
+      throw error;
+    }
+  }, [baseReturnQueue]);
+
   // Use queue actions hook
   const {
     handleCallQueue,
@@ -56,8 +77,8 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     callQueue,
     updateQueueStatus,
     recallQueue,
-    transferQueueToServicePoint,
-    returnSkippedQueueToWaiting
+    transferQueueToServicePoint: wrappedTransferQueue,
+    returnSkippedQueueToWaiting: wrappedReturnQueue
   });
 
   // Simple manual refresh function
