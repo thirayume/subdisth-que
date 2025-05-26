@@ -87,7 +87,7 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     if (!selectedServicePoint) return null;
     
     const queue = servicePointQueues.find(q => q.id === queueId);
-    const formattedNumber = queue ? formatQueueNumber(queue.type, queue.number) : queueId;
+    const formattedNumber = queue ? formatQueueNumber(queue.type as any, queue.number) : queueId;
     
     logger.debug(`Calling queue ${formattedNumber} for service point ${selectedServicePoint.code}`);
     
@@ -105,7 +105,7 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
 
   const handleUpdateStatus = useCallback(async (queueId: string, status: any) => {
     const queue = servicePointQueues.find(q => q.id === queueId);
-    const formattedNumber = queue ? formatQueueNumber(queue.type, queue.number) : queueId;
+    const formattedNumber = queue ? formatQueueNumber(queue.type as any, queue.number) : queueId;
     
     logger.debug(`Updating queue ${formattedNumber} status to ${status}`);
     
@@ -140,28 +140,32 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
 
   const handleRecallQueue = useCallback((queueId: string) => {
     const queue = servicePointQueues.find(q => q.id === queueId);
-    const formattedNumber = queue ? formatQueueNumber(queue.type, queue.number) : queueId;
+    const formattedNumber = queue ? formatQueueNumber(queue.type as any, queue.number) : queueId;
     
     logger.debug(`Recalling queue ${formattedNumber}`);
-    recallQueue(queueId);
-    toast.info(`เรียกซ้ำคิว ${formattedNumber}`);
-  }, [recallQueue, servicePointQueues]);
+    if (selectedServicePoint) {
+      recallQueue(queueId, selectedServicePoint.id);
+      toast.info(`เรียกซ้ำคิว ${formattedNumber}`);
+    }
+  }, [recallQueue, servicePointQueues, selectedServicePoint]);
 
   const handleHoldQueue = useCallback(async (queueId: string) => {
     const queue = servicePointQueues.find(q => q.id === queueId);
-    const formattedNumber = queue ? formatQueueNumber(queue.type, queue.number) : queueId;
+    const formattedNumber = queue ? formatQueueNumber(queue.type as any, queue.number) : queueId;
     
     try {
-      await putQueueOnHold(queueId);
-      toast.success(`พักคิว ${formattedNumber} เรียบร้อยแล้ว`);
+      if (selectedServicePoint) {
+        await putQueueOnHold(queueId, selectedServicePoint.id, 'PAUSED');
+        toast.success(`พักคิว ${formattedNumber} เรียบร้อยแล้ว`);
+      }
     } catch (error) {
       toast.error(`ไม่สามารถพักคิว ${formattedNumber} ได้`);
     }
-  }, [putQueueOnHold, servicePointQueues]);
+  }, [putQueueOnHold, servicePointQueues, selectedServicePoint]);
 
   const handleTransferQueue = useCallback(async (queueId: string, targetServicePointId: string) => {
     const queue = servicePointQueues.find(q => q.id === queueId);
-    const formattedNumber = queue ? formatQueueNumber(queue.type, queue.number) : queueId;
+    const formattedNumber = queue ? formatQueueNumber(queue.type as any, queue.number) : queueId;
     const targetServicePoint = servicePoints.find(sp => sp.id === targetServicePointId);
     
     try {
@@ -174,7 +178,7 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
 
   const handleReturnToWaiting = useCallback(async (queueId: string) => {
     const queue = servicePointQueues.find(q => q.id === queueId);
-    const formattedNumber = queue ? formatQueueNumber(queue.type, queue.number) : queueId;
+    const formattedNumber = queue ? formatQueueNumber(queue.type as any, queue.number) : queueId;
     
     try {
       await returnSkippedQueueToWaiting(queueId);

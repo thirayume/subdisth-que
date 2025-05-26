@@ -209,7 +209,7 @@ const PharmacyQueueTabs: React.FC<PharmacyQueueTabsProps> = ({
         open={patientDialogOpen}
         onOpenChange={setPatientDialogOpen}
         patient={selectedPatient}
-        queueNumber={selectedPatient ? formatQueueNumber('', 0) : undefined}
+        queueNumber={selectedPatient ? formatQueueNumber('GENERAL', selectedPatient.number || 0) : undefined}
       />
 
       {/* Transfer Dialog */}
