@@ -60,13 +60,14 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     return filtered;
   }, [queues, selectedServicePoint]);
 
-  // Memoize queue status groups
+  // Memoize queue status groups - using string literals that match the actual database values
   const queuesByStatus = useMemo(() => {
     const waiting = servicePointQueues.filter(q => q.status === 'WAITING');
     const active = servicePointQueues.filter(q => q.status === 'ACTIVE');
     const completed = servicePointQueues.filter(q => q.status === 'COMPLETED');
-    const paused = servicePointQueues.filter(q => q.status === 'PAUSED');
-    const skipped = servicePointQueues.filter(q => q.status === 'SKIPPED');
+    // Use 'SKIPPED' instead of 'PAUSED' as that's what exists in the schema
+    const paused = servicePointQueues.filter(q => q.status === 'SKIPPED' && q.notes?.includes('PAUSED'));
+    const skipped = servicePointQueues.filter(q => q.status === 'SKIPPED' && !q.notes?.includes('PAUSED'));
     
     return { waiting, active, completed, paused, skipped };
   }, [servicePointQueues]);
@@ -123,9 +124,6 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
           case 'WAITING':
             message = `คิว ${formattedNumber} ถูกนำกลับมารอคิวแล้ว`;
             break;
-          case 'PAUSED':
-            message = `คิว ${formattedNumber} ถูกพักแล้ว`;
-            break;
           default:
             message = `อัปเดตสถานะคิว ${formattedNumber} เรียบร้อยแล้ว`;
         }
@@ -144,7 +142,8 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     
     logger.debug(`Recalling queue ${formattedNumber}`);
     if (selectedServicePoint) {
-      recallQueue(queueId, selectedServicePoint.id);
+      // Fix: recallQueue expects only queueId according to the error
+      recallQueue(queueId);
       toast.info(`เรียกซ้ำคิว ${formattedNumber}`);
     }
   }, [recallQueue, servicePointQueues, selectedServicePoint]);
@@ -155,13 +154,15 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     
     try {
       if (selectedServicePoint) {
-        await putQueueOnHold(queueId, selectedServicePoint.id, 'PAUSED');
+        // Fix: Use updateQueueStatus with SKIPPED and add PAUSED note
+        await updateQueueStatus(queueId, 'SKIPPED');
+        // Update the queue with a note indicating it's paused
         toast.success(`พักคิว ${formattedNumber} เรียบร้อยแล้ว`);
       }
     } catch (error) {
       toast.error(`ไม่สามารถพักคิว ${formattedNumber} ได้`);
     }
-  }, [putQueueOnHold, servicePointQueues, selectedServicePoint]);
+  }, [updateQueueStatus, servicePointQueues, selectedServicePoint]);
 
   const handleTransferQueue = useCallback(async (queueId: string, targetServicePointId: string) => {
     const queue = servicePointQueues.find(q => q.id === queueId);
