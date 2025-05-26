@@ -1,9 +1,8 @@
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useQueues } from '@/hooks/useQueues';
 import { usePatients } from '@/hooks/usePatients';
 import { useServicePoints } from '@/hooks/useServicePoints';
-import { useGlobalRealtime } from '@/hooks/useGlobalRealtime';
 import { ServicePoint } from '@/integrations/supabase/schema';
 import { createLogger } from '@/utils/logger';
 import { formatQueueNumber } from '@/utils/queueFormatters';
@@ -17,8 +16,6 @@ interface UsePharmacyQueueDataProps {
 }
 
 export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: UsePharmacyQueueDataProps) => {
-  const [localLoading, setLocalLoading] = useState(false);
-  
   const { 
     queues, 
     updateQueueStatus, 
@@ -36,39 +33,18 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     return servicePoints.find(sp => sp.id === servicePointId);
   }, [servicePoints, servicePointId]);
 
-  // Controlled refresh function - only called when refreshTrigger changes
-  const refreshData = useCallback(async () => {
+  // Manual refresh function - only called explicitly
+  const handleManualRefresh = useCallback(async () => {
     if (refreshTrigger > 0 && selectedServicePoint) {
       logger.debug(`Manual refresh triggered for service point ${selectedServicePoint.code}`);
-      setLocalLoading(true);
       try {
         await fetchQueues(true);
         logger.debug(`Successfully refreshed data for service point ${selectedServicePoint.code}`);
       } catch (error) {
         logger.error(`Error refreshing data for service point ${selectedServicePoint.code}:`, error);
-      } finally {
-        setLocalLoading(false);
       }
     }
   }, [refreshTrigger, fetchQueues, selectedServicePoint]);
-
-  // Only refresh when refreshTrigger changes (manual refresh or service point change)
-  useEffect(() => {
-    if (refreshTrigger > 0) {
-      refreshData();
-    }
-  }, [refreshData, refreshTrigger]);
-
-  // Use global realtime manager for this service point - no additional refresh logic
-  useGlobalRealtime(
-    `pharmacy-queue-${servicePointId}`,
-    useCallback(() => {
-      logger.debug(`Real-time queue change detected for service point ${servicePointId}`);
-      // Global realtime manager handles the data fetching
-    }, [servicePointId]),
-    servicePointId,
-    true
-  );
 
   // Memoize filtered queues with optimized filtering
   const servicePointQueues = useMemo(() => {
@@ -159,9 +135,6 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     toast.info(`เรียกซ้ำคิว ${formattedNumber}`);
   }, [recallQueue, servicePointQueues]);
 
-  // Loading state check
-  const isLoading = globalLoading || localLoading;
-
   return {
     selectedServicePoint,
     queuesByStatus,
@@ -169,7 +142,8 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     handleCallQueue,
     handleUpdateStatus,
     handleRecallQueue,
-    isLoading,
+    handleManualRefresh,
+    isLoading: globalLoading,
     servicePoints
   };
 };

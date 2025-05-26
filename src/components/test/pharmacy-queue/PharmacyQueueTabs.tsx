@@ -1,153 +1,170 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Clock, CheckCircle } from 'lucide-react';
-import QueueCard from '@/components/queue/QueueCard';
-import PatientInfoDialog from '@/components/pharmacy/PatientInfoDialog';
-import { Patient } from '@/integrations/supabase/schema';
 import { usePharmacyQueueData } from './usePharmacyQueueData';
+import { Badge } from '@/components/ui/badge';
+import { Clock, CheckCircle, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { formatQueueNumber } from '@/utils/queueFormatters';
 
 interface PharmacyQueueTabsProps {
   servicePointId: string;
-  refreshTrigger?: number;
+  refreshTrigger: number;
 }
 
 const PharmacyQueueTabs: React.FC<PharmacyQueueTabsProps> = ({
   servicePointId,
-  refreshTrigger = 0
+  refreshTrigger
 }) => {
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [selectedQueueNumber, setSelectedQueueNumber] = useState<string>('');
-  const [patientDialogOpen, setPatientDialogOpen] = useState(false);
-
   const {
     queuesByStatus,
     getPatientName,
     handleCallQueue,
     handleUpdateStatus,
     handleRecallQueue,
+    handleManualRefresh,
     isLoading
   } = usePharmacyQueueData({ servicePointId, refreshTrigger });
 
-  const handleViewPatientInfo = (queue: any) => {
-    // This would need to fetch patient data based on queue.patient_id
-    // For now, we'll use a mock patient object
-    const mockPatient: Patient = {
-      id: queue.patient_id,
-      name: getPatientName(queue.patient_id),
-      patient_id: `P${String(queue.number).padStart(4, '0')}`,
-      phone: '',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    setSelectedPatient(mockPatient);
-    setSelectedQueueNumber(String(queue.number));
-    setPatientDialogOpen(true);
-  };
+  // Use manual refresh when refreshTrigger changes
+  React.useEffect(() => {
+    if (refreshTrigger > 0) {
+      handleManualRefresh();
+    }
+  }, [refreshTrigger, handleManualRefresh]);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="text-gray-500">กำลังโหลดข้อมูลคิว...</div>
+        <div className="text-gray-500">กำลังโหลด...</div>
       </div>
     );
   }
 
   return (
-    <>
-      <Tabs defaultValue="waiting" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="waiting" className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            รอคิว
-            <Badge variant="secondary">{queuesByStatus.waiting.length}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="active" className="flex items-center gap-2">
-            <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
-            กำลังให้บริการ
-            <Badge variant="secondary">{queuesByStatus.active.length}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="completed" className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4" />
-            เสร็จสิ้น
-            <Badge variant="secondary">{queuesByStatus.completed.length}</Badge>
-          </TabsTrigger>
-        </TabsList>
+    <Tabs defaultValue="waiting" className="w-full">
+      <TabsList className="grid w-full grid-cols-3">
+        <TabsTrigger value="waiting" className="flex items-center gap-2">
+          <Clock className="w-4 h-4" />
+          รอ
+          <Badge variant="secondary">{queuesByStatus.waiting.length}</Badge>
+        </TabsTrigger>
+        <TabsTrigger value="active" className="flex items-center gap-2">
+          <Users className="w-4 h-4" />
+          กำลังบริการ
+          <Badge variant="secondary">{queuesByStatus.active.length}</Badge>
+        </TabsTrigger>
+        <TabsTrigger value="completed" className="flex items-center gap-2">
+          <CheckCircle className="w-4 h-4" />
+          เสร็จสิ้น
+          <Badge variant="secondary">{queuesByStatus.completed.length}</Badge>
+        </TabsTrigger>
+      </TabsList>
 
-        <TabsContent value="waiting" className="space-y-4">
-          {queuesByStatus.waiting.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              ไม่มีคิวที่รอการให้บริการ
+      <TabsContent value="waiting" className="space-y-2">
+        {queuesByStatus.waiting.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            ไม่มีคิวที่รอ
+          </div>
+        ) : (
+          queuesByStatus.waiting.map((queue) => (
+            <div key={queue.id} className="flex items-center justify-between p-3 border rounded-lg">
+              <div className="flex-1">
+                <div className="font-medium">
+                  {formatQueueNumber(queue.type, queue.number)}
+                </div>
+                <div className="text-sm text-gray-600">
+                  {getPatientName(queue.patient_id)}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => handleCallQueue(queue.id)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  เรียกคิว
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleUpdateStatus(queue.id, 'SKIPPED')}
+                >
+                  ข้าม
+                </Button>
+              </div>
             </div>
-          ) : (
-            <div className="grid gap-4">
-              {queuesByStatus.waiting.map((queue) => (
-                <QueueCard
-                  key={queue.id}
-                  queue={queue}
-                  patientName={getPatientName(queue.patient_id)}
-                  onCall={() => handleCallQueue(queue.id)}
-                  onSkip={() => handleUpdateStatus(queue.id, 'SKIPPED')}
-                  isPharmacyInterface={true}
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
+          ))
+        )}
+      </TabsContent>
 
-        <TabsContent value="active" className="space-y-4">
-          {queuesByStatus.active.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              ไม่มีคิวที่กำลังให้บริการ
+      <TabsContent value="active" className="space-y-2">
+        {queuesByStatus.active.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            ไม่มีคิวที่กำลังบริการ
+          </div>
+        ) : (
+          queuesByStatus.active.map((queue) => (
+            <div key={queue.id} className="flex items-center justify-between p-3 border rounded-lg bg-blue-50">
+              <div className="flex-1">
+                <div className="font-medium">
+                  {formatQueueNumber(queue.type, queue.number)}
+                </div>
+                <div className="text-sm text-gray-600">
+                  {getPatientName(queue.patient_id)}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleRecallQueue(queue.id)}
+                >
+                  เรียกซ้ำ
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => handleUpdateStatus(queue.id, 'COMPLETED')}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  เสร็จสิ้น
+                </Button>
+              </div>
             </div>
-          ) : (
-            <div className="grid gap-4">
-              {queuesByStatus.active.map((queue) => (
-                <QueueCard
-                  key={queue.id}
-                  queue={queue}
-                  patientName={getPatientName(queue.patient_id)}
-                  onComplete={() => handleUpdateStatus(queue.id, 'COMPLETED')}
-                  onSkip={() => handleUpdateStatus(queue.id, 'SKIPPED')}
-                  onRecall={() => handleRecallQueue(queue.id)}
-                  onViewPatientInfo={() => handleViewPatientInfo(queue)}
-                  isPharmacyInterface={true}
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
+          ))
+        )}
+      </TabsContent>
 
-        <TabsContent value="completed" className="space-y-4">
-          {queuesByStatus.completed.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              ไม่มีคิวที่เสร็จสิ้นแล้ว
+      <TabsContent value="completed" className="space-y-2">
+        {queuesByStatus.completed.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            ไม่มีคิวที่เสร็จสิ้น
+          </div>
+        ) : (
+          queuesByStatus.completed.slice(0, 10).map((queue) => (
+            <div key={queue.id} className="flex items-center justify-between p-3 border rounded-lg bg-green-50">
+              <div className="flex-1">
+                <div className="font-medium">
+                  {formatQueueNumber(queue.type, queue.number)}
+                </div>
+                <div className="text-sm text-gray-600">
+                  {getPatientName(queue.patient_id)}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleUpdateStatus(queue.id, 'WAITING')}
+                >
+                  นำกลับมารอ
+                </Button>
+              </div>
             </div>
-          ) : (
-            <div className="grid gap-4">
-              {queuesByStatus.completed.map((queue) => (
-                <QueueCard
-                  key={queue.id}
-                  queue={queue}
-                  patientName={getPatientName(queue.patient_id)}
-                  onViewPatientInfo={() => handleViewPatientInfo(queue)}
-                  isPharmacyInterface={true}
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
-
-      <PatientInfoDialog
-        open={patientDialogOpen}
-        onOpenChange={setPatientDialogOpen}
-        patient={selectedPatient}
-        queueNumber={selectedQueueNumber}
-      />
-    </>
+          ))
+        )}
+      </TabsContent>
+    </Tabs>
   );
 };
 

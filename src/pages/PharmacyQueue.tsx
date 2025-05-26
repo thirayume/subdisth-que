@@ -21,8 +21,6 @@ const PharmacyQueue = () => {
     const servicePoint = servicePoints.find(sp => sp.id === value);
     if (servicePoint) {
       setSelectedServicePoint(servicePoint);
-      // Only trigger refresh when service point changes
-      setRefreshTrigger(prev => prev + 1);
     }
   };
 

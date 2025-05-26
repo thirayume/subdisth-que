@@ -17,8 +17,9 @@ class GlobalRealtimeManager {
   private listeners: QueueChangeListener[] = [];
   private debounceTimeout: NodeJS.Timeout | null = null;
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
+  private maxReconnectAttempts = 3;
   private isConnecting = false;
+  private isDestroyed = false;
 
   static getInstance(): GlobalRealtimeManager {
     if (!GlobalRealtimeManager.instance) {
@@ -33,6 +34,8 @@ class GlobalRealtimeManager {
     }
     
     this.debounceTimeout = setTimeout(() => {
+      if (this.isDestroyed) return;
+      
       logger.debug(`Notifying ${this.listeners.length} listeners of queue changes`);
       this.listeners.forEach(listener => {
         try {
@@ -41,11 +44,11 @@ class GlobalRealtimeManager {
           logger.error(`Error in listener ${listener.id}:`, error);
         }
       });
-    }, 500); // Increased debounce to 500ms to prevent rapid fire
+    }, 1000); // Increased debounce to 1 second for stability
   };
 
   private setupChannel() {
-    if (this.channel || this.isConnecting) return;
+    if (this.channel || this.isConnecting || this.isDestroyed) return;
 
     this.isConnecting = true;
     logger.debug('Setting up global realtime channel');
@@ -56,15 +59,18 @@ class GlobalRealtimeManager {
         .on('postgres_changes', 
           { event: '*', schema: 'public', table: 'queues' },
           (payload) => {
+            if (this.isDestroyed) return;
             logger.debug('Global queue change detected:', payload);
             this.debouncedNotify();
           }
         )
         .subscribe((status) => {
+          if (this.isDestroyed) return;
+          
           logger.debug('Global channel subscription status:', status);
           
           if (status === 'SUBSCRIBED') {
-            this.reconnectAttempts = 0; // Reset reconnect attempts on successful connection
+            this.reconnectAttempts = 0;
             this.isConnecting = false;
           } else if (status === 'CHANNEL_ERROR') {
             logger.error('Global channel error detected');
@@ -72,13 +78,17 @@ class GlobalRealtimeManager {
           } else if (status === 'CLOSED') {
             logger.warn('Global channel closed');
             this.isConnecting = false;
-            this.scheduleReconnect();
+            if (!this.isDestroyed) {
+              this.scheduleReconnect();
+            }
           }
         });
     } catch (error) {
       logger.error('Failed to setup channel:', error);
       this.isConnecting = false;
-      this.scheduleReconnect();
+      if (!this.isDestroyed) {
+        this.scheduleReconnect();
+      }
     }
   }
 
@@ -86,7 +96,7 @@ class GlobalRealtimeManager {
     this.isConnecting = false;
     this.cleanupChannel();
     
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+    if (this.reconnectAttempts < this.maxReconnectAttempts && !this.isDestroyed) {
       this.scheduleReconnect();
     } else {
       logger.error('Max reconnection attempts reached. Real-time updates disabled.');
@@ -94,17 +104,17 @@ class GlobalRealtimeManager {
   }
 
   private scheduleReconnect() {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts || this.isDestroyed) {
       return;
     }
 
-    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000); // Exponential backoff, max 30s
+    const delay = Math.min(5000 * Math.pow(2, this.reconnectAttempts), 30000); // Slower reconnection
     this.reconnectAttempts++;
     
     logger.debug(`Scheduling reconnection attempt ${this.reconnectAttempts} in ${delay}ms`);
     
     setTimeout(() => {
-      if (this.listeners.length > 0) {
+      if (this.listeners.length > 0 && !this.isDestroyed) {
         this.setupChannel();
       }
     }, delay);
@@ -128,6 +138,14 @@ class GlobalRealtimeManager {
   }
 
   addListener(listener: QueueChangeListener) {
+    if (this.isDestroyed) return;
+    
+    // Prevent duplicate listeners
+    if (this.listeners.find(l => l.id === listener.id)) {
+      logger.debug(`Listener ${listener.id} already exists, skipping`);
+      return;
+    }
+    
     logger.debug(`Adding listener: ${listener.id}`);
     this.listeners.push(listener);
     
@@ -142,8 +160,14 @@ class GlobalRealtimeManager {
     
     if (this.listeners.length === 0) {
       this.cleanupChannel();
-      this.reconnectAttempts = 0; // Reset reconnect attempts when no listeners
+      this.reconnectAttempts = 0;
     }
+  }
+
+  destroy() {
+    this.isDestroyed = true;
+    this.cleanupChannel();
+    this.listeners = [];
   }
 }
 

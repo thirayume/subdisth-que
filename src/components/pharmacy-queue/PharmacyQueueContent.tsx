@@ -15,7 +15,6 @@ const PharmacyQueueContent: React.FC<PharmacyQueueContentProps> = ({
   return (
     <div className="flex-1 overflow-hidden">
       <PharmacyQueuePanel
-        key={`pharmacy-${selectedServicePoint.id}`}
         servicePointId={selectedServicePoint.id}
         title={`บริการจ่ายยา - ${selectedServicePoint.name}`}
         refreshTrigger={refreshTrigger}
