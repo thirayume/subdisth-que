@@ -27,21 +27,34 @@ export const useQueueCreation = (): QueueCreationState & QueueCreationActions & 
     setNotes('');
   }, []);
 
+  // Method to get next queue number for specific type
+  const getNextQueueNumber = async (queueTypeCode: string) => {
+    try {
+      const { data: lastQueue } = await supabase
+        .from('queues')
+        .select('number')
+        .eq('type', queueTypeCode)
+        .eq('queue_date', new Date().toISOString().split('T')[0])
+        .order('number', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const nextNumber = (lastQueue?.number || 0) + 1;
+      logger.debug(`Next queue number for ${queueTypeCode}: ${nextNumber}`);
+      return nextNumber;
+    } catch (error) {
+      logger.warn(`Error getting last queue number for ${queueTypeCode}:`, error);
+      return 1; // Default to 1 if error
+    }
+  };
+
   // Method to create a queue
   const createQueue = async (patientId: string) => {
     logger.debug('Creating queue for patient', patientId);
     
     try {
-      // Get the next queue number
-      const { data: queueCountData } = await supabase
-        .from('queues')
-        .select('number')
-        .order('number', { ascending: false })
-        .limit(1);
-      
-      const nextQueueNumber = queueCountData && queueCountData.length > 0 
-        ? queueCountData[0].number + 1 
-        : 1;
+      // Get the next queue number for this specific queue type
+      const nextQueueNumber = await getNextQueueNumber(queueType);
       
       // Create queue in Supabase
       const { data, error } = await supabase
@@ -51,7 +64,8 @@ export const useQueueCreation = (): QueueCreationState & QueueCreationActions & 
           number: nextQueueNumber,
           type: queueType,
           status: 'WAITING',
-          notes: notes
+          notes: notes,
+          queue_date: new Date().toISOString().split('T')[0]
         })
         .select();
       
