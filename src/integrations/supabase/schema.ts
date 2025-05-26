@@ -1,3 +1,4 @@
+
 export interface Patient {
   id: string;
   patient_id: string;
@@ -18,7 +19,7 @@ export interface Patient {
 
 export type QueueTypeEnum = 'GENERAL' | 'PRIORITY' | 'ELDERLY' | 'FOLLOW_UP';
 export type QueueType = QueueTypeEnum; // Add explicit QueueType export
-export type QueueStatus = 'WAITING' | 'ACTIVE' | 'COMPLETED' | 'SKIPPED';
+export type QueueStatus = 'WAITING' | 'ACTIVE' | 'COMPLETED' | 'SKIPPED' | 'CANCELLED' | 'ON_HOLD';
 
 export interface Queue {
   id: string;

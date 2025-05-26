@@ -8,6 +8,15 @@ interface UseQueueFilteringProps {
   servicePoints: ServicePoint[];
 }
 
+// Define the UI status mapping to match what the PharmacyQueueTabs expects
+interface QueuesByUIStatus {
+  waiting: Queue[];
+  active: Queue[];
+  paused: Queue[];
+  skipped: Queue[];
+  completed: Queue[];
+}
+
 export const useQueueFiltering = ({ queues, servicePointId, servicePoints }: UseQueueFilteringProps) => {
   // Ensure we have safe arrays to work with
   const safeQueues = Array.isArray(queues) ? queues : [];
@@ -30,21 +39,52 @@ export const useQueueFiltering = ({ queues, servicePointId, servicePoints }: Use
     });
   }, [safeQueues, selectedServicePoint]);
 
-  const queuesByStatus = useMemo(() => {
-    if (!Array.isArray(servicePointQueues)) return {};
+  const queuesByStatus = useMemo((): QueuesByUIStatus => {
+    if (!Array.isArray(servicePointQueues)) {
+      return {
+        waiting: [],
+        active: [],
+        paused: [],
+        skipped: [],
+        completed: []
+      };
+    }
     
-    const grouped: Record<QueueStatus, Queue[]> = {
-      'WAITING': [],
-      'ACTIVE': [],
-      'COMPLETED': [],
-      'SKIPPED': [],
-      'CANCELLED': [],
-      'ON_HOLD': []
+    const grouped: QueuesByUIStatus = {
+      waiting: [],
+      active: [],
+      paused: [],
+      skipped: [],
+      completed: []
     };
 
     servicePointQueues.forEach(queue => {
-      if (queue && queue.status && grouped[queue.status as QueueStatus]) {
-        grouped[queue.status as QueueStatus].push(queue);
+      if (!queue || !queue.status) return;
+      
+      // Map database status to UI status
+      switch (queue.status as QueueStatus) {
+        case 'WAITING':
+          grouped.waiting.push(queue);
+          break;
+        case 'ACTIVE':
+          grouped.active.push(queue);
+          break;
+        case 'COMPLETED':
+          grouped.completed.push(queue);
+          break;
+        case 'SKIPPED':
+          grouped.skipped.push(queue);
+          break;
+        case 'ON_HOLD':
+          grouped.paused.push(queue);
+          break;
+        case 'CANCELLED':
+          // Don't show cancelled queues in any tab
+          break;
+        default:
+          // For any unknown status, put in waiting
+          grouped.waiting.push(queue);
+          break;
       }
     });
 
