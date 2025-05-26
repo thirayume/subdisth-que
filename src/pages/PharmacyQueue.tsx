@@ -2,6 +2,7 @@
 import React, { useState, useCallback } from 'react';
 import Layout from '@/components/layout/Layout';
 import { useServicePointContext } from '@/contexts/ServicePointContext';
+import { MedicationsProvider } from '@/components/medications/context/MedicationsContext';
 import PharmacyQueueHeader from '@/components/pharmacy-queue/PharmacyQueueHeader';
 import PharmacyQueueEmptyState from '@/components/pharmacy-queue/PharmacyQueueEmptyState';
 import PharmacyQueueContent from '@/components/pharmacy-queue/PharmacyQueueContent';
@@ -37,25 +38,27 @@ const PharmacyQueue = () => {
   }
 
   return (
-    <Layout className="overflow-hidden">
-      <div className="flex flex-col h-[calc(100vh-2rem)]">
-        <PharmacyQueueHeader
-          selectedServicePoint={selectedServicePoint}
-          servicePoints={servicePoints}
-          onServicePointChange={handleServicePointChange}
-          onRefresh={handleManualRefresh}
-        />
-
-        {!selectedServicePoint ? (
-          <PharmacyQueueEmptyState />
-        ) : (
-          <PharmacyQueueContent
+    <MedicationsProvider>
+      <Layout className="overflow-hidden">
+        <div className="flex flex-col h-[calc(100vh-2rem)]">
+          <PharmacyQueueHeader
             selectedServicePoint={selectedServicePoint}
-            refreshTrigger={refreshTrigger}
+            servicePoints={servicePoints}
+            onServicePointChange={handleServicePointChange}
+            onRefresh={handleManualRefresh}
           />
-        )}
-      </div>
-    </Layout>
+
+          {!selectedServicePoint ? (
+            <PharmacyQueueEmptyState />
+          ) : (
+            <PharmacyQueueContent
+              selectedServicePoint={selectedServicePoint}
+              refreshTrigger={refreshTrigger}
+            />
+          )}
+        </div>
+      </Layout>
+    </MedicationsProvider>
   );
 };
 
