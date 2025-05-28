@@ -27,7 +27,8 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
   const { 
     medications: patientMedications, 
     loading: medicationsLoading,
-    addMedication 
+    addMedication,
+    fetchMedicationHistory
   } = usePatientMedications(patient?.id);
   
   const { medications, loading: medicationsListLoading } = useMedicationsContext();
@@ -36,6 +37,27 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
 
   const safeMedications = Array.isArray(medications) ? medications : [];
   const safePatientMedications = Array.isArray(patientMedications) ? patientMedications : [];
+
+  const handleRefreshHistory = () => {
+    if (patient?.id) {
+      console.log('Refreshing medication history for patient:', patient.id);
+      fetchMedicationHistory(patient.id);
+    }
+  };
+
+  const handleDispenseMedication = async (data: any) => {
+    console.log('Dispensing medication in dialog:', data);
+    const result = await addMedication(data);
+    
+    // Refresh history immediately after successful dispensing
+    if (result && patient?.id) {
+      setTimeout(() => {
+        handleRefreshHistory();
+      }, 500); // Small delay to ensure data is saved
+    }
+    
+    return result;
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -135,6 +157,7 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
               patientName={patient.name}
               medications={safePatientMedications}
               loading={medicationsLoading}
+              onRefresh={handleRefreshHistory}
             />
           </TabsContent>
 
@@ -152,7 +175,7 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
               <MedicationDispenseForm
                 patientId={patient.id}
                 medications={safeMedications}
-                onDispenseMedication={addMedication}
+                onDispenseMedication={handleDispenseMedication}
                 dispensedMedications={safePatientMedications}
               />
             )}
