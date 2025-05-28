@@ -35,20 +35,17 @@ const MedicationSearchField: React.FC<MedicationSearchFieldProps> = ({
 }) => {
   const safeMedications = Array.isArray(medications) ? medications : [];
 
-  const handleMedicationSelect = (medicationValue: string) => {
-    console.log('Selection triggered with value:', medicationValue);
+  const handleMedicationSelect = (medicationId: string) => {
+    console.log('Selection triggered with ID:', medicationId);
     
-    // Find medication by matching the value format: "name code"
-    const medication = safeMedications.find(med => 
-      `${med.name} ${med.code}`.toLowerCase() === medicationValue.toLowerCase()
-    );
+    const medication = safeMedications.find(med => med.id === medicationId);
     
     if (medication) {
       console.log('Selected medication found:', medication);
       onSelectMedication(medication);
       setOpen(false);
     } else {
-      console.error('Medication not found for value:', medicationValue);
+      console.error('Medication not found for ID:', medicationId);
     }
   };
 
@@ -74,32 +71,29 @@ const MedicationSearchField: React.FC<MedicationSearchFieldProps> = ({
               <CommandList>
                 <CommandEmpty>ไม่พบยา</CommandEmpty>
                 <CommandGroup>
-                  {safeMedications.map((medication) => {
-                    const commandValue = `${medication.name} ${medication.code}`;
-                    return (
-                      <CommandItem
-                        key={medication.id}
-                        value={commandValue}
-                        onSelect={handleMedicationSelect}
-                        className="cursor-pointer"
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            selectedMedication?.id === medication.id
-                              ? "opacity-100"
-                              : "opacity-0"
-                          )}
-                        />
-                        <div className="flex flex-col">
-                          <span>{medication.name}</span>
-                          <span className="text-xs text-gray-500">
-                            {medication.code} | คงเหลือ: {medication.stock} {medication.unit}
-                          </span>
-                        </div>
-                      </CommandItem>
-                    );
-                  })}
+                  {safeMedications.map((medication) => (
+                    <CommandItem
+                      key={medication.id}
+                      value={medication.id}
+                      onSelect={handleMedicationSelect}
+                      className="cursor-pointer"
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          selectedMedication?.id === medication.id
+                            ? "opacity-100"
+                            : "opacity-0"
+                        )}
+                      />
+                      <div className="flex flex-col">
+                        <span>{medication.name}</span>
+                        <span className="text-xs text-gray-500">
+                          {medication.code} | คงเหลือ: {medication.stock} {medication.unit}
+                        </span>
+                      </div>
+                    </CommandItem>
+                  ))}
                 </CommandGroup>
               </CommandList>
             </Command>

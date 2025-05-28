@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,9 +8,9 @@ import { Patient } from '@/integrations/supabase/schema';
 import { formatThaiDate } from '@/utils/dateUtils';
 import { Phone, MapPin, Calendar, User, Loader2 } from 'lucide-react';
 import PatientMedicationHistory from './PatientMedicationHistory';
-import MedicationDispenseForm from './MedicationDispenseForm';
 import { usePatientMedications } from '@/hooks/usePatientMedications';
 import { useMedicationsContext } from '@/components/medications/context/MedicationsContext';
+import EnhancedMedicationDispenseDialog from './medication-dispense/EnhancedMedicationDispenseDialog';
 
 interface PatientInfoDialogProps {
   open: boolean;
@@ -61,7 +62,7 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
@@ -172,11 +173,13 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
                 </CardContent>
               </Card>
             ) : (
-              <MedicationDispenseForm
+              <EnhancedMedicationDispenseDialog
                 patientId={patient.id}
                 medications={safeMedications}
+                patientMedications={safePatientMedications}
+                loading={medicationsLoading}
                 onDispenseMedication={handleDispenseMedication}
-                dispensedMedications={safePatientMedications}
+                onRefreshHistory={handleRefreshHistory}
               />
             )}
           </TabsContent>
