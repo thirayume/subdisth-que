@@ -45,6 +45,7 @@ const PharmacyServiceInterface: React.FC<PharmacyServiceInterfaceProps> = ({
             patientId={activeQueue.patient_id}
             medications={medications}
             onDispenseMedication={onDispenseMedication}
+            dispensedMedications={patientMedications}
           />
           
           <FinishServiceOptions

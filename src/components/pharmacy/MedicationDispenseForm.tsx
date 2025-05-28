@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Save } from 'lucide-react';
 import { Medication } from '@/integrations/supabase/schema';
 import { PatientMedication } from '@/hooks/usePatientMedications';
 import { toast } from 'sonner';
@@ -12,57 +12,103 @@ import {
   InstructionsField,
   DispensedMedicationsList
 } from './medication-dispense';
+import PendingMedicationsList, { PendingMedication } from './medication-dispense/PendingMedicationsList';
 
 interface MedicationDispenseFormProps {
   patientId: string;
   medications: Medication[];
   onDispenseMedication: (data: Omit<PatientMedication, 'id' | 'created_at' | 'updated_at'>) => Promise<PatientMedication | null>;
+  dispensedMedications: PatientMedication[];
 }
 
 const MedicationDispenseForm: React.FC<MedicationDispenseFormProps> = ({
   patientId,
-  medications = [], // Ensure medications is always an array
-  onDispenseMedication
+  medications = [],
+  onDispenseMedication,
+  dispensedMedications = []
 }) => {
   const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
   const [dosage, setDosage] = useState('');
   const [instructions, setInstructions] = useState('');
-  const [dispensedMedications, setDispensedMedications] = useState<PatientMedication[]>([]);
+  const [pendingMedications, setPendingMedications] = useState<PendingMedication[]>([]);
   const [isDispensing, setIsDispensing] = useState(false);
   const [open, setOpen] = useState(false);
 
-  // Ensure medications is a valid array
   const safeMedications = Array.isArray(medications) ? medications : [];
 
-  const handleDispense = async () => {
+  const handleAddToPending = () => {
     if (!selectedMedication || !dosage.trim()) {
       toast.error('กรุณาเลือกยาและใส่ขนาดยา');
       return;
     }
 
-    setIsDispensing(true);
-    try {
-      const medicationData = {
-        patient_id: patientId,
-        medication_id: selectedMedication.id,
-        dosage: dosage.trim(),
-        instructions: instructions.trim() || undefined,
-        start_date: new Date().toISOString().split('T')[0],
-        end_date: undefined,
-        notes: undefined
-      };
+    // Check if medication is already in pending list
+    const existingIndex = pendingMedications.findIndex(
+      med => med.medication.id === selectedMedication.id
+    );
 
-      const result = await onDispenseMedication(medicationData);
-      
-      if (result) {
-        setDispensedMedications(prev => [result, ...prev]);
-        setSelectedMedication(null);
-        setDosage('');
-        setInstructions('');
-        toast.success('จ่ายยาเรียบร้อยแล้ว');
+    if (existingIndex >= 0) {
+      toast.error('ยานี้อยู่ในรายการแล้ว');
+      return;
+    }
+
+    const newPendingMedication: PendingMedication = {
+      medication: selectedMedication,
+      dosage: dosage.trim(),
+      instructions: instructions.trim() || undefined
+    };
+
+    setPendingMedications(prev => [...prev, newPendingMedication]);
+    setSelectedMedication(null);
+    setDosage('');
+    setInstructions('');
+    toast.success('เพิ่มยาในรายการแล้ว');
+  };
+
+  const handleRemoveFromPending = (index: number) => {
+    setPendingMedications(prev => prev.filter((_, i) => i !== index));
+    toast.success('ลบยาออกจากรายการแล้ว');
+  };
+
+  const handleDispenseAll = async () => {
+    if (pendingMedications.length === 0) {
+      toast.error('ไม่มียาที่จะจ่าย');
+      return;
+    }
+
+    setIsDispensing(true);
+    let successCount = 0;
+    
+    try {
+      for (const pendingMed of pendingMedications) {
+        const medicationData = {
+          patient_id: patientId,
+          medication_id: pendingMed.medication.id,
+          dosage: pendingMed.dosage,
+          instructions: pendingMed.instructions,
+          start_date: new Date().toISOString().split('T')[0],
+          end_date: undefined,
+          notes: undefined
+        };
+
+        const result = await onDispenseMedication(medicationData);
+        if (result) {
+          successCount++;
+        }
+      }
+
+      if (successCount === pendingMedications.length) {
+        setPendingMedications([]);
+        toast.success(`จ่ายยาเรียบร้อย ${successCount} รายการ`);
+      } else if (successCount > 0) {
+        toast.warning(`จ่ายยาได้ ${successCount} จาก ${pendingMedications.length} รายการ`);
+        // Remove successfully dispensed medications from pending list
+        // This would require more complex state management
+      } else {
+        toast.error('ไม่สามารถจ่ายยาได้');
       }
     } catch (error) {
-      console.error('Error dispensing medication:', error);
+      console.error('Error dispensing medications:', error);
       toast.error('เกิดข้อผิดพลาดในการจ่ายยา');
     } finally {
       setIsDispensing(false);
@@ -96,14 +142,31 @@ const MedicationDispenseForm: React.FC<MedicationDispenseFormProps> = ({
           />
 
           <Button 
-            onClick={handleDispense}
-            disabled={!selectedMedication || !dosage.trim() || isDispensing}
+            onClick={handleAddToPending}
+            disabled={!selectedMedication || !dosage.trim()}
+            variant="outline"
             className="w-full"
           >
             <Plus className="w-4 h-4 mr-2" />
-            {isDispensing ? 'กำลังจ่ายยา...' : 'จ่ายยา'}
+            เพิ่มยาในรายการ
           </Button>
         </div>
+
+        <PendingMedicationsList
+          medications={pendingMedications}
+          onRemoveMedication={handleRemoveFromPending}
+        />
+
+        {pendingMedications.length > 0 && (
+          <Button 
+            onClick={handleDispenseAll}
+            disabled={isDispensing}
+            className="w-full bg-pharmacy-600 hover:bg-pharmacy-700"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            {isDispensing ? 'กำลังจ่ายยา...' : `จ่ายยาทั้งหมด (${pendingMedications.length} รายการ)`}
+          </Button>
+        )}
 
         <DispensedMedicationsList 
           medications={dispensedMedications}

@@ -27,14 +27,19 @@ interface MedicationSearchFieldProps {
 }
 
 const MedicationSearchField: React.FC<MedicationSearchFieldProps> = ({
-  medications = [], // Ensure medications is always an array
+  medications = [],
   selectedMedication,
   onSelectMedication,
   open,
   setOpen
 }) => {
-  // Ensure medications is a valid array before rendering
   const safeMedications = Array.isArray(medications) ? medications : [];
+
+  const handleMedicationSelect = (medication: Medication) => {
+    console.log('Selected medication:', medication);
+    onSelectMedication(medication);
+    setOpen(false);
+  };
 
   return (
     <div className="space-y-2">
@@ -51,8 +56,7 @@ const MedicationSearchField: React.FC<MedicationSearchFieldProps> = ({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0">
-          {/* Only render Command if we have valid medications array */}
+        <PopoverContent className="w-full p-0" align="start">
           {safeMedications.length > 0 ? (
             <Command>
               <CommandInput placeholder="ค้นหายา..." />
@@ -62,11 +66,9 @@ const MedicationSearchField: React.FC<MedicationSearchFieldProps> = ({
                   {safeMedications.map((medication) => (
                     <CommandItem
                       key={medication.id}
-                      value={medication.name}
-                      onSelect={() => {
-                        onSelectMedication(medication);
-                        setOpen(false);
-                      }}
+                      value={`${medication.name} ${medication.code}`}
+                      onSelect={() => handleMedicationSelect(medication)}
+                      className="cursor-pointer"
                     >
                       <Check
                         className={cn(

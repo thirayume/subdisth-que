@@ -34,7 +34,6 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
 
   if (!patient) return null;
 
-  // Ensure medications is always an array
   const safeMedications = Array.isArray(medications) ? medications : [];
   const safePatientMedications = Array.isArray(patientMedications) ? patientMedications : [];
 
@@ -154,6 +153,7 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
                 patientId={patient.id}
                 medications={safeMedications}
                 onDispenseMedication={addMedication}
+                dispensedMedications={safePatientMedications}
               />
             )}
           </TabsContent>
