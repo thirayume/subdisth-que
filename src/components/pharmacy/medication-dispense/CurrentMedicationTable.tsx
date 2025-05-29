@@ -47,6 +47,16 @@ const CurrentMedicationTable: React.FC<CurrentMedicationTableProps> = ({
       return;
     }
 
+    // Check for duplicates in current list
+    const existsInCurrent = medications.some(med => 
+      med.medication.id === selectedMedication.id && med.dosage.trim() === dosage.trim()
+    );
+    
+    if (existsInCurrent) {
+      toast.error('ยาและขนาดยานี้มีอยู่ในรายการแล้ว');
+      return;
+    }
+
     const newMedication: CurrentMedication = {
       id: `new-${Date.now()}`,
       medication: selectedMedication,
@@ -64,6 +74,21 @@ const CurrentMedicationTable: React.FC<CurrentMedicationTableProps> = ({
 
   const handleDosageChange = (id: string, newDosage: string) => {
     if (newDosage.trim()) {
+      // Check for duplicates in current list when updating dosage
+      const medication = medications.find(med => med.id === id);
+      if (medication) {
+        const existsInCurrent = medications.some(med => 
+          med.id !== id && 
+          med.medication.id === medication.medication.id && 
+          med.dosage === newDosage.trim()
+        );
+        
+        if (existsInCurrent) {
+          toast.error('ขนาดยานี้มีอยู่ในรายการแล้ว');
+          return;
+        }
+      }
+      
       onUpdateMedication(id, { dosage: newDosage.trim() });
     }
   };
@@ -134,6 +159,7 @@ const CurrentMedicationTable: React.FC<CurrentMedicationTableProps> = ({
               <div className="text-center">
                 <div className="mb-2">ยังไม่มียาในรายการ</div>
                 <div className="text-sm">เพิ่มยาจากฟอร์มด้านบน หรือคัดลอกจากประวัติ</div>
+                <div className="text-xs text-blue-600 mt-1">💡 คัดลอกจากประวัติแล้วแก้ไขขนาดยาได้</div>
               </div>
             </div>
           ) : (

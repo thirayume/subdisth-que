@@ -36,40 +36,30 @@ const EnhancedMedicationDispenseDialog: React.FC<EnhancedMedicationDispenseDialo
     });
   }, [patientId, medications.length, patientMedications.length, currentMedications.length]);
 
-  // Helper function to check if medication already exists today
-  const checkMedicationExistsToday = (medicationId: string, dosage: string) => {
-    const today = new Date().toISOString().split('T')[0];
-    return patientMedications.some(pm => 
-      pm.medication_id === medicationId && 
-      pm.dosage === dosage && 
-      pm.start_date === today
-    );
-  };
-
   const handleCopySelected = (selectedMedications: PatientMedication[]) => {
     console.log('Copying selected medications:', selectedMedications);
     
     const newCurrentMeds: CurrentMedication[] = selectedMedications.map(med => ({
-      id: `copied-${med.id}-${Date.now()}`,
+      id: `copied-${med.id}-${Date.now()}-${Math.random()}`, // Unique ID for each copy
       medication: med.medication!,
       dosage: med.dosage,
       instructions: med.instructions || ''
     }));
 
-    // Filter out medications that already exist in current list or database for today
+    // Only filter out medications that already exist in the current pending list (right panel)
+    // Allow copying from history even if the same medication+dosage exists in today's database
     const filteredMeds = newCurrentMeds.filter(newMed => {
       const existsInCurrent = currentMedications.some(existing => 
         existing.medication.id === newMed.medication.id && existing.dosage === newMed.dosage
       );
-      const existsInDatabase = checkMedicationExistsToday(newMed.medication.id, newMed.dosage);
-      return !existsInCurrent && !existsInDatabase;
+      return !existsInCurrent;
     });
 
     if (filteredMeds.length !== newCurrentMeds.length) {
       const duplicateCount = newCurrentMeds.length - filteredMeds.length;
-      toast.warning(`เพิ่มได้ ${filteredMeds.length} จาก ${newCurrentMeds.length} รายการ (${duplicateCount} รายการมีอยู่แล้วในวันนี้)`);
+      toast.warning(`เพิ่มได้ ${filteredMeds.length} จาก ${newCurrentMeds.length} รายการ (${duplicateCount} รายการมีอยู่ในรายการปัจจุบันแล้ว)`);
     } else {
-      toast.success(`คัดลอกยาเรียบร้อย ${filteredMeds.length} รายการ`);
+      toast.success(`คัดลอกยาเรียบร้อย ${filteredMeds.length} รายการ - สามารถแก้ไขขนาดยาและคำแนะนำได้`);
     }
 
     setCurrentMedications(prev => [...prev, ...filteredMeds]);
@@ -93,13 +83,6 @@ const EnhancedMedicationDispenseDialog: React.FC<EnhancedMedicationDispenseDialo
       return;
     }
 
-    // Check if medication already exists in database for today
-    const existsInDatabase = checkMedicationExistsToday(medication.medication.id, medication.dosage);
-    if (existsInDatabase) {
-      toast.error('ยาและขนาดยานี้ได้จ่ายไปแล้วในวันนี้');
-      return;
-    }
-
     setCurrentMedications(prev => [...prev, medication]);
     toast.success('เพิ่มยาในรายการแล้ว');
   };
@@ -107,7 +90,7 @@ const EnhancedMedicationDispenseDialog: React.FC<EnhancedMedicationDispenseDialo
   const handleUpdateMedication = (id: string, updates: Partial<CurrentMedication>) => {
     console.log('Updating medication:', id, updates);
     
-    // If updating dosage, check for duplicates
+    // If updating dosage, check for duplicates in current list only
     if (updates.dosage) {
       const medication = currentMedications.find(med => med.id === id);
       if (medication) {
@@ -118,13 +101,7 @@ const EnhancedMedicationDispenseDialog: React.FC<EnhancedMedicationDispenseDialo
         );
         
         if (existsInCurrent) {
-          toast.error('ขนาดยานี้มีอยู่ในรายการแล้ว');
-          return;
-        }
-
-        const existsInDatabase = checkMedicationExistsToday(medication.medication.id, updates.dosage);
-        if (existsInDatabase) {
-          toast.error('ยาและขนาดยานี้ได้จ่ายไปแล้วในวันนี้');
+          toast.error('ขนาดยานี้มีอยู่ในรายการปัจจุบันแล้ว');
           return;
         }
       }
