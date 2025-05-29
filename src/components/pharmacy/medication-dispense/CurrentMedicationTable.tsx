@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Trash2, Save, Plus } from 'lucide-react';
 import { Medication } from '@/integrations/supabase/schema';
+import { toast } from 'sonner';
 import MedicationSearchField from './MedicationSearchField';
 
 export interface CurrentMedication {
@@ -36,121 +37,113 @@ const CurrentMedicationTable: React.FC<CurrentMedicationTableProps> = ({
   isLoading
 }) => {
   const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
-  const [newDosage, setNewDosage] = useState('');
-  const [newInstructions, setNewInstructions] = useState('');
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [dosage, setDosage] = useState('');
+  const [instructions, setInstructions] = useState('');
+  const [open, setOpen] = useState(false);
 
   const handleAddMedication = () => {
-    if (!selectedMedication || !newDosage.trim()) {
-      return;
-    }
-
-    // Check if medication already exists
-    const exists = medications.some(med => med.medication.id === selectedMedication.id);
-    if (exists) {
+    if (!selectedMedication || !dosage.trim()) {
+      toast.error('กรุณาเลือกยาและใส่ขนาดยา');
       return;
     }
 
     const newMedication: CurrentMedication = {
-      id: `current-${Date.now()}`,
+      id: `new-${Date.now()}`,
       medication: selectedMedication,
-      dosage: newDosage.trim(),
-      instructions: newInstructions.trim()
+      dosage: dosage.trim(),
+      instructions: instructions.trim()
     };
 
     onAddMedication(newMedication);
     
-    // Reset form
+    // Clear form
     setSelectedMedication(null);
-    setNewDosage('');
-    setNewInstructions('');
+    setDosage('');
+    setInstructions('');
   };
 
-  const handleDosageChange = (id: string, dosage: string) => {
-    onUpdateMedication(id, { dosage });
+  const handleDosageChange = (id: string, newDosage: string) => {
+    if (newDosage.trim()) {
+      onUpdateMedication(id, { dosage: newDosage.trim() });
+    }
   };
 
-  const handleInstructionsChange = (id: string, instructions: string) => {
-    onUpdateMedication(id, { instructions });
+  const handleInstructionsChange = (id: string, newInstructions: string) => {
+    onUpdateMedication(id, { instructions: newInstructions });
   };
 
   return (
-    <Card className="h-full">
+    <Card className="h-full flex flex-col">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">รายการยาที่จะจ่าย</CardTitle>
-          {medications.length > 0 && (
-            <Button
-              onClick={onSaveAll}
-              disabled={isLoading}
-              className="bg-pharmacy-600 hover:bg-pharmacy-700"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {isLoading ? 'กำลังบันทึก...' : `บันทึกยาทั้งหมด (${medications.length})`}
-            </Button>
-          )}
-        </div>
+        <CardTitle className="text-lg">รายการยาที่จะจ่าย</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Add New Medication Section */}
-        <div className="p-4 bg-gray-50 rounded-lg space-y-3">
-          <h4 className="font-medium text-sm">เพิ่มยาใหม่</h4>
-          <div className="grid grid-cols-1 gap-3">
-            <MedicationSearchField
-              medications={availableMedications}
-              selectedMedication={selectedMedication}
-              onSelectMedication={setSelectedMedication}
-              open={searchOpen}
-              setOpen={setSearchOpen}
-            />
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-xs text-gray-600">ขนาดยา</label>
-                <Input
-                  value={newDosage}
-                  onChange={(e) => setNewDosage(e.target.value)}
-                  placeholder="เช่น 1 เม็ด วันละ 2 ครั้ง"
-                  className="text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-gray-600">คำแนะนำ</label>
-                <Input
-                  value={newInstructions}
-                  onChange={(e) => setNewInstructions(e.target.value)}
-                  placeholder="เช่น หลังอาหาร"
-                  className="text-sm"
-                />
-              </div>
+      <CardContent className="flex-1 flex flex-col space-y-4">
+        {/* Add New Medication Form */}
+        <div className="space-y-3 p-3 border rounded-lg bg-gray-50">
+          <h4 className="text-sm font-medium">เพิ่มยาใหม่</h4>
+          
+          <MedicationSearchField
+            medications={availableMedications}
+            selectedMedication={selectedMedication}
+            onSelectMedication={setSelectedMedication}
+            open={open}
+            setOpen={setOpen}
+          />
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-sm font-medium">ขนาดยา</label>
+              <Input
+                value={dosage}
+                onChange={(e) => setDosage(e.target.value)}
+                placeholder="เช่น 500mg, 2 เม็ด"
+                className="text-sm"
+              />
+              {selectedMedication && (
+                <div className="text-xs text-gray-500 mt-1">
+                  หน่วย: {selectedMedication.unit}
+                </div>
+              )}
             </div>
-            <Button
-              onClick={handleAddMedication}
-              disabled={!selectedMedication || !newDosage.trim()}
-              variant="outline"
-              size="sm"
-              className="w-full"
-            >
-              <Plus className="h-3 w-3 mr-1" />
-              เพิ่มยา
-            </Button>
+            <div>
+              <label className="text-sm font-medium">คำแนะนำ</label>
+              <Input
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value)}
+                placeholder="เช่น กินหลังอาหาร"
+                className="text-sm"
+              />
+            </div>
           </div>
+
+          <Button 
+            onClick={handleAddMedication}
+            disabled={!selectedMedication || !dosage.trim()}
+            size="sm"
+            className="w-full"
+          >
+            <Plus className="w-3 h-3 mr-1" />
+            เพิ่มยา
+          </Button>
         </div>
 
-        {/* Current Medications Table */}
-        {medications.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <div className="mb-2">ยังไม่มียาในรายการ</div>
-            <div className="text-sm">เพิ่มยาใหม่หรือคัดลอกจากประวัติ</div>
-          </div>
-        ) : (
-          <div className="max-h-[400px] overflow-auto border rounded-lg">
+        {/* Current Medications List */}
+        <div className="flex-1 overflow-auto border rounded-lg">
+          {medications.length === 0 ? (
+            <div className="flex items-center justify-center h-32 text-gray-500">
+              <div className="text-center">
+                <div className="mb-2">ยังไม่มียาในรายการ</div>
+                <div className="text-sm">เพิ่มยาจากฟอร์มด้านบน หรือคัดลอกจากประวัติ</div>
+              </div>
+            </div>
+          ) : (
             <Table>
-              <TableHeader className="sticky top-0 bg-white z-10">
+              <TableHeader>
                 <TableRow>
                   <TableHead>ชื่อยา</TableHead>
                   <TableHead>ขนาดยา</TableHead>
                   <TableHead>คำแนะนำ</TableHead>
-                  <TableHead className="w-16">ลบ</TableHead>
+                  <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -158,7 +151,7 @@ const CurrentMedicationTable: React.FC<CurrentMedicationTableProps> = ({
                   <TableRow key={med.id}>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{med.medication.name}</div>
+                        <div className="font-medium text-sm">{med.medication.name}</div>
                         <div className="text-xs text-gray-500">
                           {med.medication.code} | คงเหลือ: {med.medication.stock} {med.medication.unit}
                         </div>
@@ -168,7 +161,7 @@ const CurrentMedicationTable: React.FC<CurrentMedicationTableProps> = ({
                       <Input
                         value={med.dosage}
                         onChange={(e) => handleDosageChange(med.id, e.target.value)}
-                        className="text-sm"
+                        className="text-sm h-8"
                         placeholder="ขนาดยา"
                       />
                     </TableCell>
@@ -176,7 +169,7 @@ const CurrentMedicationTable: React.FC<CurrentMedicationTableProps> = ({
                       <Textarea
                         value={med.instructions}
                         onChange={(e) => handleInstructionsChange(med.id, e.target.value)}
-                        className="text-sm min-h-[60px]"
+                        className="text-sm min-h-[32px] h-8 resize-none"
                         placeholder="คำแนะนำ"
                       />
                     </TableCell>
@@ -185,16 +178,28 @@ const CurrentMedicationTable: React.FC<CurrentMedicationTableProps> = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => onRemoveMedication(med.id)}
-                        className="text-red-500 hover:text-red-700"
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3 w-3" />
                       </Button>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </div>
+          )}
+        </div>
+
+        {/* Save All Button */}
+        {medications.length > 0 && (
+          <Button 
+            onClick={onSaveAll}
+            disabled={isLoading}
+            className="w-full bg-pharmacy-600 hover:bg-pharmacy-700"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            {isLoading ? 'กำลังจ่ายยา...' : `จ่ายยาทั้งหมด (${medications.length} รายการ)`}
+          </Button>
         )}
       </CardContent>
     </Card>

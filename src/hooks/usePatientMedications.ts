@@ -27,6 +27,35 @@ export const usePatientMedications = (patientId?: string) => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
+  // Check if a medication combination already exists
+  const checkDuplicateMedication = React.useCallback(async (
+    patientId: string,
+    medicationId: string,
+    dosage: string,
+    startDate: string
+  ): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('patient_medications')
+        .select('id')
+        .eq('patient_id', patientId)
+        .eq('medication_id', medicationId)
+        .eq('dosage', dosage)
+        .eq('start_date', startDate)
+        .limit(1);
+
+      if (error) {
+        logger.error('Error checking duplicate medication:', error);
+        return false;
+      }
+
+      return (data && data.length > 0);
+    } catch (err) {
+      logger.error('Error in duplicate check:', err);
+      return false;
+    }
+  }, []);
+
   // Fetch patient medication history
   const fetchMedicationHistory = React.useCallback(async (pid?: string) => {
     if (!pid) {
@@ -71,11 +100,26 @@ export const usePatientMedications = (patientId?: string) => {
     }
   }, []);
 
-  // Add new medication to patient's history
+  // Add new medication to patient's history with duplicate checking
   const addMedication = async (medicationData: Omit<PatientMedication, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       setError(null);
       logger.info(`Adding medication for patient ${medicationData.patient_id}`);
+
+      // Check for duplicates before attempting to insert
+      const isDuplicate = await checkDuplicateMedication(
+        medicationData.patient_id,
+        medicationData.medication_id,
+        medicationData.dosage,
+        medicationData.start_date
+      );
+
+      if (isDuplicate) {
+        const errorMessage = 'ยาและขนาดยานี้ได้จ่ายไปแล้วในวันเดียวกัน';
+        toast.error(errorMessage);
+        setError(errorMessage);
+        return null;
+      }
 
       const { data, error } = await supabase
         .from('patient_medications')
@@ -83,6 +127,13 @@ export const usePatientMedications = (patientId?: string) => {
         .select(`*, medication:medications(*)`);
 
       if (error) {
+        // Handle unique constraint violation specifically
+        if (error.code === '23505' && error.message.includes('unique_patient_medication_per_day')) {
+          const errorMessage = 'ยาและขนาดยานี้ได้จ่ายไปแล้วในวันเดียวกัน';
+          toast.error(errorMessage);
+          setError(errorMessage);
+          return null;
+        }
         throw error;
       }
 
@@ -175,6 +226,7 @@ export const usePatientMedications = (patientId?: string) => {
     fetchMedicationHistory,
     addMedication,
     updateMedication,
-    deleteMedication
+    deleteMedication,
+    checkDuplicateMedication
   };
 };

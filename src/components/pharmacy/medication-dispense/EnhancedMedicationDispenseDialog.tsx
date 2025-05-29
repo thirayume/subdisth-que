@@ -36,6 +36,16 @@ const EnhancedMedicationDispenseDialog: React.FC<EnhancedMedicationDispenseDialo
     });
   }, [patientId, medications.length, patientMedications.length, currentMedications.length]);
 
+  // Helper function to check if medication already exists today
+  const checkMedicationExistsToday = (medicationId: string, dosage: string) => {
+    const today = new Date().toISOString().split('T')[0];
+    return patientMedications.some(pm => 
+      pm.medication_id === medicationId && 
+      pm.dosage === dosage && 
+      pm.start_date === today
+    );
+  };
+
   const handleCopySelected = (selectedMedications: PatientMedication[]) => {
     console.log('Copying selected medications:', selectedMedications);
     
@@ -46,13 +56,18 @@ const EnhancedMedicationDispenseDialog: React.FC<EnhancedMedicationDispenseDialo
       instructions: med.instructions || ''
     }));
 
-    // Filter out medications that already exist
-    const filteredMeds = newCurrentMeds.filter(newMed => 
-      !currentMedications.some(existing => existing.medication.id === newMed.medication.id)
-    );
+    // Filter out medications that already exist in current list or database for today
+    const filteredMeds = newCurrentMeds.filter(newMed => {
+      const existsInCurrent = currentMedications.some(existing => 
+        existing.medication.id === newMed.medication.id && existing.dosage === newMed.dosage
+      );
+      const existsInDatabase = checkMedicationExistsToday(newMed.medication.id, newMed.dosage);
+      return !existsInCurrent && !existsInDatabase;
+    });
 
     if (filteredMeds.length !== newCurrentMeds.length) {
-      toast.warning(`เพิ่มได้ ${filteredMeds.length} จาก ${newCurrentMeds.length} รายการ (บางรายการมีอยู่แล้ว)`);
+      const duplicateCount = newCurrentMeds.length - filteredMeds.length;
+      toast.warning(`เพิ่มได้ ${filteredMeds.length} จาก ${newCurrentMeds.length} รายการ (${duplicateCount} รายการมีอยู่แล้วในวันนี้)`);
     } else {
       toast.success(`คัดลอกยาเรียบร้อย ${filteredMeds.length} รายการ`);
     }
@@ -68,10 +83,20 @@ const EnhancedMedicationDispenseDialog: React.FC<EnhancedMedicationDispenseDialo
   const handleAddMedication = (medication: CurrentMedication) => {
     console.log('Adding new medication:', medication);
     
-    // Check if medication already exists
-    const exists = currentMedications.some(med => med.medication.id === medication.medication.id);
-    if (exists) {
+    // Check if medication already exists in current list
+    const existsInCurrent = currentMedications.some(med => 
+      med.medication.id === medication.medication.id && med.dosage === medication.dosage
+    );
+    
+    if (existsInCurrent) {
       toast.error('ยานี้มีอยู่ในรายการแล้ว');
+      return;
+    }
+
+    // Check if medication already exists in database for today
+    const existsInDatabase = checkMedicationExistsToday(medication.medication.id, medication.dosage);
+    if (existsInDatabase) {
+      toast.error('ยาและขนาดยานี้ได้จ่ายไปแล้วในวันนี้');
       return;
     }
 
@@ -81,6 +106,30 @@ const EnhancedMedicationDispenseDialog: React.FC<EnhancedMedicationDispenseDialo
 
   const handleUpdateMedication = (id: string, updates: Partial<CurrentMedication>) => {
     console.log('Updating medication:', id, updates);
+    
+    // If updating dosage, check for duplicates
+    if (updates.dosage) {
+      const medication = currentMedications.find(med => med.id === id);
+      if (medication) {
+        const existsInCurrent = currentMedications.some(med => 
+          med.id !== id && 
+          med.medication.id === medication.medication.id && 
+          med.dosage === updates.dosage
+        );
+        
+        if (existsInCurrent) {
+          toast.error('ขนาดยานี้มีอยู่ในรายการแล้ว');
+          return;
+        }
+
+        const existsInDatabase = checkMedicationExistsToday(medication.medication.id, updates.dosage);
+        if (existsInDatabase) {
+          toast.error('ยาและขนาดยานี้ได้จ่ายไปแล้วในวันนี้');
+          return;
+        }
+      }
+    }
+    
     setCurrentMedications(prev => 
       prev.map(med => med.id === id ? { ...med, ...updates } : med)
     );
