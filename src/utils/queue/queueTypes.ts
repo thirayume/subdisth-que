@@ -12,7 +12,7 @@ export const ensureQueueTypeEnum = (type: string): QueueTypeEnum => {
 
 // Helper function to safely cast a string to QueueStatus
 export const ensureQueueStatus = (status: string): QueueStatus => {
-  const validStatuses: QueueStatus[] = ['WAITING', 'ACTIVE', 'COMPLETED', 'SKIPPED'];
+  const validStatuses: QueueStatus[] = ['WAITING', 'ACTIVE', 'COMPLETED', 'SKIPPED', 'CANCELLED'];
   return validStatuses.includes(status as QueueStatus)
     ? status as QueueStatus
     : 'WAITING';

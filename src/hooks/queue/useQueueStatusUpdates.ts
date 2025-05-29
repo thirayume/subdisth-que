@@ -30,6 +30,8 @@ export const useQueueStatusUpdates = (
         updateData.completed_at = now;
       } else if (newStatus === 'SKIPPED') {
         updateData.skipped_at = now;
+      } else if (newStatus === 'CANCELLED') {
+        updateData.cancelled_at = now;
       }
       
       // Update the queue in the database
@@ -63,7 +65,8 @@ export const useQueueStatusUpdates = (
         'ACTIVE': 'เรียกคิวแล้ว',
         'WAITING': 'กลับไปรอการเรียก',
         'COMPLETED': 'เสร็จสิ้นการให้บริการ',
-        'SKIPPED': 'ข้ามคิวแล้ว'
+        'SKIPPED': 'ข้ามคิวแล้ว',
+        'CANCELLED': 'ยกเลิกคิวแล้ว'
       };
       
       toast.success(`คิวหมายเลข ${data.number} ${statusMessages[newStatus]}`);

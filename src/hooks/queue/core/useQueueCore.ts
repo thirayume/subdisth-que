@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -97,6 +98,8 @@ export const useQueueCore = () => {
         updateData.completed_at = new Date().toISOString();
       } else if (status === 'SKIPPED') {
         updateData.skipped_at = new Date().toISOString();
+      } else if (status === 'CANCELLED') {
+        updateData.cancelled_at = new Date().toISOString();
       }
 
       const { data, error } = await supabase
