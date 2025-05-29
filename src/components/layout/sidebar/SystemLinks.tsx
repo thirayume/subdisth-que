@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BarChart, Settings } from 'lucide-react';
+import { BarChart, Settings, TestTube } from 'lucide-react';
 import SidebarNavLink from './SidebarNavLink';
 import SidebarSection from './SidebarSection';
 
@@ -22,6 +22,15 @@ const SystemLinks: React.FC<SystemLinksProps> = ({
         onClick={closeSidebar}
       >
         รายงาน
+      </SidebarNavLink>
+
+      <SidebarNavLink
+        to="/test-dashboard"
+        icon={TestTube}
+        isActive={isActiveRoute}
+        onClick={closeSidebar}
+      >
+        แดชบอร์ดทดสอบ
       </SidebarNavLink>
 
       <SidebarNavLink

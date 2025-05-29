@@ -42,6 +42,7 @@ export const useQueueManagement = () => {
   const [activeQueues, setActiveQueues] = useState<Queue[]>([]);
   const [completedQueues, setCompletedQueues] = useState<Queue[]>([]);
   const [skippedQueues, setSkippedQueues] = useState<Queue[]>([]);
+  const [isCancellingAll, setIsCancellingAll] = useState(false);
   
   // Add real-time updates specifically for queue management
   useQueueRealtime({
@@ -256,6 +257,53 @@ export const useQueueManagement = () => {
     }
   }, [servicePoints, setSelectedServicePoint]);
 
+  // New handler for canceling all waiting queues
+  const handleCancelAllQueues = useCallback(async (): Promise<void> => {
+    if (waitingQueues.length === 0) {
+      toast.info('ไม่มีคิวที่รอดำเนินการที่จะยกเลิก');
+      return;
+    }
+
+    setIsCancellingAll(true);
+    logger.info(`Starting to cancel ${waitingQueues.length} waiting queues`);
+    
+    let successCount = 0;
+    let failedCount = 0;
+
+    try {
+      // Cancel all waiting queues one by one
+      for (const queue of waitingQueues) {
+        try {
+          const result = await updateQueueStatus(queue.id, 'CANCELLED');
+          if (result) {
+            successCount++;
+          } else {
+            failedCount++;
+          }
+        } catch (error) {
+          logger.error(`Failed to cancel queue ${queue.id}:`, error);
+          failedCount++;
+        }
+      }
+
+      // Show appropriate toast message
+      if (successCount === waitingQueues.length) {
+        toast.success(`ยกเลิกคิวเรียบร้อยแล้ว ${successCount} คิว`);
+      } else if (successCount > 0) {
+        toast.warning(`ยกเลิกได้ ${successCount} จาก ${waitingQueues.length} คิว (${failedCount} คิวที่ไม่สามารถยกเลิกได้)`);
+      } else {
+        toast.error('ไม่สามารถยกเลิกคิวได้');
+      }
+
+      logger.info(`Cancel all queues completed: ${successCount} success, ${failedCount} failed`);
+    } catch (error) {
+      logger.error('Error during cancel all queues operation:', error);
+      toast.error('เกิดข้อผิดพลาดในการยกเลิกคิว');
+    } finally {
+      setIsCancellingAll(false);
+    }
+  }, [waitingQueues, updateQueueStatus]);
+
   return {
     // State - now showing ALL queues
     waitingQueues,
@@ -267,6 +315,7 @@ export const useQueueManagement = () => {
     selectedServicePoint,
     servicePoints,
     servicePointCapabilities,
+    isCancellingAll,
     
     // Handlers
     handleRecallQueue,
@@ -275,6 +324,7 @@ export const useQueueManagement = () => {
     handleHoldQueue,
     handleReturnToWaiting,
     handleServicePointChange,
+    handleCancelAllQueues,
     updateQueueStatus,
     
     // New utility functions

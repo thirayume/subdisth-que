@@ -57,8 +57,9 @@ function App() {
                 <Route path="/dashboard" element={<Index />} />
                 <Route path="/patients" element={<Patients />} />
                 
-                {/* Queue Management - Single route */}
-                <Route path="/queue" element={<QueueManagement />} />
+                {/* Queue Management - Enhanced routes */}
+                <Route path="/queue" element={<Navigate to="/queue-management" />} />
+                <Route path="/queue-management" element={<QueueManagement />} />
                 
                 {/* Queue Creation */}
                 <Route path="/queue/create" element={<CreateQueue />} />

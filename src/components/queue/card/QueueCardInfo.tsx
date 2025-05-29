@@ -1,9 +1,10 @@
 
 import React from 'react';
-import { InfoIcon, MapPin } from 'lucide-react';
+import { InfoIcon } from 'lucide-react';
 import { Queue } from '@/integrations/supabase/schema';
 import { formatQueueNumber } from '@/utils/queueFormatters';
 import QueueTypeLabel from '../QueueTypeLabel';
+import ServicePointBadge from '../ServicePointBadge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface QueueCardInfoProps {
@@ -24,9 +25,26 @@ const QueueCardInfo: React.FC<QueueCardInfoProps> = ({
   const formattedNumber = formatQueueNumber(queue.type, queue.number);
   
   return (
-    <div className="space-y-2">
-      <div className="text-xl sm:text-2xl font-bold">{formattedNumber}</div>
-      <div className="text-gray-600">{patientName}</div>
+    <div className="space-y-3">
+      {/* Queue Number and Patient Name */}
+      <div>
+        <div className="text-xl sm:text-2xl font-bold">{formattedNumber}</div>
+        <div className="text-gray-600 font-medium">{patientName}</div>
+      </div>
+
+      {/* Service Point Badge - More Prominent */}
+      {showServicePointInfo && (
+        <div className="flex items-center">
+          <ServicePointBadge
+            servicePointName={servicePointName}
+            suggestedServicePointName={suggestedServicePointName}
+            isAssigned={!!queue.service_point_id}
+            className="text-sm"
+          />
+        </div>
+      )}
+      
+      {/* Queue Type and Notes */}
       <div className="flex items-center flex-wrap gap-2">
         <QueueTypeLabel queueType={queue.type} />
         {queue.notes && (
@@ -40,26 +58,6 @@ const QueueCardInfo: React.FC<QueueCardInfoProps> = ({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-        )}
-        
-        {showServicePointInfo && (
-          <div className="flex items-center gap-2">
-            {servicePointName ? (
-              <span className="text-xs text-white bg-green-600 px-2 py-1 rounded flex items-center gap-1">
-                <MapPin className="w-3 h-3" />
-                {servicePointName}
-              </span>
-            ) : suggestedServicePointName ? (
-              <span className="text-xs text-gray-700 bg-yellow-100 border border-yellow-300 px-2 py-1 rounded flex items-center gap-1">
-                <MapPin className="w-3 h-3" />
-                แนะนำ: {suggestedServicePointName}
-              </span>
-            ) : (
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                ยังไม่กำหนดจุดบริการ
-              </span>
-            )}
-          </div>
         )}
       </div>
     </div>

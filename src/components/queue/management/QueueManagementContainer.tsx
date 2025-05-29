@@ -15,12 +15,14 @@ const QueueManagementContainer: React.FC = () => {
     queueTypes,
     selectedServicePoint,
     servicePoints,
+    isCancellingAll,
     handleRecallQueue,
     handleCallQueue,
     handleTransferQueue,
     handleHoldQueue,
     handleReturnToWaiting,
     handleServicePointChange,
+    handleCancelAllQueues,
     updateQueueStatus,
     getIntelligentServicePointSuggestion
   } = useQueueManagement();
@@ -39,7 +41,11 @@ const QueueManagementContainer: React.FC = () => {
   return (
     <div className="flex flex-col h-[calc(100vh-2rem)]">
       <div className="flex items-center justify-between mb-4">
-        <QueueManagementHeader />
+        <QueueManagementHeader 
+          waitingQueuesCount={waitingQueues.length}
+          onCancelAllQueues={handleCancelAllQueues}
+          isCancellingAll={isCancellingAll}
+        />
         
         {/* Remove service point selector from main management - now shows ALL queues */}
         <div className="text-sm text-gray-500">
