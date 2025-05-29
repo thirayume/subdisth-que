@@ -10,6 +10,7 @@ import { Phone, MapPin, Calendar, User, Loader2 } from 'lucide-react';
 import PatientMedicationHistory from './PatientMedicationHistory';
 import { usePatientMedications } from '@/hooks/usePatientMedications';
 import { useMedicationsContext } from '@/components/medications/context/MedicationsContext';
+import { useMedications } from '@/hooks/useMedications';
 import EnhancedMedicationDispenseDialog from './medication-dispense/EnhancedMedicationDispenseDialog';
 
 interface PatientInfoDialogProps {
@@ -32,7 +33,18 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
     fetchMedicationHistory
   } = usePatientMedications(patient?.id);
   
-  const { medications, loading: medicationsListLoading } = useMedicationsContext();
+  // Try to use context, but fallback to direct hook if not available
+  let medications, medicationsListLoading;
+  try {
+    const context = useMedicationsContext();
+    medications = context.medications;
+    medicationsListLoading = context.loading;
+  } catch (error) {
+    // If context is not available, use the direct hook
+    const directMedications = useMedications();
+    medications = directMedications.medications;
+    medicationsListLoading = directMedications.loading;
+  }
 
   if (!patient) return null;
 
