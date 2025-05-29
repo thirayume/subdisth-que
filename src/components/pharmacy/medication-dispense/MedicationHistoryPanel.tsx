@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Copy, CopyAll } from 'lucide-react';
+import { Copy, Copy as CopyIcon } from 'lucide-react';
 import { PatientMedication } from '@/hooks/usePatientMedications';
 import { formatThaiDate } from '@/utils/dateUtils';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -80,7 +80,7 @@ const MedicationHistoryPanel: React.FC<MedicationHistoryPanelProps> = ({
                 onClick={handleCopyAll}
                 className="text-xs"
               >
-                <CopyAll className="h-3 w-3 mr-1" />
+                <CopyIcon className="h-3 w-3 mr-1" />
                 คัดลอกทั้งหมด
               </Button>
             )}
@@ -109,7 +109,7 @@ const MedicationHistoryPanel: React.FC<MedicationHistoryPanelProps> = ({
                     <Checkbox
                       checked={allSelected}
                       onCheckedChange={handleSelectAll}
-                      indeterminate={someSelected && !allSelected}
+                      className={someSelected && !allSelected ? "data-[state=indeterminate]:bg-primary" : ""}
                     />
                   </TableHead>
                   <TableHead>วันที่</TableHead>
