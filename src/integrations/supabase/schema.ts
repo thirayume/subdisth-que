@@ -1,4 +1,3 @@
-
 export interface Patient {
   id: string;
   patient_id: string;
@@ -33,6 +32,8 @@ export interface Queue {
   updated_at: string;
   called_at?: string;
   completed_at?: string;
+  skipped_at?: string;
+  cancelled_at?: string;
   queue_date?: string;
 }
 

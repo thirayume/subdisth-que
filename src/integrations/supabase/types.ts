@@ -322,6 +322,7 @@ export type Database = {
       queues: {
         Row: {
           called_at: string | null
+          cancelled_at: string | null
           completed_at: string | null
           created_at: string
           id: string
@@ -341,6 +342,7 @@ export type Database = {
         }
         Insert: {
           called_at?: string | null
+          cancelled_at?: string | null
           completed_at?: string | null
           created_at?: string
           id?: string
@@ -360,6 +362,7 @@ export type Database = {
         }
         Update: {
           called_at?: string | null
+          cancelled_at?: string | null
           completed_at?: string | null
           created_at?: string
           id?: string
