@@ -35,17 +35,19 @@ const MedicationSearchField: React.FC<MedicationSearchFieldProps> = ({
 }) => {
   const safeMedications = Array.isArray(medications) ? medications : [];
 
-  const handleMedicationSelect = (medicationId: string) => {
-    console.log('Selection triggered with ID:', medicationId);
+  const handleMedicationSelect = (medicationName: string) => {
+    console.log('Selection triggered with name:', medicationName);
     
-    const medication = safeMedications.find(med => med.id === medicationId);
+    // Find medication by name instead of ID
+    const medication = safeMedications.find(med => med.name === medicationName);
     
     if (medication) {
       console.log('Selected medication found:', medication);
       onSelectMedication(medication);
       setOpen(false);
     } else {
-      console.error('Medication not found for ID:', medicationId);
+      console.error('Medication not found for name:', medicationName);
+      console.log('Available medications:', safeMedications.map(m => m.name));
     }
   };
 
@@ -74,8 +76,8 @@ const MedicationSearchField: React.FC<MedicationSearchFieldProps> = ({
                   {safeMedications.map((medication) => (
                     <CommandItem
                       key={medication.id}
-                      value={medication.id}
-                      onSelect={handleMedicationSelect}
+                      value={`${medication.name} ${medication.code}`.toLowerCase()}
+                      onSelect={() => handleMedicationSelect(medication.name)}
                       className="cursor-pointer"
                     >
                       <Check
