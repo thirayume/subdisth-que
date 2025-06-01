@@ -109,7 +109,7 @@ const LineLoginButton: React.FC<LineLoginButtonProps> = ({ onLoginSuccess }) => 
         เข้าสู่ระบบด้วย LINE
       </Button>
       
-      {/* <div className="text-center">
+      <div className="text-center">
         <button 
           type="button"
           onClick={handleShowPhoneInput}
@@ -117,7 +117,7 @@ const LineLoginButton: React.FC<LineLoginButtonProps> = ({ onLoginSuccess }) => 
         >
           หรือเข้าสู่ระบบด้วยเบอร์โทรศัพท์
         </button>
-      </div> */}
+      </div>
     </div>
   );
 };

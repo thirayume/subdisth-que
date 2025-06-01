@@ -1,6 +1,6 @@
 // src/services/line.service.ts
 import axios from 'axios';
-import { LineProfile } from '../components/settings/types';
+import { LineProfile } from '../components/settings/line/types';
 
 interface LineTokenResponse {
   access_token: string;

@@ -1,9 +1,8 @@
-// src/components/LineCallback.tsx
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { lineService } from '@/services/line.service';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 
 // Define interface for LINE profile
 interface LineProfile {
@@ -61,25 +60,6 @@ const LineCallback: React.FC = () => {
           
           console.log('LINE Profile Information:', lineProfile);
           
-          // Extract email from id_token if available
-          let email = null;
-          if (tokenResponse.id_token) {
-            try {
-              // Decode the JWT without verification (client-side only)
-              const base64Url = tokenResponse.id_token.split('.')[1];
-              const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-              const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-              }).join(''));
-
-              const decoded = JSON.parse(jsonPayload);
-              email = decoded.email;
-              console.log('Extracted email from ID token:', email);
-            } catch (e) {
-              console.error('Error decoding id_token:', e);
-            }
-          }
-          
           // Navigate to connect phone page with all profile information
           navigate('/patient-portal/connect-phone', { 
             state: { 
@@ -87,8 +67,7 @@ const LineCallback: React.FC = () => {
               lineUserId: lineProfile.userId,
               displayName: lineProfile.displayName,
               pictureUrl: lineProfile.pictureUrl,
-              statusMessage: lineProfile.statusMessage,
-              email: email
+              statusMessage: lineProfile.statusMessage
             }
           });
           return;
@@ -112,8 +91,7 @@ const LineCallback: React.FC = () => {
                 lineUserId: lineProfile.userId,
                 displayName: lineProfile.displayName,
                 pictureUrl: lineProfile.pictureUrl,
-                statusMessage: lineProfile.statusMessage,
-                email: null // No email since we couldn't extract it from ID token
+                statusMessage: lineProfile.statusMessage
               }
             });
             return;
