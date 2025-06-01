@@ -1,5 +1,6 @@
 
 import { formatQueueNumber } from '@/utils/queueFormatters';
+import { QueueTypeEnum } from '@/integrations/supabase/schema';
 
 // Thai phonetic conversion for queue numbers
 const thaiNumbers: { [key: string]: string } = {
@@ -125,8 +126,11 @@ export function speakText(text: string): void {
 // Function to announce queue number with proper formatting and Thai pronunciation
 export function announceQueue(queueNumber: number, counterName: string, queueType?: string): void {
   try {
+    // Convert string to QueueTypeEnum if needed, with fallback
+    const validQueueType = (queueType as QueueTypeEnum) || 'GENERAL';
+    
     // Format the queue number properly (e.g., A105, B001)
-    const formattedQueueNumber = formatQueueNumber(queueType || 'GENERAL', queueNumber);
+    const formattedQueueNumber = formatQueueNumber(validQueueType, queueNumber);
     
     // Convert to Thai phonetic pronunciation
     const thaiPhoneticNumber = convertToThaiPhonetic(formattedQueueNumber);
@@ -142,7 +146,7 @@ export function announceQueue(queueNumber: number, counterName: string, queueTyp
     
     console.log('Announcing queue:', {
       originalNumber: queueNumber,
-      queueType,
+      queueType: validQueueType,
       formattedNumber: formattedQueueNumber,
       thaiPhonetic: thaiPhoneticNumber,
       fullMessage: message
