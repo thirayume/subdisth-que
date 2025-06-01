@@ -2,7 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Index from '@/pages/Index';
-import DashboardContent from '@/pages/Dashboard';
+import Dashboard from '@/pages/Dashboard';
 import Patients from '@/pages/Patients';
 import Medications from '@/pages/Medications';
 import QueueManagement from '@/pages/QueueManagement';
@@ -28,7 +28,7 @@ function App() {
       <div className="min-h-screen bg-background">
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/dashboard" element={<Layout><DashboardContent /></Layout>} />
+          <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
           <Route path="/patients" element={<Layout><Patients /></Layout>} />
           <Route path="/medications" element={<Layout><Medications /></Layout>} />
           <Route path="/queue-management" element={<Layout><QueueManagement /></Layout>} />
