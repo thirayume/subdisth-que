@@ -40,11 +40,7 @@ const QueueBoardDisplay: React.FC<QueueBoardDisplayProps> = ({
           const voiceEnabled = localStorage.getItem('queue_voice_enabled') !== 'false';
           
           if (voiceEnabled) {
-            // Get announcement settings from localStorage or use default
-            const announcementText = localStorage.getItem('queue_announcement_text') || 
-              'ขอเชิญหมายเลข {queueNumber} ที่ช่องบริการ {counter}';
-              
-            await announceQueue(queue.number, counterName, queue.type, announcementText);
+            announceQueue(queue.number, counterName, queue.type);
           }
           setHasAnnounced(true);
         } catch (error) {

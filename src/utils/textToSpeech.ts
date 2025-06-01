@@ -1,5 +1,5 @@
 
-import { formatQueueNumber } from '@/utils/queueManagementUtils';
+import { formatQueueNumber } from '@/utils/queueFormatters';
 
 // Thai phonetic conversion for queue numbers
 const thaiNumbers: { [key: string]: string } = {
@@ -123,10 +123,10 @@ export function speakText(text: string): void {
 }
 
 // Function to announce queue number with proper formatting and Thai pronunciation
-export function announceQueue(queueNumber: number, queueType: string, patientName?: string): void {
+export function announceQueue(queueNumber: number, counterName: string, queueType?: string): void {
   try {
     // Format the queue number properly (e.g., A105, B001)
-    const formattedQueueNumber = formatQueueNumber(queueNumber, queueType);
+    const formattedQueueNumber = formatQueueNumber(queueType || 'GENERAL', queueNumber);
     
     // Convert to Thai phonetic pronunciation
     const thaiPhoneticNumber = convertToThaiPhonetic(formattedQueueNumber);
@@ -134,8 +134,8 @@ export function announceQueue(queueNumber: number, queueType: string, patientNam
     // Create the announcement message
     let message = `ขอเชิญหมายเลข ${thaiPhoneticNumber}`;
     
-    if (patientName) {
-      message += ` คุณ ${patientName}`;
+    if (counterName) {
+      message += ` ที่ช่องบริการ ${counterName}`;
     }
     
     message += ' เชิญครับ';

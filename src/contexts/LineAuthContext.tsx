@@ -71,12 +71,20 @@ export const LineAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [state, dispatch] = useReducer(lineAuthReducer, initialState);
 
   // Define all callbacks before any useEffects
-  const login = useCallback(() => {
+  const login = useCallback(async () => {
     const stateParam = Math.random().toString(36).substring(2, 15);
     sessionStorage.setItem('lineLoginState', stateParam);
     
-    const loginUrl = lineService.generateLoginUrl(stateParam);
-    window.location.href = loginUrl;
+    try {
+      const loginUrl = await lineService.generateLoginUrl(stateParam);
+      window.location.href = loginUrl;
+    } catch (error) {
+      console.error('Error generating login URL:', error);
+      dispatch({ 
+        type: 'LOGIN_FAILURE', 
+        payload: 'Failed to generate login URL' 
+      });
+    }
   }, []);
 
   const logout = useCallback(() => {

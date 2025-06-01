@@ -38,14 +38,10 @@ export const useQueueAnnouncements = () => {
     
     if (queueToRecall && voiceEnabled) {
       try {
-        const announcementText = localStorage.getItem('queue_announcement_text') || 
-          'ขอเชิญหมายเลข {queueNumber} ที่ช่องบริการ {counter}';
-        
         await announceQueue(
           queueToRecall.number, 
           counterName, 
-          queueToRecall.type,
-          announcementText
+          queueToRecall.type
         );
         
         toast.success(`เรียกซ้ำคิวหมายเลข ${queueToRecall.number}`);

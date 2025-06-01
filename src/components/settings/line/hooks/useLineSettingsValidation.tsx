@@ -12,6 +12,8 @@ export const useLineSettingsValidation = (
     channelId: true,
     channelSecret: true,
     accessToken: true,
+    loginChannelId: true,
+    loginChannelSecret: true,
     isFormValid: true
   });
 
@@ -22,6 +24,8 @@ export const useLineSettingsValidation = (
       channelId: true,
       channelSecret: true,
       accessToken: true,
+      loginChannelId: true,
+      loginChannelSecret: true,
       isFormValid: true
     };
 
@@ -43,6 +47,20 @@ export const useLineSettingsValidation = (
     if (lineSettings.accessToken.length < 30) {
       newErrors.accessToken = 'Access Token ต้องมีความยาวอย่างน้อย 30 ตัวอักษร';
       newValidation.accessToken = false;
+      newValidation.isFormValid = false;
+    }
+
+    // Login Channel ID validation (optional)
+    if (lineSettings.loginChannelId && !/^\d{5,}$/.test(lineSettings.loginChannelId)) {
+      newErrors.loginChannelId = 'Login Channel ID ต้องเป็นตัวเลขและมีความยาวอย่างน้อย 5 หลัก';
+      newValidation.loginChannelId = false;
+      newValidation.isFormValid = false;
+    }
+
+    // Login Channel Secret validation (optional)
+    if (lineSettings.loginChannelSecret && lineSettings.loginChannelSecret.length < 20) {
+      newErrors.loginChannelSecret = 'Login Channel Secret ต้องมีความยาวอย่างน้อย 20 ตัวอักษร';
+      newValidation.loginChannelSecret = false;
       newValidation.isFormValid = false;
     }
 

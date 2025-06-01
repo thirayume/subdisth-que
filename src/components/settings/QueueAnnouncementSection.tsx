@@ -23,23 +23,20 @@ interface QueueAnnouncementSectionProps {
 
 const QueueAnnouncementSection: React.FC<QueueAnnouncementSectionProps> = ({ form }) => {
   const testVoiceAnnouncement = () => {
-    const announcementText = form.getValues('queue_announcement_text') || 
-      'ขอเชิญหมายเลข {queueNumber} ที่ช่องบริการ {counter}';
+    const counter = form.getValues('counter_name') || '1';
     
     // Get settings from form values
     const volume = form.getValues('queue_voice_volume') / 100 || 0.8;
     const rate = form.getValues('queue_voice_rate') / 100 || 0.9;
-    const counter = form.getValues('counter_name') || '1';
     
     // Save settings to localStorage for the actual queue operations
-    localStorage.setItem('queue_announcement_text', announcementText);
     localStorage.setItem('queue_voice_volume', String(form.getValues('queue_voice_volume') || 80));
     localStorage.setItem('queue_voice_rate', String(form.getValues('queue_voice_rate') || 90));
     localStorage.setItem('counter_name', counter);
     localStorage.setItem('queue_voice_enabled', String(form.getValues('queue_voice_enabled') || true));
     
-    // Test with sample queue number and counter
-    announceQueue(123, counter, 'ทั่วไป', announcementText);
+    // Test with sample queue number and counter (updated to use new 3-parameter signature)
+    announceQueue(123, counter, 'GENERAL');
   };
 
   return (

@@ -64,22 +64,18 @@ const QueueBoard = () => {
               // Default to "1" if not available
               const counterName = queue.number?.toString() || "1";
               
-              // Get announcement text from localStorage or use default
-              const announcementText =
-                localStorage.getItem("queue_announcement_text") ||
-                "ขอเชิญหมายเลข {queueNumber} ที่ช่องบริการ {counter}";
-              
               console.log('Announcing queue:', queue.number, 'at counter:', counterName);
               
-              // Announce the queue
-              announceQueue(
-                queue.number,
-                counterName,
-                queue.type,
-                announcementText
-              ).catch(error => {
+              // Announce the queue (updated to use new 3-parameter signature)
+              try {
+                announceQueue(
+                  queue.number,
+                  counterName,
+                  queue.type
+                );
+              } catch (error) {
                 console.error("Error announcing queue:", error);
-              });
+              }
             }
           }
       )
