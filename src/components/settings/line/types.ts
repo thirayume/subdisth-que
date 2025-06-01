@@ -3,6 +3,10 @@ export interface LineSettings {
   channelId: string;
   channelSecret: string;
   accessToken: string;
+  loginChannelId?: string;
+  loginChannelSecret?: string;
+  callbackUrl?: string;
+  liffId?: string;
   welcomeMessage: string;
   queueReceivedMessage: string;
   queueCalledMessage: string;
@@ -12,6 +16,8 @@ export interface LineSettingsValidation {
   channelId: boolean;
   channelSecret: boolean;
   accessToken: boolean;
+  loginChannelId: boolean;
+  loginChannelSecret: boolean;
   isFormValid: boolean;
 }
 
@@ -19,6 +25,9 @@ export interface LineSettingsErrors {
   channelId?: string;
   channelSecret?: string;
   accessToken?: string;
+  loginChannelId?: string;
+  loginChannelSecret?: string;
+  callbackUrl?: string;
 }
 
 export interface TextToSpeechConfig {

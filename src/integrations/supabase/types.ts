@@ -53,10 +53,14 @@ export type Database = {
       line_settings: {
         Row: {
           access_token: string
+          callback_url: string | null
           channel_id: string
           channel_secret: string
           created_at: string
           id: string
+          liff_id: string | null
+          login_channel_id: string | null
+          login_channel_secret: string | null
           queue_called_message: string
           queue_received_message: string
           tts_config: Json
@@ -65,10 +69,14 @@ export type Database = {
         }
         Insert: {
           access_token: string
+          callback_url?: string | null
           channel_id: string
           channel_secret: string
           created_at?: string
           id?: string
+          liff_id?: string | null
+          login_channel_id?: string | null
+          login_channel_secret?: string | null
           queue_called_message: string
           queue_received_message: string
           tts_config?: Json
@@ -77,10 +85,14 @@ export type Database = {
         }
         Update: {
           access_token?: string
+          callback_url?: string | null
           channel_id?: string
           channel_secret?: string
           created_at?: string
           id?: string
+          liff_id?: string | null
+          login_channel_id?: string | null
+          login_channel_secret?: string | null
           queue_called_message?: string
           queue_received_message?: string
           tts_config?: Json

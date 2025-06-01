@@ -1,6 +1,7 @@
-// src/services/line.service.ts
+
 import axios from 'axios';
 import { LineProfile } from '../components/settings/line/types';
+import { supabase } from '@/integrations/supabase/client';
 
 interface LineTokenResponse {
   access_token: string;
@@ -16,26 +17,67 @@ interface LineTokenResponse {
   };
 }
 
+interface LineSettingsFromDB {
+  login_channel_id: string;
+  login_channel_secret: string;
+  callback_url: string;
+  liff_id: string;
+  channel_id: string;
+  channel_secret: string;
+  access_token: string;
+}
+
 class LineService {
-  private channelId: string;
-  private redirectUri: string;
+  private lineSettings: LineSettingsFromDB | null = null;
 
   constructor() {
-    this.channelId = import.meta.env.VITE_LINE_CHANNEL_ID || '';
-    this.redirectUri = import.meta.env.VITE_LINE_CALLBACK_URL || `${window.location.origin}/auth/line/callback`;
+    this.loadSettings();
   }
 
-  generateLoginUrl(state: string): string {
+  private async loadSettings(): Promise<void> {
+    try {
+      const { data, error } = await supabase
+        .from('line_settings')
+        .select('login_channel_id, login_channel_secret, callback_url, liff_id, channel_id, channel_secret, access_token')
+        .single();
+
+      if (error) {
+        console.error('Error loading LINE settings:', error);
+        return;
+      }
+
+      this.lineSettings = data;
+      console.log('LINE settings loaded from database');
+    } catch (error) {
+      console.error('Failed to load LINE settings:', error);
+    }
+  }
+
+  private async ensureSettings(): Promise<LineSettingsFromDB> {
+    if (!this.lineSettings) {
+      await this.loadSettings();
+    }
+    
+    if (!this.lineSettings) {
+      throw new Error('LINE settings not configured. Please configure LINE settings in the admin panel.');
+    }
+    
+    return this.lineSettings;
+  }
+
+  async generateLoginUrl(state: string): Promise<string> {
+    const settings = await this.ensureSettings();
+    
     // Save state to localStorage for verification in callback
     localStorage.setItem('lineLoginState', state);
     
     const baseUrl = 'https://access.line.me/oauth2/v2.1/authorize';
     const params = new URLSearchParams({
       response_type: 'code',
-      client_id: this.channelId,
-      redirect_uri: this.redirectUri,
+      client_id: settings.login_channel_id,
+      redirect_uri: settings.callback_url,
       state,
-      scope: 'profile openid email', // Added email scope
+      scope: 'profile openid email',
       bot_prompt: 'normal'
     });
 
@@ -44,12 +86,15 @@ class LineService {
 
   async exchangeToken(code: string): Promise<LineTokenResponse> {
     try {
+      const settings = await this.ensureSettings();
+      
       const response = await axios.post('/api/line-token-exchange', {
         code,
-        redirectUri: this.redirectUri
+        redirectUri: settings.callback_url,
+        clientId: settings.login_channel_id,
+        clientSecret: settings.login_channel_secret
       });
       
-      // Log to debug
       console.log("LINE token exchange complete. Response contains profile:", !!response.data.profile);
       
       return response.data;

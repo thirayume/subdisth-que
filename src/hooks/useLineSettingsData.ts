@@ -16,7 +16,7 @@ export const useLineSettingsData = () => {
       setLoading(true);
       setError(null);
 
-      // Use any to work around type system limitations
+      // Fetch all LINE settings including login credentials
       const { data, error } = await (supabase as any)
         .from('line_settings')
         .select('*')
@@ -32,6 +32,10 @@ export const useLineSettingsData = () => {
           channelId: data.channel_id,
           channelSecret: data.channel_secret,
           accessToken: data.access_token,
+          loginChannelId: data.login_channel_id,
+          loginChannelSecret: data.login_channel_secret,
+          callbackUrl: data.callback_url,
+          liffId: data.liff_id,
           welcomeMessage: data.welcome_message,
           queueReceivedMessage: data.queue_received_message,
           queueCalledMessage: data.queue_called_message
@@ -91,7 +95,7 @@ export const useLineSettingsData = () => {
       localStorage.setItem('lineSettings', JSON.stringify(settings));
       localStorage.setItem('ttsConfig', JSON.stringify(tts));
 
-      // Then save to Supabase using any to bypass type checking
+      // Then save to Supabase including all fields
       const { error } = await (supabase as any)
         .from('line_settings')
         .upsert({
@@ -99,6 +103,10 @@ export const useLineSettingsData = () => {
           channel_id: settings.channelId,
           channel_secret: settings.channelSecret,
           access_token: settings.accessToken,
+          login_channel_id: settings.loginChannelId,
+          login_channel_secret: settings.loginChannelSecret,
+          callback_url: settings.callbackUrl,
+          liff_id: settings.liffId,
           welcome_message: settings.welcomeMessage,
           queue_received_message: settings.queueReceivedMessage,
           queue_called_message: settings.queueCalledMessage,

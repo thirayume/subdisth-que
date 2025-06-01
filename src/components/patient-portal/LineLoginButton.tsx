@@ -14,19 +14,26 @@ const LineLoginButton: React.FC<LineLoginButtonProps> = ({ onLoginSuccess }) => 
   const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLineLogin = useCallback(() => {
-    // Generate state for CSRF protection
-    const state = Math.random().toString(36).substring(2, 15);
-    localStorage.setItem('lineLoginState', state);
-    
-    // Store callback information to be used after LINE login
-    localStorage.setItem('lineLoginCallback', 'patient-portal');
-    
-    // Generate and redirect to LINE login URL
-    const loginUrl = lineService.generateLoginUrl(state);
-    
-    // Use window.location.href for proper redirect (not in frame)
-    window.location.href = loginUrl;
+  const handleLineLogin = useCallback(async () => {
+    try {
+      // Generate state for CSRF protection
+      const state = Math.random().toString(36).substring(2, 15);
+      localStorage.setItem('lineLoginState', state);
+      
+      // Store callback information to be used after LINE login
+      localStorage.setItem('lineLoginCallback', 'patient-portal');
+      
+      // Generate and redirect to LINE login URL using database settings
+      const loginUrl = await lineService.generateLoginUrl(state);
+      
+      console.log('Redirecting to LINE login URL:', loginUrl);
+      
+      // Use window.location.href for proper redirect (not in frame)
+      window.location.href = loginUrl;
+    } catch (error) {
+      console.error('Error initiating LINE login:', error);
+      toast.error('ไม่สามารถเชื่อมต่อกับ LINE ได้ กรุณาตรวจสอบการตั้งค่า');
+    }
   }, []);
 
   // Keep the phone input functionality as a fallback option
