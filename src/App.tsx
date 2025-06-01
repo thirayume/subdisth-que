@@ -45,14 +45,14 @@ function App() {
               <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
               <Route path="/patients" element={<Layout><Patients /></Layout>} />
               <Route path="/medications" element={<Layout><Medications /></Layout>} />
-              <Route path="/queue-management" element={<Layout><QueueManagement /></Layout>} />
+              <Route path="/queue" element={<Layout><QueueManagement /></Layout>} />
               <Route path="/queue-board" element={<QueueBoard />} />
               <Route path="/settings" element={<Layout><Settings /></Layout>} />
               <Route path="/analytics" element={<Layout><Analytics /></Layout>} />
               <Route path="/appointments" element={<Layout><Appointments /></Layout>} />
-              <Route path="/create-queue" element={<CreateQueue />} />
+              <Route path="/queue/create" element={<CreateQueue />} />
               <Route path="/queue-ticket" element={<QueueTicket />} />
-              <Route path="/pharmacy-queue" element={<Layout><PharmacyQueue /></Layout>} />
+              <Route path="/pharmacy" element={<Layout><PharmacyQueue /></Layout>} />
               <Route path="/service-point-queue" element={<Layout><ServicePointQueue /></Layout>} />
               <Route path="/queue-history" element={<Layout><QueueHistory /></Layout>} />
               <Route path="/test-dashboard" element={<Layout><TestDashboard /></Layout>} />
