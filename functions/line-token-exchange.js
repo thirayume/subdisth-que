@@ -32,7 +32,7 @@ exports.handler = async function(event, context) {
     }
 
     // LINE API credentials
-    const channelId = process.env.LINE_CHANNEL_ID;
+    const channelId = process.env.VITE_LINE_CHANNEL_ID || '2006508726';
     const channelSecret = process.env.LINE_CHANNEL_SECRET;
 
     if (!channelId || !channelSecret) {
@@ -46,12 +46,12 @@ exports.handler = async function(event, context) {
 
     console.log(`Exchanging code for token with redirect URI: ${redirectUri}`);
 
-    // Exchange code for token
+    // Exchange code for token using the official LINE API endpoint
     const tokenResponse = await axios.post('https://api.line.me/oauth2/v2.1/token', 
       new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri: redirectUri || 'https://subdisth-que.netlify.app/auth/line/callback',
+        redirect_uri: redirectUri,
         client_id: channelId,
         client_secret: channelSecret
       }).toString(),

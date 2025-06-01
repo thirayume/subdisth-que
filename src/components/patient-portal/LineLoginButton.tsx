@@ -24,6 +24,8 @@ const LineLoginButton: React.FC<LineLoginButtonProps> = ({ onLoginSuccess }) => 
     
     // Generate and redirect to LINE login URL
     const loginUrl = lineService.generateLoginUrl(state);
+    
+    // Use window.location.href for proper redirect (not in frame)
     window.location.href = loginUrl;
   }, []);
 

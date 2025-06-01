@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { lineService } from '@/services/line.service';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 // Define interface for LINE profile
 interface LineProfile {
@@ -44,23 +45,52 @@ const LineCallback: React.FC = () => {
           throw new Error('No authorization code received');
         }
 
-        // Exchange code for token
+        console.log('Processing LINE callback with code:', code);
+
+        // Exchange code for token and get profile
         const tokenResponse = await lineService.exchangeToken(code);
         
         // Store token
         localStorage.setItem('lineToken', tokenResponse.access_token);
         
         // Extract and store profile information
+        let lineProfile: LineProfile;
         if (tokenResponse.profile) {
-          const lineProfile: LineProfile = tokenResponse.profile;
+          lineProfile = tokenResponse.profile;
+        } else {
+          // If no profile in the token response, try to fetch it separately
+          lineProfile = await lineService.getProfile(tokenResponse.access_token);
+        }
+        
+        console.log('LINE Profile Information:', lineProfile);
+        
+        // Store all profile information in localStorage
+        localStorage.setItem('lineProfile', JSON.stringify(lineProfile));
+        localStorage.setItem('lineUserId', lineProfile.userId);
+        
+        // Try to find existing patient with this LINE user ID
+        const { data: existingPatient, error: findError } = await supabase
+          .from('patients')
+          .select('*')
+          .eq('line_user_id', lineProfile.userId)
+          .single();
+
+        if (findError && findError.code !== 'PGRST116') {
+          console.error('Error finding patient:', findError);
+        }
+
+        if (existingPatient) {
+          // Patient already exists with this LINE account
+          console.log('Found existing patient:', existingPatient);
           
-          // Store all profile information in localStorage
-          localStorage.setItem('lineProfile', JSON.stringify(lineProfile));
-          localStorage.setItem('lineUserId', lineProfile.userId);
+          // Store user phone and navigate to patient portal
+          localStorage.setItem('userPhone', existingPatient.phone);
+          localStorage.setItem('lineToken', tokenResponse.access_token);
           
-          console.log('LINE Profile Information:', lineProfile);
-          
-          // Navigate to connect phone page with all profile information
+          toast.success('เข้าสู่ระบบสำเร็จ');
+          navigate('/patient-portal');
+        } else {
+          // No existing patient found, need to connect phone number
           navigate('/patient-portal/connect-phone', { 
             state: { 
               lineLoginSuccess: true,
@@ -70,43 +100,10 @@ const LineCallback: React.FC = () => {
               statusMessage: lineProfile.statusMessage
             }
           });
-          return;
-        } else {
-          // If no profile in the token response, try to fetch it separately
-          console.log('No profile in token response, fetching profile separately...');
-          try {
-            const profileResponse = await lineService.getProfile(tokenResponse.access_token);
-            const lineProfile: LineProfile = profileResponse;
-            
-            // Store all profile information in localStorage
-            localStorage.setItem('lineProfile', JSON.stringify(lineProfile));
-            localStorage.setItem('lineUserId', lineProfile.userId);
-            
-            console.log('Fetched LINE Profile Information:', lineProfile);
-            
-            // Navigate to connect phone page with all profile information
-            navigate('/patient-portal/connect-phone', { 
-              state: { 
-                lineLoginSuccess: true,
-                lineUserId: lineProfile.userId,
-                displayName: lineProfile.displayName,
-                pictureUrl: lineProfile.pictureUrl,
-                statusMessage: lineProfile.statusMessage
-              }
-            });
-            return;
-          } catch (profileError) {
-            console.error('Error fetching LINE profile:', profileError);
-            // Continue with the flow, but without profile information
-          }
         }
         
         // Clean up
         localStorage.removeItem('lineLoginState');
-        
-        // Default navigation if no profile
-        navigate('/patient-portal');
-        toast.success('เข้าสู่ระบบสำเร็จ');
       } catch (err) {
         console.error('LINE callback error:', err);
         setError(err instanceof Error ? err.message : 'Unknown error occurred');
