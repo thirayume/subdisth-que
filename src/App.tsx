@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -52,10 +51,10 @@ function App() {
               <Route path="/appointments" element={<Layout><Appointments /></Layout>} />
               <Route path="/queue/create" element={<CreateQueue />} />
               <Route path="/queue-ticket" element={<QueueTicket />} />
-              <Route path="/pharmacy" element={<Layout><PharmacyQueue /></Layout>} />
+              <Route path="/pharmacy" element={<Layout fullWidth><PharmacyQueue /></Layout>} />
               <Route path="/service-point-queue" element={<Layout><ServicePointQueue /></Layout>} />
               <Route path="/queue-history" element={<Layout><QueueHistory /></Layout>} />
-              <Route path="/test-dashboard" element={<Layout><TestDashboard /></Layout>} />
+              <Route path="/test-dashboard" element={<TestDashboard />} />
               <Route path="/patient-portal" element={<PatientPortal />} />
               <Route path="/patient-portal/connect-phone" element={<ConnectPhone />} />
               <Route path="/auth/line/callback" element={<LineCallback />} />

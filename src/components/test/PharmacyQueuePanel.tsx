@@ -16,7 +16,7 @@ const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
 }) => {
   if (!servicePointId) {
     return (
-      <Card>
+      <Card className="h-full">
         <CardHeader>
           <CardTitle>{title}</CardTitle>
         </CardHeader>
@@ -30,11 +30,11 @@ const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="h-full flex flex-col">
+      <CardHeader className="flex-shrink-0">
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 overflow-hidden p-0">
         <PharmacyQueueTabs
           servicePointId={servicePointId}
           refreshTrigger={refreshTrigger}

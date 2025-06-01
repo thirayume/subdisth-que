@@ -6,9 +6,10 @@ import Sidebar from './Sidebar';
 interface LayoutProps {
   children: React.ReactNode;
   className?: string;
+  fullWidth?: boolean;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, className }) => {
+const Layout: React.FC<LayoutProps> = ({ children, className, fullWidth = false }) => {
   const [mounted, setMounted] = React.useState(false);
   
   // Wait for component to mount to avoid hydration mismatch
@@ -43,7 +44,10 @@ const Layout: React.FC<LayoutProps> = ({ children, className }) => {
           className
         )}
       >
-        <div className="container mx-auto p-6 animate-fade-in">
+        <div className={cn(
+          "animate-fade-in",
+          fullWidth ? "w-full h-full" : "container mx-auto p-6"
+        )}>
           {/* Debug overlay in development */}
           {process.env.NODE_ENV === 'development' && (
             <div className="fixed top-2 right-2 bg-black/70 text-white text-xs p-1 rounded z-50">

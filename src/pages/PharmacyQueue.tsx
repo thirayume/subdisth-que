@@ -1,6 +1,5 @@
 
 import React, { useState, useCallback } from 'react';
-import Layout from '@/components/layout/Layout';
 import { useServicePointContext } from '@/contexts/ServicePointContext';
 import { MedicationsProvider } from '@/components/medications/context/MedicationsContext';
 import PharmacyQueueHeader from '@/components/pharmacy-queue/PharmacyQueueHeader';
@@ -30,24 +29,22 @@ const PharmacyQueue = () => {
   }, []);
 
   if (loadingServicePoints) {
-    return (
-      <Layout>
-        <PharmacyQueueLoading />
-      </Layout>
-    );
+    return <PharmacyQueueLoading />;
   }
 
   return (
     <MedicationsProvider>
-      <Layout className="overflow-hidden">
-        <div className="flex flex-col h-[calc(100vh-2rem)]">
+      <div className="flex flex-col h-screen overflow-hidden">
+        <div className="p-6 border-b bg-white">
           <PharmacyQueueHeader
             selectedServicePoint={selectedServicePoint}
             servicePoints={servicePoints}
             onServicePointChange={handleServicePointChange}
             onRefresh={handleManualRefresh}
           />
+        </div>
 
+        <div className="flex-1 overflow-hidden">
           {!selectedServicePoint ? (
             <PharmacyQueueEmptyState />
           ) : (
@@ -57,7 +54,7 @@ const PharmacyQueue = () => {
             />
           )}
         </div>
-      </Layout>
+      </div>
     </MedicationsProvider>
   );
 };
