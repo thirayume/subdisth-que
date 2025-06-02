@@ -47,6 +47,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
   onTransferQueue,
   onHoldQueue,
   onReturnToWaiting,
+  onViewPatientInfo,
   selectedServicePoint,
   servicePoints,
   getIntelligentServicePointSuggestion
@@ -142,6 +143,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
                   getPatientName={getPatientName}
                   onUpdateStatus={onUpdateStatus}
                   onCallQueue={onCallQueue}
+                  onViewPatientInfo={onViewPatientInfo}
                   status="WAITING"
                   selectedServicePoint={selectedServicePoint}
                   servicePoints={servicePoints}
@@ -162,6 +164,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
                   onRecallQueue={onRecallQueue}
                   onTransferQueue={onTransferQueue ? handleTransferQueue : undefined}
                   onHoldQueue={onHoldQueue ? handleHoldQueue : undefined}
+                  onViewPatientInfo={onViewPatientInfo}
                   status="ACTIVE"
                   selectedServicePoint={selectedServicePoint}
                   servicePoints={servicePoints}
@@ -181,6 +184,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
                   onUpdateStatus={onUpdateStatus}
                   onCallQueue={onCallQueue}
                   onReturnToWaiting={onReturnToWaiting}
+                  onViewPatientInfo={onViewPatientInfo}
                   status="WAITING"
                   selectedServicePoint={selectedServicePoint}
                   servicePoints={servicePoints}
@@ -199,6 +203,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
                   getPatientName={getPatientName}
                   onUpdateStatus={onUpdateStatus}
                   onReturnToWaiting={onReturnToWaiting}
+                  onViewPatientInfo={onViewPatientInfo}
                   status="SKIPPED"
                   selectedServicePoint={selectedServicePoint}
                   servicePoints={servicePoints}
@@ -215,6 +220,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
                 <QueueList
                   queues={completedQueues}
                   getPatientName={getPatientName}
+                  onViewPatientInfo={onViewPatientInfo}
                   status="COMPLETED"
                   selectedServicePoint={selectedServicePoint}
                   servicePoints={servicePoints}

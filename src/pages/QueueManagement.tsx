@@ -5,7 +5,7 @@ import QueueManagementContainer from '@/components/queue/management/QueueManagem
 
 const QueueManagement = () => {
   return (
-    <Layout className="overflow-hidden">
+    <Layout className="overflow-hidden p-0">
       <QueueManagementContainer />
     </Layout>
   );

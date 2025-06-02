@@ -2,8 +2,11 @@
 import React from 'react';
 import QueueManagementHeader from './QueueManagementHeader';
 import QueueTabsContainer from './QueueTabsContainer';
+import PatientInfoDialog from '../PatientInfoDialog';
 import { useQueueManagement } from '@/hooks/queue/useQueueManagement';
 import { useQueueRealtime } from '@/hooks/useQueueRealtime';
+import { usePatients } from '@/hooks/usePatients';
+import { Patient } from '@/integrations/supabase/schema';
 
 const QueueManagementContainer: React.FC = () => {
   const {
@@ -26,6 +29,19 @@ const QueueManagementContainer: React.FC = () => {
     updateQueueStatus,
     getIntelligentServicePointSuggestion
   } = useQueueManagement();
+
+  // Patient info dialog state
+  const [patientInfoOpen, setPatientInfoOpen] = React.useState(false);
+  const [selectedPatient, setSelectedPatient] = React.useState<Patient | null>(null);
+
+  // Handle patient info view
+  const handleViewPatientInfo = (patientId: string) => {
+    const patient = patients.find(p => p.id === patientId);
+    if (patient) {
+      setSelectedPatient(patient);
+      setPatientInfoOpen(true);
+    }
+  };
 
   // Add dedicated real-time updates for queue management
   useQueueRealtime({
@@ -78,11 +94,19 @@ const QueueManagementContainer: React.FC = () => {
           onTransferQueue={handleTransferQueue}
           onHoldQueue={handleHoldQueue}
           onReturnToWaiting={handleReturnToWaiting}
+          onViewPatientInfo={handleViewPatientInfo}
           selectedServicePoint={selectedServicePoint}
           servicePoints={servicePoints}
           getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
         />
       </div>
+
+      {/* Patient Info Dialog */}
+      <PatientInfoDialog
+        isOpen={patientInfoOpen}
+        onClose={() => setPatientInfoOpen(false)}
+        patient={selectedPatient}
+      />
     </div>
   );
 };

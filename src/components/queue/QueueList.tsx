@@ -14,6 +14,7 @@ interface QueueListProps {
   onTransferQueue?: (queueId: string) => void;
   onHoldQueue?: (queueId: string) => void;
   onReturnToWaiting?: (queueId: string) => void;
+  onViewPatientInfo?: (patientId: string) => void;
   selectedServicePoint?: ServicePoint | null;
   servicePoints?: ServicePoint[];
   getIntelligentServicePointSuggestion?: (queue: Queue) => ServicePoint | null;
@@ -30,6 +31,7 @@ const QueueList: React.FC<QueueListProps> = ({
   onTransferQueue,
   onHoldQueue,
   onReturnToWaiting,
+  onViewPatientInfo,
   selectedServicePoint,
   servicePoints = [],
   getIntelligentServicePointSuggestion,
@@ -181,6 +183,11 @@ const QueueList: React.FC<QueueListProps> = ({
                 onReturnToWaiting={
                   onReturnToWaiting && (status === 'SKIPPED' || isPausedQueue)
                     ? () => onReturnToWaiting(queue.id)
+                    : undefined
+                }
+                onViewPatientInfo={
+                  onViewPatientInfo 
+                    ? () => onViewPatientInfo(queue.patient_id)
                     : undefined
                 }
                 servicePointId={queue.service_point_id}
