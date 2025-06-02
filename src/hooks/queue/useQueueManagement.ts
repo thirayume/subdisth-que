@@ -218,35 +218,63 @@ export const useQueueManagement = () => {
     notes?: string,
     newQueueType?: string
   ): Promise<boolean> => {
-    const result = await transferQueueToServicePoint(
-      queueId, 
-      sourceServicePointId,
-      targetServicePointId,
-      notes,
-      newQueueType
-    );
-    
-    if (result) {
-      // Trigger recalculation of queue assignments for affected service points
-      logger.info('Queue transfer completed, triggering algorithm recalculation');
-      toast.success('โอนคิวเรียบร้อยแล้ว และปรับปรุงลำดับคิวอัตโนมัติ');
-      return true;
+    try {
+      const result = await transferQueueToServicePoint(
+        queueId, 
+        sourceServicePointId,
+        targetServicePointId,
+        notes,
+        newQueueType
+      );
+      
+      if (result) {
+        // Trigger recalculation of queue assignments for affected service points
+        logger.info('Queue transfer completed, triggering algorithm recalculation');
+        toast.success('โอนคิวเรียบร้อยแล้ว และปรับปรุงลำดับคิวอัตโนมัติ');
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      logger.error('Error in transfer queue:', error);
+      toast.error('ไม่สามารถโอนคิวได้');
+      return false;
     }
-    
-    return false;
   }, [transferQueueToServicePoint]);
   
   // Handler for holding queue
   const handleHoldQueue = useCallback(async (queueId: string, servicePointId: string, reason?: string): Promise<boolean> => {
-    const result = await putQueueOnHold(queueId, servicePointId, reason);
-    return !!result;
-  }, [putQueueOnHold]);
+    try {
+      const result = await putQueueOnHold(queueId, servicePointId, reason);
+      if (result) {
+        const queue = queues?.find(q => q.id === queueId);
+        toast.success(`พักคิวหมายเลข ${queue?.number || ''} เรียบร้อยแล้ว`);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      logger.error('Error holding queue:', error);
+      toast.error('ไม่สามารถพักคิวได้');
+      return false;
+    }
+  }, [putQueueOnHold, queues]);
   
   // Handler for returning skipped queue to waiting
   const handleReturnToWaiting = useCallback(async (queueId: string): Promise<boolean> => {
-    const result = await returnSkippedQueueToWaiting(queueId);
-    return !!result;
-  }, [returnSkippedQueueToWaiting]);
+    try {
+      const result = await returnSkippedQueueToWaiting(queueId);
+      if (result) {
+        const queue = queues?.find(q => q.id === queueId);
+        toast.success(`นำคิวหมายเลข ${queue?.number || ''} กลับมารอเรียบร้อยแล้ว`);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      logger.error('Error returning queue to waiting:', error);
+      toast.error('ไม่สามารถนำคิวกลับมารอได้');
+      return false;
+    }
+  }, [returnSkippedQueueToWaiting, queues]);
   
   // Handler for service point change (for manual assignment)
   const handleServicePointChange = useCallback((value: string) => {

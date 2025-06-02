@@ -3,10 +3,11 @@ import React from 'react';
 import QueueManagementHeader from './QueueManagementHeader';
 import QueueTabsContainer from './QueueTabsContainer';
 import PatientInfoDialog from '../../pharmacy/PatientInfoDialog';
+import QueueTransferDialogContainer from './QueueTransferDialogContainer';
 import { useQueueManagement } from '@/hooks/queue/useQueueManagement';
 import { useQueueRealtime } from '@/hooks/useQueueRealtime';
 import { usePatients } from '@/hooks/usePatients';
-import { Patient } from '@/integrations/supabase/schema';
+import { Patient, Queue } from '@/integrations/supabase/schema';
 
 const QueueManagementContainer: React.FC = () => {
   const {
@@ -34,12 +35,25 @@ const QueueManagementContainer: React.FC = () => {
   const [patientInfoOpen, setPatientInfoOpen] = React.useState(false);
   const [selectedPatient, setSelectedPatient] = React.useState<Patient | null>(null);
 
+  // Transfer dialog state
+  const [transferDialogOpen, setTransferDialogOpen] = React.useState(false);
+  const [queueToTransfer, setQueueToTransfer] = React.useState<Queue | null>(null);
+
   // Handle patient info view
   const handleViewPatientInfo = (patientId: string) => {
     const patient = patients.find(p => p.id === patientId);
     if (patient) {
       setSelectedPatient(patient);
       setPatientInfoOpen(true);
+    }
+  };
+
+  // Handle transfer queue button click
+  const handleTransferQueueClick = (queueId: string) => {
+    const queue = activeQueues.find(q => q.id === queueId);
+    if (queue) {
+      setQueueToTransfer(queue);
+      setTransferDialogOpen(true);
     }
   };
 
@@ -98,6 +112,7 @@ const QueueManagementContainer: React.FC = () => {
           selectedServicePoint={selectedServicePoint}
           servicePoints={servicePoints}
           getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+          onTransferQueueClick={handleTransferQueueClick}
         />
       </div>
 
@@ -106,6 +121,16 @@ const QueueManagementContainer: React.FC = () => {
         open={patientInfoOpen}
         onOpenChange={setPatientInfoOpen}
         patient={selectedPatient}
+      />
+
+      {/* Transfer Dialog */}
+      <QueueTransferDialogContainer
+        queueToTransfer={queueToTransfer}
+        transferDialogOpen={transferDialogOpen}
+        onOpenChange={setTransferDialogOpen}
+        servicePoints={servicePoints}
+        queueTypes={queueTypes}
+        onTransfer={handleTransferQueue}
       />
     </div>
   );
