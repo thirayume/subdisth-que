@@ -30,10 +30,12 @@ const SettingsContent: React.FC = () => {
 
 const Settings = () => {
   return (
-    <Layout>
-      <SettingsProvider>
-        <SettingsContent />
-      </SettingsProvider>
+    <Layout fullWidth={true}>
+      <div className="container mx-auto p-6">
+        <SettingsProvider>
+          <SettingsContent />
+        </SettingsProvider>
+      </div>
     </Layout>
   );
 };

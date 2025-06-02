@@ -16,11 +16,13 @@ const Analytics = () => {
   };
 
   return (
-    <Layout>
-      <DirectionProvider dir="ltr">
-        <AnalyticsHeader />
-        <AnalyticsContainer queues={queues} sortQueues={sortQueuesWrapper} />
-      </DirectionProvider>
+    <Layout fullWidth={true}>
+      <div className="container mx-auto p-6">
+        <DirectionProvider dir="ltr">
+          <AnalyticsHeader />
+          <AnalyticsContainer queues={queues} sortQueues={sortQueuesWrapper} />
+        </DirectionProvider>
+      </div>
     </Layout>
   );
 };

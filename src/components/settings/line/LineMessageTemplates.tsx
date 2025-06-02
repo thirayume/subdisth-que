@@ -25,6 +25,7 @@ const LineMessageTemplates: React.FC<LineMessageTemplatesProps> = ({
       <div className="rounded-lg border p-4">
         <div className="flex justify-between items-center mb-2">
           <h4 className="text-sm font-medium">ข้อความต้อนรับ</h4>
+          {/* Commented out test message button as requested
           {!isEditing && handleTestMessage && (
             <Button 
               size="sm" 
@@ -37,6 +38,7 @@ const LineMessageTemplates: React.FC<LineMessageTemplatesProps> = ({
               ทดสอบส่ง
             </Button>
           )}
+          */}
         </div>
         <Textarea 
           value={lineSettings.welcomeMessage} 
@@ -49,6 +51,7 @@ const LineMessageTemplates: React.FC<LineMessageTemplatesProps> = ({
       <div className="rounded-lg border p-4">
         <div className="flex justify-between items-center mb-2">
           <h4 className="text-sm font-medium">ข้อความเมื่อรับคิว</h4>
+          {/* Commented out test message button as requested
           {!isEditing && handleTestMessage && (
             <Button 
               size="sm" 
@@ -61,6 +64,7 @@ const LineMessageTemplates: React.FC<LineMessageTemplatesProps> = ({
               ทดสอบส่ง
             </Button>
           )}
+          */}
         </div>
         <Textarea 
           value={lineSettings.queueReceivedMessage} 
@@ -76,6 +80,7 @@ const LineMessageTemplates: React.FC<LineMessageTemplatesProps> = ({
       <div className="rounded-lg border p-4">
         <div className="flex justify-between items-center mb-2">
           <h4 className="text-sm font-medium">ข้อความเมื่อเรียกคิว</h4>
+          {/* Commented out test message button as requested
           {!isEditing && handleTestMessage && (
             <Button 
               size="sm" 
@@ -88,6 +93,7 @@ const LineMessageTemplates: React.FC<LineMessageTemplatesProps> = ({
               ทดสอบส่ง
             </Button>
           )}
+          */}
         </div>
         <Textarea 
           value={lineSettings.queueCalledMessage} 

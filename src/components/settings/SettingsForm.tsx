@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Form } from '@/components/ui/form';
+import { TabsContent } from '@/components/ui/tabs';
 import QueueSettings from './QueueSettings';
 import GeneralSettings from './GeneralSettings';
 import LineSettings from './LineSettings';
@@ -27,14 +28,16 @@ const SettingsForm: React.FC = () => {
 
   return (
     <Form {...settings.form}>
-      <div className="space-y-6">
+      <TabsContent value="general" className="space-y-6">
         <GeneralSettings form={settings.form} />
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <ServicePointSettings />
           <ServicePointQueueTypeSettings />
         </div>
-        
+      </TabsContent>
+
+      <TabsContent value="queue" className="space-y-6">
         <form onSubmit={settings.form.handleSubmit(onSubmit)} className="space-y-6">
           <QueueSettings 
             form={settings.form}
@@ -53,11 +56,11 @@ const SettingsForm: React.FC = () => {
           />
           <SettingsFormActions isSubmitting={isSubmitting} />
         </form>
-        
-        <div className="space-y-6">
-          <LineSettings />
-        </div>
-      </div>
+      </TabsContent>
+      
+      <TabsContent value="line" className="space-y-6">
+        <LineSettings />
+      </TabsContent>
     </Form>
   );
 };

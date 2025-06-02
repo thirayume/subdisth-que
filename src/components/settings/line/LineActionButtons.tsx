@@ -29,6 +29,7 @@ const LineActionButtons: React.FC<LineActionButtonsProps> = ({
           <Button variant="outline" onClick={handleEdit}>
             แก้ไขการเชื่อมต่อ
           </Button>
+          {/* Commented out test connection button as requested
           <Button 
             onClick={handleTestConnection} 
             disabled={isTesting}
@@ -43,6 +44,7 @@ const LineActionButtons: React.FC<LineActionButtonsProps> = ({
               <>ทดสอบการเชื่อมต่อ</>
             )}
           </Button>
+          */}
         </>
       ) : (
         <>

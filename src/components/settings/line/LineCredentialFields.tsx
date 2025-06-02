@@ -45,7 +45,7 @@ const LineCredentialFields: React.FC<LineCredentialFieldsProps> = ({
               </TooltipProvider>
             </div>
             <Input 
-              value={isEditing ? lineSettings.channelId : lineSettings.channelId.replace(/./g, '•')} 
+              value={lineSettings.channelId} 
               onChange={(e) => handleChange('channelId', e.target.value)}
               disabled={!isEditing} 
               className={!isEditing ? "bg-gray-50" : errors.channelId ? "border-red-500" : ""}
@@ -128,7 +128,7 @@ const LineCredentialFields: React.FC<LineCredentialFieldsProps> = ({
               </TooltipProvider>
             </div>
             <Input 
-              value={isEditing ? (lineSettings.loginChannelId || '') : (lineSettings.loginChannelId || '').replace(/./g, '•')} 
+              value={lineSettings.loginChannelId || ''} 
               onChange={(e) => handleChange('loginChannelId', e.target.value)}
               disabled={!isEditing} 
               className={!isEditing ? "bg-gray-50" : errors.loginChannelId ? "border-red-500" : ""}
@@ -169,7 +169,7 @@ const LineCredentialFields: React.FC<LineCredentialFieldsProps> = ({
           <div>
             <FormLabel>Callback URL</FormLabel>
             <Input 
-              value={isEditing ? (lineSettings.callbackUrl || '') : (lineSettings.callbackUrl || '')} 
+              value={lineSettings.callbackUrl || ''} 
               onChange={(e) => handleChange('callbackUrl', e.target.value)}
               disabled={!isEditing} 
               className={!isEditing ? "bg-gray-50" : errors.callbackUrl ? "border-red-500" : ""}
@@ -182,7 +182,7 @@ const LineCredentialFields: React.FC<LineCredentialFieldsProps> = ({
           <div>
             <FormLabel>LIFF ID</FormLabel>
             <Input 
-              value={isEditing ? (lineSettings.liffId || '') : (lineSettings.liffId || '')} 
+              value={lineSettings.liffId || ''} 
               onChange={(e) => handleChange('liffId', e.target.value)}
               disabled={!isEditing} 
               className={!isEditing ? "bg-gray-50" : ""}
