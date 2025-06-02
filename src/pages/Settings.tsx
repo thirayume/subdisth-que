@@ -19,7 +19,7 @@ const SettingsContent: React.FC = () => {
     <>
       <div className="flex items-center justify-between mb-6">
         <SettingsHeader />
-        <ServicePointSelector />
+        {/* <ServicePointSelector /> */}
       </div>
       <SettingsTabs>
         <SettingsForm />
