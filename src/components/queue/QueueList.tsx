@@ -38,35 +38,58 @@ const QueueList: React.FC<QueueListProps> = ({
   const [selectorQueue, setSelectorQueue] = useState<Queue | null>(null);
   const [suggestedServicePoint, setSuggestedServicePoint] = useState<ServicePoint | null>(null);
 
+  // Enhanced empty state messages based on status and paused state
+  const getEmptyStateMessage = () => {
+    const isPausedTab = queues.some(q => q.paused_at); // Check if this is the paused tab
+    
+    if (isPausedTab) {
+      return {
+        title: 'ไม่มีคิวที่พัก',
+        description: 'ไม่มีคิวที่ถูกพักไว้'
+      };
+    }
+
+    switch (status) {
+      case 'WAITING':
+        return {
+          title: 'ไม่มีคิวที่รอดำเนินการ',
+          description: 'ไม่พบคิวที่รอดำเนินการ'
+        };
+      case 'ACTIVE':
+        return {
+          title: 'ไม่มีคิวที่กำลังให้บริการ',
+          description: 'ไม่มีคิวที่กำลังให้บริการ'
+        };
+      case 'COMPLETED':
+        return {
+          title: 'ไม่มีคิวที่เสร็จสิ้น',
+          description: 'ไม่มีคิวที่เสร็จสิ้นแล้ว'
+        };
+      case 'SKIPPED':
+        return {
+          title: 'ไม่มีคิวที่ถูกข้าม',
+          description: 'ไม่มีคิวที่ถูกข้าม'
+        };
+      default:
+        return {
+          title: 'ไม่มีคิวในสถานะนี้',
+          description: 'ไม่พบคิวในสถานะนี้'
+        };
+    }
+  };
+
   // Show empty state if no queues
   if (queues.length === 0) {
+    const emptyState = getEmptyStateMessage();
+    
     return (
       <div className="flex items-center justify-center h-full min-h-[400px]">
         <div className="text-center p-8">
           <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
             <div className="w-8 h-8 bg-gray-300 rounded opacity-50"></div>
           </div>
-          <p className="text-gray-500 mb-2 font-medium">ไม่มีคิวในสถานะนี้</p>
-          {status === 'WAITING' && (
-            <p className="text-sm text-gray-400">
-              ไม่พบคิวที่รอดำเนินการ
-            </p>
-          )}
-          {status === 'ACTIVE' && (
-            <p className="text-sm text-gray-400">
-              ไม่มีคิวที่กำลังให้บริการ
-            </p>
-          )}
-          {status === 'COMPLETED' && (
-            <p className="text-sm text-gray-400">
-              ไม่มีคิวที่เสร็จสิ้นแล้ว
-            </p>
-          )}
-          {status === 'SKIPPED' && (
-            <p className="text-sm text-gray-400">
-              ไม่มีคิวที่ถูกข้าม
-            </p>
-          )}
+          <p className="text-gray-500 mb-2 font-medium">{emptyState.title}</p>
+          <p className="text-sm text-gray-400">{emptyState.description}</p>
         </div>
       </div>
     );
@@ -117,6 +140,9 @@ const QueueList: React.FC<QueueListProps> = ({
               ? getIntelligentServicePointSuggestion(queue)
               : null;
 
+            // Determine if this is a paused queue
+            const isPausedQueue = !!queue.paused_at;
+
             return (
               <QueueCard
                 key={queue.id}
@@ -128,12 +154,12 @@ const QueueList: React.FC<QueueListProps> = ({
                     : undefined
                 }
                 onSkip={
-                  onUpdateStatus && status === 'WAITING'
+                  onUpdateStatus && (status === 'WAITING' || status === 'ACTIVE')
                     ? () => onUpdateStatus(queue.id, 'SKIPPED')
                     : undefined
                 }
                 onCall={
-                  onCallQueue && status === 'WAITING'
+                  onCallQueue && (status === 'WAITING' || isPausedQueue)
                     ? () => handleCallQueue(queue)
                     : undefined
                 }
@@ -153,7 +179,7 @@ const QueueList: React.FC<QueueListProps> = ({
                     : undefined
                 }
                 onReturnToWaiting={
-                  onReturnToWaiting && status === 'SKIPPED'
+                  onReturnToWaiting && (status === 'SKIPPED' || isPausedQueue)
                     ? () => onReturnToWaiting(queue.id)
                     : undefined
                 }

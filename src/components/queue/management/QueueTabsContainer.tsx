@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Queue, Patient, ServicePoint } from '@/integrations/supabase/schema';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Users, CheckCircle, SkipForward } from 'lucide-react';
+import { Clock, Users, CheckCircle, SkipForward, Pause } from 'lucide-react';
 import QueueList from '../QueueList';
 import { QueueStatus } from '@/integrations/supabase/schema';
 import { QueueTransferDialog } from '@/components/queue/transfer';
@@ -57,6 +57,10 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
   const [transferDialogOpen, setTransferDialogOpen] = React.useState(false);
   const [queueToTransfer, setQueueToTransfer] = React.useState<Queue | null>(null);
 
+  // Filter paused queues from waiting queues (queues with paused_at timestamp)
+  const pausedQueues = waitingQueues.filter(q => q.paused_at);
+  const actualWaitingQueues = waitingQueues.filter(q => !q.paused_at);
+
   // Get patient name by ID
   const getPatientName = (patientId: string) => {
     const patient = patients.find(p => p.id === patientId);
@@ -85,28 +89,28 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
       <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
         {/* Enhanced Tab Header */}
         <div className="border-b bg-gray-50/50 px-6 py-3">
-          <TabsList className="grid w-full grid-cols-4 bg-white shadow-sm">
+          <TabsList className="grid w-full grid-cols-5 bg-white shadow-sm">
             <TabsTrigger value="waiting" className="flex items-center gap-2 data-[state=active]:bg-orange-50 data-[state=active]:text-orange-700">
               <Clock className="w-4 h-4" />
-              รอดำเนินการ
+              รอ
               <Badge variant="secondary" className="bg-orange-100 text-orange-700">
-                {waitingQueues.length}
+                {actualWaitingQueues.length}
               </Badge>
             </TabsTrigger>
             
             <TabsTrigger value="active" className="flex items-center gap-2 data-[state=active]:bg-green-50 data-[state=active]:text-green-700">
               <Users className="w-4 h-4" />
-              กำลังให้บริการ
+              กำลังบริการ
               <Badge variant="secondary" className="bg-green-100 text-green-700">
                 {activeQueues.length}
               </Badge>
             </TabsTrigger>
-            
-            <TabsTrigger value="completed" className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
-              <CheckCircle className="w-4 h-4" />
-              เสร็จสิ้น
+
+            <TabsTrigger value="paused" className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
+              <Pause className="w-4 h-4" />
+              พัก
               <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                {completedQueues.length}
+                {pausedQueues.length}
               </Badge>
             </TabsTrigger>
             
@@ -115,6 +119,14 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
               ข้าม
               <Badge variant="secondary" className="bg-amber-100 text-amber-700">
                 {skippedQueues.length}
+              </Badge>
+            </TabsTrigger>
+
+            <TabsTrigger value="completed" className="flex items-center gap-2 data-[state=active]:bg-gray-50 data-[state=active]:text-gray-700">
+              <CheckCircle className="w-4 h-4" />
+              เสร็จสิ้น
+              <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                {completedQueues.length}
               </Badge>
             </TabsTrigger>
           </TabsList>
@@ -126,7 +138,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
             <Card className="h-full border-0 shadow-none">
               <CardContent className="h-full p-0">
                 <QueueList
-                  queues={waitingQueues}
+                  queues={actualWaitingQueues}
                   getPatientName={getPatientName}
                   onUpdateStatus={onUpdateStatus}
                   onCallQueue={onCallQueue}
@@ -134,6 +146,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
                   selectedServicePoint={selectedServicePoint}
                   servicePoints={servicePoints}
                   getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+                  showServicePointInfo={true}
                 />
               </CardContent>
             </Card>
@@ -153,21 +166,26 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
                   selectedServicePoint={selectedServicePoint}
                   servicePoints={servicePoints}
                   getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+                  showServicePointInfo={true}
                 />
               </CardContent>
             </Card>
           </TabsContent>
-          
-          <TabsContent value="completed" className="h-full m-0">
+
+          <TabsContent value="paused" className="h-full m-0">
             <Card className="h-full border-0 shadow-none">
               <CardContent className="h-full p-0">
                 <QueueList
-                  queues={completedQueues}
+                  queues={pausedQueues}
                   getPatientName={getPatientName}
-                  status="COMPLETED"
+                  onUpdateStatus={onUpdateStatus}
+                  onCallQueue={onCallQueue}
+                  onReturnToWaiting={onReturnToWaiting}
+                  status="WAITING"
                   selectedServicePoint={selectedServicePoint}
                   servicePoints={servicePoints}
                   getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+                  showServicePointInfo={true}
                 />
               </CardContent>
             </Card>
@@ -185,6 +203,23 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
                   selectedServicePoint={selectedServicePoint}
                   servicePoints={servicePoints}
                   getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+                  showServicePointInfo={true}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="completed" className="h-full m-0">
+            <Card className="h-full border-0 shadow-none">
+              <CardContent className="h-full p-0">
+                <QueueList
+                  queues={completedQueues}
+                  getPatientName={getPatientName}
+                  status="COMPLETED"
+                  selectedServicePoint={selectedServicePoint}
+                  servicePoints={servicePoints}
+                  getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+                  showServicePointInfo={true}
                 />
               </CardContent>
             </Card>

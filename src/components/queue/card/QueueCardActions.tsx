@@ -1,8 +1,11 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Check, SkipForward, PhoneCall, PhoneForwarded, RotateCcw, ArrowRightFromLine, User, X } from 'lucide-react';
+import { Check, SkipForward, PhoneCall, PhoneForwarded, RotateCcw, ArrowRightFromLine, User, X, Volume2, Pause } from 'lucide-react';
 import { Queue } from '@/integrations/supabase/schema';
+import { announceQueue } from '@/utils/textToSpeech';
+import { getServicePointById } from '@/utils/servicePointUtils';
+import { toast } from 'sonner';
 
 interface QueueCardActionsProps {
   queue: Queue;
@@ -31,37 +34,70 @@ const QueueCardActions: React.FC<QueueCardActionsProps> = ({
   onCancel,
   isPharmacyInterface = false
 }) => {
+  // Function to handle queue announcement
+  const handleAnnounceQueue = async () => {
+    try {
+      // Get service point information if available
+      const servicePointInfo = queue.service_point_id 
+        ? await getServicePointById(queue.service_point_id)
+        : null;
+      
+      // Use counter name from localStorage as fallback
+      const counterName = localStorage.getItem('queue_counter_name') || '1';
+      
+      await announceQueue(
+        queue.number,
+        servicePointInfo || { code: '', name: counterName },
+        queue.type
+      );
+      toast.info(`ประกาศเสียงเรียกคิวหมายเลข ${queue.number} เรียบร้อยแล้ว`);
+    } catch (error) {
+      console.error("Error announcing queue:", error);
+      toast.error("ไม่สามารถประกาศเสียงเรียกคิวได้");
+    }
+  };
+
+  const isPausedQueue = !!queue.paused_at;
+
   return (
     <>
-      {/* Patient Info Button - Show for waiting and active queues */}
-      {onViewPatientInfo && (queue.status === 'ACTIVE' || queue.status === 'WAITING') && (
+      {/* Patient Info Button - Show for waiting, active, and paused queues */}
+      {onViewPatientInfo && (queue.status === 'ACTIVE' || queue.status === 'WAITING' || isPausedQueue) && (
         <Button variant="outline" size="sm" onClick={onViewPatientInfo}>
           <User className="h-4 w-4 mr-1" />
           ข้อมูลผู้ป่วย
         </Button>
       )}
       
-      {/* Cancel Queue - Show for waiting queues */}
-      {onCancel && queue.status === 'WAITING' && (
+      {/* Cancel Queue - Show for waiting queues (not paused) */}
+      {onCancel && queue.status === 'WAITING' && !isPausedQueue && (
         <Button variant="outline" size="sm" onClick={onCancel} className="border-red-200 text-red-700 hover:bg-red-50">
           <X className="h-4 w-4 mr-1" />
           ยกเลิก
         </Button>
       )}
       
-      {/* Return to Waiting - Show for skipped queues */}
-      {onReturnToWaiting && queue.status === 'SKIPPED' && (
+      {/* Return to Waiting - Show for skipped queues or paused queues */}
+      {onReturnToWaiting && (queue.status === 'SKIPPED' || isPausedQueue) && (
         <Button variant="outline" size="sm" onClick={onReturnToWaiting}>
           <RotateCcw className="h-4 w-4 mr-1" />
-          กลับรอคิว
+          {isPausedQueue ? 'คืนสู่คิว' : 'กลับรอคิว'}
+        </Button>
+      )}
+      
+      {/* Announce Button - Show for active queues */}
+      {queue.status === 'ACTIVE' && (
+        <Button variant="outline" size="sm" onClick={handleAnnounceQueue} className="border-blue-200 text-blue-700 hover:bg-blue-50">
+          <Volume2 className="h-4 w-4 mr-1" />
+          ประกาศ
         </Button>
       )}
       
       {/* Hold Queue - Show for active queues */}
       {onHold && queue.status === 'ACTIVE' && (
         <Button variant="outline" size="sm" onClick={onHold}>
-          <SkipForward className="h-4 w-4 mr-1" />
-          พักคิว
+          <Pause className="h-4 w-4 mr-1" />
+          พัก
         </Button>
       )}
       
@@ -69,7 +105,7 @@ const QueueCardActions: React.FC<QueueCardActionsProps> = ({
       {onTransfer && queue.status === 'ACTIVE' && (
         <Button variant="outline" size="sm" onClick={onTransfer}>
           <ArrowRightFromLine className="h-4 w-4 mr-1" />
-          โอนคิว
+          โอน
         </Button>
       )}
       
@@ -87,15 +123,15 @@ const QueueCardActions: React.FC<QueueCardActionsProps> = ({
       )}
       
       {/* Skip Queue - Show for waiting and active queues */}
-      {onSkip && (queue.status === 'WAITING' || queue.status === 'ACTIVE') && (
+      {onSkip && (queue.status === 'WAITING' || queue.status === 'ACTIVE') && !isPausedQueue && (
         <Button variant="outline" size="sm" onClick={onSkip}>
           <SkipForward className="h-4 w-4 mr-1" />
           ข้าม
         </Button>
       )}
       
-      {/* Call Queue - Primary action for waiting queues */}
-      {onCall && queue.status === 'WAITING' && (
+      {/* Call Queue - Primary action for waiting queues (including paused) */}
+      {onCall && (queue.status === 'WAITING' || isPausedQueue) && (
         <Button 
           variant="default" 
           size="sm" 
