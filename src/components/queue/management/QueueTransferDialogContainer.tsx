@@ -1,7 +1,7 @@
 
 import * as React from 'react';
 import { Queue, ServicePoint } from '@/integrations/supabase/schema';
-import { QueueTransferDialog } from '@/components/queue/transfer';
+import { QueueTransferDialog } from '@/components/test/pharmacy-queue';
 import { QueueType } from '@/hooks/useQueueTypes';
 
 interface QueueTransferDialogContainerProps {
@@ -27,17 +27,26 @@ const QueueTransferDialogContainer: React.FC<QueueTransferDialogContainerProps> 
   queueTypes,
   onTransfer
 }) => {
-  if (!onTransfer) return null;
+  if (!onTransfer || !queueToTransfer) return null;
+
+  // Handle the simple transfer - just pass the target service point
+  const handleSimpleTransfer = async (targetServicePointId: string) => {
+    if (!queueToTransfer.service_point_id) return;
+    
+    await onTransfer(
+      queueToTransfer.id,
+      queueToTransfer.service_point_id,
+      targetServicePointId
+    );
+  };
 
   return (
     <QueueTransferDialog
-      queue={queueToTransfer}
       open={transferDialogOpen}
       onOpenChange={onOpenChange}
+      onTransfer={handleSimpleTransfer}
       servicePoints={servicePoints}
-      queueTypes={queueTypes}
-      currentServicePointId={queueToTransfer?.service_point_id}
-      onTransfer={onTransfer}
+      currentServicePointId={queueToTransfer.service_point_id || ''}
     />
   );
 };
