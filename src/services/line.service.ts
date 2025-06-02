@@ -88,7 +88,7 @@ class LineService {
     try {
       const settings = await this.ensureSettings();
       
-      const response = await axios.post('/api/line-token-exchange', {
+      const response = await axios.post('/.netlify/functions/line-token-exchange', {
         code,
         redirectUri: settings.callback_url,
         clientId: settings.login_channel_id,
