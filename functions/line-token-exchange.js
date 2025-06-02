@@ -21,7 +21,14 @@ exports.handler = async function(event, context) {
   try {
     // Parse the request body
     const requestBody = JSON.parse(event.body);
-    const { code, redirectUri } = requestBody;
+    const { code, redirectUri, clientId, clientSecret } = requestBody;
+
+    console.log('LINE token exchange request received:', {
+      hasCode: !!code,
+      redirectUri,
+      hasClientId: !!clientId,
+      hasClientSecret: !!clientSecret
+    });
 
     if (!code) {
       return {
@@ -31,16 +38,12 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // LINE API credentials
-    const channelId = process.env.VITE_LINE_CHANNEL_ID || '2006508726';
-    const channelSecret = process.env.LINE_CHANNEL_SECRET;
-
-    if (!channelId || !channelSecret) {
-      console.error('LINE credentials not configured');
+    if (!clientId || !clientSecret) {
+      console.error('Missing LINE credentials in request body');
       return {
-        statusCode: 500,
+        statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Server configuration error' })
+        body: JSON.stringify({ error: 'Client ID and Client Secret are required' })
       };
     }
 
@@ -52,8 +55,8 @@ exports.handler = async function(event, context) {
         grant_type: 'authorization_code',
         code,
         redirect_uri: redirectUri,
-        client_id: channelId,
-        client_secret: channelSecret
+        client_id: clientId,
+        client_secret: clientSecret
       }).toString(),
       {
         headers: {
