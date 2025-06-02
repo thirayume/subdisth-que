@@ -2,7 +2,7 @@
 import React from 'react';
 import QueueManagementHeader from './QueueManagementHeader';
 import QueueTabsContainer from './QueueTabsContainer';
-import PatientInfoDialog from '../PatientInfoDialog';
+import PatientInfoDialog from '../../pharmacy/PatientInfoDialog';
 import { useQueueManagement } from '@/hooks/queue/useQueueManagement';
 import { useQueueRealtime } from '@/hooks/useQueueRealtime';
 import { usePatients } from '@/hooks/usePatients';
@@ -101,7 +101,7 @@ const QueueManagementContainer: React.FC = () => {
         />
       </div>
 
-      {/* Patient Info Dialog */}
+      {/* Patient Info Dialog - Using the pharmacy component */}
       <PatientInfoDialog
         isOpen={patientInfoOpen}
         onClose={() => setPatientInfoOpen(false)}
