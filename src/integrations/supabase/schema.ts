@@ -1,3 +1,4 @@
+
 export interface Patient {
   id: string;
   patient_id: string;
@@ -35,6 +36,7 @@ export interface Queue {
   skipped_at?: string;
   cancelled_at?: string;
   queue_date?: string;
+  paused_at?: string;
 }
 
 export type AppointmentStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
