@@ -25,6 +25,18 @@ export function convertServicePointCodeToThai(code: string): string {
 }
 
 /**
+ * Convert formatted queue number to Thai phonetics (each character individually)
+ */
+export function convertQueueNumberToThai(formattedQueueNumber: string): string {
+  if (!formattedQueueNumber) return '';
+  
+  return formattedQueueNumber.split('').map(char => {
+    const upperChar = char.toUpperCase();
+    return thaiLetterMap[upperChar] || char;
+  }).join(' ');
+}
+
+/**
  * Create service point announcement message
  */
 export function createServicePointAnnouncement(servicePointInfo: { code?: string; name?: string } | string): string {
@@ -67,11 +79,14 @@ export function createQueueAnnouncementMessage(
     // Format the queue number properly (e.g., A105, B001)
     const formattedQueueNumber = formatQueueNumber(validQueueType, queueNumber);
     
+    // Convert formatted queue number to Thai phonetics (each digit individually)
+    const phoneticQueueNumber = convertQueueNumberToThai(formattedQueueNumber);
+    
     // Create service point message
     const servicePointMessage = createServicePointAnnouncement(servicePointInfo);
     
     // Create the announcement message (removed "เชิญครับ")
-    return `ขอเชิญหมายเลข ${formattedQueueNumber} ${servicePointMessage}`;
+    return `ขอเชิญหมายเลข ${phoneticQueueNumber} ${servicePointMessage}`;
   } catch (error) {
     console.error('Error creating queue announcement message:', error);
     // Fallback to simple announcement
