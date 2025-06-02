@@ -1,148 +1,242 @@
-
+import { toast } from 'sonner';
 import { formatQueueNumber } from '@/utils/queueFormatters';
 import { QueueTypeEnum } from '@/integrations/supabase/schema';
 
-// Thai phonetic conversion for queue numbers
-const thaiNumbers: { [key: string]: string } = {
-  '0': 'ศูนย์',
-  '1': 'หนึ่ง',
-  '2': 'สอง',
-  '3': 'สาม',
-  '4': 'สี่',
-  '5': 'ห้า',
-  '6': 'หก',
-  '7': 'เจ็ด',
-  '8': 'แปด',
-  '9': 'เก้า'
-};
-
-const thaiLetters: { [key: string]: string } = {
-  'A': 'เอ',
-  'B': 'บี',
-  'C': 'ซี',
-  'D': 'ดี',
-  'E': 'อี',
-  'F': 'เอฟ',
-  'G': 'จี',
-  'H': 'เอช',
-  'I': 'ไอ',
-  'J': 'เจ',
-  'K': 'เค',
-  'L': 'แอล',
-  'M': 'เอ็ม',
-  'N': 'เอ็น',
-  'O': 'โอ',
-  'P': 'พี',
-  'Q': 'คิว',
-  'R': 'อาร์',
-  'S': 'เอส',
-  'T': 'ที',
-  'U': 'ยู',
-  'V': 'วี',
-  'W': 'ดับเบิลยู',
-  'X': 'เอ็กซ์',
-  'Y': 'วาย',
-  'Z': 'แซด'
-};
-
-// Convert formatted queue number to Thai phonetic pronunciation
-function convertToThaiPhonetic(formattedQueueNumber: string): string {
-  let result = '';
-  
-  for (let i = 0; i < formattedQueueNumber.length; i++) {
-    const char = formattedQueueNumber[i].toUpperCase();
-    
-    if (thaiLetters[char]) {
-      result += thaiLetters[char] + ' ';
-    } else if (thaiNumbers[char]) {
-      result += thaiNumbers[char] + ' ';
-    } else {
-      result += char + ' ';
-    }
-  }
-  
-  return result.trim();
+interface TextToSpeechOptions {
+  voice?: string;
+  rate?: number;
+  pitch?: number;
+  volume?: number;
+  language?: string;
+  debug?: boolean;
 }
 
-// Convert service point code to Thai phonetic pronunciation
-function convertServicePointCodeToThai(servicePointCode: string): string {
-  if (!servicePointCode) return '';
-  
-  let result = '';
-  
-  for (let i = 0; i < servicePointCode.length; i++) {
-    const char = servicePointCode[i].toUpperCase();
-    
-    if (thaiLetters[char]) {
-      result += thaiLetters[char] + ' ';
-    } else if (thaiNumbers[char]) {
-      result += thaiNumbers[char] + ' ';
-    } else {
-      result += char + ' ';
-    }
-  }
-  
-  return result.trim();
-}
-
-// Default TTS configuration
-const defaultTTSConfig = {
-  enabled: true,
+// Default options optimized for Thai language
+const defaultOptions: TextToSpeechOptions = {
+  voice: 'th',
+  rate: 1.0,
+  pitch: 1.0,
   volume: 1.0,
-  rate: 0.8,
-  language: 'th-TH'
+  language: 'th',
+  debug: false
 };
 
-// Function to get TTS configuration from localStorage or use defaults
-function getTTSConfig() {
-  try {
-    const savedConfig = localStorage.getItem('ttsConfig');
-    if (savedConfig) {
-      return { ...defaultTTSConfig, ...JSON.parse(savedConfig) };
+let audioElement: HTMLAudioElement | null = null;
+let isSpeaking = false;
+let audioChunks: string[] = [];
+let currentAudioIndex = 0;
+
+/**
+ * Split text into chunks of maximum 200 characters
+ */
+function splitTextIntoChunks(text: string, maxLength = 200): string[] {
+  // Split by sentence endings first to try to keep sentences together
+  const sentences = text.split(/(?<=[.!?।॥])\s+/);
+  const chunks: string[] = [];
+  let currentChunk = "";
+  
+  for (let i = 0; i < sentences.length; i++) {
+    const sentence = sentences[i];
+    
+    if (sentence.length > maxLength) {
+      // If a single sentence is longer than maxLength, split it further
+      // Try to split by commas or other natural pauses
+      const parts = sentence.split(/(?<=[,;:])(?=\s)/);
+      for (const part of parts) {
+        if (part.length > maxLength) {
+          // If still too long, just split by maxLength
+          for (let j = 0; j < part.length; j += maxLength) {
+            chunks.push(part.substring(j, j + maxLength));
+          }
+        } else {
+          if (currentChunk.length + part.length > maxLength) {
+            chunks.push(currentChunk);
+            currentChunk = part;
+          } else {
+            currentChunk += (currentChunk ? " " : "") + part;
+          }
+        }
+      }
+    } else {
+      // If adding this sentence would exceed maxLength, start a new chunk
+      if (currentChunk.length + sentence.length > maxLength) {
+        chunks.push(currentChunk);
+        currentChunk = sentence;
+      } else {
+        currentChunk += (currentChunk ? " " : "") + sentence;
+      }
     }
-  } catch (error) {
-    console.error('Error parsing TTS config from localStorage:', error);
   }
-  return defaultTTSConfig;
+  
+  // Add the last chunk if there's anything left
+  if (currentChunk) {
+    chunks.push(currentChunk);
+  }
+  
+  return chunks;
 }
 
-// Function to speak text using Web Speech API with Thai language support
-export function speakText(text: string): void {
-  const config = getTTSConfig();
+/**
+ * Get the correct URL for TTS
+ */
+function getTtsUrl(text: string, lang: string): string {
+  // Check if we're in development or production
+  const isDev = process.env.NODE_ENV === 'development' || 
+                window.location.hostname === 'localhost' || 
+                window.location.hostname === '127.0.0.1';
   
-  if (!config.enabled) {
-    console.log('TTS is disabled');
+  if (isDev) {
+    // In development, use Google's TTS directly (works fine locally)
+    return `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${lang}&client=tw-ob`;
+  } else {
+    // In production (Netlify), use our serverless function proxy
+    return `/.netlify/functions/tts-proxy?text=${encodeURIComponent(text)}&lang=${lang}`;
+  }
+}
+
+/**
+ * Stop any currently playing speech
+ */
+function stopSpeaking(): void {
+  isSpeaking = false;
+  
+  // Stop current audio
+  if (audioElement) {
+    audioElement.pause();
+    audioElement = null;
+  }
+  
+  // Reset variables
+  currentAudioIndex = 0;
+  audioChunks = [];
+}
+
+/**
+ * Play the next chunk of audio
+ */
+function playNextChunk(options: TextToSpeechOptions, resolve: () => void, reject: (error: Error) => void): void {
+  if (!isSpeaking || currentAudioIndex >= audioChunks.length) {
+    // All chunks finished or stopped
+    isSpeaking = false;
+    
+    // Reset for next play
+    currentAudioIndex = 0;
+    audioChunks = [];
+    
+    resolve();
     return;
   }
-
-  if ('speechSynthesis' in window) {
-    // Cancel any ongoing speech
-    window.speechSynthesis.cancel();
+  
+  const text = audioChunks[currentAudioIndex];
+  
+  // Get language and voice modifiers
+  let lang = options.language || 'th';
+  let speechRate = options.rate || 1.0;
+  
+  // Handle voice modifiers if using the voice ID format
+  const voice = options.voice || 'th';
+  if (voice.includes('+')) {
+    // Handle special voices with modifiers
+    const parts = voice.split('+');
+    lang = parts[0];
     
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = config.language || 'th-TH';
-    utterance.volume = config.volume || 1.0;
-    utterance.rate = config.rate || 0.8;
-    utterance.pitch = 1.0;
-    
-    // Add event listeners for debugging
-    utterance.onstart = () => {
-      console.log('TTS started speaking:', text);
-    };
-    
-    utterance.onend = () => {
-      console.log('TTS finished speaking');
-    };
-    
-    utterance.onerror = (event) => {
-      console.error('TTS error:', event.error);
-    };
-    
-    window.speechSynthesis.speak(utterance);
+    // Apply voice modifiers
+    if (parts[1] === 's') speechRate = 0.7; // Slow voice
   } else {
-    console.warn('Text-to-speech not supported in this browser');
+    // Standard voice - just use the voice ID as language
+    lang = voice;
+  }
+  
+  try {
+    // Create audio element
+    const audio = new Audio();
+    
+    // Set main event handlers
+    audio.onended = () => {
+      if (!isSpeaking) return;
+      currentAudioIndex++;
+      playNextChunk(options, resolve, reject);
+    };
+    
+    audio.onerror = async (e) => {
+      // Show error toast
+      toast.error(`เกิดข้อผิดพลาดในการอ่านข้อความส่วนที่ ${currentAudioIndex+1}`);
+      
+      // Continue to next chunk
+      if (!isSpeaking) return;
+      currentAudioIndex++;
+      setTimeout(() => playNextChunk(options, resolve, reject), 500);
+    };
+    
+    // Get the TTS URL
+    const url = getTtsUrl(text, lang);
+    
+    // Set volume
+    audio.volume = options.volume || 1.0;
+    
+    // Try to set playback rate
+    try {
+      audio.playbackRate = speechRate;
+    } catch (e) {
+      // Browser doesn't support playbackRate adjustment
+    }
+    
+    // Set source
+    audio.src = url;
+    
+    // Store reference
+    audioElement = audio;
+    
+    // Play audio
+    audio.play().catch(error => {
+      if (error.name === "NotAllowedError") {
+        toast.error("ไม่สามารถเล่นเสียงได้: ต้องมีการโต้ตอบจากผู้ใช้ก่อน (กดปุ่มใดก็ได้)");
+      }
+      
+      if (!isSpeaking) return;
+      
+      // Try next chunk
+      currentAudioIndex++;
+      setTimeout(() => playNextChunk(options, resolve, reject), 500);
+    });
+  } catch (error) {
+    toast.error(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    
+    if (!isSpeaking) return;
+    
+    // Try next chunk
+    currentAudioIndex++;
+    setTimeout(() => playNextChunk(options, resolve, reject), 500);
   }
 }
+
+/**
+ * Speak text using Google Translate TTS
+ */
+export const speakText = (text: string, options: TextToSpeechOptions = {}): Promise<void> => {
+  console.log("Speaking text:", text.substring(0, 50) + "...");
+  
+  // Check if debug mode is enabled in localStorage
+  const isDebug = localStorage.getItem('tts_debug_mode') === 'true' || options.debug === true;
+  
+  return new Promise((resolve, reject) => {
+    // Stop any current speech
+    stopSpeaking();
+    
+    // Apply options with defaults
+    const mergedOptions = { ...defaultOptions, ...options, debug: isDebug };
+    
+    // Set speaking state
+    isSpeaking = true;
+    
+    // Split text into chunks (Google Translate TTS has a character limit)
+    audioChunks = splitTextIntoChunks(text);
+    currentAudioIndex = 0;
+    
+    // Start playing chunks
+    playNextChunk(mergedOptions, resolve, reject);
+  });
+};
 
 // Function to announce queue number with proper service point information
 export function announceQueue(
@@ -157,21 +251,17 @@ export function announceQueue(
     // Format the queue number properly (e.g., A105, B001)
     const formattedQueueNumber = formatQueueNumber(validQueueType, queueNumber);
     
-    // Convert to Thai phonetic pronunciation
-    const thaiPhoneticNumber = convertToThaiPhonetic(formattedQueueNumber);
-    
     // Handle service point information
     let servicePointMessage = '';
     if (typeof servicePointInfo === 'string') {
       // Legacy support - treat as counter name
       servicePointMessage = `ที่ช่องบริการ ${servicePointInfo}`;
     } else if (servicePointInfo && (servicePointInfo.code || servicePointInfo.name)) {
-      // New service point format
+      // New service point format - use code and name directly in Thai
       let servicePointParts = [];
       
       if (servicePointInfo.code) {
-        const thaiPhoneticCode = convertServicePointCodeToThai(servicePointInfo.code);
-        servicePointParts.push(thaiPhoneticCode);
+        servicePointParts.push(servicePointInfo.code);
       }
       
       if (servicePointInfo.name) {
@@ -184,20 +274,29 @@ export function announceQueue(
       servicePointMessage = 'ที่ช่องบริการ หนึ่ง';
     }
     
-    // Create the announcement message
-    let message = `ขอเชิญหมายเลข ${thaiPhoneticNumber} ${servicePointMessage} เชิญครับ`;
+    // Create the announcement message using your working format
+    let message = `ขอเชิญหมายเลข ${formattedQueueNumber} ${servicePointMessage} เชิญครับ`;
     
     console.log('Announcing queue:', {
       originalNumber: queueNumber,
       queueType: validQueueType,
       formattedNumber: formattedQueueNumber,
-      thaiPhonetic: thaiPhoneticNumber,
       servicePointInfo,
       servicePointMessage,
       fullMessage: message
     });
     
-    speakText(message);
+    // Get settings from localStorage
+    const volumeStr = localStorage.getItem('queue_voice_volume');
+    const rateStr = localStorage.getItem('queue_voice_rate');
+    const voiceType = localStorage.getItem('queue_voice_type') || 'th';
+    const debugMode = localStorage.getItem('tts_debug_mode') === 'true';
+    
+    // Convert settings to proper values
+    const volume = volumeStr ? parseInt(volumeStr) / 100 : 1; 
+    const rate = rateStr ? parseInt(rateStr) / 100 : 1.0;
+    
+    speakText(message, { volume, rate, voice: voiceType, debug: debugMode });
   } catch (error) {
     console.error('Error announcing queue:', error);
     // Fallback to simple announcement
@@ -207,12 +306,34 @@ export function announceQueue(
 
 // Function to announce custom message
 export function announceCustomMessage(message: string): void {
-  speakText(message);
+  const volumeStr = localStorage.getItem('queue_voice_volume');
+  const rateStr = localStorage.getItem('queue_voice_rate');
+  const voiceType = localStorage.getItem('queue_voice_type') || 'th';
+  
+  const volume = volumeStr ? parseInt(volumeStr) / 100 : 1; 
+  const rate = rateStr ? parseInt(rateStr) / 100 : 1.0;
+  
+  speakText(message, { volume, rate, voice: voiceType });
 }
 
 // Function to test TTS with a sample message
 export function testTTS(): void {
   const testMessage = 'ขอเชิญหมายเลข เอ หนึ่ง ศูนย์ ห้า เชิญครับ';
   console.log('Testing TTS with message:', testMessage);
-  speakText(testMessage);
+  
+  const volumeStr = localStorage.getItem('queue_voice_volume');
+  const rateStr = localStorage.getItem('queue_voice_rate');
+  const voiceType = localStorage.getItem('queue_voice_type') || 'th';
+  
+  const volume = volumeStr ? parseInt(volumeStr) / 100 : 1; 
+  const rate = rateStr ? parseInt(rateStr) / 100 : 1.0;
+  
+  speakText(testMessage, { volume, rate, voice: voiceType, debug: true });
 }
+
+/**
+ * Cancel any ongoing speech
+ */
+export const cancelSpeech = (): void => {
+  stopSpeaking();
+};
