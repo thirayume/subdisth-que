@@ -1,14 +1,12 @@
 
 import * as React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Queue, Patient, ServicePoint } from '@/integrations/supabase/schema';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Clock, Users, CheckCircle, SkipForward, Pause } from 'lucide-react';
-import QueueList from '../QueueList';
 import { QueueStatus } from '@/integrations/supabase/schema';
-import { QueueTransferDialog } from '@/components/queue/transfer';
 import { QueueType } from '@/hooks/useQueueTypes';
+import QueueTabsHeader from './QueueTabsHeader';
+import QueueTabContent from './QueueTabContent';
+import QueueTransferDialogContainer from './QueueTransferDialogContainer';
 
 interface QueueTabsContainerProps {
   waitingQueues: Queue[];
@@ -29,6 +27,7 @@ interface QueueTabsContainerProps {
   ) => Promise<boolean>;
   onHoldQueue?: (queueId: string, servicePointId: string, reason?: string) => Promise<boolean>;
   onReturnToWaiting?: (queueId: string) => Promise<boolean>;
+  onViewPatientInfo?: (patientId: string) => void;
   selectedServicePoint?: ServicePoint | null;
   servicePoints: ServicePoint[];
   getIntelligentServicePointSuggestion?: (queue: Queue) => ServicePoint | null;
@@ -53,8 +52,6 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
   getIntelligentServicePointSuggestion
 }) => {
   const [activeTab, setActiveTab] = React.useState('waiting');
-
-  // State for transfer dialog
   const [transferDialogOpen, setTransferDialogOpen] = React.useState(false);
   const [queueToTransfer, setQueueToTransfer] = React.useState<Queue | null>(null);
 
@@ -88,163 +85,103 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
   return (
     <div className="h-full flex flex-col bg-white">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-        {/* Enhanced Tab Header */}
-        <div className="border-b bg-gray-50/50 px-6 py-3">
-          <TabsList className="grid w-full grid-cols-5 bg-white shadow-sm">
-            <TabsTrigger value="waiting" className="flex items-center gap-2 data-[state=active]:bg-orange-50 data-[state=active]:text-orange-700">
-              <Clock className="w-4 h-4" />
-              รอ
-              <Badge variant="secondary" className="bg-orange-100 text-orange-700">
-                {actualWaitingQueues.length}
-              </Badge>
-            </TabsTrigger>
-            
-            <TabsTrigger value="active" className="flex items-center gap-2 data-[state=active]:bg-green-50 data-[state=active]:text-green-700">
-              <Users className="w-4 h-4" />
-              กำลังบริการ
-              <Badge variant="secondary" className="bg-green-100 text-green-700">
-                {activeQueues.length}
-              </Badge>
-            </TabsTrigger>
-
-            <TabsTrigger value="paused" className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
-              <Pause className="w-4 h-4" />
-              พัก
-              <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                {pausedQueues.length}
-              </Badge>
-            </TabsTrigger>
-            
-            <TabsTrigger value="skipped" className="flex items-center gap-2 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700">
-              <SkipForward className="w-4 h-4" />
-              ข้าม
-              <Badge variant="secondary" className="bg-amber-100 text-amber-700">
-                {skippedQueues.length}
-              </Badge>
-            </TabsTrigger>
-
-            <TabsTrigger value="completed" className="flex items-center gap-2 data-[state=active]:bg-gray-50 data-[state=active]:text-gray-700">
-              <CheckCircle className="w-4 h-4" />
-              เสร็จสิ้น
-              <Badge variant="secondary" className="bg-gray-100 text-gray-700">
-                {completedQueues.length}
-              </Badge>
-            </TabsTrigger>
-          </TabsList>
-        </div>
+        <QueueTabsHeader
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          waitingQueues={actualWaitingQueues}
+          activeQueues={activeQueues}
+          completedQueues={completedQueues}
+          skippedQueues={skippedQueues}
+          pausedQueues={pausedQueues}
+        />
         
-        {/* Tab Content */}
         <div className="flex-1 overflow-hidden">
           <TabsContent value="waiting" className="h-full m-0">
-            <Card className="h-full border-0 shadow-none">
-              <CardContent className="h-full p-0">
-                <QueueList
-                  queues={actualWaitingQueues}
-                  getPatientName={getPatientName}
-                  onUpdateStatus={onUpdateStatus}
-                  onCallQueue={onCallQueue}
-                  onViewPatientInfo={onViewPatientInfo}
-                  status="WAITING"
-                  selectedServicePoint={selectedServicePoint}
-                  servicePoints={servicePoints}
-                  getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
-                  showServicePointInfo={true}
-                />
-              </CardContent>
-            </Card>
+            <QueueTabContent
+              queues={actualWaitingQueues}
+              patients={patients}
+              status="WAITING"
+              getPatientName={getPatientName}
+              onUpdateStatus={onUpdateStatus}
+              onCallQueue={onCallQueue}
+              onViewPatientInfo={onViewPatientInfo}
+              selectedServicePoint={selectedServicePoint}
+              servicePoints={servicePoints}
+              getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+            />
           </TabsContent>
           
           <TabsContent value="active" className="h-full m-0">
-            <Card className="h-full border-0 shadow-none">
-              <CardContent className="h-full p-0">
-                <QueueList
-                  queues={activeQueues}
-                  getPatientName={getPatientName}
-                  onUpdateStatus={onUpdateStatus}
-                  onRecallQueue={onRecallQueue}
-                  onTransferQueue={onTransferQueue ? handleTransferQueue : undefined}
-                  onHoldQueue={onHoldQueue ? handleHoldQueue : undefined}
-                  onViewPatientInfo={onViewPatientInfo}
-                  status="ACTIVE"
-                  selectedServicePoint={selectedServicePoint}
-                  servicePoints={servicePoints}
-                  getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
-                  showServicePointInfo={true}
-                />
-              </CardContent>
-            </Card>
+            <QueueTabContent
+              queues={activeQueues}
+              patients={patients}
+              status="ACTIVE"
+              getPatientName={getPatientName}
+              onUpdateStatus={onUpdateStatus}
+              onRecallQueue={onRecallQueue}
+              onTransferQueue={onTransferQueue ? handleTransferQueue : undefined}
+              onHoldQueue={onHoldQueue ? handleHoldQueue : undefined}
+              onViewPatientInfo={onViewPatientInfo}
+              selectedServicePoint={selectedServicePoint}
+              servicePoints={servicePoints}
+              getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+            />
           </TabsContent>
 
           <TabsContent value="paused" className="h-full m-0">
-            <Card className="h-full border-0 shadow-none">
-              <CardContent className="h-full p-0">
-                <QueueList
-                  queues={pausedQueues}
-                  getPatientName={getPatientName}
-                  onUpdateStatus={onUpdateStatus}
-                  onCallQueue={onCallQueue}
-                  onReturnToWaiting={onReturnToWaiting}
-                  onViewPatientInfo={onViewPatientInfo}
-                  status="WAITING"
-                  selectedServicePoint={selectedServicePoint}
-                  servicePoints={servicePoints}
-                  getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
-                  showServicePointInfo={true}
-                />
-              </CardContent>
-            </Card>
+            <QueueTabContent
+              queues={pausedQueues}
+              patients={patients}
+              status="WAITING"
+              getPatientName={getPatientName}
+              onUpdateStatus={onUpdateStatus}
+              onCallQueue={onCallQueue}
+              onReturnToWaiting={onReturnToWaiting}
+              onViewPatientInfo={onViewPatientInfo}
+              selectedServicePoint={selectedServicePoint}
+              servicePoints={servicePoints}
+              getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+            />
           </TabsContent>
           
           <TabsContent value="skipped" className="h-full m-0">
-            <Card className="h-full border-0 shadow-none">
-              <CardContent className="h-full p-0">
-                <QueueList
-                  queues={skippedQueues}
-                  getPatientName={getPatientName}
-                  onUpdateStatus={onUpdateStatus}
-                  onReturnToWaiting={onReturnToWaiting}
-                  onViewPatientInfo={onViewPatientInfo}
-                  status="SKIPPED"
-                  selectedServicePoint={selectedServicePoint}
-                  servicePoints={servicePoints}
-                  getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
-                  showServicePointInfo={true}
-                />
-              </CardContent>
-            </Card>
+            <QueueTabContent
+              queues={skippedQueues}
+              patients={patients}
+              status="SKIPPED"
+              getPatientName={getPatientName}
+              onUpdateStatus={onUpdateStatus}
+              onReturnToWaiting={onReturnToWaiting}
+              onViewPatientInfo={onViewPatientInfo}
+              selectedServicePoint={selectedServicePoint}
+              servicePoints={servicePoints}
+              getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+            />
           </TabsContent>
 
           <TabsContent value="completed" className="h-full m-0">
-            <Card className="h-full border-0 shadow-none">
-              <CardContent className="h-full p-0">
-                <QueueList
-                  queues={completedQueues}
-                  getPatientName={getPatientName}
-                  onViewPatientInfo={onViewPatientInfo}
-                  status="COMPLETED"
-                  selectedServicePoint={selectedServicePoint}
-                  servicePoints={servicePoints}
-                  getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
-                  showServicePointInfo={true}
-                />
-              </CardContent>
-            </Card>
+            <QueueTabContent
+              queues={completedQueues}
+              patients={patients}
+              status="COMPLETED"
+              getPatientName={getPatientName}
+              onViewPatientInfo={onViewPatientInfo}
+              selectedServicePoint={selectedServicePoint}
+              servicePoints={servicePoints}
+              getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+            />
           </TabsContent>
         </div>
       </Tabs>
 
-      {/* Transfer Dialog */}
-      {onTransferQueue && (
-        <QueueTransferDialog
-          queue={queueToTransfer}
-          open={transferDialogOpen}
-          onOpenChange={setTransferDialogOpen}
-          servicePoints={servicePoints}
-          queueTypes={queueTypes}
-          currentServicePointId={queueToTransfer?.service_point_id}
-          onTransfer={onTransferQueue}
-        />
-      )}
+      <QueueTransferDialogContainer
+        queueToTransfer={queueToTransfer}
+        transferDialogOpen={transferDialogOpen}
+        onOpenChange={setTransferDialogOpen}
+        servicePoints={servicePoints}
+        queueTypes={queueTypes}
+        onTransfer={onTransferQueue}
+      />
     </div>
   );
 };
