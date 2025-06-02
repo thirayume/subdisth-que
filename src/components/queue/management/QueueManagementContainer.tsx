@@ -103,8 +103,8 @@ const QueueManagementContainer: React.FC = () => {
 
       {/* Patient Info Dialog - Using the pharmacy component */}
       <PatientInfoDialog
-        isOpen={patientInfoOpen}
-        onClose={() => setPatientInfoOpen(false)}
+        open={patientInfoOpen}
+        onOpenChange={setPatientInfoOpen}
         patient={selectedPatient}
       />
     </div>
