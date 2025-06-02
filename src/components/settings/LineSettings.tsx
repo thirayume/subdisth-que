@@ -79,13 +79,13 @@ const LineSettings = () => {
             errors={errors}
           />
           
-          <LineMessageTemplates
+          {/* <LineMessageTemplates
             lineSettings={currentLineSettings}
             isEditing={isEditing}
             handleChange={handleChange}
             handleTestMessage={handleTestMessage}
             isTesting={isTestingMessage}
-          />
+          /> */}
           
           <LineActionButtons 
             isEditing={isEditing}
