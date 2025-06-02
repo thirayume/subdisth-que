@@ -83,15 +83,15 @@ const QueueTransferFormFields: React.FC<QueueTransferFormFieldsProps> = ({
         </Label>
         <div className="col-span-3">
           <Select
-            value={formState.newQueueType}
-            onValueChange={onQueueTypeChange}
+            value={formState.newQueueType || "KEEP_EXISTING"}
+            onValueChange={(value) => onQueueTypeChange(value === "KEEP_EXISTING" ? "" : value)}
             disabled={isTransferring}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="คงประเภทคิวเดิม" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">คงประเภทคิวเดิม</SelectItem>
+              <SelectItem value="KEEP_EXISTING">คงประเภทคิวเดิม</SelectItem>
               {queueTypes.map((queueType) => (
                 <SelectItem key={queueType.id} value={queueType.code}>
                   {queueType.code} - {queueType.name}
