@@ -70,11 +70,11 @@ export function createQueueAnnouncementMessage(
     // Create service point message
     const servicePointMessage = createServicePointAnnouncement(servicePointInfo);
     
-    // Create the announcement message
-    return `ขอเชิญหมายเลข ${formattedQueueNumber} ${servicePointMessage} เชิญครับ`;
+    // Create the announcement message (removed "เชิญครับ")
+    return `ขอเชิญหมายเลข ${formattedQueueNumber} ${servicePointMessage}`;
   } catch (error) {
     console.error('Error creating queue announcement message:', error);
     // Fallback to simple announcement
-    return `ขอเชิญหมายเลข ${queueNumber} เชิญครับ`;
+    return `ขอเชิญหมายเลข ${queueNumber}`;
   }
 }

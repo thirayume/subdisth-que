@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { Textarea } from '@/components/ui/textarea';
@@ -35,8 +34,14 @@ const QueueAnnouncementSection: React.FC<QueueAnnouncementSectionProps> = ({ for
     localStorage.setItem('counter_name', counter);
     localStorage.setItem('queue_voice_enabled', String(form.getValues('queue_voice_enabled') || true));
     
-    // Test with sample queue number and counter (updated to use new 3-parameter signature)
-    announceQueue(123, counter, 'GENERAL');
+    // Create proper service point object for testing with sample data
+    const testServicePointInfo = {
+      code: 'SP01', // This will be converted to "เอส พี ศูนย์ หนึ่ง"
+      name: 'เซอร์วิสพอยท์ หนึ่ง'
+    };
+    
+    // Test with sample queue number and service point object
+    announceQueue(123, testServicePointInfo, 'GENERAL');
   };
 
   return (

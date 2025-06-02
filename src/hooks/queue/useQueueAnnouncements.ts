@@ -2,6 +2,7 @@
 import * as React from 'react';
 import { toast } from 'sonner';
 import { announceQueue } from '@/utils/textToSpeech';
+import { getServicePointById } from '@/utils/servicePointUtils';
 
 export const useQueueAnnouncements = () => {
   const [voiceEnabled, setVoiceEnabled] = React.useState<boolean>(() => {
@@ -38,9 +39,17 @@ export const useQueueAnnouncements = () => {
     
     if (queueToRecall && voiceEnabled) {
       try {
+        // Get service point information if available
+        const servicePointInfo = queueToRecall.service_point_id 
+          ? await getServicePointById(queueToRecall.service_point_id)
+          : null;
+        
+        // Use service point object or fallback to counter name
+        const servicePointData = servicePointInfo || { code: '', name: counterName };
+        
         await announceQueue(
           queueToRecall.number, 
-          counterName, 
+          servicePointData, 
           queueToRecall.type
         );
         

@@ -60,8 +60,8 @@ export function announceQueue(
     speakText(message, { volume, rate, voice: voiceType, debug: debugMode });
   } catch (error) {
     console.error('Error announcing queue:', error);
-    // Fallback to simple announcement
-    speakText(`ขอเชิญหมายเลข ${queueNumber} เชิญครับ`);
+    // Fallback to simple announcement (also removed "เชิญครับ")
+    speakText(`ขอเชิญหมายเลข ${queueNumber}`);
   }
 }
 
@@ -79,7 +79,7 @@ export function announceCustomMessage(message: string): void {
 
 // Function to test TTS with a sample message
 export function testTTS(): void {
-  const testMessage = 'ขอเชิญหมายเลข เอ หนึ่ง ศูนย์ ห้า เชิญครับ';
+  const testMessage = 'ขอเชิญหมายเลข เอ หนึ่ง ศูนย์ ห้า';
   console.log('Testing TTS with message:', testMessage);
   
   const volumeStr = localStorage.getItem('queue_voice_volume');
