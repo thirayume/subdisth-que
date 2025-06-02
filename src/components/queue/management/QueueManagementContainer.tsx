@@ -39,20 +39,31 @@ const QueueManagementContainer: React.FC = () => {
   });
 
   return (
-    <div className="flex flex-col h-[calc(100vh-2rem)]">
-      <div className="flex items-center justify-between mb-4">
-        <QueueManagementHeader 
-          waitingQueuesCount={waitingQueues.length}
-          onCancelAllQueues={handleCancelAllQueues}
-          isCancellingAll={isCancellingAll}
-        />
-        
-        {/* Remove service point selector from main management - now shows ALL queues */}
-        <div className="text-sm text-gray-500">
-          แสดงคิวทั้งหมด - ระบบจะแนะนำจุดบริการที่เหมาะสมอัตโนมัติ
+    <div className="h-full flex flex-col bg-gray-50">
+      {/* Enhanced Header */}
+      <div className="bg-white border-b shadow-sm">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between mb-2">
+            <QueueManagementHeader 
+              waitingQueuesCount={waitingQueues.length}
+              onCancelAllQueues={handleCancelAllQueues}
+              isCancellingAll={isCancellingAll}
+            />
+          </div>
+          
+          {/* Enhanced Service Point Info */}
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span>แสดงคิวทั้งหมด</span>
+            </div>
+            <span className="text-gray-400">•</span>
+            <span>ระบบจะแนะนำจุดบริการที่เหมาะสมอัตโนมัติ</span>
+          </div>
         </div>
       </div>
       
+      {/* Enhanced Content Area */}
       <div className="flex-1 overflow-hidden">
         <QueueTabsContainer
           waitingQueues={waitingQueues}

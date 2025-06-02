@@ -2,7 +2,9 @@
 import * as React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Queue, Patient, ServicePoint } from '@/integrations/supabase/schema';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Clock, Users, CheckCircle, SkipForward } from 'lucide-react';
 import QueueList from '../QueueList';
 import { QueueStatus } from '@/integrations/supabase/schema';
 import { QueueTransferDialog } from '@/components/queue/transfer';
@@ -50,10 +52,6 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
   getIntelligentServicePointSuggestion
 }) => {
   const [activeTab, setActiveTab] = React.useState('waiting');
-  const waitingCount = waitingQueues.length;
-  const activeCount = activeQueues.length;
-  const completedCount = completedQueues.length;
-  const skippedCount = skippedQueues.length;
 
   // State for transfer dialog
   const [transferDialogOpen, setTransferDialogOpen] = React.useState(false);
@@ -83,103 +81,112 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
   };
 
   return (
-    <>
+    <div className="h-full flex flex-col bg-white">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-        <div className="border-b px-2">
-          <TabsList className="h-12">
-            <TabsTrigger value="waiting" className="relative">
-              คิวที่รอดำเนินการ
-              {waitingCount > 0 && (
-                <span className="ml-2 rounded-full bg-primary text-primary-foreground text-xs px-2 py-0.5">
-                  {waitingCount}
-                </span>
-              )}
+        {/* Enhanced Tab Header */}
+        <div className="border-b bg-gray-50/50 px-6 py-3">
+          <TabsList className="grid w-full grid-cols-4 bg-white shadow-sm">
+            <TabsTrigger value="waiting" className="flex items-center gap-2 data-[state=active]:bg-orange-50 data-[state=active]:text-orange-700">
+              <Clock className="w-4 h-4" />
+              รอดำเนินการ
+              <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+                {waitingQueues.length}
+              </Badge>
             </TabsTrigger>
-            <TabsTrigger value="active" className="relative">
+            
+            <TabsTrigger value="active" className="flex items-center gap-2 data-[state=active]:bg-green-50 data-[state=active]:text-green-700">
+              <Users className="w-4 h-4" />
               กำลังให้บริการ
-              {activeCount > 0 && (
-                <span className="ml-2 rounded-full bg-green-500 text-white text-xs px-2 py-0.5">
-                  {activeCount}
-                </span>
-              )}
+              <Badge variant="secondary" className="bg-green-100 text-green-700">
+                {activeQueues.length}
+              </Badge>
             </TabsTrigger>
-            <TabsTrigger value="completed">
+            
+            <TabsTrigger value="completed" className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
+              <CheckCircle className="w-4 h-4" />
               เสร็จสิ้น
-              {completedCount > 0 && (
-                <span className="ml-2 rounded-full bg-gray-500 text-white text-xs px-2 py-0.5">
-                  {completedCount}
-                </span>
-              )}
+              <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                {completedQueues.length}
+              </Badge>
             </TabsTrigger>
-            <TabsTrigger value="skipped">
+            
+            <TabsTrigger value="skipped" className="flex items-center gap-2 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700">
+              <SkipForward className="w-4 h-4" />
               ข้าม
-              {skippedCount > 0 && (
-                <span className="ml-2 rounded-full bg-amber-500 text-white text-xs px-2 py-0.5">
-                  {skippedCount}
-                </span>
-              )}
+              <Badge variant="secondary" className="bg-amber-100 text-amber-700">
+                {skippedQueues.length}
+              </Badge>
             </TabsTrigger>
           </TabsList>
         </div>
         
-        <div className="flex-1 overflow-auto p-2">
-          <TabsContent value="waiting" className="mt-0 h-full">
-            <Card className="h-full overflow-auto border-0 shadow-none">
-              <QueueList
-                queues={waitingQueues}
-                getPatientName={getPatientName}
-                onUpdateStatus={onUpdateStatus}
-                onCallQueue={onCallQueue}
-                status="WAITING"
-                selectedServicePoint={selectedServicePoint}
-                servicePoints={servicePoints}
-                getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
-              />
+        {/* Tab Content */}
+        <div className="flex-1 overflow-hidden">
+          <TabsContent value="waiting" className="h-full m-0">
+            <Card className="h-full border-0 shadow-none">
+              <CardContent className="h-full p-0">
+                <QueueList
+                  queues={waitingQueues}
+                  getPatientName={getPatientName}
+                  onUpdateStatus={onUpdateStatus}
+                  onCallQueue={onCallQueue}
+                  status="WAITING"
+                  selectedServicePoint={selectedServicePoint}
+                  servicePoints={servicePoints}
+                  getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+                />
+              </CardContent>
             </Card>
           </TabsContent>
           
-          <TabsContent value="active" className="mt-0 h-full">
-            <Card className="h-full overflow-auto border-0 shadow-none">
-              <QueueList
-                queues={activeQueues}
-                getPatientName={getPatientName}
-                onUpdateStatus={onUpdateStatus}
-                onRecallQueue={onRecallQueue}
-                onTransferQueue={onTransferQueue ? handleTransferQueue : undefined}
-                onHoldQueue={onHoldQueue ? handleHoldQueue : undefined}
-                status="ACTIVE"
-                selectedServicePoint={selectedServicePoint}
-                servicePoints={servicePoints}
-                getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
-              />
+          <TabsContent value="active" className="h-full m-0">
+            <Card className="h-full border-0 shadow-none">
+              <CardContent className="h-full p-0">
+                <QueueList
+                  queues={activeQueues}
+                  getPatientName={getPatientName}
+                  onUpdateStatus={onUpdateStatus}
+                  onRecallQueue={onRecallQueue}
+                  onTransferQueue={onTransferQueue ? handleTransferQueue : undefined}
+                  onHoldQueue={onHoldQueue ? handleHoldQueue : undefined}
+                  status="ACTIVE"
+                  selectedServicePoint={selectedServicePoint}
+                  servicePoints={servicePoints}
+                  getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+                />
+              </CardContent>
             </Card>
           </TabsContent>
           
-          <TabsContent value="completed" className="mt-0 h-full">
-            <Card className="h-full overflow-auto border-0 shadow-none">
-              <QueueList
-                queues={completedQueues}
-                getPatientName={getPatientName}
-                status="COMPLETED"
-                selectedServicePoint={selectedServicePoint}
-                servicePoints={servicePoints}
-                getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
-              />
+          <TabsContent value="completed" className="h-full m-0">
+            <Card className="h-full border-0 shadow-none">
+              <CardContent className="h-full p-0">
+                <QueueList
+                  queues={completedQueues}
+                  getPatientName={getPatientName}
+                  status="COMPLETED"
+                  selectedServicePoint={selectedServicePoint}
+                  servicePoints={servicePoints}
+                  getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+                />
+              </CardContent>
             </Card>
           </TabsContent>
           
-          <TabsContent value="skipped" className="mt-0 h-full">
-            <Card className="h-full overflow-auto border-0 shadow-none">
-              <QueueList
-                queues={skippedQueues}
-                getPatientName={getPatientName}
-                onUpdateStatus={onUpdateStatus}
-                onReturnToWaiting={onReturnToWaiting}
-                status="SKIPPED"
-                selectedServicePoint={selectedServicePoint}
-                servicePoints={servicePoints}
-                getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
-              />
+          <TabsContent value="skipped" className="h-full m-0">
+            <Card className="h-full border-0 shadow-none">
+              <CardContent className="h-full p-0">
+                <QueueList
+                  queues={skippedQueues}
+                  getPatientName={getPatientName}
+                  onUpdateStatus={onUpdateStatus}
+                  onReturnToWaiting={onReturnToWaiting}
+                  status="SKIPPED"
+                  selectedServicePoint={selectedServicePoint}
+                  servicePoints={servicePoints}
+                  getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+                />
+              </CardContent>
             </Card>
           </TabsContent>
         </div>
@@ -197,7 +204,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
           onTransfer={onTransferQueue}
         />
       )}
-    </>
+    </div>
   );
 };
 
