@@ -56,7 +56,8 @@ export const usePharmacyDataFetch = () => {
             service:pharmacy_queue_services(*)
           `)
           .eq('queue_date', todayDate)
-          .eq('status', 'ACTIVE')
+          .in('status', ['WAITING', 'ACTIVE', 'COMPLETED'])
+          .not('service_point_id', 'is', null)
           .order('created_at', { ascending: true });
         
         return response;

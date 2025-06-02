@@ -32,12 +32,25 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
   const { patients = [] } = usePatients();
   const { servicePoints = [] } = useServicePoints();
 
-  // Use filtering hook with safe defaults
-  const { selectedServicePoint, servicePointQueues, queuesByStatus } = useQueueFiltering({
-    queues: Array.isArray(queues) ? queues : [],
-    servicePointId,
-    servicePoints: Array.isArray(servicePoints) ? servicePoints : []
-  });
+  // Filter queues for the specific service point with all relevant statuses
+  const servicePointQueues = Array.isArray(queues) ? queues.filter(queue => {
+    const isServicePointMatch = queue.service_point_id === servicePointId;
+    const isRelevantStatus = ['WAITING', 'ACTIVE', 'COMPLETED', 'SKIPPED'].includes(queue.status);
+    const isTodayQueue = queue.queue_date === new Date().toISOString().slice(0, 10);
+    
+    return isServicePointMatch && isRelevantStatus && isTodayQueue;
+  }) : [];
+
+  const selectedServicePoint = servicePoints.find(sp => sp.id === servicePointId) || null;
+
+  // Group queues by status for the pharmacy interface
+  const queuesByStatus = {
+    waiting: servicePointQueues.filter(q => q.status === 'WAITING' && !q.paused_at),
+    active: servicePointQueues.filter(q => q.status === 'ACTIVE'),
+    completed: servicePointQueues.filter(q => q.status === 'COMPLETED'),
+    skipped: servicePointQueues.filter(q => q.status === 'SKIPPED'),
+    paused: servicePointQueues.filter(q => q.status === 'WAITING' && q.paused_at)
+  };
 
   // Use patient data hook with safe defaults
   const { getPatientName, getPatientData } = usePatientData({ 
