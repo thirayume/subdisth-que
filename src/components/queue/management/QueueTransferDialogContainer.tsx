@@ -1,7 +1,7 @@
 
 import * as React from 'react';
 import { Queue, ServicePoint } from '@/integrations/supabase/schema';
-import { QueueTransferDialog } from '@/components/test/pharmacy-queue';
+import QueueTransferDialog from '@/components/test/pharmacy-queue/QueueTransferDialog';
 import { QueueType } from '@/hooks/useQueueTypes';
 
 interface QueueTransferDialogContainerProps {
