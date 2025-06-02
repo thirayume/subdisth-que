@@ -6,6 +6,7 @@ import { formatQueueNumber } from '@/utils/queueFormatters';
 import QueueTypeLabel from './QueueTypeLabel';
 import { Queue } from '@/integrations/supabase/schema';
 import { announceQueue } from '@/utils/textToSpeech';
+import { getServicePointById } from '@/utils/servicePointUtils';
 
 interface QueueBoardDisplayProps {
   queue: Queue;
@@ -40,7 +41,16 @@ const QueueBoardDisplay: React.FC<QueueBoardDisplayProps> = ({
           const voiceEnabled = localStorage.getItem('queue_voice_enabled') !== 'false';
           
           if (voiceEnabled) {
-            announceQueue(queue.number, counterName, queue.type);
+            // Get service point information if available
+            const servicePointInfo = queue.service_point_id 
+              ? await getServicePointById(queue.service_point_id)
+              : null;
+            
+            announceQueue(
+              queue.number, 
+              servicePointInfo || { code: '', name: counterName }, 
+              queue.type
+            );
           }
           setHasAnnounced(true);
         } catch (error) {

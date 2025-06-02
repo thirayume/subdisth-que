@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { Queue, QueueStatus } from '@/integrations/supabase/schema';
 import { supabase } from '@/integrations/supabase/client';
 import { announceQueue } from '@/utils/textToSpeech';
+import { getServicePointById } from '@/utils/servicePointUtils';
 import { QueueAlgorithmType, ServicePointCapability } from '@/utils/queueAlgorithms';
 import { createLogger } from '@/utils/logger';
 import { mapToQueueObject } from '@/utils/queue/queueMapping';
@@ -117,7 +118,16 @@ export const useQueueActions = (
         
         // Announce queue if voice is enabled
         if (voiceEnabled) {
-          await announceQueue(queue.number, '1', queue.type);
+          // Get service point information for announcement
+          const servicePointInfo = targetServicePointId 
+            ? await getServicePointById(targetServicePointId)
+            : null;
+          
+          await announceQueue(
+            queue.number, 
+            servicePointInfo || { code: '', name: 'ช่องบริการ หนึ่ง' }, 
+            queue.type
+          );
         }
         
         toast.success(`เรียกคิวหมายเลข ${queue.number} เรียบร้อยแล้ว`);

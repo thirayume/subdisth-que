@@ -14,6 +14,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { announceQueue } from "@/utils/textToSpeech";
+import { getServicePointById } from "@/utils/servicePointUtils";
 import { toast } from "sonner";
 import { lineNotificationService } from "@/services/line-notification.service";
 
@@ -60,9 +61,14 @@ const QueueControls: React.FC<QueueControlsProps> = ({
   // Function to handle queue announcement
   const handleAnnounceQueue = async () => {
     try {
+      // Get service point information if available
+      const servicePointInfo = queue.service_point_id 
+        ? await getServicePointById(queue.service_point_id)
+        : null;
+      
       await announceQueue(
         queue.number,
-        counterName,
+        servicePointInfo || { code: '', name: counterName },
         queue.type
       );
       toast.info(`ประกาศเสียงเรียกคิวหมายเลข ${queue.number} เรียบร้อยแล้ว`);

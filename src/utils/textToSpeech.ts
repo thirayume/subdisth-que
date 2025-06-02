@@ -64,6 +64,27 @@ function convertToThaiPhonetic(formattedQueueNumber: string): string {
   return result.trim();
 }
 
+// Convert service point code to Thai phonetic pronunciation
+function convertServicePointCodeToThai(servicePointCode: string): string {
+  if (!servicePointCode) return '';
+  
+  let result = '';
+  
+  for (let i = 0; i < servicePointCode.length; i++) {
+    const char = servicePointCode[i].toUpperCase();
+    
+    if (thaiLetters[char]) {
+      result += thaiLetters[char] + ' ';
+    } else if (thaiNumbers[char]) {
+      result += thaiNumbers[char] + ' ';
+    } else {
+      result += char + ' ';
+    }
+  }
+  
+  return result.trim();
+}
+
 // Default TTS configuration
 const defaultTTSConfig = {
   enabled: true,
@@ -123,8 +144,12 @@ export function speakText(text: string): void {
   }
 }
 
-// Function to announce queue number with proper formatting and Thai pronunciation
-export function announceQueue(queueNumber: number, counterName: string, queueType?: string): void {
+// Function to announce queue number with proper service point information
+export function announceQueue(
+  queueNumber: number, 
+  servicePointInfo: { code?: string; name?: string } | string, 
+  queueType?: string
+): void {
   try {
     // Convert string to QueueTypeEnum if needed, with fallback
     const validQueueType = (queueType as QueueTypeEnum) || 'GENERAL';
@@ -135,20 +160,40 @@ export function announceQueue(queueNumber: number, counterName: string, queueTyp
     // Convert to Thai phonetic pronunciation
     const thaiPhoneticNumber = convertToThaiPhonetic(formattedQueueNumber);
     
-    // Create the announcement message
-    let message = `ขอเชิญหมายเลข ${thaiPhoneticNumber}`;
-    
-    if (counterName) {
-      message += ` ที่ช่องบริการ ${counterName}`;
+    // Handle service point information
+    let servicePointMessage = '';
+    if (typeof servicePointInfo === 'string') {
+      // Legacy support - treat as counter name
+      servicePointMessage = `ที่ช่องบริการ ${servicePointInfo}`;
+    } else if (servicePointInfo && (servicePointInfo.code || servicePointInfo.name)) {
+      // New service point format
+      let servicePointParts = [];
+      
+      if (servicePointInfo.code) {
+        const thaiPhoneticCode = convertServicePointCodeToThai(servicePointInfo.code);
+        servicePointParts.push(thaiPhoneticCode);
+      }
+      
+      if (servicePointInfo.name) {
+        servicePointParts.push(servicePointInfo.name);
+      }
+      
+      servicePointMessage = `ที่ ${servicePointParts.join(' ')}`;
+    } else {
+      // Fallback to default
+      servicePointMessage = 'ที่ช่องบริการ หนึ่ง';
     }
     
-    message += ' เชิญครับ';
+    // Create the announcement message
+    let message = `ขอเชิญหมายเลข ${thaiPhoneticNumber} ${servicePointMessage} เชิญครับ`;
     
     console.log('Announcing queue:', {
       originalNumber: queueNumber,
       queueType: validQueueType,
       formattedNumber: formattedQueueNumber,
       thaiPhonetic: thaiPhoneticNumber,
+      servicePointInfo,
+      servicePointMessage,
       fullMessage: message
     });
     
