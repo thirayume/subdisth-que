@@ -85,13 +85,13 @@ const QueueCardActions: React.FC<QueueCardActionsProps> = ({
         </Button>
       )}
       
-      {/* Announce Button - Show for active queues */}
+      /* {/* Announce Button - Show for active queues */}
       {queue.status === 'ACTIVE' && (
         <Button variant="outline" size="sm" onClick={handleAnnounceQueue} className="border-blue-200 text-blue-700 hover:bg-blue-50">
           <Volume2 className="h-4 w-4 mr-1" />
           ประกาศ
         </Button>
-      )}
+      )} */
       
       {/* Hold Queue - Show for active queues */}
       {onHold && queue.status === 'ACTIVE' && (
@@ -106,19 +106,6 @@ const QueueCardActions: React.FC<QueueCardActionsProps> = ({
         <Button variant="outline" size="sm" onClick={onTransfer}>
           <ArrowRightFromLine className="h-4 w-4 mr-1" />
           โอน
-        </Button>
-      )}
-      
-      {/* Complete Service - Show for active queues */}
-      {onComplete && queue.status === 'ACTIVE' && (
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={onComplete}
-          className={isPharmacyInterface ? "border-green-200 text-green-700 hover:bg-green-50" : ""}
-        >
-          <Check className="h-4 w-4 mr-1" />
-          เสร็จสิ้น
         </Button>
       )}
       
@@ -148,6 +135,19 @@ const QueueCardActions: React.FC<QueueCardActionsProps> = ({
         <Button variant="outline" size="sm" onClick={onRecall}>
           <PhoneForwarded className="h-4 w-4 mr-1" />
           เรียกซ้ำ
+        </Button>
+      )}
+
+      {/* Complete Service - Show for active queues */}
+      {onComplete && queue.status === 'ACTIVE' && (
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={onComplete}
+          className={isPharmacyInterface ? "border-green-200 text-green-700 hover:bg-green-50" : ""}
+        >
+          <Check className="h-4 w-4 mr-1" />
+          เสร็จสิ้น
         </Button>
       )}
     </>
