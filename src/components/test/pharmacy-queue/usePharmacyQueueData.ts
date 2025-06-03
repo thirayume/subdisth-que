@@ -32,24 +32,23 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
   const { patients = [] } = usePatients();
   const { servicePoints = [] } = useServicePoints();
 
-  // Filter queues for the specific service point with all relevant statuses
-  const servicePointQueues = Array.isArray(queues) ? queues.filter(queue => {
-    const isServicePointMatch = queue.service_point_id === servicePointId;
+  // Show ALL queues, not filtered by service point (like queue management page)
+  const allQueues = Array.isArray(queues) ? queues.filter(queue => {
     const isRelevantStatus = ['WAITING', 'ACTIVE', 'COMPLETED', 'SKIPPED'].includes(queue.status);
     const isTodayQueue = queue.queue_date === new Date().toISOString().slice(0, 10);
     
-    return isServicePointMatch && isRelevantStatus && isTodayQueue;
+    return isRelevantStatus && isTodayQueue;
   }) : [];
 
   const selectedServicePoint = servicePoints.find(sp => sp.id === servicePointId) || null;
 
-  // Group queues by status for the pharmacy interface
+  // Group ALL queues by status for the pharmacy interface (not filtered by service point)
   const queuesByStatus = {
-    waiting: servicePointQueues.filter(q => q.status === 'WAITING' && !q.paused_at),
-    active: servicePointQueues.filter(q => q.status === 'ACTIVE'),
-    completed: servicePointQueues.filter(q => q.status === 'COMPLETED'),
-    skipped: servicePointQueues.filter(q => q.status === 'SKIPPED'),
-    paused: servicePointQueues.filter(q => q.status === 'WAITING' && q.paused_at)
+    waiting: allQueues.filter(q => q.status === 'WAITING' && !q.paused_at),
+    active: allQueues.filter(q => q.status === 'ACTIVE'),
+    completed: allQueues.filter(q => q.status === 'COMPLETED'),
+    skipped: allQueues.filter(q => q.status === 'SKIPPED'),
+    paused: allQueues.filter(q => q.status === 'WAITING' && q.paused_at)
   };
 
   // Use patient data hook with safe defaults
@@ -87,7 +86,7 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     }
   }, [removeQueue]);
 
-  // Use queue actions hook with safe defaults
+  // Use queue actions hook with safe defaults - pass all queues, not filtered
   const {
     handleCallQueue,
     handleUpdateStatus,
@@ -98,7 +97,7 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     handleCancelQueue
   } = useQueueActions({
     selectedServicePoint,
-    servicePointQueues: Array.isArray(servicePointQueues) ? servicePointQueues : [],
+    servicePointQueues: Array.isArray(allQueues) ? allQueues : [],
     servicePoints: Array.isArray(servicePoints) ? servicePoints : [],
     callQueue,
     updateQueueStatus,
