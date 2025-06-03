@@ -23,9 +23,9 @@ const PharmacyQueueTabs: React.FC<PharmacyQueueTabsProps> = ({
     handleCallQueue,
     handleUpdateStatus,
     handleRecallQueue,
-    handleHoldQueue,
-    handleTransferQueue,
-    handleReturnToWaiting,
+    handleHoldQueue: pharmacyHoldQueue,
+    handleTransferQueue: pharmacyTransferQueue,
+    handleReturnToWaiting: pharmacyReturnToWaiting,
     handleCancelQueue,
     servicePoints
   } = usePharmacyQueueData({ 
@@ -39,6 +39,47 @@ const PharmacyQueueTabs: React.FC<PharmacyQueueTabsProps> = ({
     openTransferDialog,
     closeTransferDialog
   } = useQueueTransferDialog();
+
+  // Create wrapper functions that match QueueTabsContainer expectations
+  const handleTransferQueueWrapper = async (
+    queueId: string, 
+    sourceServicePointId: string,
+    targetServicePointId: string,
+    notes?: string,
+    newQueueType?: string
+  ): Promise<boolean> => {
+    try {
+      await pharmacyTransferQueue(queueId, targetServicePointId);
+      return true;
+    } catch (error) {
+      console.error('Transfer failed:', error);
+      return false;
+    }
+  };
+
+  const handleHoldQueueWrapper = async (
+    queueId: string, 
+    servicePointId: string, 
+    reason?: string
+  ): Promise<boolean> => {
+    try {
+      await pharmacyHoldQueue(queueId);
+      return true;
+    } catch (error) {
+      console.error('Hold failed:', error);
+      return false;
+    }
+  };
+
+  const handleReturnToWaitingWrapper = async (queueId: string): Promise<boolean> => {
+    try {
+      await pharmacyReturnToWaiting(queueId);
+      return true;
+    } catch (error) {
+      console.error('Return to waiting failed:', error);
+      return false;
+    }
+  };
 
   // Handler for opening transfer dialog
   const handleTransferQueueClick = (queueId: string) => {
@@ -77,14 +118,15 @@ const PharmacyQueueTabs: React.FC<PharmacyQueueTabsProps> = ({
         onUpdateStatus={handleUpdateStatus}
         onCallQueue={handleCallQueue}
         onRecallQueue={handleRecallQueue}
-        onTransferQueue={handleTransferQueue}
-        onHoldQueue={handleHoldQueue}
-        onReturnToWaiting={handleReturnToWaiting}
+        onTransferQueue={handleTransferQueueWrapper}
+        onHoldQueue={handleHoldQueueWrapper}
+        onReturnToWaiting={handleReturnToWaitingWrapper}
         onViewPatientInfo={handleViewPatientInfo}
         selectedServicePoint={selectedServicePoint}
         servicePoints={servicePoints}
         onTransferQueueClick={handleTransferQueueClick}
         isPharmacyInterface={true}
+        getPatientName={getPatientName}
       />
 
       <QueueTransferDialogContainer
@@ -93,7 +135,7 @@ const PharmacyQueueTabs: React.FC<PharmacyQueueTabsProps> = ({
         onOpenChange={closeTransferDialog}
         servicePoints={servicePoints}
         queueTypes={queueTypes}
-        onTransfer={handleTransferQueue}
+        onTransfer={handleTransferQueueWrapper}
       />
     </>
   );
