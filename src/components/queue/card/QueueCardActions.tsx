@@ -85,8 +85,8 @@ const QueueCardActions: React.FC<QueueCardActionsProps> = ({
         </Button>
       )}
       
-      /* {/* Announce Button - Show for active queues */}
-      {queue.status === 'ACTIVE' && (
+      {/* Announce Button - Show for active queues */}
+      /* {queue.status === 'ACTIVE' && (
         <Button variant="outline" size="sm" onClick={handleAnnounceQueue} className="border-blue-200 text-blue-700 hover:bg-blue-50">
           <Volume2 className="h-4 w-4 mr-1" />
           ประกาศ
