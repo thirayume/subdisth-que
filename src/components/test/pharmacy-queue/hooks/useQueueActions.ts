@@ -1,8 +1,8 @@
-
 import { useCallback } from 'react';
 import { createLogger } from '@/utils/logger';
 import { formatQueueNumber } from '@/utils/queueFormatters';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const logger = createLogger('useQueueActions');
 
@@ -93,20 +93,29 @@ export const useQueueActions = ({
     }
   }, [recallQueue, servicePointQueues, selectedServicePoint]);
 
+  // Fix hold queue action to properly pause the queue instead of skipping it
   const handleHoldQueue = useCallback(async (queueId: string) => {
     const queue = servicePointQueues.find(q => q.id === queueId);
     const formattedNumber = queue ? formatQueueNumber(queue.type as any, queue.number) : queueId;
     
     try {
-      if (selectedServicePoint) {
-        // Use updateQueueStatus with SKIPPED and add PAUSED note
-        await updateQueueStatus(queueId, 'SKIPPED');
-        toast.success(`พักคิว ${formattedNumber} เรียบร้อยแล้ว`);
-      }
+      // Properly pause the queue by setting paused_at timestamp while keeping status as WAITING
+      const { error } = await supabase
+        .from('queues')
+        .update({ 
+          paused_at: new Date().toISOString(),
+          status: 'WAITING' // Keep status as WAITING, not SKIPPED
+        })
+        .eq('id', queueId);
+
+      if (error) throw error;
+
+      toast.success(`พักคิว ${formattedNumber} เรียบร้อยแล้ว`);
     } catch (error) {
+      console.error('Error pausing queue:', error);
       toast.error(`ไม่สามารถพักคิว ${formattedNumber} ได้`);
     }
-  }, [updateQueueStatus, servicePointQueues, selectedServicePoint]);
+  }, [servicePointQueues]);
 
   const handleTransferQueue = useCallback(async (queueId: string, targetServicePointId: string) => {
     const queue = servicePointQueues.find(q => q.id === queueId);
@@ -121,14 +130,31 @@ export const useQueueActions = ({
     }
   }, [transferQueueToServicePoint, servicePointQueues, servicePoints]);
 
+  // Fix return to waiting to handle both SKIPPED and paused queues
   const handleReturnToWaiting = useCallback(async (queueId: string) => {
     const queue = servicePointQueues.find(q => q.id === queueId);
     const formattedNumber = queue ? formatQueueNumber(queue.type as any, queue.number) : queueId;
     
     try {
-      await returnSkippedQueueToWaiting(queueId);
+      if (queue?.paused_at) {
+        // For paused queues, clear paused_at and ensure status is WAITING
+        const { error } = await supabase
+          .from('queues')
+          .update({ 
+            paused_at: null,
+            status: 'WAITING'
+          })
+          .eq('id', queueId);
+
+        if (error) throw error;
+      } else {
+        // For skipped queues, use the existing function
+        await returnSkippedQueueToWaiting(queueId);
+      }
+      
       toast.success(`นำคิว ${formattedNumber} กลับมารอเรียบร้อยแล้ว`);
     } catch (error) {
+      console.error('Error returning queue to waiting:', error);
       toast.error(`ไม่สามารถนำคิว ${formattedNumber} กลับมารอได้`);
     }
   }, [returnSkippedQueueToWaiting, servicePointQueues]);
