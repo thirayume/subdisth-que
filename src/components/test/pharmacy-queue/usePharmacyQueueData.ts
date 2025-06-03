@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { useQueues } from '@/hooks/useQueues';
 import { usePatients } from '@/hooks/usePatients';
@@ -32,13 +31,27 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
   const { patients = [] } = usePatients();
   const { servicePoints = [] } = useServicePoints();
 
-  // Filter queues for the specific service point - more inclusive filtering
+  // More inclusive filtering - show queues for the specific service point OR unassigned queues
   const servicePointQueues = Array.isArray(queues) ? queues.filter(queue => {
-    const isServicePointMatch = queue.service_point_id === servicePointId;
-    const isRelevantStatus = ['WAITING', 'ACTIVE', 'COMPLETED', 'SKIPPED'].includes(queue.status);
-    const isTodayQueue = queue.queue_date === new Date().toISOString().slice(0, 10);
+    // Check if queue belongs to this service point OR is unassigned (null service_point_id)
+    const isServicePointMatch = queue.service_point_id === servicePointId || 
+                               (!queue.service_point_id && servicePointId);
     
-    console.log('Queue filtering:', {
+    // Include all relevant statuses for pharmacy interface
+    const isRelevantStatus = ['WAITING', 'ACTIVE', 'COMPLETED', 'SKIPPED'].includes(queue.status);
+    
+    // More flexible date filtering - include today and recent dates
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const queueDate = queue.queue_date;
+    const todayStr = today.toISOString().slice(0, 10);
+    const yesterdayStr = yesterday.toISOString().slice(0, 10);
+    
+    const isRecentQueue = queueDate === todayStr || queueDate === yesterdayStr;
+    
+    console.log('Pharmacy Queue filtering:', {
       queueId: queue.id,
       queueNumber: queue.number,
       queueServicePointId: queue.service_point_id,
@@ -47,14 +60,16 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
       status: queue.status,
       isRelevantStatus,
       queueDate: queue.queue_date,
-      todayDate: new Date().toISOString().slice(0, 10),
-      isTodayQueue
+      todayDate: todayStr,
+      yesterdayDate: yesterdayStr,
+      isRecentQueue,
+      willInclude: isServicePointMatch && isRelevantStatus && isRecentQueue
     });
     
-    return isServicePointMatch && isRelevantStatus && isTodayQueue;
+    return isServicePointMatch && isRelevantStatus && isRecentQueue;
   }) : [];
 
-  console.log('Filtered servicePointQueues:', servicePointQueues.length, servicePointQueues);
+  console.log('Filtered pharmacy servicePointQueues:', servicePointQueues.length, servicePointQueues);
 
   const selectedServicePoint = servicePoints.find(sp => sp.id === servicePointId) || null;
 
@@ -67,7 +82,7 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     paused: servicePointQueues.filter(q => q.status === 'WAITING' && q.paused_at)
   };
 
-  console.log('Queues by status:', queuesByStatus);
+  console.log('Pharmacy queues by status:', queuesByStatus);
 
   // Use patient data hook with safe defaults
   const { getPatientName, getPatientData } = usePatientData({ 
