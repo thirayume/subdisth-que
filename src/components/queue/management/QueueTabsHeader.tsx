@@ -42,14 +42,6 @@ const QueueTabsHeader: React.FC<QueueTabsHeaderProps> = ({
             {activeQueues.length}
           </Badge>
         </TabsTrigger>
-
-        <TabsTrigger value="paused" className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
-          <Pause className="w-4 h-4" />
-          พัก
-          <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-            {pausedQueues.length}
-          </Badge>
-        </TabsTrigger>
         
         <TabsTrigger value="skipped" className="flex items-center gap-2 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700">
           <SkipForward className="w-4 h-4" />
