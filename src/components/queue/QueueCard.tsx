@@ -44,7 +44,7 @@ const QueueCard: React.FC<QueueCardProps> = ({
   const hasActions = onComplete || onSkip || onCall || onRecall || onTransfer || onReturnToWaiting || onHold || onViewPatientInfo || onCancel;
   
   return (
-    <Card>
+    <Card className={isPharmacyInterface ? "border-pharmacy-200" : ""}>
       <CardContent className="p-4">
         <div className="flex justify-between items-start">
           <QueueCardInfo
@@ -52,7 +52,7 @@ const QueueCard: React.FC<QueueCardProps> = ({
             patientName={patientName}
             servicePointName={servicePointName}
             suggestedServicePointName={suggestedServicePointName}
-            showServicePointInfo={showServicePointInfo}
+            showServicePointInfo={true} // Always show service point info in pharmacy interface
           />
           
           <QueueTimeInfo queue={queue} />
@@ -61,7 +61,9 @@ const QueueCard: React.FC<QueueCardProps> = ({
       
       {/* Show actions if any handlers are provided */}
       {hasActions && (
-        <CardFooter className="px-4 py-3 bg-gray-50 flex justify-end gap-2 flex-wrap">
+        <CardFooter className={`px-4 py-3 flex justify-end gap-2 flex-wrap ${
+          isPharmacyInterface ? "bg-pharmacy-50" : "bg-gray-50"
+        }`}>
           <QueueCardActions
             queue={queue}
             onComplete={onComplete}

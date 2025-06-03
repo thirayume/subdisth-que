@@ -1,13 +1,12 @@
 
-import React, { useState } from 'react';
-import { Tabs } from '@/components/ui/tabs';
-import { usePharmacyQueueData } from './usePharmacyQueueData';
-import PharmacyQueueTabsList from './components/PharmacyQueueTabsList';
-import PharmacyQueueTabContent from './components/PharmacyQueueTabContent';
-import PharmacyQueueDialogs from './components/PharmacyQueueDialogs';
+import React from 'react';
+import { useQueueManagement } from '@/hooks/queue/useQueueManagement';
+import QueueTabsContainer from '@/components/queue/management/QueueTabsContainer';
+import QueueTransferDialogContainer from '@/components/queue/management/QueueTransferDialogContainer';
+import { useQueueTransferDialog } from '@/components/queue/transfer/useQueueTransfer';
 
 interface PharmacyQueueTabsProps {
-  servicePointId: string;
+  servicePointId?: string;
   refreshTrigger: number;
 }
 
@@ -16,126 +15,75 @@ const PharmacyQueueTabs: React.FC<PharmacyQueueTabsProps> = ({
   refreshTrigger
 }) => {
   const {
-    queuesByStatus,
-    getPatientName,
-    getPatientData,
-    handleCallQueue,
-    handleUpdateStatus,
+    waitingQueues,
+    activeQueues,
+    completedQueues,
+    skippedQueues,
+    patients,
+    queueTypes,
+    selectedServicePoint,
+    servicePoints,
     handleRecallQueue,
-    handleHoldQueue,
+    handleCallQueue,
     handleTransferQueue,
+    handleHoldQueue,
     handleReturnToWaiting,
-    handleCancelQueue,
-    handleManualRefresh,
-    isLoading,
-    servicePoints
-  } = usePharmacyQueueData({ servicePointId, refreshTrigger });
+    updateQueueStatus,
+    getIntelligentServicePointSuggestion
+  } = useQueueManagement();
 
-  const [selectedPatient, setSelectedPatient] = useState<any>(null);
-  const [patientDialogOpen, setPatientDialogOpen] = useState(false);
-  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
-  const [transferQueueId, setTransferQueueId] = useState<string>('');
+  const {
+    transferDialogOpen,
+    queueToTransfer,
+    openTransferDialog,
+    closeTransferDialog
+  } = useQueueTransferDialog();
 
-  // Handle manual refresh when refreshTrigger changes
-  React.useEffect(() => {
-    if (refreshTrigger > 0) {
-      handleManualRefresh();
-    }
-  }, [refreshTrigger, handleManualRefresh]);
-
-  const handleViewPatientInfo = (queue: any) => {
-    const patient = getPatientData(queue.patient_id);
-    setSelectedPatient(patient);
-    setPatientDialogOpen(true);
-  };
-
-  const handleTransferClick = (queueId: string) => {
-    setTransferQueueId(queueId);
-    setTransferDialogOpen(true);
-  };
-
-  const handleTransferConfirm = async (targetServicePointId: string) => {
-    if (transferQueueId) {
-      await handleTransferQueue(transferQueueId, targetServicePointId);
-      setTransferDialogOpen(false);
-      setTransferQueueId('');
+  // Handler for opening transfer dialog
+  const handleTransferQueueClick = (queueId: string) => {
+    const queue = [...waitingQueues, ...activeQueues, ...completedQueues, ...skippedQueues]
+      .find(q => q.id === queueId);
+    if (queue) {
+      openTransferDialog(queue);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <div className="text-gray-500">กำลังโหลด...</div>
-      </div>
-    );
-  }
+  // Handler for patient info (can be implemented later)
+  const handleViewPatientInfo = (patientId: string) => {
+    console.log('View patient info:', patientId);
+    // TODO: Implement patient info dialog
+  };
 
   return (
     <>
-      <Tabs defaultValue="waiting" className="w-full">
-        <PharmacyQueueTabsList queuesByStatus={queuesByStatus} />
-
-        <PharmacyQueueTabContent
-          value="waiting"
-          queues={queuesByStatus.waiting}
-          emptyMessage="ไม่มีคิวที่รอ"
-          getPatientName={getPatientName}
-          onViewPatientInfo={handleViewPatientInfo}
-          onCallQueue={handleCallQueue}
-          onUpdateStatus={handleUpdateStatus}
-          onCancelQueue={handleCancelQueue}
-        />
-
-        <PharmacyQueueTabContent
-          value="active"
-          queues={queuesByStatus.active}
-          emptyMessage="ไม่มีคิวที่กำลังบริการ"
-          getPatientName={getPatientName}
-          onViewPatientInfo={handleViewPatientInfo}
-          onUpdateStatus={handleUpdateStatus}
-          onRecallQueue={handleRecallQueue}
-          onHoldQueue={handleHoldQueue}
-          onTransferClick={handleTransferClick}
-        />
-
-        <PharmacyQueueTabContent
-          value="paused"
-          queues={queuesByStatus.paused}
-          emptyMessage="ไม่มีคิวที่พัก"
-          getPatientName={getPatientName}
-          onViewPatientInfo={handleViewPatientInfo}
-          onCallQueue={handleCallQueue}
-        />
-
-        <PharmacyQueueTabContent
-          value="skipped"
-          queues={queuesByStatus.skipped}
-          emptyMessage="ไม่มีคิวที่ข้าม"
-          getPatientName={getPatientName}
-          onViewPatientInfo={handleViewPatientInfo}
-          onReturnToWaiting={handleReturnToWaiting}
-        />
-
-        <PharmacyQueueTabContent
-          value="completed"
-          queues={queuesByStatus.completed}
-          emptyMessage="ไม่มีคิวที่เสร็จสิ้น"
-          getPatientName={getPatientName}
-          onViewPatientInfo={handleViewPatientInfo}
-          onReturnToWaiting={handleReturnToWaiting}
-          isCompleted={true}
-        />
-      </Tabs>
-
-      <PharmacyQueueDialogs
-        selectedPatient={selectedPatient}
-        patientDialogOpen={patientDialogOpen}
-        setPatientDialogOpen={setPatientDialogOpen}
-        transferDialogOpen={transferDialogOpen}
-        setTransferDialogOpen={setTransferDialogOpen}
-        onTransferConfirm={handleTransferConfirm}
+      <QueueTabsContainer
+        waitingQueues={waitingQueues}
+        activeQueues={activeQueues}
+        completedQueues={completedQueues}
+        skippedQueues={skippedQueues}
+        patients={patients}
+        queueTypes={queueTypes}
+        onUpdateStatus={updateQueueStatus}
+        onCallQueue={handleCallQueue}
+        onRecallQueue={handleRecallQueue}
+        onTransferQueue={handleTransferQueue}
+        onHoldQueue={handleHoldQueue}
+        onReturnToWaiting={handleReturnToWaiting}
+        onViewPatientInfo={handleViewPatientInfo}
+        selectedServicePoint={selectedServicePoint}
         servicePoints={servicePoints}
-        servicePointId={servicePointId}
+        getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+        onTransferQueueClick={handleTransferQueueClick}
+        isPharmacyInterface={true}
+      />
+
+      <QueueTransferDialogContainer
+        queueToTransfer={queueToTransfer}
+        transferDialogOpen={transferDialogOpen}
+        onOpenChange={closeTransferDialog}
+        servicePoints={servicePoints}
+        queueTypes={queueTypes}
+        onTransfer={handleTransferQueue}
       />
     </>
   );

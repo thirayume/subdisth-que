@@ -14,21 +14,6 @@ const PharmacyQueuePanel: React.FC<PharmacyQueuePanelProps> = ({
   title = "คิวร้านยา",
   refreshTrigger
 }) => {
-  if (!servicePointId) {
-    return (
-      <Card className="h-full">
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-gray-500">
-            กรุณาเลือกจุดบริการ
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="flex-shrink-0">

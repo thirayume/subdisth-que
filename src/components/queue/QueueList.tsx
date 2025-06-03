@@ -19,6 +19,7 @@ interface QueueListProps {
   servicePoints?: ServicePoint[];
   getIntelligentServicePointSuggestion?: (queue: Queue) => ServicePoint | null;
   showServicePointInfo?: boolean;
+  isPharmacyInterface?: boolean;
 }
 
 const QueueList: React.FC<QueueListProps> = ({
@@ -35,7 +36,8 @@ const QueueList: React.FC<QueueListProps> = ({
   selectedServicePoint,
   servicePoints = [],
   getIntelligentServicePointSuggestion,
-  showServicePointInfo = true
+  showServicePointInfo = true,
+  isPharmacyInterface = false
 }) => {
   const [selectorQueue, setSelectorQueue] = useState<Queue | null>(null);
   const [suggestedServicePoint, setSuggestedServicePoint] = useState<ServicePoint | null>(null);
@@ -87,8 +89,12 @@ const QueueList: React.FC<QueueListProps> = ({
     return (
       <div className="flex items-center justify-center h-full min-h-[400px]">
         <div className="text-center p-8">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-            <div className="w-8 h-8 bg-gray-300 rounded opacity-50"></div>
+          <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${
+            isPharmacyInterface ? "bg-pharmacy-100" : "bg-gray-100"
+          }`}>
+            <div className={`w-8 h-8 rounded opacity-50 ${
+              isPharmacyInterface ? "bg-pharmacy-300" : "bg-gray-300"
+            }`}></div>
           </div>
           <p className="text-gray-500 mb-2 font-medium">{emptyState.title}</p>
           <p className="text-sm text-gray-400">{emptyState.description}</p>
@@ -194,6 +200,7 @@ const QueueList: React.FC<QueueListProps> = ({
                 servicePointName={currentServicePoint?.name}
                 suggestedServicePointName={suggestedServicePoint?.name}
                 showServicePointInfo={showServicePointInfo}
+                isPharmacyInterface={isPharmacyInterface}
               />
             );
           })}

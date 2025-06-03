@@ -31,6 +31,7 @@ interface QueueTabsContainerProps {
   servicePoints: ServicePoint[];
   getIntelligentServicePointSuggestion?: (queue: Queue) => ServicePoint | null;
   onTransferQueueClick?: (queueId: string) => void;
+  isPharmacyInterface?: boolean;
 }
 
 const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
@@ -50,7 +51,8 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
   selectedServicePoint,
   servicePoints,
   getIntelligentServicePointSuggestion,
-  onTransferQueueClick
+  onTransferQueueClick,
+  isPharmacyInterface = false
 }) => {
   const [activeTab, setActiveTab] = React.useState('waiting');
 
@@ -73,7 +75,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col bg-white">
+    <div className={`h-full flex flex-col ${isPharmacyInterface ? "bg-pharmacy-50" : "bg-white"}`}>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
         <QueueTabsHeader
           activeTab={activeTab}
@@ -98,6 +100,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
               selectedServicePoint={selectedServicePoint}
               servicePoints={servicePoints}
               getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+              isPharmacyInterface={isPharmacyInterface}
             />
           </TabsContent>
           
@@ -115,6 +118,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
               selectedServicePoint={selectedServicePoint}
               servicePoints={servicePoints}
               getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+              isPharmacyInterface={isPharmacyInterface}
             />
           </TabsContent>
 
@@ -131,6 +135,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
               selectedServicePoint={selectedServicePoint}
               servicePoints={servicePoints}
               getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+              isPharmacyInterface={isPharmacyInterface}
             />
           </TabsContent>
           
@@ -146,6 +151,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
               selectedServicePoint={selectedServicePoint}
               servicePoints={servicePoints}
               getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+              isPharmacyInterface={isPharmacyInterface}
             />
           </TabsContent>
 
@@ -159,6 +165,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
               selectedServicePoint={selectedServicePoint}
               servicePoints={servicePoints}
               getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
+              isPharmacyInterface={isPharmacyInterface}
             />
           </TabsContent>
         </div>

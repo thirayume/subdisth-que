@@ -21,6 +21,7 @@ interface QueueTabContentProps {
   selectedServicePoint?: ServicePoint | null;
   servicePoints: ServicePoint[];
   getIntelligentServicePointSuggestion?: (queue: Queue) => ServicePoint | null;
+  isPharmacyInterface?: boolean;
 }
 
 const QueueTabContent: React.FC<QueueTabContentProps> = ({
@@ -37,7 +38,8 @@ const QueueTabContent: React.FC<QueueTabContentProps> = ({
   onViewPatientInfo,
   selectedServicePoint,
   servicePoints,
-  getIntelligentServicePointSuggestion
+  getIntelligentServicePointSuggestion,
+  isPharmacyInterface = false
 }) => {
   return (
     <Card className="h-full border-0 shadow-none">
@@ -57,6 +59,7 @@ const QueueTabContent: React.FC<QueueTabContentProps> = ({
           servicePoints={servicePoints}
           getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
           showServicePointInfo={true}
+          isPharmacyInterface={isPharmacyInterface}
         />
       </CardContent>
     </Card>
