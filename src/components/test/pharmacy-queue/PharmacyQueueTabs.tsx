@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { useQueueManagement } from '@/hooks/queue/useQueueManagement';
 import QueueTabsContainer from '@/components/queue/management/QueueTabsContainer';
 import QueueTransferDialogContainer from '@/components/queue/management/QueueTransferDialogContainer';
-import { useQueueTransferDialog } from '@/components/queue/transfer/useQueueTransfer';
+import { useQueueTransferDialog } from '@/components/queue/transfer';
 
 interface PharmacyQueueTabsProps {
   servicePointId?: string;
