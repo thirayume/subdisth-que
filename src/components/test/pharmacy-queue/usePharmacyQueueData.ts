@@ -32,14 +32,29 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
   const { patients = [] } = usePatients();
   const { servicePoints = [] } = useServicePoints();
 
-  // Filter queues for the specific service point with all relevant statuses
+  // Filter queues for the specific service point - more inclusive filtering
   const servicePointQueues = Array.isArray(queues) ? queues.filter(queue => {
     const isServicePointMatch = queue.service_point_id === servicePointId;
     const isRelevantStatus = ['WAITING', 'ACTIVE', 'COMPLETED', 'SKIPPED'].includes(queue.status);
     const isTodayQueue = queue.queue_date === new Date().toISOString().slice(0, 10);
     
+    console.log('Queue filtering:', {
+      queueId: queue.id,
+      queueNumber: queue.number,
+      queueServicePointId: queue.service_point_id,
+      targetServicePointId: servicePointId,
+      isServicePointMatch,
+      status: queue.status,
+      isRelevantStatus,
+      queueDate: queue.queue_date,
+      todayDate: new Date().toISOString().slice(0, 10),
+      isTodayQueue
+    });
+    
     return isServicePointMatch && isRelevantStatus && isTodayQueue;
   }) : [];
+
+  console.log('Filtered servicePointQueues:', servicePointQueues.length, servicePointQueues);
 
   const selectedServicePoint = servicePoints.find(sp => sp.id === servicePointId) || null;
 
@@ -51,6 +66,8 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
     skipped: servicePointQueues.filter(q => q.status === 'SKIPPED'),
     paused: servicePointQueues.filter(q => q.status === 'WAITING' && q.paused_at)
   };
+
+  console.log('Queues by status:', queuesByStatus);
 
   // Use patient data hook with safe defaults
   const { getPatientName, getPatientData } = usePatientData({ 
