@@ -24,14 +24,14 @@ const SystemLinks: React.FC<SystemLinksProps> = ({
         รายงาน
       </SidebarNavLink>
 
-      <SidebarNavLink
+      {/* <SidebarNavLink
         to="/test-dashboard"
         icon={TestTube}
         isActive={isActiveRoute}
         onClick={closeSidebar}
       >
         แดชบอร์ดทดสอบ
-      </SidebarNavLink>
+      </SidebarNavLink> */}
 
       <SidebarNavLink
         to="/settings"
