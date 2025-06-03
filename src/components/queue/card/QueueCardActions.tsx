@@ -85,14 +85,6 @@ const QueueCardActions: React.FC<QueueCardActionsProps> = ({
         </Button>
       )}
       
-      {/* Announce Button - Show for active queues */}
-      /* {queue.status === 'ACTIVE' && (
-        <Button variant="outline" size="sm" onClick={handleAnnounceQueue} className="border-blue-200 text-blue-700 hover:bg-blue-50">
-          <Volume2 className="h-4 w-4 mr-1" />
-          ประกาศ
-        </Button>
-      )} */
-      
       {/* Hold Queue - Show for active queues */}
       {onHold && queue.status === 'ACTIVE' && (
         <Button variant="outline" size="sm" onClick={onHold}>
@@ -132,7 +124,8 @@ const QueueCardActions: React.FC<QueueCardActionsProps> = ({
       
       {/* Recall Queue - Show for active queues */}
       {onRecall && queue.status === 'ACTIVE' && (
-        <Button variant="outline" size="sm" onClick={onRecall}>
+        <Button variant="outline" size="sm" onClick={onRecall} 
+          className="border-blue-200 text-blue-700 hover:bg-blue-50">
           <PhoneForwarded className="h-4 w-4 mr-1" />
           เรียกซ้ำ
         </Button>
@@ -144,7 +137,7 @@ const QueueCardActions: React.FC<QueueCardActionsProps> = ({
           variant="outline" 
           size="sm" 
           onClick={onComplete}
-          className={isPharmacyInterface ? "border-green-200 text-green-700 hover:bg-green-50" : ""}
+          className={isPharmacyInterface ? "border-green-200 text-green-700 hover:bg-green-50" : "border-green-200 text-green-700 hover:bg-green-50"}
         >
           <Check className="h-4 w-4 mr-1" />
           เสร็จสิ้น
