@@ -32,6 +32,7 @@ interface QueueTabsContainerProps {
   getIntelligentServicePointSuggestion?: (queue: Queue) => ServicePoint | null;
   onTransferQueueClick?: (queueId: string) => void;
   isPharmacyInterface?: boolean;
+  getPatientName?: (patientId: string) => string;
 }
 
 const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
@@ -52,7 +53,8 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
   servicePoints,
   getIntelligentServicePointSuggestion,
   onTransferQueueClick,
-  isPharmacyInterface = false
+  isPharmacyInterface = false,
+  getPatientName: customGetPatientName
 }) => {
   const [activeTab, setActiveTab] = React.useState('waiting');
 
@@ -60,11 +62,11 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
   const pausedQueues = waitingQueues.filter(q => q.paused_at);
   const actualWaitingQueues = waitingQueues.filter(q => !q.paused_at);
 
-  // Get patient name by ID
-  const getPatientName = (patientId: string) => {
+  // Get patient name by ID - use custom function if provided (for pharmacy interface)
+  const getPatientName = customGetPatientName || ((patientId: string) => {
     const patient = patients.find(p => p.id === patientId);
     return patient ? patient.name : 'Unknown';
-  };
+  });
 
   // Handle hold queue with proper parameters
   const handleHoldQueue = (queueId: string) => {

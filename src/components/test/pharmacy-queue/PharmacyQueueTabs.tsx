@@ -1,8 +1,9 @@
+
 import React from 'react';
-import { useQueueManagement } from '@/hooks/queue/useQueueManagement';
 import QueueTabsContainer from '@/components/queue/management/QueueTabsContainer';
 import QueueTransferDialogContainer from '@/components/queue/management/QueueTransferDialogContainer';
 import { useQueueTransferDialog } from '@/components/queue/transfer';
+import { usePharmacyQueueData } from './usePharmacyQueueData';
 
 interface PharmacyQueueTabsProps {
   servicePointId?: string;
@@ -13,23 +14,24 @@ const PharmacyQueueTabs: React.FC<PharmacyQueueTabsProps> = ({
   servicePointId,
   refreshTrigger
 }) => {
+  // Use the properly filtered pharmacy queue data
   const {
-    waitingQueues,
-    activeQueues,
-    completedQueues,
-    skippedQueues,
-    patients,
-    queueTypes,
     selectedServicePoint,
-    servicePoints,
-    handleRecallQueue,
+    queuesByStatus,
+    getPatientName,
+    getPatientData,
     handleCallQueue,
-    handleTransferQueue,
+    handleUpdateStatus,
+    handleRecallQueue,
     handleHoldQueue,
+    handleTransferQueue,
     handleReturnToWaiting,
-    updateQueueStatus,
-    getIntelligentServicePointSuggestion
-  } = useQueueManagement();
+    handleCancelQueue,
+    servicePoints
+  } = usePharmacyQueueData({ 
+    servicePointId: servicePointId || '',
+    refreshTrigger 
+  });
 
   const {
     transferDialogOpen,
@@ -40,8 +42,14 @@ const PharmacyQueueTabs: React.FC<PharmacyQueueTabsProps> = ({
 
   // Handler for opening transfer dialog
   const handleTransferQueueClick = (queueId: string) => {
-    const queue = [...waitingQueues, ...activeQueues, ...completedQueues, ...skippedQueues]
-      .find(q => q.id === queueId);
+    const allQueues = [
+      ...queuesByStatus.waiting,
+      ...queuesByStatus.active,
+      ...queuesByStatus.completed,
+      ...queuesByStatus.skipped,
+      ...queuesByStatus.paused
+    ];
+    const queue = allQueues.find(q => q.id === queueId);
     if (queue) {
       openTransferDialog(queue);
     }
@@ -53,16 +61,20 @@ const PharmacyQueueTabs: React.FC<PharmacyQueueTabsProps> = ({
     // TODO: Implement patient info dialog
   };
 
+  // Create empty patients array since we're using getPatientName from usePharmacyQueueData
+  const patients: any[] = [];
+  const queueTypes: any[] = [];
+
   return (
     <>
       <QueueTabsContainer
-        waitingQueues={waitingQueues}
-        activeQueues={activeQueues}
-        completedQueues={completedQueues}
-        skippedQueues={skippedQueues}
+        waitingQueues={queuesByStatus.waiting}
+        activeQueues={queuesByStatus.active}
+        completedQueues={queuesByStatus.completed}
+        skippedQueues={queuesByStatus.skipped}
         patients={patients}
         queueTypes={queueTypes}
-        onUpdateStatus={updateQueueStatus}
+        onUpdateStatus={handleUpdateStatus}
         onCallQueue={handleCallQueue}
         onRecallQueue={handleRecallQueue}
         onTransferQueue={handleTransferQueue}
@@ -71,7 +83,6 @@ const PharmacyQueueTabs: React.FC<PharmacyQueueTabsProps> = ({
         onViewPatientInfo={handleViewPatientInfo}
         selectedServicePoint={selectedServicePoint}
         servicePoints={servicePoints}
-        getIntelligentServicePointSuggestion={getIntelligentServicePointSuggestion}
         onTransferQueueClick={handleTransferQueueClick}
         isPharmacyInterface={true}
       />
