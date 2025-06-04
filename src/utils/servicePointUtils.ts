@@ -45,7 +45,7 @@ export async function getServicePointById(servicePointId: string): Promise<{ cod
     
     if (servicePoint) {
       return {
-        code: servicePoint.code,
+        // code: servicePoint.code,
         name: servicePoint.name
       };
     }
