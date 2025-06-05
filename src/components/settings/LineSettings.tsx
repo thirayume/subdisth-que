@@ -51,10 +51,10 @@ const LineSettings = () => {
 
   // Default settings if not available
   const currentLineSettings = lineSettings || {
-    channelId: "1234567890",
-    channelSecret: "abcdefghijklmnopqrstuvwxyz",
-    accessToken: "12345678901234567890123456789012345678901234567890",
-    welcomeMessage: "ยินดีต้อนรับสู่ระบบคิวห้องยา โรงพยาบาลชุมชนตัวอย่าง",
+    channelId: "2007119652",
+    channelSecret: "06c5c8cd9ef5c62e7ec68b17ff51cffd",
+    accessToken: "k0GIOBj7Cxn8TYbBobb4hF3+n9QjEIzeHFKNr4EdjTSYCUqHP+7FstCU9tDQWY25AEJNo5EZTgDYHGltQ9wMAoJBAzDCa5LLTKy1yfH5/kA2OLcvKTwjpl/zX4SPQhEcjwqnwKVJ4XXzoeZSLhto7QdB04t89/1O/w1cDnyilFU=",
+    welcomeMessage: "ยินดีต้อนรับสู่ระบบคิวห้องยา โรงพยาบาลส่งเสริมสุขภาพตำบลหนองแวง",
     queueReceivedMessage: "คุณได้รับคิวหมายเลข {queueNumber} ประเภท: {queueType}\nระยะเวลารอโดยประมาณ: {estimatedWaitTime} นาที",
     queueCalledMessage: "เรียนคุณ {patientName}\nถึงคิวของคุณแล้ว! กรุณามาที่ช่องบริการ {counter}\nหมายเลขคิวของคุณคือ: {queueNumber}"
   };
