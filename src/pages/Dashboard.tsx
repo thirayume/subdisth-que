@@ -23,7 +23,8 @@ const Dashboard: React.FC = () => {
   } = useDashboardQueues();
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col h-screen overflow-hidden">
+      {/* <div className="space-y-6"> */}
       <DashboardHeader />
       <DashboardContent
         waitingQueues={waitingQueues}
