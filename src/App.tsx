@@ -42,18 +42,18 @@ function App() {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-              <Route path="/patients" element={<Layout><Patients /></Layout>} />
-              <Route path="/medications" element={<Layout><Medications /></Layout>} />
-              <Route path="/queue" element={<Layout><QueueManagement /></Layout>} />
+              <Route path="/patients" element={<Layout fullWidth><Patients /></Layout>} />
+              <Route path="/medications" element={<Layout fullWidth><Medications /></Layout>} />
+              <Route path="/queue" element={<Layout fullWidth><QueueManagement /></Layout>} />
               <Route path="/queue-board" element={<QueueBoard />} />
-              <Route path="/settings" element={<Layout><Settings /></Layout>} />
-              <Route path="/analytics" element={<Layout><Analytics /></Layout>} />
-              <Route path="/appointments" element={<Layout><Appointments /></Layout>} />
+              <Route path="/settings" element={<Layout fullWidth><Settings /></Layout>} />
+              <Route path="/analytics" element={<Layout fullWidth><Analytics /></Layout>} />
+              <Route path="/appointments" element={<Layout fullWidth><Appointments /></Layout>} />
               <Route path="/queue/create" element={<CreateQueue />} />
               <Route path="/queue-ticket" element={<QueueTicket />} />
               <Route path="/pharmacy" element={<Layout fullWidth><PharmacyQueue /></Layout>} />
               <Route path="/service-point-queue" element={<Layout><ServicePointQueue /></Layout>} />
-              <Route path="/queue-history" element={<Layout><QueueHistory /></Layout>} />
+              <Route path="/queue-history" element={<Layout fullWidth><QueueHistory /></Layout>} />
               <Route path="/test-dashboard" element={<TestDashboard />} />
               <Route path="/patient-portal" element={<PatientPortal />} />
               <Route path="/patient-portal/connect-phone" element={<ConnectPhone />} />
