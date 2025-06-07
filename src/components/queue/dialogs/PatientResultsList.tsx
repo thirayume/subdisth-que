@@ -51,7 +51,7 @@ const PatientResultsList: React.FC<PatientResultsListProps> = ({
           </div>
         ))}
       </div>
-      {/* Only show "Add New Patient" button when no patient is selected */}
+      {/* Only show "Add New Patient" button when NO patient is selected from the results */}
       {!patientId && (
         <div className="mt-4 text-center">
           <Button 

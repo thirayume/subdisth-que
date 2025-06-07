@@ -21,7 +21,8 @@ export const usePatientInfoHook = (): {
     setPhoneNumber,
     showNewPatientForm: searchShowNewPatientForm,
     setShowNewPatientForm,
-    matchedPatients
+    matchedPatients,
+    resetPatientSearch
   } = patientSearchState;
 
   // Patient selection state
@@ -35,7 +36,8 @@ export const usePatientInfoHook = (): {
     setPatientPhone,
     lineId,
     setLineId,
-    handleSelectPatient: selectPatient
+    handleSelectPatient: selectPatient,
+    resetPatientSelection
   } = patientSelectionState;
 
   // New patient state
@@ -44,7 +46,8 @@ export const usePatientInfoHook = (): {
     showNewPatientForm: newPatientFormVisible,
     setShowNewPatientForm: setNewPatientFormVisible,
     newPatientName,
-    setNewPatientName
+    setNewPatientName,
+    resetNewPatientCreation
   } = newPatientCreationState;
 
   // Create the final values for the patient information
@@ -62,9 +65,20 @@ export const usePatientInfoHook = (): {
     selectPatient(id, matchedPatients);
   }, [selectPatient, matchedPatients]);
 
-  // Reset all patient-related states
+  // Enhanced reset function that clears everything
   const resetPatientState = React.useCallback(() => {
-    logger.debug('Resetting patient state');
+    logger.debug('Resetting patient state completely');
+    
+    // Reset search state
+    resetPatientSearch();
+    
+    // Reset selection state  
+    resetPatientSelection();
+    
+    // Reset new patient state
+    resetNewPatientCreation();
+    
+    // Additional manual resets to ensure clean state
     setPhoneNumber('');
     setPatientId('');
     setPatientName('');
@@ -73,6 +87,9 @@ export const usePatientInfoHook = (): {
     setShowNewPatientForm(false);
     setNewPatientName('');
   }, [
+    resetPatientSearch,
+    resetPatientSelection, 
+    resetNewPatientCreation,
     setPhoneNumber, 
     setPatientId, 
     setPatientName, 

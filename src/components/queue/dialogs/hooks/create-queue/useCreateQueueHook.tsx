@@ -78,13 +78,25 @@ export const useCreateQueueHook = (
     onCreateQueue
   ]);
 
-  // Function to reset all state
+  // Function to reset all state - enhanced to clear everything
   const resetState = React.useCallback(() => {
-    logger.debug('Resetting all state');
+    logger.debug('Resetting all state completely');
     resetPatientState();
     resetQueueState();
     resetDialogState();
-  }, [resetPatientState, resetQueueState, resetDialogState]);
+    
+    // Force reset of patient search state
+    patientSearchState.resetPatientSearch();
+    patientSelectionState.resetPatientSelection();
+    newPatientCreationState.resetNewPatientCreation();
+  }, [
+    resetPatientState, 
+    resetQueueState, 
+    resetDialogState,
+    patientSearchState,
+    patientSelectionState,
+    newPatientCreationState
+  ]);
 
   // Create the return object with all properties needed by the dialog
   return {
