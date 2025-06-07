@@ -12,6 +12,7 @@ export const useNewPatientCreation = (): NewPatientCreationState & NewPatientCre
   const [newPatientName, setNewPatientName] = React.useState('');
 
   const resetNewPatientCreation = React.useCallback(() => {
+    logger.debug('Resetting new patient creation state');
     setShowNewPatientForm(false);
     setNewPatientName('');
   }, []);
@@ -65,9 +66,11 @@ export const useNewPatientCreation = (): NewPatientCreationState & NewPatientCre
     }
   }, [newPatientName]);
 
-  // This function acts as a bridge for older components that use handleAddNewPatient
-  const handleAddNewPatient = React.useCallback(async (): Promise<NewPatientCreationResult | null> => {
-    return null; // Implementation will be provided by parent components
+  // Properly implement handleAddNewPatient to show the form and clear selected patient
+  const handleAddNewPatient = React.useCallback(() => {
+    logger.debug('Adding new patient - showing form and clearing selection');
+    setShowNewPatientForm(true);
+    setNewPatientName('');
   }, []);
 
   return {

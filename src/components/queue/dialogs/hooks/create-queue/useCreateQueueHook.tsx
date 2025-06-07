@@ -26,6 +26,7 @@ export const useCreateQueueHook = (
     newPatientCreationState,
     patientInfo,
     handleSelectPatient,
+    handleAddNewPatient,
     resetPatientState
   } = usePatientInfoHook();
 
@@ -115,7 +116,7 @@ export const useCreateQueueHook = (
     showNewPatientForm: newPatientCreationState.showNewPatientForm,
     newPatientName: newPatientCreationState.newPatientName,
     setNewPatientName: newPatientCreationState.setNewPatientName,
-    handleAddNewPatient: newPatientCreationState.handleAddNewPatient,
+    handleAddNewPatient,
     
     // Queue creation
     queueType: queueState.queueType as QueueType,

@@ -12,6 +12,7 @@ export const usePatientInfoHook = (): {
   newPatientCreationState: ReturnType<typeof useNewPatientCreation>;
   patientInfo: PatientInfo;
   handleSelectPatient: (id: string) => void;
+  handleAddNewPatient: () => void;
   resetPatientState: () => void;
 } => {
   // Patient search & selection state
@@ -47,6 +48,7 @@ export const usePatientInfoHook = (): {
     setShowNewPatientForm: setNewPatientFormVisible,
     newPatientName,
     setNewPatientName,
+    handleAddNewPatient: originalHandleAddNewPatient,
     resetNewPatientCreation
   } = newPatientCreationState;
 
@@ -63,7 +65,36 @@ export const usePatientInfoHook = (): {
   const handleSelectPatient = React.useCallback((id: string) => {
     logger.verbose(`Selecting patient with ID: ${id}`);
     selectPatient(id, matchedPatients);
-  }, [selectPatient, matchedPatients]);
+    // When a patient is selected, hide the new patient form
+    setShowNewPatientForm(false);
+    setNewPatientFormVisible(false);
+  }, [selectPatient, matchedPatients, setShowNewPatientForm, setNewPatientFormVisible]);
+
+  // Enhanced handleAddNewPatient that clears selection and shows form
+  const handleAddNewPatient = React.useCallback(() => {
+    logger.debug('Handle add new patient - clearing selection and showing form');
+    
+    // Clear any selected patient
+    setPatientId('');
+    setPatientName('');
+    setPatientPhone('');
+    setLineId('');
+    
+    // Show the new patient form
+    setShowNewPatientForm(true);
+    setNewPatientFormVisible(true);
+    
+    // Call the original handler
+    originalHandleAddNewPatient();
+  }, [
+    setPatientId,
+    setPatientName, 
+    setPatientPhone,
+    setLineId,
+    setShowNewPatientForm,
+    setNewPatientFormVisible,
+    originalHandleAddNewPatient
+  ]);
 
   // Enhanced reset function that clears everything
   const resetPatientState = React.useCallback(() => {
@@ -116,6 +147,7 @@ export const usePatientInfoHook = (): {
     newPatientCreationState,
     patientInfo,
     handleSelectPatient,
+    handleAddNewPatient,
     resetPatientState
   };
 };
