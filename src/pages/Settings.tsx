@@ -16,7 +16,7 @@ const SettingsContent: React.FC = () => {
   }
 
   return (
-    <>
+    <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <SettingsHeader />
         {/* <ServicePointSelector /> */}
@@ -24,18 +24,16 @@ const SettingsContent: React.FC = () => {
       <SettingsTabs>
         <SettingsForm />
       </SettingsTabs>
-    </>
+    </div>
   );
 };
 
 const Settings = () => {
   return (
     <Layout fullWidth={true}>
-      <div className="container mx-auto p-6">
-        <SettingsProvider>
-          <SettingsContent />
-        </SettingsProvider>
-      </div>
+      <SettingsProvider>
+        <SettingsContent />
+      </SettingsProvider>
     </Layout>
   );
 };
