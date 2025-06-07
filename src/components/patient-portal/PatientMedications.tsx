@@ -1,11 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Pill, Info } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Pill, Info, Volume2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { usePatientMedications } from '@/hooks/usePatientMedications';
+import { speakText } from '@/utils/textToSpeech';
 
 interface PatientMedicationsProps {
   patientId: string;
@@ -13,6 +15,45 @@ interface PatientMedicationsProps {
 
 const PatientMedications: React.FC<PatientMedicationsProps> = ({ patientId }) => {
   const { medications, loading } = usePatientMedications(patientId);
+  const [speakingId, setSpeakingId] = useState<string | null>(null);
+
+  const handleSpeak = async (med: any) => {
+    try {
+      setSpeakingId(med.id);
+      
+      // Construct the text to speak in Thai
+      let textToSpeak = '';
+      
+      if (med.medication?.description) {
+        textToSpeak += med.medication.description + ' ';
+      }
+      
+      if (med.medication?.name) {
+        textToSpeak += med.medication.name + ' ';
+      }
+      
+      if (med.dosage) {
+        textToSpeak += med.dosage + ' ';
+      }
+      
+      if (med.instructions) {
+        textToSpeak += med.instructions + ' ';
+      }
+      
+      if (med.medication?.unit) {
+        textToSpeak += med.medication.unit;
+      }
+      
+      // Clean up extra spaces
+      textToSpeak = textToSpeak.trim();
+      
+      await speakText(textToSpeak);
+    } catch (error) {
+      console.error('Error speaking medication:', error);
+    } finally {
+      setSpeakingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -67,16 +108,25 @@ const PatientMedications: React.FC<PatientMedicationsProps> = ({ patientId }) =>
               className="p-4 rounded-md border border-gray-200 hover:border-pharmacy-200 hover:bg-pharmacy-50 transition-colors"
             >
               <div className="flex items-start justify-between">
-                <div>
+                <div className="flex-1">
                   <h3 className="font-medium text-pharmacy-700">
                     {med.medication?.name}
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">{med.dosage}</p>
                 </div>
-                <div className="text-right">
+                <div className="flex items-center gap-2">
                   <span className="text-xs font-medium px-2 py-1 rounded-full bg-pharmacy-100 text-pharmacy-700">
                     {med.medication?.unit}
                   </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSpeak(med)}
+                    disabled={speakingId === med.id}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Volume2 className={`h-4 w-4 ${speakingId === med.id ? 'animate-pulse' : ''}`} />
+                  </Button>
                 </div>
               </div>
               
