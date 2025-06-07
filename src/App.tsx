@@ -41,16 +41,16 @@ function App() {
         <Router>
           <div className="min-h-screen bg-background">
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Layout fullWidth={true}><Index /></Layout>} />
               <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
               <Route path="/patients" element={<Layout fullWidth={true}><Patients /></Layout>} />
               <Route path="/medications" element={<Layout fullWidth={true}><Medications /></Layout>} />
               <Route path="/queue" element={<Layout fullWidth={true}><QueueManagement /></Layout>} />
-              <Route path="/queue-board" element={<QueueBoard />} />
+              <Route path="/queue-board" element={<Layout fullWidth={true}><QueueBoard /></Layout>} />
               <Route path="/settings" element={<Layout fullWidth={true}><Settings /></Layout>} />
               <Route path="/analytics" element={<Layout fullWidth={true}><Analytics /></Layout>} />
               <Route path="/appointments" element={<Layout fullWidth={true}><Appointments /></Layout>} />
-              <Route path="/queue/create" element={<CreateQueue />} />
+              <Route path="/queue/create" element={<Layout fullWidth={true}><CreateQueue /></Layout>} />
               <Route path="/queue-ticket" element={<QueueTicket />} />
               <Route path="/pharmacy" element={<Layout fullWidth={true}><PharmacyQueue /></Layout>} />
               <Route path="/service-point-queue" element={<Layout><ServicePointQueue /></Layout>} />

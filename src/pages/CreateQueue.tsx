@@ -55,7 +55,7 @@ const CreateQueue: React.FC = () => {
       <QueueBoardAlgorithmInfo algorithmName="สร้างคิวใหม่" />
       
       {/* Main Content Area */}
-      <main className="container mx-auto p-6 flex-1">
+      <main className="flex-1 p-6">
         <div className="grid grid-cols-1 gap-6">
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">สร้างคิวใหม่</h1>
