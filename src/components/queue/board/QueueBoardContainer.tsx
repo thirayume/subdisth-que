@@ -125,7 +125,7 @@ const QueueBoardContainer = () => {
   };
   
   return (
-    <div className="min-h-screen bg-pharmacy-50">
+    <div className="min-h-screen bg-pharmacy-50 flex flex-col">
       <QueueBoardHeader 
         currentTime={currentTime}
         soundEnabled={soundEnabled}
@@ -134,15 +134,19 @@ const QueueBoardContainer = () => {
       
       <QueueBoardAlgorithmInfo algorithmName={getCurrentAlgorithmName()} />
       
-      <QueueBoardContent 
-        activeQueues={activeQueues}
-        waitingQueues={waitingQueues}
-        completedQueues={completedQueues}
-        findPatient={findPatient}
-        findServicePoint={findServicePoint}
-      />
+      <div className="flex-1">
+        <QueueBoardContent 
+          activeQueues={activeQueues}
+          waitingQueues={waitingQueues}
+          completedQueues={completedQueues}
+          findPatient={findPatient}
+          findServicePoint={findServicePoint}
+        />
+      </div>
       
-      <HospitalFooter />
+      <div className="mt-auto">
+        <HospitalFooter />
+      </div>
     </div>
   );
 };

@@ -6,7 +6,6 @@ import SettingsHeader from '@/components/settings/SettingsHeader';
 import SettingsLoading from '@/components/settings/SettingsLoading';
 import SettingsForm from '@/components/settings/SettingsForm';
 import { SettingsProvider, useSettingsContext } from '@/contexts/SettingsContext';
-import ServicePointSelector from '@/components/queue/ServicePointSelector';
 
 const SettingsContent: React.FC = () => {
   const { loading, loadingQueueTypes } = useSettingsContext();
@@ -19,7 +18,6 @@ const SettingsContent: React.FC = () => {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <SettingsHeader />
-        {/* <ServicePointSelector /> */}
       </div>
       <SettingsTabs>
         <SettingsForm />
@@ -30,11 +28,9 @@ const SettingsContent: React.FC = () => {
 
 const Settings = () => {
   return (
-    <Layout fullWidth={true}>
-      <SettingsProvider>
-        <SettingsContent />
-      </SettingsProvider>
-    </Layout>
+    <SettingsProvider>
+      <SettingsContent />
+    </SettingsProvider>
   );
 };
 
