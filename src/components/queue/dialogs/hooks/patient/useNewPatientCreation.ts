@@ -66,8 +66,8 @@ export const useNewPatientCreation = (): NewPatientCreationState & NewPatientCre
     }
   }, [newPatientName]);
 
-  // Properly implement handleAddNewPatient to show the form and clear selected patient
-  const handleAddNewPatient = React.useCallback(() => {
+  // Fix the handleAddNewPatient function to match the expected Promise return type
+  const handleAddNewPatient = React.useCallback(async (): Promise<void> => {
     logger.debug('Adding new patient - showing form and clearing selection');
     setShowNewPatientForm(true);
     setNewPatientName('');
