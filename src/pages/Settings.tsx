@@ -1,6 +1,5 @@
 
 import React from 'react';
-import Layout from '@/components/layout/Layout';
 import SettingsTabs from '@/components/settings/SettingsTabs';
 import SettingsHeader from '@/components/settings/SettingsHeader';
 import SettingsLoading from '@/components/settings/SettingsLoading';
