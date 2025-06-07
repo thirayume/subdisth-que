@@ -1,6 +1,5 @@
 
 import React from 'react';
-import Layout from '@/components/layout/Layout';
 import { useAppointments } from '@/hooks/appointments/useAppointments';
 import { usePatients } from '@/hooks/usePatients';
 import AppointmentHeader from '@/components/appointments/AppointmentHeader';
@@ -30,7 +29,7 @@ const Appointments = () => {
   } = useAppointmentFilters(appointments, patients);
 
   return (
-    <Layout>
+    <div className="p-6">
       <AppointmentHeader />
       
       <AppointmentStats 
@@ -57,7 +56,7 @@ const Appointments = () => {
         onClearSearch={handleClearSearch}
         appointments={appointments}
       />
-    </Layout>
+    </div>
   );
 };
 
