@@ -51,15 +51,18 @@ const PatientResultsList: React.FC<PatientResultsListProps> = ({
           </div>
         ))}
       </div>
-      <div className="mt-4 text-center">
-        <Button 
-          variant="link" 
-          className="text-pharmacy-600"
-          onClick={handleAddNewPatient}
-        >
-          เพิ่มผู้ป่วยใหม่
-        </Button>
-      </div>
+      {/* Only show "Add New Patient" button when no patient is selected */}
+      {!patientId && (
+        <div className="mt-4 text-center">
+          <Button 
+            variant="link" 
+            className="text-pharmacy-600"
+            onClick={handleAddNewPatient}
+          >
+            เพิ่มผู้ป่วยใหม่
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
