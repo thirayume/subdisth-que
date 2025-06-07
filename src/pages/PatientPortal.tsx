@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -49,46 +48,7 @@ const PatientPortal: React.FC = () => {
             setPatients(patientData);
             
             // Check if there are active queues for any of these patients
-            const patientIds = patientData.map(p => p.id);
-            const { data: queueData, error: queueError } = await supabase
-              .from('queues')
-              .select('*')
-              .in('patient_id', patientIds)
-              .in('status', ['WAITING', 'ACTIVE'])
-              .order('created_at', { ascending: false });
-            
-            if (queueError) throw queueError;
-            
-            if (queueData && queueData.length > 0) {
-              console.log("[DEBUG] Found queues:", queueData.length);
-              // Convert string type to QueueType and string status to QueueStatus
-              const typedQueues: Queue[] = queueData.map(queue => ({
-                ...queue,
-                type: queue.type as QueueTypeEnum,
-                status: queue.status as QueueStatus
-              }));
-              
-              setAvailableQueues(typedQueues);
-              
-              // If there's only one queue, auto-select it
-              if (typedQueues.length === 1) {
-                const singleQueue = typedQueues[0];
-                setActiveQueue(singleQueue);
-                
-                // Find which patient this queue belongs to
-                const queuePatient = patientData.find(p => p.id === singleQueue.patient_id);
-                if (queuePatient) {
-                  setSelectedPatient(queuePatient);
-                } else {
-                  setSelectedPatient(patientData[0]);
-                }
-              }
-              // If multiple queues, let user select (don't auto-select)
-            } else {
-              console.log("[DEBUG] No active queues found");
-              // No active queues, select first patient for profile view
-              setSelectedPatient(patientData[0]);
-            }
+            await checkForActiveQueues(patientData);
           } else {
             console.log("[DEBUG] No patients found for phone:", userPhone);
             // No patients found for this phone number
@@ -110,8 +70,99 @@ const PatientPortal: React.FC = () => {
     checkAuth();
   }, []);
 
-  const handlePatientSelect = (patient: Patient) => {
+  const checkForActiveQueues = async (patientData: Patient[]) => {
+    try {
+      const patientIds = patientData.map(p => p.id);
+      
+      // Get today's date
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { data: queueData, error: queueError } = await supabase
+        .from('queues')
+        .select('*')
+        .in('patient_id', patientIds)
+        .in('status', ['WAITING', 'ACTIVE'])
+        .eq('queue_date', today)
+        .order('created_at', { ascending: false });
+      
+      if (queueError) throw queueError;
+      
+      if (queueData && queueData.length > 0) {
+        console.log("[DEBUG] Found queues:", queueData.length);
+        // Convert string type to QueueType and string status to QueueStatus
+        const typedQueues: Queue[] = queueData.map(queue => ({
+          ...queue,
+          type: queue.type as QueueTypeEnum,
+          status: queue.status as QueueStatus
+        }));
+        
+        setAvailableQueues(typedQueues);
+        
+        // If there's only one queue, auto-select it
+        if (typedQueues.length === 1) {
+          const singleQueue = typedQueues[0];
+          setActiveQueue(singleQueue);
+          
+          // Find which patient this queue belongs to
+          const queuePatient = patientData.find(p => p.id === singleQueue.patient_id);
+          if (queuePatient) {
+            setSelectedPatient(queuePatient);
+          } else {
+            setSelectedPatient(patientData[0]);
+          }
+        }
+        // If multiple queues, let user select (don't auto-select)
+      } else {
+        console.log("[DEBUG] No active queues found");
+        // No active queues, select first patient for profile view
+        setSelectedPatient(patientData[0]);
+      }
+    } catch (error) {
+      console.error('Error checking for active queues:', error);
+    }
+  };
+
+  const handlePatientSelect = async (patient: Patient) => {
+    console.log("[DEBUG] Patient selected:", patient.name);
     setSelectedPatient(patient);
+    
+    // Check for active queues for this specific patient
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { data: queueData, error: queueError } = await supabase
+        .from('queues')
+        .select('*')
+        .eq('patient_id', patient.id)
+        .in('status', ['WAITING', 'ACTIVE'])
+        .eq('queue_date', today)
+        .order('created_at', { ascending: false });
+      
+      if (queueError) throw queueError;
+      
+      if (queueData && queueData.length > 0) {
+        const typedQueues: Queue[] = queueData.map(queue => ({
+          ...queue,
+          type: queue.type as QueueTypeEnum,
+          status: queue.status as QueueStatus
+        }));
+        
+        setAvailableQueues(typedQueues);
+        
+        // If single queue, auto-select it and navigate to queue view
+        if (typedQueues.length === 1) {
+          setActiveQueue(typedQueues[0]);
+        }
+        // If multiple queues, user can see them in the selection view
+      } else {
+        // No active queues for this patient
+        setAvailableQueues([]);
+        setActiveQueue(null);
+      }
+    } catch (error) {
+      console.error('Error fetching patient queues:', error);
+      toast.error('เกิดข้อผิดพลาดในการดึงข้อมูลคิว');
+    }
   };
 
   const handleLineLoginSuccess = async (token: string, userPhone: string) => {
