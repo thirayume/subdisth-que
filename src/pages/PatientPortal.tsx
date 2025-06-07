@@ -253,6 +253,7 @@ const PatientPortal: React.FC = () => {
         patient={selectedPatient}
         queue={activeQueue}
         patients={patients}
+        availableQueues={availableQueues}
         onLogout={handleLogout}
         onSwitchPatient={handleSwitchPatient}
         onSwitchQueue={availableQueues.length > 1 ? handleSwitchQueue : undefined}

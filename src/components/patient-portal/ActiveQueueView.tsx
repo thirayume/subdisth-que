@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft } from 'lucide-react';
 import { Patient, Queue } from '@/integrations/supabase/schema';
 import PatientProfile from '@/components/patient-portal/PatientProfile';
 import PatientQueueStatus from '@/components/patient-portal/PatientQueueStatus';
@@ -13,9 +14,10 @@ interface ActiveQueueViewProps {
   patient: Patient;
   queue: Queue;
   patients: Patient[];
+  availableQueues?: Queue[];
   onLogout: () => void;
   onSwitchPatient: () => void;
-  onSwitchQueue?: () => void; // New optional prop for switching queues
+  onSwitchQueue?: () => void;
   onClearQueueHistory?: () => void;
 }
 
@@ -23,6 +25,7 @@ const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({
   patient, 
   queue, 
   patients, 
+  availableQueues = [],
   onLogout, 
   onSwitchPatient,
   onSwitchQueue,
@@ -31,13 +34,16 @@ const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
+  // Check if user has multiple queues
+  const hasMultipleQueues = availableQueues.length > 1;
+
   // Add a function to determine if the queue is from today
   const isQueueFromToday = () => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set to beginning of today
+    today.setHours(0, 0, 0, 0);
     
     const queueDate = new Date(queue.created_at);
-    queueDate.setHours(0, 0, 0, 0); // Set to beginning of queue date
+    queueDate.setHours(0, 0, 0, 0);
     
     return queueDate >= today;
   };
@@ -45,7 +51,6 @@ const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({
   // Automatically clear outdated queues when component mounts
   useEffect(() => {
     if (!isQueueFromToday() && onClearQueueHistory) {
-      // Automatically clear outdated queues
       onClearQueueHistory();
     }
   }, [queue, onClearQueueHistory]);
@@ -75,9 +80,10 @@ const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({
             ข้อมูลผู้ป่วย
           </h2>
           <div className="flex gap-2">
-            {onSwitchQueue && (
+            {hasMultipleQueues && onSwitchQueue && (
               <Button variant="outline" size="sm" onClick={onSwitchQueue}>
-                เลือกคิวอื่น
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                กลับไปรายการคิว
               </Button>
             )}
             {patients.length > 1 && (
@@ -128,13 +134,21 @@ const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({
       />
       
       <div className="flex justify-between items-center mb-2 sm:mb-4">
-        <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold text-gray-800`}>
-          ข้อมูลผู้ป่วย
-        </h2>
+        <div>
+          <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold text-gray-800`}>
+            ข้อมูลผู้ป่วย
+          </h2>
+          {hasMultipleQueues && (
+            <p className="text-sm text-gray-600 mt-1">
+              คิวที่ติดตาม: คิว {availableQueues.findIndex(q => q.id === queue.id) + 1} จาก {availableQueues.length} คิว
+            </p>
+          )}
+        </div>
         <div className="flex gap-2">
-          {onSwitchQueue && (
+          {hasMultipleQueues && onSwitchQueue && (
             <Button variant="outline" size="sm" onClick={onSwitchQueue}>
-              เลือกคิวอื่น
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              {isMobile ? "รายการคิว" : "กลับไปรายการคิว"}
             </Button>
           )}
           {patients.length > 1 && (
