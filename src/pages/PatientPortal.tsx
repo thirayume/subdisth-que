@@ -7,6 +7,7 @@ import PatientPortalLoading from '@/components/patient-portal/PatientPortalLoadi
 import PatientPortalAuth from '@/components/patient-portal/PatientPortalAuth';
 import ActiveQueueView from '@/components/patient-portal/ActiveQueueView';
 import PatientSelectionView from '@/components/patient-portal/PatientSelectionView';
+import PatientQueueSelector from '@/components/patient-portal/PatientQueueSelector';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const PatientPortal: React.FC = () => {
@@ -15,6 +16,7 @@ const PatientPortal: React.FC = () => {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [activeQueue, setActiveQueue] = useState<Queue | null>(null);
+  const [availableQueues, setAvailableQueues] = useState<Queue[]>([]);
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const [isStaffMode, setIsStaffMode] = useState<boolean>(false);
   const isMobile = useIsMobile();
@@ -46,40 +48,45 @@ const PatientPortal: React.FC = () => {
             console.log("[DEBUG] Found patients:", patientData.length);
             setPatients(patientData);
             
-            // Check if there's an active queue for any of these patients
+            // Check if there are active queues for any of these patients
             const patientIds = patientData.map(p => p.id);
             const { data: queueData, error: queueError } = await supabase
               .from('queues')
               .select('*')
               .in('patient_id', patientIds)
               .in('status', ['WAITING', 'ACTIVE'])
-              .order('created_at', { ascending: false })
-              .limit(1);
+              .order('created_at', { ascending: false });
             
             if (queueError) throw queueError;
             
             if (queueData && queueData.length > 0) {
-              console.log("[DEBUG] Found active queue:", queueData[0]);
+              console.log("[DEBUG] Found queues:", queueData.length);
               // Convert string type to QueueType and string status to QueueStatus
-              const typedQueue: Queue = {
-                ...queueData[0],
-                type: queueData[0].type as QueueTypeEnum,
-                status: queueData[0].status as QueueStatus
-              };
+              const typedQueues: Queue[] = queueData.map(queue => ({
+                ...queue,
+                type: queue.type as QueueTypeEnum,
+                status: queue.status as QueueStatus
+              }));
               
-              setActiveQueue(typedQueue);
+              setAvailableQueues(typedQueues);
               
-              // Find which patient this queue belongs to
-              const queuePatient = patientData.find(p => p.id === typedQueue.patient_id);
-              if (queuePatient) {
-                setSelectedPatient(queuePatient);
-              } else {
-                // If no active queue patient found, select first patient
-                setSelectedPatient(patientData[0]);
+              // If there's only one queue, auto-select it
+              if (typedQueues.length === 1) {
+                const singleQueue = typedQueues[0];
+                setActiveQueue(singleQueue);
+                
+                // Find which patient this queue belongs to
+                const queuePatient = patientData.find(p => p.id === singleQueue.patient_id);
+                if (queuePatient) {
+                  setSelectedPatient(queuePatient);
+                } else {
+                  setSelectedPatient(patientData[0]);
+                }
               }
+              // If multiple queues, let user select (don't auto-select)
             } else {
-              console.log("[DEBUG] No active queue found");
-              // No active queue, select first patient
+              console.log("[DEBUG] No active queues found");
+              // No active queues, select first patient for profile view
               setSelectedPatient(patientData[0]);
             }
           } else {
@@ -135,21 +142,25 @@ const PatientPortal: React.FC = () => {
         .select('*')
         .eq('patient_id', patient.id)
         .in('status', ['WAITING', 'ACTIVE'])
-        .gte('created_at', oneDayAgo.toISOString()) // Only show queues created in the last 24 hours
-        .order('created_at', { ascending: false })
-        .limit(1);
+        .gte('created_at', oneDayAgo.toISOString())
+        .order('created_at', { ascending: false });
       
       if (queueError) throw queueError;
       
       if (queueData && queueData.length > 0) {
         // Convert string type to QueueType and string status to QueueStatus
-        const typedQueue: Queue = {
-          ...queueData[0],
-          type: queueData[0].type as QueueTypeEnum,
-          status: queueData[0].status as QueueStatus
-        };
+        const typedQueues: Queue[] = queueData.map(queue => ({
+          ...queue,
+          type: queue.type as QueueTypeEnum,
+          status: queue.status as QueueStatus
+        }));
         
-        setActiveQueue(typedQueue);
+        setAvailableQueues(typedQueues);
+        
+        // If single queue, auto-select it
+        if (typedQueues.length === 1) {
+          setActiveQueue(typedQueues[0]);
+        }
       }
     } catch (error) {
       console.error('Error fetching patient queue:', error);
@@ -159,17 +170,32 @@ const PatientPortal: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('lineToken');
     localStorage.removeItem('userPhone');
-    localStorage.removeItem('stepOutData'); // Also clear step out data
+    localStorage.removeItem('stepOutData');
     setIsAuthenticated(false);
     setSelectedPatient(null);
     setPatients([]);
     setActiveQueue(null);
+    setAvailableQueues([]);
     setPhoneNumber(null);
     setIsStaffMode(false);
   };
 
   const handleSwitchPatient = () => {
     setActiveQueue(null);
+    setAvailableQueues([]);
+  };
+
+  const handleSwitchQueue = () => {
+    setActiveQueue(null);
+  };
+
+  const handleSelectQueue = (queue: Queue) => {
+    setActiveQueue(queue);
+    // Find which patient this queue belongs to
+    const queuePatient = patients.find(p => p.id === queue.patient_id);
+    if (queuePatient) {
+      setSelectedPatient(queuePatient);
+    }
   };
 
   // Move this function up before it's used
@@ -188,6 +214,7 @@ const PatientPortal: React.FC = () => {
       
       toast.success('ล้างประวัติคิวเก่าเรียบร้อยแล้ว');
       setActiveQueue(null);
+      setAvailableQueues([]);
     } catch (error) {
       console.error('Error clearing queue history:', error);
       toast.error('เกิดข้อผิดพลาดในการล้างประวัติคิว');
@@ -207,6 +234,19 @@ const PatientPortal: React.FC = () => {
     );
   }
 
+  // Show queue selector when multiple queues are available but none selected
+  if (availableQueues.length > 1 && !activeQueue) {
+    return (
+      <PatientQueueSelector
+        queues={availableQueues}
+        patients={patients}
+        onSelectQueue={handleSelectQueue}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
+  // Show active queue view when a queue is selected
   if (activeQueue && selectedPatient) {
     return (
       <ActiveQueueView
@@ -215,11 +255,13 @@ const PatientPortal: React.FC = () => {
         patients={patients}
         onLogout={handleLogout}
         onSwitchPatient={handleSwitchPatient}
+        onSwitchQueue={availableQueues.length > 1 ? handleSwitchQueue : undefined}
         onClearQueueHistory={handleClearQueueHistory}
       />
     );
   }
 
+  // Show patient selection view when no active queues
   return (
     <PatientSelectionView
       patients={patients}

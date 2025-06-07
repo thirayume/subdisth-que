@@ -15,7 +15,8 @@ interface ActiveQueueViewProps {
   patients: Patient[];
   onLogout: () => void;
   onSwitchPatient: () => void;
-  onClearQueueHistory?: () => void; // Add this prop
+  onSwitchQueue?: () => void; // New optional prop for switching queues
+  onClearQueueHistory?: () => void;
 }
 
 const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({ 
@@ -24,6 +25,7 @@ const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({
   patients, 
   onLogout, 
   onSwitchPatient,
+  onSwitchQueue,
   onClearQueueHistory
 }) => {
   const navigate = useNavigate();
@@ -72,11 +74,18 @@ const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({
           <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold text-gray-800`}>
             ข้อมูลผู้ป่วย
           </h2>
-          {patients.length > 1 && (
-            <Button variant="outline" size="sm" onClick={onSwitchPatient}>
-              เลือกผู้ป่วยอื่น
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {onSwitchQueue && (
+              <Button variant="outline" size="sm" onClick={onSwitchQueue}>
+                เลือกคิวอื่น
+              </Button>
+            )}
+            {patients.length > 1 && (
+              <Button variant="outline" size="sm" onClick={onSwitchPatient}>
+                เลือกผู้ป่วยอื่น
+              </Button>
+            )}
+          </div>
         </div>
         
         <Tabs defaultValue="profile" className="flex-1">
@@ -122,11 +131,18 @@ const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({
         <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold text-gray-800`}>
           ข้อมูลผู้ป่วย
         </h2>
-        {patients.length > 1 && (
-          <Button variant="outline" size="sm" onClick={onSwitchPatient}>
-            เลือกผู้ป่วยอื่น
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {onSwitchQueue && (
+            <Button variant="outline" size="sm" onClick={onSwitchQueue}>
+              เลือกคิวอื่น
+            </Button>
+          )}
+          {patients.length > 1 && (
+            <Button variant="outline" size="sm" onClick={onSwitchPatient}>
+              เลือกผู้ป่วยอื่น
+            </Button>
+          )}
+        </div>
       </div>
       
       <Tabs defaultValue="profile" className="flex-1">
