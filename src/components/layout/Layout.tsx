@@ -44,7 +44,7 @@ const Layout: React.FC<LayoutProps> = ({ children, className, fullWidth = false 
           className
         )}
       >
-        {/* Only apply container and padding when NOT fullWidth */}
+        {/* Apply full width with no padding/container when fullWidth is true */}
         {fullWidth ? (
           <div className="animate-fade-in w-full h-full">
             {/* Debug overlay in development */}
