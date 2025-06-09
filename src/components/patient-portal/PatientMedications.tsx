@@ -112,12 +112,10 @@ const PatientMedications: React.FC<PatientMedicationsProps> = ({ patientId }) =>
                   <h3 className="font-medium text-pharmacy-700">
                     {med.medication?.name}
                   </h3>
-                  <p className="text-sm text-gray-600 mt-1">{med.dosage}</p>
+                  <p className="text-sm text-gray-600 mt-1">{med.dosage} {med.medication?.unit}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium px-2 py-1 rounded-full bg-pharmacy-100 text-pharmacy-700">
-                    {med.medication?.unit}
-                  </span>
+                  <span className="text-xs font-medium px-2 py-1 rounded-full bg-pharmacy-100 text-pharmacy-700"></span>
                   <Button
                     variant="outline"
                     size="sm"
