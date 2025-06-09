@@ -8,6 +8,56 @@ import { toast } from 'sonner';
 const logger = createLogger('useSmsNotifications');
 
 export const useSmsNotifications = () => {
+  // Check if SMS is enabled in settings
+  const checkSmsEnabled = useCallback(async (): Promise<boolean> => {
+    try {
+      const { data: settings, error } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('category', 'sms')
+        .eq('key', 'enabled')
+        .single();
+
+      if (error || !settings) {
+        logger.warn('SMS enabled setting not found, defaulting to disabled');
+        return false;
+      }
+
+      return settings.value === 'true' || settings.value === true;
+    } catch (error) {
+      logger.error('Error checking SMS enabled status:', error);
+      return false;
+    }
+  }, []);
+
+  // Get message template from settings
+  const getMessageTemplate = useCallback(async (): Promise<string | null> => {
+    try {
+      const { data: settings, error } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('category', 'sms')
+        .eq('key', 'message_template')
+        .single();
+
+      if (error || !settings) {
+        return null;
+      }
+
+      // Parse JSON string value
+      try {
+        return typeof settings.value === 'string' && settings.value.startsWith('"')
+          ? JSON.parse(settings.value)
+          : settings.value;
+      } catch (e) {
+        return settings.value;
+      }
+    } catch (error) {
+      logger.error('Error getting message template:', error);
+      return null;
+    }
+  }, []);
+
   // Get next 3 waiting queues for each service point
   const getNextQueuesPerServicePoint = useCallback(async (): Promise<{ servicePoint: ServicePoint; queues: Queue[]; patients: Patient[] }[]> => {
     try {
@@ -78,7 +128,13 @@ export const useSmsNotifications = () => {
         return false;
       }
 
-      const message = `ท่านกำลังจะได้รับบริการในคิวถัดไป คิวหมายเลข ${queue.number} ที่ ${servicePoint.name}`;
+      // Get message template from settings
+      const messageTemplate = await getMessageTemplate();
+      const message = messageTemplate
+        ? messageTemplate
+            .replace('{queueNumber}', queue.number.toString())
+            .replace('{servicePoint}', servicePoint.name)
+        : `ท่านกำลังจะได้รับบริการในคิวถัดไป คิวหมายเลข ${queue.number} ที่ ${servicePoint.name}`;
 
       const { data, error } = await supabase.functions.invoke('send-sms-notification', {
         body: {
@@ -100,11 +156,18 @@ export const useSmsNotifications = () => {
       logger.error(`Error sending SMS to patient ${patient.name}:`, error);
       return false;
     }
-  }, []);
+  }, [getMessageTemplate]);
 
   // Send SMS notifications to next 3 queues for all service points
   const sendSmsToNextQueues = useCallback(async (): Promise<void> => {
     try {
+      // Check if SMS is enabled
+      const smsEnabled = await checkSmsEnabled();
+      if (!smsEnabled) {
+        logger.info('SMS notifications are disabled');
+        return;
+      }
+
       logger.info('Starting SMS notifications for next queues...');
       
       const servicePointData = await getNextQueuesPerServicePoint();
@@ -133,18 +196,22 @@ export const useSmsNotifications = () => {
       }
 
       const message = `ส่ง SMS แจ้งเตือนไปยัง ${totalSent}/${totalQueues} คิว`;
-      toast.success(message);
+      if (totalSent > 0) {
+        toast.success(message);
+      }
       logger.info(message);
 
     } catch (error) {
       logger.error('Error in sendSmsToNextQueues:', error);
       toast.error('เกิดข้อผิดพลาดในการส่ง SMS แจ้งเตือน');
     }
-  }, [getNextQueuesPerServicePoint, sendSmsToPatient]);
+  }, [checkSmsEnabled, getNextQueuesPerServicePoint, sendSmsToPatient]);
 
   return {
     sendSmsToNextQueues,
     getNextQueuesPerServicePoint,
-    sendSmsToPatient
+    sendSmsToPatient,
+    checkSmsEnabled,
+    getMessageTemplate
   };
 };
