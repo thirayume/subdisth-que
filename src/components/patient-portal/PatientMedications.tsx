@@ -35,13 +35,13 @@ const PatientMedications: React.FC<PatientMedicationsProps> = ({ patientId }) =>
       if (med.dosage) {
         textToSpeak += med.dosage + ' ';
       }
+
+      if (med.medication?.unit) {
+        textToSpeak += med.medication.unit;
+      }
       
       if (med.instructions) {
         textToSpeak += med.instructions + ' ';
-      }
-      
-      if (med.medication?.unit) {
-        textToSpeak += med.medication.unit;
       }
       
       // Clean up extra spaces
