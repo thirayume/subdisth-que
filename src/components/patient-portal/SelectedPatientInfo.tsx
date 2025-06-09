@@ -38,7 +38,7 @@ const SelectedPatientInfo: React.FC<SelectedPatientInfoProps> = ({
           )}
         </div>
         
-        <div className="text-center mt-6 space-y-2">
+        {/* <div className="text-center mt-6 space-y-2">
           {onClearQueueHistory && (
             <Button 
               variant="outline" 
@@ -48,7 +48,7 @@ const SelectedPatientInfo: React.FC<SelectedPatientInfoProps> = ({
               ล้างประวัติคิวเก่า
             </Button>
           )}
-        </div>
+        </div> */}
       </CardContent>
     </Card>
   );
