@@ -5,7 +5,7 @@ export * from './usePatients';
 export * from './useMedications';
 export * from './useServicePoints';
 export * from './useSettings';
-export * from './useAppointments';
+export * from './appointments/useAppointments';
 export * from './useQueueTypes';
 export * from './usePatientMedications';
 export * from './useOfflineStatus';
