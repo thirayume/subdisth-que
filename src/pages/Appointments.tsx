@@ -10,7 +10,7 @@ import { useAppointmentCategories } from '@/hooks/appointments/useAppointmentCat
 import { getPatientInfo } from '@/utils/patientUtils';
 
 const Appointments = () => {
-  const { appointments } = useAppointments();
+  const { appointments, fetchAppointments } = useAppointments();
   const { patients } = usePatients();
   
   const { getPatientName, getPatientPhone } = getPatientInfo(patients);
@@ -30,7 +30,7 @@ const Appointments = () => {
 
   return (
     <div className="p-6">
-      <AppointmentHeader />
+      <AppointmentHeader onAppointmentsRefresh={fetchAppointments} />
       
       <AppointmentStats 
         todayCount={todayAppointments.length}
