@@ -44,14 +44,20 @@ export const useSmsNotifications = () => {
         return null;
       }
 
-      // Parse JSON string value
-      try {
-        return typeof settings.value === 'string' && settings.value.startsWith('"')
-          ? JSON.parse(settings.value)
-          : settings.value;
-      } catch (e) {
-        return settings.value;
+      // Properly handle Json type conversion to string
+      const value = settings.value;
+      if (typeof value === 'string') {
+        // If it's already a string, check if it's a JSON string that needs parsing
+        if (value.startsWith('"') && value.endsWith('"')) {
+          return JSON.parse(value);
+        }
+        return value;
+      } else if (value) {
+        // If it's not a string but has a value, convert to string
+        return String(value);
       }
+      
+      return null;
     } catch (error) {
       logger.error('Error getting message template:', error);
       return null;
