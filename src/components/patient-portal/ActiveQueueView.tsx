@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,9 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Clock, Users, ArrowRight, Calendar, UserCog, LogOut, RotateCcw } from 'lucide-react';
 import { Patient, Queue } from '@/integrations/supabase/schema';
 import { supabase } from '@/integrations/supabase/client';
-import PatientQueueStatus from './PatientQueueStatus';
-import StepOutTimer from './StepOutTimer';
-import WaitingTimeProgress from './WaitingTimeProgress';
 import { useNavigate } from 'react-router-dom';
 
 interface ActiveQueueViewProps {
@@ -69,7 +67,7 @@ const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({
 
         if (avgWaitTimeError) throw avgWaitTimeError;
 
-        const avgWaitTime = avgWaitTimeData ? parseInt(avgWaitTimeData.value, 10) : 10; // Default to 10 minutes
+        const avgWaitTime = avgWaitTimeData ? parseInt(String(avgWaitTimeData.value), 10) : 10; // Default to 10 minutes
 
         setEstimatedWaitTime(queuePosition * avgWaitTime);
       } catch (error) {
@@ -99,21 +97,44 @@ const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({
           </CardContent>
         </Card>
 
-        {/* Queue Status */}
-        <PatientQueueStatus 
-          queue={queue}
-          queuePosition={queuePosition}
-          estimatedWaitTime={estimatedWaitTime}
-        />
+        {/* Queue Status Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-blue-600" />
+              สถานะคิว
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-blue-600 mb-2">
+                {queuePosition + 1}
+              </div>
+              <p className="text-gray-600">คิวก่อนหน้า</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-xl font-semibold text-green-600">
+                {estimatedWaitTime} นาที
+              </div>
+              <p className="text-gray-600">เวลารอโดยประมาณ</p>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Step Out Timer */}
-        {queue.paused_at && <StepOutTimer queue={queue} />}
-
-        {/* Waiting Time Progress */}
-        <WaitingTimeProgress 
-          queue={queue}
-          estimatedWaitTime={estimatedWaitTime}
-        />
+        {/* Step Out Timer - only show if queue is paused */}
+        {queue.paused_at && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-orange-600 font-medium">คิวของคุณถูกพักไว้</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  พักตั้งแต่: {new Date(queue.paused_at).toLocaleTimeString('th-TH')}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Quick Actions */}
         <Card>

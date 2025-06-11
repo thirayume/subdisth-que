@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Plus, Calendar, Edit, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Patient, Appointment } from '@/integrations/supabase/schema';
+import { Patient } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
@@ -16,12 +16,23 @@ interface PatientAppointmentsProps {
   patient: Patient;
 }
 
+interface AppointmentData {
+  id: string;
+  patient_id: string;
+  date: string;
+  purpose: string;
+  notes: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 const PatientAppointments: React.FC<PatientAppointmentsProps> = ({ patient }) => {
   const navigate = useNavigate();
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState<AppointmentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+  const [editingAppointment, setEditingAppointment] = useState<AppointmentData | null>(null);
   const [deleteAppointmentId, setDeleteAppointmentId] = useState<string | null>(null);
 
   const fetchAppointments = async () => {
@@ -51,7 +62,7 @@ const PatientAppointments: React.FC<PatientAppointmentsProps> = ({ patient }) =>
     setIsDialogOpen(true);
   };
 
-  const handleEditAppointment = (appointment: Appointment) => {
+  const handleEditAppointment = (appointment: AppointmentData) => {
     setEditingAppointment(appointment);
     setIsDialogOpen(true);
   };

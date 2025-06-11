@@ -39,6 +39,10 @@ const PatientSelectionView: React.FC<PatientSelectionViewProps> = ({
               patients={patients}
               selectedPatient={selectedPatient}
               onSelectPatient={onSelectPatient}
+              patientQueues={[]}
+              loading={false}
+              cancellingQueue=""
+              onCancelQueue={() => {}}
             />
             
             {selectedPatient && (

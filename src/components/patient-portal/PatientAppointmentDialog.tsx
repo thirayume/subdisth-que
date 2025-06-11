@@ -22,7 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { Patient, Appointment } from '@/integrations/supabase/schema';
+import { Patient } from '@/integrations/supabase/schema';
 import { toast } from 'sonner';
 
 const appointmentSchema = z.object({
@@ -34,11 +34,22 @@ const appointmentSchema = z.object({
 
 type AppointmentFormValues = z.infer<typeof appointmentSchema>;
 
+interface AppointmentData {
+  id: string;
+  patient_id: string;
+  date: string;
+  purpose: string;
+  notes: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface PatientAppointmentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   patient: Patient;
-  appointment?: Appointment | null;
+  appointment?: AppointmentData | null;
   onSuccess: () => void;
 }
 
