@@ -23,6 +23,9 @@ import NotFound from '@/pages/NotFound';
 import Layout from '@/components/layout/Layout';
 import ConnectPhone from '@/pages/ConnectPhone';
 import LineCallback from '@/components/LineCallback';
+import PatientPortalAuthWrapper from '@/components/patient-portal/PatientPortalAuthWrapper';
+import PatientAppointments from '@/components/patient-portal/PatientAppointments';
+import PatientProfile from '@/components/patient-portal/PatientProfile';
 
 // Create a QueryClient instance
 const queryClient = new QueryClient({
@@ -58,6 +61,16 @@ function App() {
               <Route path="/test-dashboard" element={<TestDashboard />} />
               <Route path="/patient-portal" element={<PatientPortal />} />
               <Route path="/patient-portal/connect-phone" element={<ConnectPhone />} />
+              <Route path="/patient-portal/appointments" element={
+                <PatientPortalAuthWrapper>
+                  <PatientAppointments />
+                </PatientPortalAuthWrapper>
+              } />
+              <Route path="/patient-portal/profile" element={
+                <PatientPortalAuthWrapper>
+                  <PatientProfile />
+                </PatientPortalAuthWrapper>
+              } />
               <Route path="/auth/line/callback" element={<LineCallback />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

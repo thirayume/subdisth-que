@@ -1,182 +1,192 @@
-
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Clock, Users, ArrowRight, Calendar, UserCog, LogOut, RotateCcw } from 'lucide-react';
 import { Patient, Queue } from '@/integrations/supabase/schema';
-import PatientProfile from '@/components/patient-portal/PatientProfile';
-import PatientQueueStatus from '@/components/patient-portal/PatientQueueStatus';
-import PatientMedications from '@/components/patient-portal/PatientMedications';
+import { supabase } from '@/integrations/supabase/client';
+import PatientQueueStatus from './PatientQueueStatus';
+import StepOutTimer from './StepOutTimer';
+import WaitingTimeProgress from './WaitingTimeProgress';
 import { useNavigate } from 'react-router-dom';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ActiveQueueViewProps {
   patient: Patient;
   queue: Queue;
   patients: Patient[];
-  availableQueues?: Queue[];
+  availableQueues: Queue[];
   onLogout: () => void;
   onSwitchPatient: () => void;
   onSwitchQueue?: () => void;
-  onClearQueueHistory?: () => void;
+  onClearQueueHistory: () => void;
 }
 
-const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({ 
-  patient, 
-  queue, 
-  patients, 
-  availableQueues = [],
-  onLogout, 
+const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({
+  patient,
+  queue,
+  patients,
+  availableQueues,
+  onLogout,
   onSwitchPatient,
   onSwitchQueue,
   onClearQueueHistory
 }) => {
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
+  const [queuePosition, setQueuePosition] = useState<number>(0);
+  const [estimatedWaitTime, setEstimatedWaitTime] = useState<number>(0);
 
-  // Check if user has multiple queues
-  const hasMultipleQueues = availableQueues.length > 1;
-
-  // Add a function to determine if the queue is from today
-  const isQueueFromToday = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const queueDate = new Date(queue.created_at);
-    queueDate.setHours(0, 0, 0, 0);
-    
-    return queueDate >= today;
-  };
-
-  // Automatically clear outdated queues when component mounts
   useEffect(() => {
-    if (!isQueueFromToday() && onClearQueueHistory) {
-      onClearQueueHistory();
-    }
-  }, [queue, onClearQueueHistory]);
+    const fetchQueuePosition = async () => {
+      try {
+        // Get today's date
+        const today = new Date().toISOString().split('T')[0];
+        
+        const { count, error } = await supabase
+          .from('queues')
+          .select('*', { count: 'exact' })
+          .eq('queue_date', today)
+          .eq('status', 'WAITING')
+          .or(`service_point_id.eq.${queue.service_point_id},service_point_id.is.null`)
+          .is('paused_at', null)
+          .lt('number', queue.number);
 
-  // If queue is not from today, don't show it
-  if (!isQueueFromToday()) {
-    return (
-      <div className="flex flex-col min-h-screen bg-gray-50 p-2 sm:p-4">
-        <div className="flex justify-between items-center mb-3 sm:mb-4">
-          <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-pharmacy-700`}>
-            ระบบติดตามคิวผู้ป่วย
-          </h1>
-          <Button variant="outline" size={isMobile ? "sm" : "default"} onClick={onLogout}>
-            ออกจากระบบ
-          </Button>
-        </div>
-        
-        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
-          <h2 className="text-lg font-semibold text-yellow-800 mb-2">ไม่พบคิวสำหรับวันนี้</h2>
-          <p className="text-yellow-700">
-            คิวที่แสดงอยู่เป็นคิวเก่าจากวันก่อนหน้า ระบบกำลังล้างข้อมูลคิวเก่า
-          </p>
-        </div>
-        
-        <div className="flex justify-between items-center mb-2 sm:mb-4">
-          <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold text-gray-800`}>
-            ข้อมูลผู้ป่วย
-          </h2>
-          <div className="flex gap-2">
-            {hasMultipleQueues && onSwitchQueue && (
-              <Button variant="outline" size="sm" onClick={onSwitchQueue}>
-                <ArrowLeft className="h-4 w-4 mr-1" />
-                กลับไปรายการคิว
-              </Button>
-            )}
-            {patients.length > 1 && (
-              <Button variant="outline" size="sm" onClick={onSwitchPatient}>
-                เลือกผู้ป่วยอื่น
-              </Button>
-            )}
-          </div>
-        </div>
-        
-        <Tabs defaultValue="profile" className="flex-1">
-          <TabsList className="mb-3 sm:mb-4 grid grid-cols-2 w-full">
-            <TabsTrigger value="profile" className={isMobile ? "text-sm py-1.5" : ""}>
-              ข้อมูลส่วนตัว
-            </TabsTrigger>
-            <TabsTrigger value="medications" className={isMobile ? "text-sm py-1.5" : ""}>
-              รายการยา
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="profile">
-            <PatientProfile patient={patient} />
-          </TabsContent>
-          
-          <TabsContent value="medications">
-            <PatientMedications patientId={patient.id} />
-          </TabsContent>
-        </Tabs>
-      </div>
-    );
-  }
+        if (error) throw error;
+
+        setQueuePosition(count || 0);
+      } catch (error) {
+        console.error('Error fetching queue position:', error);
+      }
+    };
+
+    const calculateEstimatedWaitTime = async () => {
+      try {
+        const { data: avgWaitTimeData, error: avgWaitTimeError } = await supabase
+          .from('settings')
+          .select('value')
+          .eq('category', 'queue')
+          .eq('key', 'avg_wait_time')
+          .single();
+
+        if (avgWaitTimeError) throw avgWaitTimeError;
+
+        const avgWaitTime = avgWaitTimeData ? parseInt(avgWaitTimeData.value, 10) : 10; // Default to 10 minutes
+
+        setEstimatedWaitTime(queuePosition * avgWaitTime);
+      } catch (error) {
+        console.error('Error calculating estimated wait time:', error);
+      }
+    };
+
+    fetchQueuePosition();
+    calculateEstimatedWaitTime();
+  }, [queue, supabase, queuePosition]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 p-2 sm:p-4">
-      <div className="flex justify-between items-center mb-3 sm:mb-4">
-        <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-pharmacy-700`}>
-          ระบบติดตามคิวผู้ป่วย
-        </h1>
-        <Button variant="outline" size={isMobile ? "sm" : "default"} onClick={onLogout}>
-          ออกจากระบบ
-        </Button>
-      </div>
-      
-      <PatientQueueStatus 
-        queue={queue} 
-        patient={patient} 
-        className="mb-3 sm:mb-4" 
-      />
-      
-      <div className="flex justify-between items-center mb-2 sm:mb-4">
-        <div>
-          <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold text-gray-800`}>
-            ข้อมูลผู้ป่วย
-          </h2>
-          {hasMultipleQueues && (
-            <p className="text-sm text-gray-600 mt-1">
-              คิวที่ติดตาม: คิว {availableQueues.findIndex(q => q.id === queue.id) + 1} จาก {availableQueues.length} คิว
-            </p>
-          )}
-        </div>
-        <div className="flex gap-2">
-          {hasMultipleQueues && onSwitchQueue && (
-            <Button variant="outline" size="sm" onClick={onSwitchQueue}>
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              {isMobile ? "รายการคิว" : "กลับไปรายการคิว"}
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-2xl mx-auto space-y-4">
+        {/* Patient Info Card */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">{patient.name}</h2>
+                <p className="text-gray-600">{patient.phone}</p>
+              </div>
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                คิวที่ {queue.number}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Queue Status */}
+        <PatientQueueStatus 
+          queue={queue}
+          queuePosition={queuePosition}
+          estimatedWaitTime={estimatedWaitTime}
+        />
+
+        {/* Step Out Timer */}
+        {queue.paused_at && <StepOutTimer queue={queue} />}
+
+        {/* Waiting Time Progress */}
+        <WaitingTimeProgress 
+          queue={queue}
+          estimatedWaitTime={estimatedWaitTime}
+        />
+
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">การจัดการ</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 gap-3">
+              <Button
+                onClick={() => navigate('/patient-portal/appointments')}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                จัดการนัดหมาย
+              </Button>
+              
+              <Button
+                onClick={() => navigate('/patient-portal/profile')}
+                variant="outline"
+                className="w-full border-green-600 text-green-600 hover:bg-green-50"
+              >
+                <UserCog className="w-4 h-4 mr-2" />
+                แก้ไขข้อมูลส่วนตัว
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Queue Management Actions */}
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            {patients.length > 1 && (
+              <Button
+                onClick={onSwitchPatient}
+                variant="outline"
+                className="w-full"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                เปลี่ยนผู้ป่วย
+              </Button>
+            )}
+
+            {onSwitchQueue && availableQueues.length > 1 && (
+              <Button
+                onClick={onSwitchQueue}
+                variant="outline"
+                className="w-full"
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                เปลี่ยนคิว
+              </Button>
+            )}
+
+            <Button
+              onClick={onClearQueueHistory}
+              variant="outline"
+              className="w-full border-red-600 text-red-600 hover:bg-red-50"
+            >
+              <RotateCcw className="w-4 h-4 mr-2" />
+              ล้างประวัติคิวเก่า
             </Button>
-          )}
-          {patients.length > 1 && (
-            <Button variant="outline" size="sm" onClick={onSwitchPatient}>
-              เลือกผู้ป่วยอื่น
+
+            <Button
+              onClick={onLogout}
+              variant="outline"
+              className="w-full"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              ออกจากระบบ
             </Button>
-          )}
-        </div>
+          </CardContent>
+        </Card>
       </div>
-      
-      <Tabs defaultValue="profile" className="flex-1">
-        <TabsList className="mb-3 sm:mb-4 grid grid-cols-2 w-full">
-          <TabsTrigger value="profile" className={isMobile ? "text-sm py-1.5" : ""}>
-            ข้อมูลส่วนตัว
-          </TabsTrigger>
-          <TabsTrigger value="medications" className={isMobile ? "text-sm py-1.5" : ""}>
-            รายการยา
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="profile">
-          <PatientProfile patient={patient} />
-        </TabsContent>
-        
-        <TabsContent value="medications">
-          <PatientMedications patientId={patient.id} />
-        </TabsContent>
-      </Tabs>
     </div>
   );
 };
