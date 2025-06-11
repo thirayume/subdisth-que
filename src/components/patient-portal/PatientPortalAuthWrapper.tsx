@@ -62,9 +62,9 @@ export const PatientPortalAuthWrapper: React.FC<PatientPortalAuthWrapperProps> =
     return null;
   }
 
-  // Pass the patient prop to the children
+  // Pass the patient prop to the children by cloning with proper typing
   if (React.isValidElement(children)) {
-    return React.cloneElement(children as React.ReactElement<any>, { patient });
+    return React.cloneElement(children as React.ReactElement<{ patient: Patient }>, { patient });
   }
 
   return <div>{children}</div>;
