@@ -63,12 +63,12 @@ function App() {
               <Route path="/patient-portal/connect-phone" element={<ConnectPhone />} />
               <Route path="/patient-portal/appointments" element={
                 <PatientPortalAuthWrapper>
-                  <PatientAppointments />
+                  {(patient) => <PatientAppointments patient={patient} />}
                 </PatientPortalAuthWrapper>
               } />
               <Route path="/patient-portal/profile" element={
                 <PatientPortalAuthWrapper>
-                  <PatientProfile />
+                  {(patient) => <PatientProfile patient={patient} />}
                 </PatientPortalAuthWrapper>
               } />
               <Route path="/auth/line/callback" element={<LineCallback />} />

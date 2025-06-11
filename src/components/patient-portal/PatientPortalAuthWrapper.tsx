@@ -7,7 +7,7 @@ import PatientPortalLoading from './PatientPortalLoading';
 import { toast } from 'sonner';
 
 interface PatientPortalAuthWrapperProps {
-  children: React.ReactNode;
+  children: (patient: Patient) => React.ReactNode;
 }
 
 export const PatientPortalAuthWrapper: React.FC<PatientPortalAuthWrapperProps> = ({ children }) => {
@@ -62,12 +62,7 @@ export const PatientPortalAuthWrapper: React.FC<PatientPortalAuthWrapperProps> =
     return null;
   }
 
-  // For React elements, clone with patient prop using proper typing
-  if (React.isValidElement(children)) {
-    return React.cloneElement(children as React.ReactElement<{ patient?: Patient }>, { patient });
-  }
-
-  return <div>{children}</div>;
+  return <>{children(patient)}</>;
 };
 
 export default PatientPortalAuthWrapper;
