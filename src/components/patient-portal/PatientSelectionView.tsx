@@ -150,13 +150,6 @@ const PatientSelectionView: React.FC<PatientSelectionViewProps> = ({
             </CardContent>
           </Card>
         )}
-
-        {/* Debug panel - remove this in production */}
-        <PatientPortalDebug 
-          patients={patients}
-          selectedPatient={selectedPatient}
-          isAuthenticated={true}
-        />
       </div>
     </div>
   );
