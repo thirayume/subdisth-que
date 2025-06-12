@@ -7,13 +7,14 @@ import PatientPortalLoading from './PatientPortalLoading';
 import { toast } from 'sonner';
 
 interface PatientPortalAuthWrapperProps {
-  children: (patient: Patient) => React.ReactNode;
+  children: (patients: Patient[], selectedPatient: Patient | null, onSelectPatient: (patient: Patient) => void) => React.ReactNode;
 }
 
 export const PatientPortalAuthWrapper: React.FC<PatientPortalAuthWrapperProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [patient, setPatient] = useState<Patient | null>(null);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -68,37 +69,19 @@ export const PatientPortalAuthWrapper: React.FC<PatientPortalAuthWrapperProps> =
           return;
         }
 
-        // Handle multiple patients - prioritize those with LINE integration
-        let selectedPatient: Patient;
+        console.log('[PatientPortalAuthWrapper] Authentication successful, found patients:', patientData.length);
+        setPatients(patientData);
         
-        if (patientData.length === 1) {
-          selectedPatient = patientData[0];
-          console.log('[PatientPortalAuthWrapper] Single patient found:', selectedPatient.name);
-        } else {
-          console.log('[PatientPortalAuthWrapper] Multiple patients found, count:', patientData.length);
-          
-          // Prioritize patient with LINE user ID (most integrated)
-          const lineIntegratedPatient = patientData.find(p => p.line_user_id);
-          
-          if (lineIntegratedPatient) {
-            selectedPatient = lineIntegratedPatient;
-            console.log('[PatientPortalAuthWrapper] Selected LINE-integrated patient:', selectedPatient.name);
-          } else {
-            // If no LINE-integrated patient, pick the most recently updated
-            selectedPatient = patientData.sort((a, b) => 
-              new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-            )[0];
-            console.log('[PatientPortalAuthWrapper] Selected most recent patient:', selectedPatient.name);
+        // Check if there's a previously selected patient
+        const storedPatientId = localStorage.getItem('selectedPatientId');
+        if (storedPatientId) {
+          const storedPatient = patientData.find(p => p.id === storedPatientId);
+          if (storedPatient) {
+            setSelectedPatient(storedPatient);
+            console.log('[PatientPortalAuthWrapper] Restored selected patient:', storedPatient.name);
           }
-          
-          // Log warning about multiple patients
-          console.warn('[PatientPortalAuthWrapper] Multiple patients found for phone:', userPhone, 
-            'Patient IDs:', patientData.map(p => p.patient_id));
-          toast.info('พบข้อมูลผู้ป่วยหลายรายการ ระบบจะใช้ข้อมูลล่าสุด');
         }
-
-        console.log('[PatientPortalAuthWrapper] Authentication successful for patient:', selectedPatient.name);
-        setPatient(selectedPatient);
+        
         setIsAuthenticated(true);
       } catch (error) {
         console.error('[PatientPortalAuthWrapper] Auth check error:', error);
@@ -114,24 +97,30 @@ export const PatientPortalAuthWrapper: React.FC<PatientPortalAuthWrapperProps> =
     checkAuth();
   }, [navigate, location.pathname]);
 
+  const handleSelectPatient = (patient: Patient) => {
+    setSelectedPatient(patient);
+    localStorage.setItem('selectedPatientId', patient.id);
+    console.log('[PatientPortalAuthWrapper] Patient selected:', patient.name);
+  };
+
   console.log('[PatientPortalAuthWrapper] Current state:', { 
     loading, 
     isAuthenticated, 
-    hasPatient: !!patient,
-    patientName: patient?.name 
+    patientsCount: patients.length,
+    selectedPatientName: selectedPatient?.name 
   });
 
   if (loading) {
     return <PatientPortalLoading />;
   }
 
-  if (!isAuthenticated || !patient) {
-    console.log('[PatientPortalAuthWrapper] Not authenticated or no patient, showing null');
+  if (!isAuthenticated || patients.length === 0) {
+    console.log('[PatientPortalAuthWrapper] Not authenticated or no patients, showing null');
     return null;
   }
 
-  console.log('[PatientPortalAuthWrapper] Rendering children with patient:', patient.name);
-  return <>{children(patient)}</>;
+  console.log('[PatientPortalAuthWrapper] Rendering children with patients:', patients.length);
+  return <>{children(patients, selectedPatient, handleSelectPatient)}</>;
 };
 
 export default PatientPortalAuthWrapper;

@@ -75,7 +75,7 @@ const PatientPortalContainer: React.FC = () => {
   }
 
   // Show queue selector when multiple queues are available but none selected
-  if (availableQueues.length > 1 && !activeQueue) {
+  if (availableQueues.length > 1 && !activeQueue && selectedPatient) {
     console.log('[PatientPortalContainer] Multiple queues available, showing selector');
     return (
       <PatientQueueSelector
@@ -104,15 +104,15 @@ const PatientPortalContainer: React.FC = () => {
     );
   }
 
-  // Show patient selection view when no active queues
-  console.log('[PatientPortalContainer] No active queue, showing patient selection view');
+  // Show patient selection view - this is now the main view for multi-patient management
+  console.log('[PatientPortalContainer] Showing patient selection view');
   return (
     <PatientSelectionView
       patients={patients}
       selectedPatient={selectedPatient}
       onSelectPatient={handlePatientSelect}
       onLogout={handleLogout}
-      onClearQueueHistory={() => handleClearQueueHistory(selectedPatient)}
+      onClearQueueHistory={() => selectedPatient && handleClearQueueHistory(selectedPatient)}
     />
   );
 };

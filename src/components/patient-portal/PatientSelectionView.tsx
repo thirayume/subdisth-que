@@ -3,9 +3,9 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, User, LogOut, Trash2 } from 'lucide-react';
+import { Calendar, User, LogOut, Trash2, AlertCircle } from 'lucide-react';
 import { Patient } from '@/integrations/supabase/schema';
-import PatientList from '@/components/patients/PatientList';
+import PatientCardWithQueue from './PatientCardWithQueue';
 import PatientPortalDebug from './PatientPortalDebug';
 
 interface PatientSelectionViewProps {
@@ -28,10 +28,6 @@ const PatientSelectionView: React.FC<PatientSelectionViewProps> = ({
   const handleAppointmentsClick = () => {
     console.log('[PatientSelectionView] Appointments button clicked');
     console.log('[PatientSelectionView] Selected patient:', selectedPatient);
-    console.log('[PatientSelectionView] Auth tokens:', {
-      lineToken: !!localStorage.getItem('lineToken'),
-      userPhone: localStorage.getItem('userPhone')
-    });
     
     if (!selectedPatient) {
       console.error('[PatientSelectionView] No patient selected');
@@ -39,6 +35,8 @@ const PatientSelectionView: React.FC<PatientSelectionViewProps> = ({
     }
     
     try {
+      // Store the selected patient context for the appointments page
+      sessionStorage.setItem('appointmentPatientContext', JSON.stringify(selectedPatient));
       navigate('/patient-portal/appointments');
       console.log('[PatientSelectionView] Navigation to appointments initiated');
     } catch (error) {
@@ -49,10 +47,6 @@ const PatientSelectionView: React.FC<PatientSelectionViewProps> = ({
   const handleProfileClick = () => {
     console.log('[PatientSelectionView] Profile button clicked');
     console.log('[PatientSelectionView] Selected patient:', selectedPatient);
-    console.log('[PatientSelectionView] Auth tokens:', {
-      lineToken: !!localStorage.getItem('lineToken'),
-      userPhone: localStorage.getItem('userPhone')
-    });
     
     if (!selectedPatient) {
       console.error('[PatientSelectionView] No patient selected');
@@ -60,6 +54,8 @@ const PatientSelectionView: React.FC<PatientSelectionViewProps> = ({
     }
     
     try {
+      // Store the selected patient context for the profile page
+      sessionStorage.setItem('profilePatientContext', JSON.stringify(selectedPatient));
       navigate('/patient-portal/profile');
       console.log('[PatientSelectionView] Navigation to profile initiated');
     } catch (error) {
@@ -82,15 +78,37 @@ const PatientSelectionView: React.FC<PatientSelectionViewProps> = ({
           </Button>
         </div>
 
-        <PatientList
-          patients={patients}
-          onSelectPatient={onSelectPatient}
-        />
+        {/* Multiple patients info */}
+        {patients.length > 1 && (
+          <Card className="mb-6 border-blue-200 bg-blue-50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 text-blue-800">
+                <AlertCircle className="w-5 h-5" />
+                <span className="font-medium">
+                  พบข้อมูลผู้ป่วย {patients.length} รายการ กรุณาเลือกผู้ป่วยที่ต้องการจัดการข้อมูล
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
+        {/* Patient Cards */}
+        <div className="space-y-4 mb-6">
+          {patients.map((patient) => (
+            <PatientCardWithQueue
+              key={patient.id}
+              patient={patient}
+              isSelected={selectedPatient?.id === patient.id}
+              onSelect={onSelectPatient}
+            />
+          ))}
+        </div>
+
+        {/* Action buttons for selected patient */}
         {selectedPatient && (
-          <Card className="mt-6">
+          <Card>
             <CardHeader>
-              <CardTitle>การจัดการข้อมูล</CardTitle>
+              <CardTitle>การจัดการข้อมูล - {selectedPatient.name}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -118,6 +136,17 @@ const PatientSelectionView: React.FC<PatientSelectionViewProps> = ({
                 <Trash2 className="w-4 h-4 mr-2" />
                 ล้างประวัติคิวเก่า
               </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* No selection message */}
+        {!selectedPatient && patients.length > 0 && (
+          <Card className="border-gray-200">
+            <CardContent className="p-6 text-center text-gray-500">
+              <User className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+              <p>กรุณาเลือกผู้ป่วยที่ต้องการจัดการข้อมูล</p>
+              <p className="text-sm mt-1">คลิกที่การ์ดผู้ป่วยด้านบนเพื่อเลือก</p>
             </CardContent>
           </Card>
         )}

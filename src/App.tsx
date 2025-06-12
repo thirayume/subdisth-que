@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -63,12 +62,40 @@ function App() {
               <Route path="/patient-portal/connect-phone" element={<ConnectPhone />} />
               <Route path="/patient-portal/appointments" element={
                 <PatientPortalAuthWrapper>
-                  {(patient) => <PatientAppointments patient={patient} />}
+                  {(patients, selectedPatient) => {
+                    // Get patient context from session storage or use selected patient
+                    const appointmentPatientContext = sessionStorage.getItem('appointmentPatientContext');
+                    const contextPatient = appointmentPatientContext 
+                      ? JSON.parse(appointmentPatientContext) 
+                      : selectedPatient;
+                    
+                    if (!contextPatient) {
+                      // Redirect back to patient selection if no patient context
+                      window.location.href = '/patient-portal';
+                      return null;
+                    }
+                    
+                    return <PatientAppointments patient={contextPatient} />;
+                  }}
                 </PatientPortalAuthWrapper>
               } />
               <Route path="/patient-portal/profile" element={
                 <PatientPortalAuthWrapper>
-                  {(patient) => <PatientProfile patient={patient} />}
+                  {(patients, selectedPatient) => {
+                    // Get patient context from session storage or use selected patient
+                    const profilePatientContext = sessionStorage.getItem('profilePatientContext');
+                    const contextPatient = profilePatientContext 
+                      ? JSON.parse(profilePatientContext) 
+                      : selectedPatient;
+                    
+                    if (!contextPatient) {
+                      // Redirect back to patient selection if no patient context
+                      window.location.href = '/patient-portal';
+                      return null;
+                    }
+                    
+                    return <PatientProfile patient={contextPatient} />;
+                  }}
                 </PatientPortalAuthWrapper>
               } />
               <Route path="/auth/line/callback" element={<LineCallback />} />
