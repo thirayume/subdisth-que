@@ -3,10 +3,9 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, User, LogOut, Trash2, AlertCircle } from 'lucide-react';
-import { Patient } from '@/integrations/supabase/schema';
+import { LogOut, Trash2, AlertCircle, User } from 'lucide-react';
+import { Patient, Queue } from '@/integrations/supabase/schema';
 import PatientCardWithQueue from './PatientCardWithQueue';
-import PatientPortalDebug from './PatientPortalDebug';
 
 interface PatientSelectionViewProps {
   patients: Patient[];
@@ -25,41 +24,58 @@ const PatientSelectionView: React.FC<PatientSelectionViewProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  const handleAppointmentsClick = () => {
-    console.log('[PatientSelectionView] Appointments button clicked');
-    console.log('[PatientSelectionView] Selected patient:', selectedPatient);
-    
-    if (!selectedPatient) {
-      console.error('[PatientSelectionView] No patient selected');
-      return;
-    }
+  const handleAppointmentsClick = (patient: Patient) => {
+    console.log('[PatientSelectionView] Appointments button clicked for patient:', patient.name);
     
     try {
       // Store the selected patient context for the appointments page
-      sessionStorage.setItem('appointmentPatientContext', JSON.stringify(selectedPatient));
+      sessionStorage.setItem('appointmentPatientContext', JSON.stringify(patient));
       navigate('/patient-portal/appointments');
-      console.log('[PatientSelectionView] Navigation to appointments initiated');
+      console.log('[PatientSelectionView] Navigation to appointments initiated for patient:', patient.name);
     } catch (error) {
       console.error('[PatientSelectionView] Navigation error:', error);
     }
   };
 
-  const handleProfileClick = () => {
-    console.log('[PatientSelectionView] Profile button clicked');
-    console.log('[PatientSelectionView] Selected patient:', selectedPatient);
+  const handleMedicationsClick = (patient: Patient) => {
+    console.log('[PatientSelectionView] Medications button clicked for patient:', patient.name);
     
-    if (!selectedPatient) {
-      console.error('[PatientSelectionView] No patient selected');
-      return;
+    try {
+      // Store the selected patient context for medications page
+      sessionStorage.setItem('medicationPatientContext', JSON.stringify(patient));
+      // Navigate to a medications page (you may need to create this route)
+      navigate('/patient-portal/medications');
+      console.log('[PatientSelectionView] Navigation to medications initiated for patient:', patient.name);
+    } catch (error) {
+      console.error('[PatientSelectionView] Medications navigation error:', error);
     }
+  };
+
+  const handleProfileClick = (patient: Patient) => {
+    console.log('[PatientSelectionView] Profile button clicked for patient:', patient.name);
     
     try {
       // Store the selected patient context for the profile page
-      sessionStorage.setItem('profilePatientContext', JSON.stringify(selectedPatient));
+      sessionStorage.setItem('profilePatientContext', JSON.stringify(patient));
       navigate('/patient-portal/profile');
-      console.log('[PatientSelectionView] Navigation to profile initiated');
+      console.log('[PatientSelectionView] Navigation to profile initiated for patient:', patient.name);
     } catch (error) {
-      console.error('[PatientSelectionView] Navigation error:', error);
+      console.error('[PatientSelectionView] Profile navigation error:', error);
+    }
+  };
+
+  const handleQueueClick = (patient: Patient, queue: Queue) => {
+    console.log('[PatientSelectionView] Queue button clicked for patient:', patient.name, 'Queue:', queue.id);
+    
+    try {
+      // Store both patient and queue context
+      sessionStorage.setItem('queuePatientContext', JSON.stringify(patient));
+      sessionStorage.setItem('activeQueueContext', JSON.stringify(queue));
+      // Navigate back to the main patient portal to show active queue view
+      navigate('/patient-portal');
+      console.log('[PatientSelectionView] Navigation to queue view initiated');
+    } catch (error) {
+      console.error('[PatientSelectionView] Queue navigation error:', error);
     }
   };
 
@@ -100,34 +116,21 @@ const PatientSelectionView: React.FC<PatientSelectionViewProps> = ({
               patient={patient}
               isSelected={selectedPatient?.id === patient.id}
               onSelect={onSelectPatient}
+              onAppointmentsClick={handleAppointmentsClick}
+              onMedicationsClick={handleMedicationsClick}
+              onProfileClick={handleProfileClick}
+              onQueueClick={handleQueueClick}
             />
           ))}
         </div>
 
-        {/* Action buttons for selected patient */}
+        {/* Clear queue history button */}
         {selectedPatient && (
           <Card>
             <CardHeader>
-              <CardTitle>การจัดการข้อมูล - {selectedPatient.name}</CardTitle>
+              <CardTitle>การจัดการระบบ - {selectedPatient.name}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Button 
-                  onClick={handleAppointmentsClick}
-                  className="bg-green-600 hover:bg-green-700 w-full"
-                >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  นัดหมายของฉัน
-                </Button>
-                <Button 
-                  onClick={handleProfileClick}
-                  className="bg-blue-600 hover:bg-blue-700 w-full"
-                >
-                  <User className="w-4 h-4 mr-2" />
-                  แก้ไขข้อมูลส่วนตัว
-                </Button>
-              </div>
-              
+            <CardContent>
               <Button
                 variant="outline"
                 onClick={onClearQueueHistory}

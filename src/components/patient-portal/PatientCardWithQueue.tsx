@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Clock, User, Phone, Calendar, Stethoscope, CheckCircle } from 'lucide-react';
+import { Clock, User, Phone, Calendar, Stethoscope, CheckCircle, Edit } from 'lucide-react';
 import { Patient, Queue } from '@/integrations/supabase/schema';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -11,12 +10,20 @@ interface PatientCardWithQueueProps {
   patient: Patient;
   isSelected: boolean;
   onSelect: (patient: Patient) => void;
+  onAppointmentsClick?: (patient: Patient) => void;
+  onMedicationsClick?: (patient: Patient) => void;
+  onProfileClick?: (patient: Patient) => void;
+  onQueueClick?: (patient: Patient, queue: Queue) => void;
 }
 
 const PatientCardWithQueue: React.FC<PatientCardWithQueueProps> = ({
   patient,
   isSelected,
-  onSelect
+  onSelect,
+  onAppointmentsClick,
+  onMedicationsClick,
+  onProfileClick,
+  onQueueClick
 }) => {
   const [queueInfo, setQueueInfo] = useState<Queue | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,6 +82,38 @@ const PatientCardWithQueue: React.FC<PatientCardWithQueueProps> = ({
       'PHARMACY': 'คิวยา'
     };
     return typeMap[type] || type;
+  };
+
+  const handleAppointmentsClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log('[PatientCardWithQueue] Appointments button clicked for patient:', patient.name);
+    if (onAppointmentsClick) {
+      onAppointmentsClick(patient);
+    }
+  };
+
+  const handleMedicationsClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log('[PatientCardWithQueue] Medications button clicked for patient:', patient.name);
+    if (onMedicationsClick) {
+      onMedicationsClick(patient);
+    }
+  };
+
+  const handleProfileClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log('[PatientCardWithQueue] Profile button clicked for patient:', patient.name);
+    if (onProfileClick) {
+      onProfileClick(patient);
+    }
+  };
+
+  const handleQueueClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log('[PatientCardWithQueue] Queue button clicked for patient:', patient.name);
+    if (onQueueClick && queueInfo) {
+      onQueueClick(patient, queueInfo);
+    }
   };
 
   return (
@@ -139,19 +178,50 @@ const PatientCardWithQueue: React.FC<PatientCardWithQueueProps> = ({
             </div>
           )}
 
-          {/* Action Buttons */}
-          {isSelected && (
-            <div className="flex gap-2 mt-4">
-              <Button size="sm" variant="outline" className="flex-1">
-                <Calendar className="w-4 h-4 mr-1" />
-                นัดหมาย
+          {/* Action Buttons - Always visible */}
+          <div className="grid grid-cols-2 gap-2 mt-4">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+              onClick={handleAppointmentsClick}
+            >
+              <Calendar className="w-4 h-4 mr-1" />
+              นัดหมาย
+            </Button>
+            
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="text-green-600 border-green-200 hover:bg-green-50"
+              onClick={handleMedicationsClick}
+            >
+              <Stethoscope className="w-4 h-4 mr-1" />
+              ยา
+            </Button>
+            
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="text-purple-600 border-purple-200 hover:bg-purple-50"
+              onClick={handleProfileClick}
+            >
+              <Edit className="w-4 h-4 mr-1" />
+              แก้ไขข้อมูล
+            </Button>
+            
+            {queueInfo && (
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                onClick={handleQueueClick}
+              >
+                <Clock className="w-4 h-4 mr-1" />
+                ดูคิว
               </Button>
-              <Button size="sm" variant="outline" className="flex-1">
-                <Stethoscope className="w-4 h-4 mr-1" />
-                ยา
-              </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
