@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, User, LogOut, Trash2 } from 'lucide-react';
 import { Patient } from '@/integrations/supabase/schema';
-import PatientList from './PatientList';
+import PatientList from '@/components/patients/PatientList';
 import PatientPortalDebug from './PatientPortalDebug';
 
 interface PatientSelectionViewProps {
@@ -84,7 +84,6 @@ const PatientSelectionView: React.FC<PatientSelectionViewProps> = ({
 
         <PatientList
           patients={patients}
-          selectedPatient={selectedPatient}
           onSelectPatient={onSelectPatient}
         />
 
