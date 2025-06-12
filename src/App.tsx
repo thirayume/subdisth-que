@@ -25,6 +25,7 @@ import LineCallback from '@/components/LineCallback';
 import PatientPortalAuthWrapper from '@/components/patient-portal/PatientPortalAuthWrapper';
 import PatientAppointments from '@/components/patient-portal/PatientAppointments';
 import PatientProfile from '@/components/patient-portal/PatientProfile';
+import PatientMedications from '@/components/patient-portal/PatientMedications';
 
 // Create a QueryClient instance
 const queryClient = new QueryClient({
@@ -76,6 +77,25 @@ function App() {
                     }
                     
                     return <PatientAppointments patient={contextPatient} />;
+                  }}
+                </PatientPortalAuthWrapper>
+              } />
+              <Route path="/patient-portal/medications" element={
+                <PatientPortalAuthWrapper>
+                  {(patients, selectedPatient) => {
+                    // Get patient context from session storage or use selected patient
+                    const medicationPatientContext = sessionStorage.getItem('medicationPatientContext');
+                    const contextPatient = medicationPatientContext 
+                      ? JSON.parse(medicationPatientContext) 
+                      : selectedPatient;
+                    
+                    if (!contextPatient) {
+                      // Redirect back to patient selection if no patient context
+                      window.location.href = '/patient-portal';
+                      return null;
+                    }
+                    
+                    return <PatientMedications patient={contextPatient} />;
                   }}
                 </PatientPortalAuthWrapper>
               } />

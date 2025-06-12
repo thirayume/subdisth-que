@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAppointments } from '@/hooks/appointments/useAppointments';
 import { usePatients } from '@/hooks/usePatients';
 import AppointmentHeader from '@/components/appointments/AppointmentHeader';
@@ -8,6 +8,7 @@ import { AppointmentLayout } from '@/components/appointments/AppointmentLayout';
 import { useAppointmentFilters } from '@/hooks/appointments/useAppointmentFilters';
 import { useAppointmentCategories } from '@/hooks/appointments/useAppointmentCategories';
 import { getPatientInfo } from '@/utils/patientUtils';
+import { appointmentQueueService } from '@/services/appointmentQueueService';
 
 const Appointments = () => {
   const { appointments, fetchAppointments } = useAppointments();
@@ -28,9 +29,26 @@ const Appointments = () => {
     handleClearSearch
   } = useAppointmentFilters(appointments, patients);
 
+  // Auto-sync appointments to queues when appointments page loads
+  useEffect(() => {
+    const syncAppointments = async () => {
+      console.log('[Appointments] Auto-syncing appointments to queues...');
+      await appointmentQueueService.createQueuesFromAppointments();
+      await appointmentQueueService.syncAppointmentQueueStatus();
+    };
+    
+    syncAppointments();
+  }, []);
+
+  const handleAppointmentsRefresh = async () => {
+    await fetchAppointments();
+    await appointmentQueueService.createQueuesFromAppointments();
+    await appointmentQueueService.syncAppointmentQueueStatus();
+  };
+
   return (
     <div className="p-6">
-      <AppointmentHeader onAppointmentsRefresh={fetchAppointments} />
+      <AppointmentHeader onAppointmentsRefresh={handleAppointmentsRefresh} />
       
       <AppointmentStats 
         todayCount={todayAppointments.length}
