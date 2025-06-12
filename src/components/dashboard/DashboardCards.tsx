@@ -37,7 +37,7 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({
         </CardContent>
         <CardFooter className="pt-2 flex justify-between">
           <Button asChild variant="outline" size="sm" className="text-blue-600 border-blue-200">
-            <Link to="/queue/management">
+            <Link to="/queue">
               จัดการคิว
             </Link>
           </Button>
