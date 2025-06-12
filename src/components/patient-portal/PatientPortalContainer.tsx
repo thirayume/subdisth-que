@@ -49,11 +49,23 @@ const PatientPortalContainer: React.FC = () => {
     checkForActiveQueues
   });
 
+  console.log('[PatientPortalContainer] Current state:', {
+    isAuthenticated,
+    loading,
+    selectedPatient: selectedPatient?.name,
+    patientsCount: patients.length,
+    activeQueue: activeQueue?.id,
+    availableQueuesCount: availableQueues.length,
+    phoneNumber,
+    isStaffMode
+  });
+
   if (loading) {
     return <PatientPortalLoading />;
   }
 
   if (!isAuthenticated) {
+    console.log('[PatientPortalContainer] Not authenticated, showing auth page');
     return (
       <PatientPortalAuth 
         onLoginSuccess={handleLineLoginSuccess} 
@@ -64,6 +76,7 @@ const PatientPortalContainer: React.FC = () => {
 
   // Show queue selector when multiple queues are available but none selected
   if (availableQueues.length > 1 && !activeQueue) {
+    console.log('[PatientPortalContainer] Multiple queues available, showing selector');
     return (
       <PatientQueueSelector
         queues={availableQueues}
@@ -76,6 +89,7 @@ const PatientPortalContainer: React.FC = () => {
 
   // Show active queue view when a queue is selected
   if (activeQueue && selectedPatient) {
+    console.log('[PatientPortalContainer] Active queue found, showing queue view');
     return (
       <ActiveQueueView
         patient={selectedPatient}
@@ -91,6 +105,7 @@ const PatientPortalContainer: React.FC = () => {
   }
 
   // Show patient selection view when no active queues
+  console.log('[PatientPortalContainer] No active queue, showing patient selection view');
   return (
     <PatientSelectionView
       patients={patients}
