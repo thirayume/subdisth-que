@@ -26,14 +26,14 @@ const QueueCardInfo: React.FC<QueueCardInfoProps> = ({
   // Fetch appointment info if this queue is linked to an appointment
   useEffect(() => {
     const fetchAppointmentInfo = async () => {
-      if ((queue as any).appointment_id) {
+      if (queue.appointment_id) {
         const appointment = await appointmentQueueService.getAppointmentByQueueId(queue.id);
         setAppointmentInfo(appointment);
       }
     };
 
     fetchAppointmentInfo();
-  }, [queue.id, (queue as any).appointment_id]);
+  }, [queue.id, queue.appointment_id]);
 
   return (
     <div className="flex-1">
