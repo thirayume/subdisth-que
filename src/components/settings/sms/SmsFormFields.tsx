@@ -7,7 +7,8 @@ import { Switch } from '@/components/ui/switch';
 
 interface SmsFormData {
   enabled: boolean;
-  authorization_header: string;
+  api_key: string;
+  secret: string;
   sender_name: string;
   message_template: string;
 }
@@ -37,18 +38,33 @@ const SmsFormFields: React.FC<SmsFormFieldsProps> = ({ formData, onInputChange }
         />
       </div>
 
-      {/* Authorization Header */}
+      {/* API Key */}
       <div>
-        <Label htmlFor="authorization-header">Authorization Header</Label>
+        <Label htmlFor="api-key">API Key</Label>
         <Input
-          id="authorization-header"
+          id="api-key"
           type="password"
-          value={formData.authorization_header}
-          onChange={(e) => onInputChange('authorization_header', e.target.value)}
-          placeholder="Basic dzlIeWpBdkFPNTRlYUJ5d0t2elJmT0ExOHprSmFhOkpPTFhVaDVqT3E0WW1zRW1BVUN1RnNHVFptOWJlcg=="
+          value={formData.api_key}
+          onChange={(e) => onInputChange('api_key', e.target.value)}
+          placeholder="w9HyjAvAO54eaBywKvzRfOA18zkJaa"
         />
         <p className="text-sm text-gray-500 mt-2">
-          ใส่ Authorization header แบบเต็ม เช่น "Basic YOUR_ENCODED_CREDENTIALS"
+          ใส่ API Key ที่ได้จาก Thai Bulk SMS
+        </p>
+      </div>
+
+      {/* Secret */}
+      <div>
+        <Label htmlFor="secret">Secret</Label>
+        <Input
+          id="secret"
+          type="password"
+          value={formData.secret}
+          onChange={(e) => onInputChange('secret', e.target.value)}
+          placeholder="JOLXUh5jOq4YmsEmAUCuFsGTZm9ber"
+        />
+        <p className="text-sm text-gray-500 mt-2">
+          ใส่ Secret ที่ได้จาก Thai Bulk SMS
         </p>
       </div>
 

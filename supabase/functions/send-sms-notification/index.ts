@@ -73,17 +73,26 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Validate required settings
-    if (!settings.authorization_header) {
-      console.error('SMS authorization header not configured');
+    // Validate required settings - now looking for api_key and secret
+    if (!settings.api_key || !settings.secret) {
+      console.error('SMS API key or secret not configured');
       return new Response(JSON.stringify({ 
         success: false, 
-        error: 'SMS authorization header not configured' 
+        error: 'SMS API key and secret not configured' 
       }), {
         status: 400,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
+
+    // Construct Basic authorization header from api_key and secret
+    const credentials = `${settings.api_key}:${settings.secret}`;
+    const encodedCredentials = btoa(credentials);
+    const authorizationHeader = `Basic ${encodedCredentials}`;
+
+    console.log('API Key:', settings.api_key);
+    console.log('Secret:', settings.secret);
+    console.log('Authorization header constructed:', authorizationHeader);
 
     const { phoneNumber, message, queueNumber, patientName }: SmsRequest = await req.json();
 
@@ -105,7 +114,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Final message:', finalMessage);
     console.log('Phone number:', phoneNumber);
-    console.log('Authorization header:', settings.authorization_header);
 
     // Prepare form data exactly like your working cURL
     const formData = new URLSearchParams();
@@ -120,7 +128,7 @@ const handler = async (req: Request): Promise<Response> => {
       headers: {
         'accept': 'application/json',
         'content-type': 'application/x-www-form-urlencoded',
-        'authorization': settings.authorization_header
+        'authorization': authorizationHeader
       },
       body: formData
     });
