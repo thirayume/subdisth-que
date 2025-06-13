@@ -188,14 +188,14 @@ const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({
               </Button>
             )}
 
-            <Button
+            {/* <Button
               onClick={onClearQueueHistory}
               variant="outline"
               className="w-full border-red-600 text-red-600 hover:bg-red-50"
             >
               <RotateCcw className="w-4 h-4 mr-2" />
               ล้างประวัติคิวเก่า
-            </Button>
+            </Button> */}
 
             <Button
               onClick={onLogout}

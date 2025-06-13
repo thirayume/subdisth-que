@@ -125,7 +125,7 @@ const PatientSelectionView: React.FC<PatientSelectionViewProps> = ({
         </div>
 
         {/* Clear queue history button */}
-        {selectedPatient && (
+        {/* {selectedPatient && (
           <Card>
             <CardHeader>
               <CardTitle>การจัดการระบบ - {selectedPatient.name}</CardTitle>
@@ -141,7 +141,7 @@ const PatientSelectionView: React.FC<PatientSelectionViewProps> = ({
               </Button>
             </CardContent>
           </Card>
-        )}
+        )} */}
 
         {/* No selection message */}
         {!selectedPatient && patients.length > 0 && (
