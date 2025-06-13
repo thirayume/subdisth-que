@@ -7,8 +7,7 @@ import { Switch } from '@/components/ui/switch';
 
 interface SmsFormData {
   enabled: boolean;
-  api_key: string;
-  secret: string;
+  authorization_header: string;
   sender_name: string;
   message_template: string;
 }
@@ -38,28 +37,19 @@ const SmsFormFields: React.FC<SmsFormFieldsProps> = ({ formData, onInputChange }
         />
       </div>
 
-      {/* API Credentials */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="api-key">API Key</Label>
-          <Input
-            id="api-key"
-            type="password"
-            value={formData.api_key}
-            onChange={(e) => onInputChange('api_key', e.target.value)}
-            placeholder="ใส่ API Key"
-          />
-        </div>
-        <div>
-          <Label htmlFor="secret">Secret</Label>
-          <Input
-            id="secret"
-            type="password"
-            value={formData.secret}
-            onChange={(e) => onInputChange('secret', e.target.value)}
-            placeholder="ใส่ Secret"
-          />
-        </div>
+      {/* Authorization Header */}
+      <div>
+        <Label htmlFor="authorization-header">Authorization Header</Label>
+        <Input
+          id="authorization-header"
+          type="password"
+          value={formData.authorization_header}
+          onChange={(e) => onInputChange('authorization_header', e.target.value)}
+          placeholder="Basic dzlIeWpBdkFPNTRlYUJ5d0t2elJmT0ExOHprSmFhOkpPTFhVaDVqT3E0WW1zRW1BVUN1RnNHVFptOWJlcg=="
+        />
+        <p className="text-sm text-gray-500 mt-2">
+          ใส่ Authorization header แบบเต็ม เช่น "Basic YOUR_ENCODED_CREDENTIALS"
+        </p>
       </div>
 
       {/* Sender Name */}

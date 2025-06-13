@@ -10,8 +10,7 @@ const SmsSettings: React.FC = () => {
   const { settings, updateMultipleSettings, loading } = useSettings('sms');
   const [formData, setFormData] = useState({
     enabled: false,
-    api_key: '',
-    secret: '',
+    authorization_header: '',
     sender_name: 'Nattharida',
     message_template: 'ท่านกำลังจะได้รับบริการในคิวถัดไป คิวหมายเลข {queueNumber} ที่ {servicePoint}'
   });
@@ -45,8 +44,7 @@ const SmsSettings: React.FC = () => {
     try {
       const updates = {
         enabled: formData.enabled.toString(),
-        api_key: JSON.stringify(formData.api_key),
-        secret: JSON.stringify(formData.secret),
+        authorization_header: JSON.stringify(formData.authorization_header),
         sender_name: JSON.stringify(formData.sender_name),
         message_template: JSON.stringify(formData.message_template)
       };

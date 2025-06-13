@@ -57,3 +57,69 @@ export const getMessageTemplate = async (): Promise<string | null> => {
     return null;
   }
 };
+
+export const getAuthorizationHeader = async (): Promise<string | null> => {
+  try {
+    const { data: settings, error } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('category', 'sms')
+      .eq('key', 'authorization_header')
+      .single();
+
+    if (error || !settings) {
+      return null;
+    }
+
+    // Properly handle Json type conversion to string
+    const value = settings.value;
+    if (typeof value === 'string') {
+      // If it's already a string, check if it's a JSON string that needs parsing
+      if (value.startsWith('"') && value.endsWith('"')) {
+        return JSON.parse(value);
+      }
+      return value;
+    } else if (value) {
+      // If it's not a string but has a value, convert to string
+      return String(value);
+    }
+    
+    return null;
+  } catch (error) {
+    logger.error('Error getting authorization header:', error);
+    return null;
+  }
+};
+
+export const getSenderName = async (): Promise<string | null> => {
+  try {
+    const { data: settings, error } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('category', 'sms')
+      .eq('key', 'sender_name')
+      .single();
+
+    if (error || !settings) {
+      return null;
+    }
+
+    // Properly handle Json type conversion to string
+    const value = settings.value;
+    if (typeof value === 'string') {
+      // If it's already a string, check if it's a JSON string that needs parsing
+      if (value.startsWith('"') && value.endsWith('"')) {
+        return JSON.parse(value);
+      }
+      return value;
+    } else if (value) {
+      // If it's not a string but has a value, convert to string
+      return String(value);
+    }
+    
+    return null;
+  } catch (error) {
+    logger.error('Error getting sender name:', error);
+    return null;
+  }
+};

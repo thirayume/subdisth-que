@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Send } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SmsTestSectionProps {
   enabled: boolean;
@@ -27,7 +28,7 @@ const SmsTestSection: React.FC<SmsTestSectionProps> = ({ enabled, messageTemplat
         .replace('{queueNumber}', '999')
         .replace('{servicePoint}', 'ช่องทดสอบ');
 
-      const { error } = await (window as any).supabase.functions.invoke('send-sms-notification', {
+      const { data, error } = await supabase.functions.invoke('send-sms-notification', {
         body: {
           phoneNumber: testPhone,
           message: testMessage,
@@ -56,7 +57,7 @@ const SmsTestSection: React.FC<SmsTestSectionProps> = ({ enabled, messageTemplat
           id="test-phone"
           value={testPhone}
           onChange={(e) => setTestPhone(e.target.value)}
-          placeholder="หมายเลขโทรศัพท์สำหรับทดสอบ"
+          placeholder="หมายเลขโทรศัพท์สำหรับทดสอบ เช่น 0644255591"
           className="flex-1"
         />
         <Button

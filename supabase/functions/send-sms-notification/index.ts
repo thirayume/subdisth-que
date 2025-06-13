@@ -67,11 +67,11 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Validate required settings
-    if (!settings.api_key || !settings.secret) {
-      console.error('SMS API credentials not configured');
+    if (!settings.authorization_header) {
+      console.error('SMS authorization header not configured');
       return new Response(JSON.stringify({ 
         success: false, 
-        error: 'SMS API credentials not configured' 
+        error: 'SMS authorization header not configured' 
       }), {
         status: 400,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -96,15 +96,8 @@ const handler = async (req: Request): Promise<Response> => {
       finalMessage = `ท่านกำลังจะได้รับบริการในคิวถัดไป คิวหมายเลข ${queueNumber}`;
     }
 
-    // Format phone number - ensure it starts with country code
-    let formattedPhone = phoneNumber.replace(/\D/g, ''); // Remove non-digits
-    if (formattedPhone.startsWith('0')) {
-      formattedPhone = '66' + formattedPhone.substring(1); // Replace leading 0 with 66
-    }
-
-    // Create Basic Auth header
-    const credentials = `${settings.api_key}:${settings.secret}`;
-    const encodedCredentials = btoa(credentials);
+    // Use phone number as is (don't modify format)
+    const formattedPhone = phoneNumber;
 
     const encodedParams = new URLSearchParams();
     encodedParams.set('msisdn', formattedPhone);
@@ -116,7 +109,7 @@ const handler = async (req: Request): Promise<Response> => {
       headers: {
         'accept': 'application/json',
         'content-type': 'application/x-www-form-urlencoded',
-        'authorization': `Basic ${encodedCredentials}`
+        'authorization': settings.authorization_header
       },
       body: encodedParams
     });
