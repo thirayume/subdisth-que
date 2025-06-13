@@ -26,6 +26,8 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    console.log('Starting SMS send process...');
+
     // Get SMS settings from database
     const { data: smsSettings, error: settingsError } = await supabase
       .from('settings')
@@ -36,6 +38,8 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Error fetching SMS settings:', settingsError);
       throw new Error('Failed to fetch SMS settings');
     }
+
+    console.log('SMS Settings fetched:', smsSettings);
 
     // Parse settings
     const settings: Record<string, any> = {};
@@ -50,9 +54,12 @@ const handler = async (req: Request): Promise<Response> => {
           settings[setting.key] = setting.value;
         }
       } catch (e) {
+        console.warn(`Error parsing setting ${setting.key}:`, e);
         settings[setting.key] = setting.value;
       }
     });
+
+    console.log('Parsed settings:', settings);
 
     // Check if SMS is enabled
     if (!settings.enabled) {
@@ -96,13 +103,17 @@ const handler = async (req: Request): Promise<Response> => {
       finalMessage = `ท่านกำลังจะได้รับบริการในคิวถัดไป คิวหมายเลข ${queueNumber}`;
     }
 
-    // Use phone number as is (don't modify format)
-    const formattedPhone = phoneNumber;
+    console.log('Final message:', finalMessage);
+    console.log('Phone number:', phoneNumber);
+    console.log('Authorization header:', settings.authorization_header);
 
-    const encodedParams = new URLSearchParams();
-    encodedParams.set('msisdn', formattedPhone);
-    encodedParams.set('message', finalMessage);
-    encodedParams.set('sender', settings.sender_name || 'Hospital');
+    // Prepare form data exactly like your working cURL
+    const formData = new URLSearchParams();
+    formData.append('msisdn', phoneNumber);
+    formData.append('message', finalMessage);
+    formData.append('sender', settings.sender_name || 'SubdisTH');
+
+    console.log('Form data:', Object.fromEntries(formData));
 
     const smsResponse = await fetch('https://api-v2.thaibulksms.com/sms', {
       method: 'POST',
@@ -111,17 +122,31 @@ const handler = async (req: Request): Promise<Response> => {
         'content-type': 'application/x-www-form-urlencoded',
         'authorization': settings.authorization_header
       },
-      body: encodedParams
+      body: formData
     });
 
+    console.log('SMS API response status:', smsResponse.status);
+    
     const result = await smsResponse.json();
     
     console.log(`SMS result for ${queueNumber}:`, result);
 
+    if (!smsResponse.ok) {
+      console.error('SMS API error:', result);
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: `SMS API returned ${smsResponse.status}: ${JSON.stringify(result)}`,
+        result
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
     return new Response(JSON.stringify({ 
       success: true, 
       result,
-      phoneNumber: formattedPhone,
+      phoneNumber,
       queueNumber,
       message: finalMessage
     }), {
