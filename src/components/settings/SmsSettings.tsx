@@ -35,7 +35,7 @@ const SmsSettings: React.FC = () => {
       const newFormData = { ...formData };
       settings.forEach((setting: any) => {
         if (setting.key === 'enabled' || setting.key === 'appointment_reminders_enabled') {
-          newFormData[setting.key as keyof SmsFormData] = setting.value === 'true' || setting.value === true;
+          (newFormData as any)[setting.key] = setting.value === 'true' || setting.value === true;
         } else if (setting.key in newFormData) {
           // Remove quotes from JSON string values
           const value = typeof setting.value === 'string' && setting.value.startsWith('"') 
