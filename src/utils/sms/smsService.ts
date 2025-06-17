@@ -20,10 +20,8 @@ export const sendSmsToPatient = async (
     // Get message template from settings
     const messageTemplate = await getMessageTemplate();
     const message = messageTemplate
-      ? messageTemplate
-          .replace('{queueNumber}', queue.number.toString())
-          .replace('{servicePoint}', servicePoint.name)
-      : `ท่านกำลังจะได้รับบริการในคิวถัดไป คิวหมายเลข ${queue.number} ที่ ${servicePoint.name}`;
+      ? messageTemplate.replace('{queueNumber}', queue.number.toString())
+      : `ท่านกำลังจะได้รับบริการในคิวถัดไป คิวหมายเลข ${queue.number}`;
 
     const { data, error } = await supabase.functions.invoke('send-sms-notification', {
       body: {

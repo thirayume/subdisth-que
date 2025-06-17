@@ -11,6 +11,8 @@ interface SmsFormData {
   secret: string;
   sender_name: string;
   message_template: string;
+  appointment_reminder_template: string;
+  appointment_reminders_enabled: boolean;
 }
 
 interface SmsFormFieldsProps {
@@ -79,9 +81,9 @@ const SmsFormFields: React.FC<SmsFormFieldsProps> = ({ formData, onInputChange }
         />
       </div>
 
-      {/* Message Template */}
+      {/* Queue Message Template */}
       <div>
-        <Label htmlFor="message-template">รูปแบบข้อความ</Label>
+        <Label htmlFor="message-template">รูปแบบข้อความแจ้งเตือนคิว</Label>
         <Textarea
           id="message-template"
           value={formData.message_template}
@@ -90,8 +92,42 @@ const SmsFormFields: React.FC<SmsFormFieldsProps> = ({ formData, onInputChange }
           rows={3}
         />
         <p className="text-sm text-gray-500 mt-2">
-          ใช้ {'{queueNumber}'} สำหรับหมายเลขคิว และ {'{servicePoint}'} สำหรับชื่อช่องบริการ
+          ใช้ {'{queueNumber}'} สำหรับหมายเลขคิว
         </p>
+      </div>
+
+      {/* Appointment Reminders Section */}
+      <div className="border-t pt-4">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <Label htmlFor="appointment-reminders-enabled" className="text-base font-medium">
+              เปิดใช้งาน SMS แจ้งเตือนนัดหมาย
+            </Label>
+            <p className="text-sm text-gray-500 mt-1">
+              ส่ง SMS แจ้งเตือนนัดหมายวันถัดไป เวลา 11:00 และ 17:00 น.
+            </p>
+          </div>
+          <Switch
+            id="appointment-reminders-enabled"
+            checked={formData.appointment_reminders_enabled}
+            onCheckedChange={(checked) => onInputChange('appointment_reminders_enabled', checked)}
+          />
+        </div>
+
+        {/* Appointment Reminder Template */}
+        <div>
+          <Label htmlFor="appointment-reminder-template">รูปแบบข้อความแจ้งเตือนนัดหมาย</Label>
+          <Textarea
+            id="appointment-reminder-template"
+            value={formData.appointment_reminder_template}
+            onChange={(e) => onInputChange('appointment_reminder_template', e.target.value)}
+            placeholder="รูปแบบข้อความแจ้งเตือนนัดหมาย"
+            rows={4}
+          />
+          <p className="text-sm text-gray-500 mt-2">
+            ใช้ {'{patientName}'} สำหรับชื่อผู้ป่วย, {'{appointmentDate}'} สำหรับวันที่นัด, {'{appointmentTime}'} สำหรับเวลานัด, และ {'{purpose}'} สำหรับวัตถุประสงค์
+          </p>
+        </div>
       </div>
     </>
   );

@@ -13,7 +13,9 @@ const SmsSettings: React.FC = () => {
     api_key: '',
     secret: '',
     sender_name: 'SubdisTH',
-    message_template: 'ท่านกำลังจะได้รับบริการในคิวถัดไป คิวหมายเลข {queueNumber} ที่ {servicePoint}'
+    message_template: 'ท่านกำลังจะได้รับบริการในคิวถัดไป คิวหมายเลข {queueNumber}',
+    appointment_reminder_template: 'เตือนความจำ: คุณ {patientName} มีนัดหมาย {purpose} วันที่ {appointmentDate} เวลา {appointmentTime} น. กรุณามาตรงเวลาค่ะ',
+    appointment_reminders_enabled: false
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -22,8 +24,8 @@ const SmsSettings: React.FC = () => {
     if (settings && Array.isArray(settings)) {
       const newFormData = { ...formData };
       settings.forEach((setting: any) => {
-        if (setting.key === 'enabled') {
-          newFormData.enabled = setting.value === 'true' || setting.value === true;
+        if (setting.key === 'enabled' || setting.key === 'appointment_reminders_enabled') {
+          newFormData[setting.key as keyof typeof newFormData] = setting.value === 'true' || setting.value === true;
         } else if (setting.key in newFormData) {
           // Remove quotes from JSON string values
           const value = typeof setting.value === 'string' && setting.value.startsWith('"') 
@@ -48,7 +50,9 @@ const SmsSettings: React.FC = () => {
         api_key: JSON.stringify(formData.api_key),
         secret: JSON.stringify(formData.secret),
         sender_name: JSON.stringify(formData.sender_name),
-        message_template: JSON.stringify(formData.message_template)
+        message_template: JSON.stringify(formData.message_template),
+        appointment_reminder_template: JSON.stringify(formData.appointment_reminder_template),
+        appointment_reminders_enabled: formData.appointment_reminders_enabled.toString()
       };
 
       await updateMultipleSettings(updates, 'sms');
