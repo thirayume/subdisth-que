@@ -6,9 +6,19 @@ import { useSettings } from '@/hooks/settings';
 import { toast } from 'sonner';
 import { SmsFormFields, SmsTestSection } from './sms';
 
+interface SmsFormData {
+  enabled: boolean;
+  api_key: string;
+  secret: string;
+  sender_name: string;
+  message_template: string;
+  appointment_reminder_template: string;
+  appointment_reminders_enabled: boolean;
+}
+
 const SmsSettings: React.FC = () => {
   const { settings, updateMultipleSettings, loading } = useSettings('sms');
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<SmsFormData>({
     enabled: false,
     api_key: '',
     secret: '',
@@ -25,7 +35,7 @@ const SmsSettings: React.FC = () => {
       const newFormData = { ...formData };
       settings.forEach((setting: any) => {
         if (setting.key === 'enabled' || setting.key === 'appointment_reminders_enabled') {
-          newFormData[setting.key as keyof typeof newFormData] = setting.value === 'true' || setting.value === true;
+          newFormData[setting.key as keyof SmsFormData] = setting.value === 'true' || setting.value === true;
         } else if (setting.key in newFormData) {
           // Remove quotes from JSON string values
           const value = typeof setting.value === 'string' && setting.value.startsWith('"') 
