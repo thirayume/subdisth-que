@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Settings, BarChart3, Users } from 'lucide-react';
+import { Settings, BarChart3 } from 'lucide-react';
 import SidebarSection from './SidebarSection';
 import SidebarNavLink from './SidebarNavLink';
 
