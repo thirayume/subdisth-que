@@ -23,6 +23,7 @@ import TestDashboard from '@/pages/TestDashboard';
 import PatientPortal from '@/pages/PatientPortal';
 import NotFound from '@/pages/NotFound';
 import Auth from '@/pages/Auth';
+import UserManagement from '@/pages/UserManagement';
 import Layout from '@/components/layout/Layout';
 import ConnectPhone from '@/pages/ConnectPhone';
 import LineCallback from '@/components/LineCallback';
@@ -111,6 +112,11 @@ function App() {
                 <Route path="/medications" element={
                   <ProtectedRoute requiredRole="admin">
                     <Layout fullWidth={true}><Medications /></Layout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/user-management" element={
+                  <ProtectedRoute requiredRole="admin">
+                    <Layout fullWidth={true}><UserManagement /></Layout>
                   </ProtectedRoute>
                 } />
                 <Route path="/settings" element={

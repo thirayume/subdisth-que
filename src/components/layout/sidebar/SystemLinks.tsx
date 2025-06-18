@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { BarChart, Settings, TestTube } from 'lucide-react';
-import SidebarNavLink from './SidebarNavLink';
+import { Settings, BarChart3, Users } from 'lucide-react';
+import { useAuth } from '@/components/auth/AuthProvider';
 import SidebarSection from './SidebarSection';
+import SidebarNavLink from './SidebarNavLink';
 
 interface SystemLinksProps {
   isActiveRoute: (path: string) => boolean;
@@ -13,34 +14,40 @@ const SystemLinks: React.FC<SystemLinksProps> = ({
   isActiveRoute,
   closeSidebar,
 }) => {
+  const { isAdmin } = useAuth();
+
   return (
     <SidebarSection title="ระบบ">
       <SidebarNavLink
         to="/analytics"
-        icon={BarChart}
+        icon={BarChart3}
         isActive={isActiveRoute}
         onClick={closeSidebar}
       >
-        รายงาน
+        รายงานและสถิติ
       </SidebarNavLink>
-
-      {/* <SidebarNavLink
-        to="/test-dashboard"
-        icon={TestTube}
-        isActive={isActiveRoute}
-        onClick={closeSidebar}
-      >
-        แดชบอร์ดทดสอบ
-      </SidebarNavLink> */}
-
-      <SidebarNavLink
-        to="/settings"
-        icon={Settings}
-        isActive={isActiveRoute}
-        onClick={closeSidebar}
-      >
-        ตั้งค่า
-      </SidebarNavLink>
+      
+      {isAdmin && (
+        <>
+          <SidebarNavLink
+            to="/user-management"
+            icon={Users}
+            isActive={isActiveRoute}
+            onClick={closeSidebar}
+          >
+            จัดการผู้ใช้
+          </SidebarNavLink>
+          
+          <SidebarNavLink
+            to="/settings"
+            icon={Settings}
+            isActive={isActiveRoute}
+            onClick={closeSidebar}
+          >
+            การตั้งค่าระบบ
+          </SidebarNavLink>
+        </>
+      )}
     </SidebarSection>
   );
 };
