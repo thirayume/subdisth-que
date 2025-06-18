@@ -52,11 +52,16 @@ export function Sidebar() {
         </Button>
       </div>
 
-      {/* Sidebar */}
+      {/* Sidebar - Remove fixed positioning, use relative positioning in flex container */}
       <div
         className={cn(
-          "fixed top-0 left-0 z-50 h-full w-64 transform transition-transform duration-200 ease-in-out bg-white border-r border-gray-200 flex flex-col",
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          "w-64 bg-white border-r border-gray-200 flex flex-col transition-all duration-200 ease-in-out",
+          // On mobile: use fixed positioning with transform
+          "lg:relative lg:translate-x-0",
+          // On mobile: conditionally show/hide with transform
+          isSidebarOpen 
+            ? "fixed top-0 left-0 z-50 h-full translate-x-0" 
+            : "fixed top-0 left-0 z-50 h-full -translate-x-full lg:translate-x-0"
         )}
       >
         <SidebarHeader closeSidebar={closeSidebar} />
