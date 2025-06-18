@@ -21,7 +21,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
 }) => {
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState<string>('patient');
+  const [role, setRole] = useState<'patient' | 'staff' | 'admin'>('patient');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,18 +33,9 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
 
     setLoading(true);
     try {
-      // Invite user via Supabase Auth
-      const { data, error } = await supabase.auth.admin.inviteUserByEmail(email, {
-        data: {
-          full_name: fullName.trim() || email,
-          role: role
-        },
-        redirectTo: `${window.location.origin}/auth`
-      });
-
-      if (error) throw error;
-
-      toast.success(`Invitation sent to ${email}`);
+      // For now, we'll just show a message that manual invitation is needed
+      // since supabase.auth.admin requires service role key
+      toast.success(`Please manually invite ${email} via Supabase Auth dashboard and then promote their role`);
       setEmail('');
       setFullName('');
       setRole('patient');
@@ -52,7 +43,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
       onUserCreated();
     } catch (error: any) {
       console.error('Error inviting user:', error);
-      toast.error(error.message || 'Failed to invite user');
+      toast.error('Please use Supabase Auth dashboard to invite users');
     } finally {
       setLoading(false);
     }
@@ -90,7 +81,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
 
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
-            <Select value={role} onValueChange={setRole}>
+            <Select value={role} onValueChange={(value: 'patient' | 'staff' | 'admin') => setRole(value)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -111,7 +102,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Sending...' : 'Send Invitation'}
+              {loading ? 'Processing...' : 'Note Role Assignment'}
             </Button>
           </div>
         </form>

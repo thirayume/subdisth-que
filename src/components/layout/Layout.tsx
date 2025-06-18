@@ -2,7 +2,7 @@
 import React from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import Sidebar from './Sidebar';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import UserMenu from '@/components/auth/UserMenu';
 

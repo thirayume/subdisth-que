@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { User, LogOut, Settings } from 'lucide-react';
-import { useAuth } from './AuthProvider';
+import { useAuth } from '@/contexts/AuthContext';
 
 const UserMenu: React.FC = () => {
   const { user, userRole, signOut } = useAuth();

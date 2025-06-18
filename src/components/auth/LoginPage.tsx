@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Shield } from 'lucide-react';
-import { useAuth } from './AuthProvider';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 const LoginPage: React.FC = () => {

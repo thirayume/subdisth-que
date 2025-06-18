@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Settings, BarChart3, Users } from 'lucide-react';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/contexts/AuthContext';
 import SidebarSection from './SidebarSection';
 import SidebarNavLink from './SidebarNavLink';
 

@@ -1,10 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, UserPlus, Shield, Users } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import UserManagementHeader from './UserManagementHeader';
 import UserManagementTable from './UserManagementTable';
@@ -14,7 +11,7 @@ interface User {
   id: string;
   email: string;
   full_name: string | null;
-  role: string;
+  role: 'admin' | 'staff' | 'patient';
   created_at: string;
   last_sign_in_at: string | null;
 }
@@ -38,7 +35,15 @@ const UserManagementContainer: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setUsers(data || []);
+      
+      // Map the data to include last_sign_in_at as null since it's not available in profiles
+      const mappedUsers: User[] = (data || []).map(user => ({
+        ...user,
+        last_sign_in_at: null,
+        role: user.role as 'admin' | 'staff' | 'patient'
+      }));
+      
+      setUsers(mappedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Failed to load users');
@@ -47,7 +52,7 @@ const UserManagementContainer: React.FC = () => {
     }
   };
 
-  const updateUserRole = async (userId: string, newRole: string) => {
+  const updateUserRole = async (userId: string, newRole: 'admin' | 'staff' | 'patient') => {
     try {
       // Update profile role
       const { error: profileError } = await supabase
