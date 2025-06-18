@@ -1,10 +1,9 @@
-
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/utils/logger';
 import SecureStorage from '@/utils/security/secureStorage';
-import { authRateLimiter } from '@/utils/security/sanitization';
+import { RateLimiter } from '@/utils/security/sanitization';
 
 const logger = createLogger('AuthProvider');
 
@@ -74,8 +73,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const clientId = `${email}_${Date.now()}`;
     
     // Rate limiting check
-    if (!authRateLimiter.isAllowed(email, 5, 15 * 60 * 1000)) {
-      const remainingTime = Math.ceil(authRateLimiter.getRemainingTime(email) / 1000 / 60);
+    if (!RateLimiter.isAllowed(email, 5, 15 * 60 * 1000)) {
+      const remainingTime = Math.ceil(RateLimiter.getRemainingTime(email) / 1000 / 60);
       return { 
         error: { 
           message: `Too many login attempts. Please try again in ${remainingTime} minutes.` 
@@ -104,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data.user) {
-        authRateLimiter.reset(email); // Reset rate limiting on success
+        RateLimiter.reset(email); // Reset rate limiting on success
         
         // Store session securely
         if (data.session) {
