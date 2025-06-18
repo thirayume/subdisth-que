@@ -1,73 +1,70 @@
 
-import * as React from 'react';
-import { cn } from '@/lib/utils';
+import React from 'react';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import Sidebar from './Sidebar';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { Navigate } from 'react-router-dom';
+import UserMenu from '@/components/auth/UserMenu';
 
 interface LayoutProps {
   children: React.ReactNode;
-  className?: string;
   fullWidth?: boolean;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, className, fullWidth = false }) => {
-  const [mounted, setMounted] = React.useState(false);
-  
-  // Wait for component to mount to avoid hydration mismatch
-  React.useEffect(() => {
-    setMounted(true);
-    console.log("[DEBUG] Layout component mounted");
-    
-    // Force a re-render after a brief delay to ensure styles are applied
-    const timer = setTimeout(() => {
-      console.log("[DEBUG] Layout forcing style refresh");
-      setMounted(state => state); // Trigger re-render
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, []);
-  
-  // Show a loading state until the component is mounted
-  if (!mounted) {
+const Layout: React.FC<LayoutProps> = ({ children, fullWidth = false }) => {
+  const { user, loading } = useAuth();
+
+  // Show loading state while checking authentication
+  if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center" style={{backgroundColor: "hsl(var(--background))"}}>
-        <div className="animate-pulse text-primary">Loading...</div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Redirect to auth if not authenticated
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  if (fullWidth) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+          <div className="container flex h-14 items-center justify-between px-4">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-lg font-semibold">ระบบบริหารจัดการคิว</h1>
+            </div>
+            <UserMenu />
+          </div>
+        </header>
+        <main className="container mx-auto px-4 py-6">
+          {children}
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background" style={{backgroundColor: "hsl(var(--background))"}}>
-      <Sidebar />
-      <main
-        className={cn(
-          "lg:pl-64 pt-16 lg:pt-0 min-h-screen transition-all duration-300",
-          className
-        )}
-      >
-        {/* Apply full width with no padding/container when fullWidth is true */}
-        {fullWidth ? (
-          <div className="animate-fade-in w-full h-full">
-            {/* Debug overlay in development */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="fixed top-2 right-2 bg-black/70 text-white text-xs p-1 rounded z-50">
-                Layout rendered (fullWidth)
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <Sidebar />
+        <div className="flex-1 flex flex-col">
+          <header className="border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+            <div className="container flex h-14 items-center justify-between px-4">
+              <div className="flex items-center space-x-4">
+                <h1 className="text-lg font-semibold">ระบบบริหารจัดการคิว</h1>
               </div>
-            )}
+              <UserMenu />
+            </div>
+          </header>
+          <main className="flex-1 container mx-auto px-4 py-6">
             {children}
-          </div>
-        ) : (
-          <div className="container mx-auto p-6 animate-fade-in">
-            {/* Debug overlay in development */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="fixed top-2 right-2 bg-black/70 text-white text-xs p-1 rounded z-50">
-                Layout rendered (container)
-              </div>
-            )}
-            {children}
-          </div>
-        )}
-      </main>
-    </div>
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 };
 

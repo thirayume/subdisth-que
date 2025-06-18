@@ -3,6 +3,8 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/utils/logger';
+import SecureStorage from '@/utils/security/secureStorage';
+import { authRateLimiter } from '@/utils/security/sanitization';
 
 const logger = createLogger('AuthProvider');
 
@@ -45,19 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   const cleanupAuthState = useCallback(() => {
-    // Clear all auth-related localStorage items
-    Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-        localStorage.removeItem(key);
-      }
-    });
-    
-    // Clear auth-related sessionStorage items
-    Object.keys(sessionStorage || {}).forEach((key) => {
-      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-        sessionStorage.removeItem(key);
-      }
-    });
+    SecureStorage.clearAuthData();
   }, []);
 
   const fetchUserRole = useCallback(async (userId: string) => {
@@ -81,6 +71,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
+    const clientId = `${email}_${Date.now()}`;
+    
+    // Rate limiting check
+    if (!authRateLimiter.isAllowed(email, 5, 15 * 60 * 1000)) {
+      const remainingTime = Math.ceil(authRateLimiter.getRemainingTime(email) / 1000 / 60);
+      return { 
+        error: { 
+          message: `Too many login attempts. Please try again in ${remainingTime} minutes.` 
+        } 
+      };
+    }
+
     try {
       cleanupAuthState();
       
@@ -92,7 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim().toLowerCase(),
         password,
       });
 
@@ -102,6 +104,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data.user) {
+        authRateLimiter.reset(email); // Reset rate limiting on success
+        
+        // Store session securely
+        if (data.session) {
+          await SecureStorage.setSecure('auth_session', {
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+            expires_at: data.session.expires_at
+          });
+        }
+
         // Fetch user role
         setTimeout(async () => {
           const role = await fetchUserRole(data.user.id);
@@ -123,11 +136,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const redirectUrl = `${window.location.origin}/`;
       
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: email.trim().toLowerCase(),
         password,
         options: {
           emailRedirectTo: redirectUrl,
-          data: fullName ? { full_name: fullName } : undefined
+          data: fullName ? { full_name: fullName.trim() } : undefined
         }
       });
 
@@ -171,6 +184,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          // Store session securely
+          await SecureStorage.setSecure('auth_session', {
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+            expires_at: session.expires_at
+          });
+          
           // Defer role fetching to prevent deadlocks
           setTimeout(async () => {
             const role = await fetchUserRole(session.user.id);
@@ -178,6 +198,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }, 0);
         } else {
           setUserRole(null);
+          SecureStorage.removeSecure('auth_session');
         }
         
         setLoading(false);
