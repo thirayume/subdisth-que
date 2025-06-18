@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Settings, BarChart3, Users } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
 import SidebarSection from './SidebarSection';
 import SidebarNavLink from './SidebarNavLink';
 
@@ -14,8 +13,6 @@ const SystemLinks: React.FC<SystemLinksProps> = ({
   isActiveRoute,
   closeSidebar,
 }) => {
-  const { isAdmin } = useAuth();
-
   return (
     <SidebarSection title="ระบบ">
       <SidebarNavLink
@@ -27,27 +24,14 @@ const SystemLinks: React.FC<SystemLinksProps> = ({
         รายงานและสถิติ
       </SidebarNavLink>
       
-      {isAdmin && (
-        <>
-          <SidebarNavLink
-            to="/user-management"
-            icon={Users}
-            isActive={isActiveRoute}
-            onClick={closeSidebar}
-          >
-            จัดการผู้ใช้
-          </SidebarNavLink>
-          
-          <SidebarNavLink
-            to="/settings"
-            icon={Settings}
-            isActive={isActiveRoute}
-            onClick={closeSidebar}
-          >
-            การตั้งค่าระบบ
-          </SidebarNavLink>
-        </>
-      )}
+      <SidebarNavLink
+        to="/settings"
+        icon={Settings}
+        isActive={isActiveRoute}
+        onClick={closeSidebar}
+      >
+        การตั้งค่าระบบ
+      </SidebarNavLink>
     </SidebarSection>
   );
 };
