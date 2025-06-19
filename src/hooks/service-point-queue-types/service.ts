@@ -53,22 +53,7 @@ export const createServicePointQueueTypeMapping = async (
   logger.debug(`Adding mapping: servicePointId=${servicePointId}, queueTypeId=${queueTypeId}`);
 
   try {
-    // Check current user authentication status
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError) {
-      logger.error('Authentication error:', authError);
-      throw new Error(`Authentication failed: ${authError.message}`);
-    }
-    
-    if (!user) {
-      logger.error('No authenticated user found');
-      throw new Error('User not authenticated');
-    }
-    
-    logger.debug('Authenticated user:', user.id);
-
-    // Try the insert operation
+    // Try the insert operation directly since RLS now allows public access
     const { data, error } = await supabase
       .from('service_point_queue_types')
       .insert({
@@ -82,9 +67,7 @@ export const createServicePointQueueTypeMapping = async (
       logger.error('Supabase error during insert:', error);
       
       // Provide more specific error messages
-      if (error.code === '42501') {
-        throw new Error('ไม่มีสิทธิ์ในการเพิ่มการเชื่อมโยง กรุณาติดต่อผู้ดูแลระบบเพื่อกำหนดสิทธิ์ที่เหมาะสม');
-      } else if (error.code === '23505') {
+      if (error.code === '23505') {
         throw new Error('การเชื่อมโยงนี้มีอยู่แล้วในระบบ');
       } else {
         throw error;
