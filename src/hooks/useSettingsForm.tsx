@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -39,7 +40,9 @@ const defaultValues: SettingsFormValues = {
 
 export const useSettingsForm = () => {
   const [loading, setLoading] = useState(true);
-  const { settings, updateMultipleSettings: updateSettingsHook } = useSettings('general');
+  const { settings: generalSettings } = useSettings('general');
+  const { settings: queueSettings } = useSettings('queue');
+  const { settings: notificationSettings } = useSettings('notification');
   const { queueTypes, loading: loadingQueueTypes } = useQueueTypesData();
   const [queueTypesInitialized, setQueueTypesInitialized] = useState(false);
 
@@ -49,54 +52,88 @@ export const useSettingsForm = () => {
   });
 
   useEffect(() => {
-    if (settings) {
+    // Load settings from multiple categories
+    if (generalSettings || queueSettings || notificationSettings) {
+      console.log('Loading settings:', { generalSettings, queueSettings, notificationSettings });
+      
       let mergedValues = { ...defaultValues };
       
-      if (Array.isArray(settings)) {
-        for (const setting of settings) {
+      // Process general settings
+      if (Array.isArray(generalSettings)) {
+        for (const setting of generalSettings) {
           try {
-            if (setting.key === 'queue_algorithm') {
-              const algorithm = setting.value as unknown as string;
-              if (algorithm && Object.values(QueueAlgorithmType).includes(algorithm as QueueAlgorithmType)) {
-                mergedValues.queue_algorithm = algorithm as QueueAlgorithmType;
-              }
-            } else if (setting.key === 'queue_types') {
-              // Handle queue types if they're in settings
-              // This is just for backward compatibility
-            } else if (setting.key in defaultValues) {
+            if (setting.key in defaultValues) {
               mergedValues = {
                 ...mergedValues,
                 [setting.key]: setting.value,
               };
             }
           } catch (error) {
-            console.error(`Error processing setting ${setting.key}:`, error);
+            console.error(`Error processing general setting ${setting.key}:`, error);
           }
         }
-      } else if (typeof settings === 'object' && settings !== null) {
-        Object.entries(settings).forEach(([key, value]) => {
-          if (key === 'queue_algorithm') {
-            const algorithm = value as string;
-            if (algorithm && Object.values(QueueAlgorithmType).includes(algorithm as QueueAlgorithmType)) {
-              mergedValues.queue_algorithm = algorithm as QueueAlgorithmType;
-            }
-          } else if (key === 'queue_types') {
-            // Skip queue_types as they're handled separately
-          } else if (key in defaultValues) {
-            mergedValues = {
-              ...mergedValues,
-              [key]: value,
-            };
-          }
-        });
-      } else {
-        console.warn('Settings is not in expected format:', settings);
       }
       
+      // Process queue settings (including queue_algorithm)
+      if (Array.isArray(queueSettings)) {
+        for (const setting of queueSettings) {
+          try {
+            if (setting.key === 'queue_algorithm') {
+              const algorithm = setting.value as unknown as string;
+              console.log('Loading queue algorithm from queue settings:', algorithm);
+              if (algorithm && Object.values(QueueAlgorithmType).includes(algorithm as QueueAlgorithmType)) {
+                mergedValues.queue_algorithm = algorithm as QueueAlgorithmType;
+                console.log('Set queue algorithm to:', algorithm);
+              }
+            } else if (setting.key in defaultValues) {
+              // Handle other queue settings like queue_start_number, queue_reset_daily, etc.
+              let value = setting.value;
+              
+              // Convert string values to appropriate types
+              if (setting.key === 'queue_start_number') {
+                value = parseInt(value as string) || 1;
+              } else if (setting.key === 'queue_reset_daily' || setting.key === 'enable_wait_time_prediction' || setting.key === 'queue_voice_enabled') {
+                value = value === 'true' || value === true;
+              }
+              
+              mergedValues = {
+                ...mergedValues,
+                [setting.key]: value,
+              };
+            }
+          } catch (error) {
+            console.error(`Error processing queue setting ${setting.key}:`, error);
+          }
+        }
+      }
+      
+      // Process notification settings
+      if (Array.isArray(notificationSettings)) {
+        for (const setting of notificationSettings) {
+          try {
+            if (setting.key in defaultValues) {
+              // Convert string values to boolean for notification settings
+              let value = setting.value;
+              if (typeof value === 'string') {
+                value = value === 'true';
+              }
+              
+              mergedValues = {
+                ...mergedValues,
+                [setting.key]: value,
+              };
+            }
+          } catch (error) {
+            console.error(`Error processing notification setting ${setting.key}:`, error);
+          }
+        }
+      }
+      
+      console.log('Final merged values:', mergedValues);
       form.reset(mergedValues);
       setLoading(false);
     }
-  }, [settings, form]);
+  }, [generalSettings, queueSettings, notificationSettings, form]);
   
   useEffect(() => {
     if (!loadingQueueTypes && queueTypes && queueTypes.length > 0) {
@@ -128,6 +165,16 @@ export const useSettingsForm = () => {
       }));
       
       console.log('Converted to settings array:', settingsArray);
+      
+      // Use the appropriate settings hook based on category
+      let updateSettingsHook;
+      if (category === 'general') {
+        updateSettingsHook = useSettings('general').updateMultipleSettings;
+      } else if (category === 'notification') {
+        updateSettingsHook = useSettings('notification').updateMultipleSettings;
+      } else {
+        updateSettingsHook = useSettings('queue').updateMultipleSettings;
+      }
       
       const success = await updateSettingsHook(settingsArray, category);
       return success;
