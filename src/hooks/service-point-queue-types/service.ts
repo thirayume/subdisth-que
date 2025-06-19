@@ -26,7 +26,6 @@ export const fetchServicePointQueueTypes = async (servicePointId: string): Promi
   return data || [];
 };
 
-// New function to fetch ALL mappings across all service points
 export const fetchAllServicePointQueueTypes = async (): Promise<ServicePointQueueType[]> => {
   logger.debug('Fetching all service point queue type mappings');
 
@@ -53,29 +52,56 @@ export const createServicePointQueueTypeMapping = async (
 ): Promise<ServicePointQueueType> => {
   logger.debug(`Adding mapping: servicePointId=${servicePointId}, queueTypeId=${queueTypeId}`);
 
-  // First, try a simple insert without the complex select to avoid RLS issues
-  const { data, error } = await supabase
-    .from('service_point_queue_types')
-    .insert({
-      service_point_id: servicePointId,
-      queue_type_id: queueTypeId
-    })
-    .select('*')
-    .single();
+  try {
+    // Check current user authentication status
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError) {
+      logger.error('Authentication error:', authError);
+      throw new Error(`Authentication failed: ${authError.message}`);
+    }
+    
+    if (!user) {
+      logger.error('No authenticated user found');
+      throw new Error('User not authenticated');
+    }
+    
+    logger.debug('Authenticated user:', user.id);
 
-  if (error) {
-    logger.error('Supabase error during insert:', error);
-    throw error;
+    // Try the insert operation
+    const { data, error } = await supabase
+      .from('service_point_queue_types')
+      .insert({
+        service_point_id: servicePointId,
+        queue_type_id: queueTypeId
+      })
+      .select('*')
+      .single();
+
+    if (error) {
+      logger.error('Supabase error during insert:', error);
+      
+      // Provide more specific error messages
+      if (error.code === '42501') {
+        throw new Error('ไม่มีสิทธิ์ในการเพิ่มการเชื่อมโยง กรุณาติดต่อผู้ดูแลระบบเพื่อกำหนดสิทธิ์ที่เหมาะสม');
+      } else if (error.code === '23505') {
+        throw new Error('การเชื่อมโยงนี้มีอยู่แล้วในระบบ');
+      } else {
+        throw error;
+      }
+    }
+
+    logger.debug('Successfully added mapping:', data);
+    
+    return {
+      ...data,
+      queue_type: null,
+      service_point: null
+    } as ServicePointQueueType;
+  } catch (err) {
+    logger.error('Error in createServicePointQueueTypeMapping:', err);
+    throw err;
   }
-
-  logger.debug('Successfully added mapping:', data);
-  
-  // Return the data with a simple structure that matches our expected type
-  return {
-    ...data,
-    queue_type: null, // Will be populated by subsequent fetch
-    service_point: null // Will be populated by subsequent fetch
-  } as ServicePointQueueType;
 };
 
 export const deleteServicePointQueueTypeMapping = async (id: string): Promise<boolean> => {

@@ -39,29 +39,23 @@ const defaultValues: SettingsFormValues = {
 
 export const useSettingsForm = () => {
   const [loading, setLoading] = useState(true);
-  const { settings, updateSettings } = useSettings('general'); // Pass 'general' as the default category
+  const { settings, updateMultipleSettings: updateSettingsHook } = useSettings('general');
   const { queueTypes, loading: loadingQueueTypes } = useQueueTypesData();
-  // Add a state to track if queue types are initialized
   const [queueTypesInitialized, setQueueTypesInitialized] = useState(false);
 
-  // Create form with default values
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(queueSettingsSchema),
     defaultValues,
   });
 
-  // Update form values when settings load
   useEffect(() => {
     if (settings) {
       let mergedValues = { ...defaultValues };
       
-      // Check if settings is an array (iterable) before trying to loop through it
       if (Array.isArray(settings)) {
-        // Process each setting based on its key
         for (const setting of settings) {
           try {
             if (setting.key === 'queue_algorithm') {
-              // Handle queue algorithm setting
               const algorithm = setting.value as unknown as string;
               if (algorithm && Object.values(QueueAlgorithmType).includes(algorithm as QueueAlgorithmType)) {
                 mergedValues.queue_algorithm = algorithm as QueueAlgorithmType;
@@ -70,7 +64,6 @@ export const useSettingsForm = () => {
               // Handle queue types if they're in settings
               // This is just for backward compatibility
             } else if (setting.key in defaultValues) {
-              // Handle other recognized settings
               mergedValues = {
                 ...mergedValues,
                 [setting.key]: setting.value,
@@ -81,8 +74,6 @@ export const useSettingsForm = () => {
           }
         }
       } else if (typeof settings === 'object' && settings !== null) {
-        // If settings is an object (not array), handle it differently
-        // Convert object format to merged values directly
         Object.entries(settings).forEach(([key, value]) => {
           if (key === 'queue_algorithm') {
             const algorithm = value as string;
@@ -102,16 +93,13 @@ export const useSettingsForm = () => {
         console.warn('Settings is not in expected format:', settings);
       }
       
-      // Reset form with merged values
       form.reset(mergedValues);
       setLoading(false);
     }
   }, [settings, form]);
   
-  // Handle queue types from the database
   useEffect(() => {
     if (!loadingQueueTypes && queueTypes && queueTypes.length > 0) {
-      // Convert QueueType[] to the format expected by the form
       const convertedQueueTypes = queueTypes.map(qt => ({
         id: qt.id,
         code: qt.code,
@@ -129,24 +117,20 @@ export const useSettingsForm = () => {
     }
   }, [loadingQueueTypes, queueTypes, form]);
 
-  // Function to update multiple settings at once
-  const updateMultipleSettings = async (data: any, category: string = 'general') => {
+  const updateMultipleSettings = async (data: any, category: string = 'queue') => {
     try {
-      const updates = [];
-      for (const [key, value] of Object.entries(data)) {
-        if (key === 'queue_types') continue; // Skip queue types as they are handled separately
-        
-        updates.push({
-          category,
-          key,
-          value,
-        });
-      }
+      console.log('updateMultipleSettings called with:', { data, category });
       
-      if (updates.length > 0) {
-        await updateSettings(updates, category); // Pass the category parameter here
-      }
-      return true;
+      const settingsArray = Object.entries(data).map(([key, value]) => ({
+        category,
+        key,
+        value,
+      }));
+      
+      console.log('Converted to settings array:', settingsArray);
+      
+      const success = await updateSettingsHook(settingsArray, category);
+      return success;
     } catch (error) {
       console.error('Error updating settings:', error);
       return false;

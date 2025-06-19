@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
@@ -34,10 +33,12 @@ const QueueConfigSection: React.FC<QueueConfigSectionProps> = ({ form }) => {
     try {
       form.setValue('queue_algorithm', value);
       
+      console.log('Saving algorithm:', value);
+      
       // Save algorithm to Supabase immediately with correct format and category
       const success = await updateMultipleSettings({
         queue_algorithm: value
-      });
+      }, 'queue');
       
       if (success) {
         // Save to localStorage for immediate use
