@@ -12,14 +12,19 @@ export const useUpdateSettings = () => {
       setIsUpdating(true);
       const { key, value } = data;
       
-      // Save to Supabase - fix the upsert structure with proper JSONB handling
+      console.log('Updating single setting:', { category, key, value, type: typeof value });
+      
+      // Prepare the value for JSONB storage - always store as string for simplicity
+      const jsonbValue = typeof value === 'string' ? value : JSON.stringify(value);
+      
+      // Save to Supabase with proper JSONB string format
       const { error } = await supabase
         .from('settings')
         .upsert(
           { 
             category,
             key,
-            value: typeof value === 'string' ? value : JSON.stringify(value)
+            value: jsonbValue
           },
           { 
             onConflict: 'category,key',
@@ -76,17 +81,22 @@ export const useUpdateSettings = () => {
         return true;
       }
 
-      console.log('Updating settings with proper JSONB format:', validUpdates);
+      console.log('Updating multiple settings:', validUpdates);
 
-      // Save to Supabase - fix the upsert structure with proper JSONB handling
+      // Prepare updates for JSONB storage - store all values as strings
+      const formattedUpdates = validUpdates.map((item: any) => ({
+        category: item.category || category,
+        key: item.key,
+        value: typeof item.value === 'string' ? item.value : JSON.stringify(item.value)
+      }));
+
+      console.log('Formatted updates for database:', formattedUpdates);
+
+      // Save to Supabase with proper JSONB string format
       const { error } = await supabase
         .from('settings')
         .upsert(
-          validUpdates.map((item: any) => ({
-            category: item.category || category,
-            key: item.key,
-            value: typeof item.value === 'string' ? item.value : JSON.stringify(item.value)
-          })),
+          formattedUpdates,
           { 
             onConflict: 'category,key',
             ignoreDuplicates: false 

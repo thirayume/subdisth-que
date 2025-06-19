@@ -8,9 +8,10 @@ import { useServicePoints } from '@/hooks/useServicePoints';
 import { useServicePointQueueTypes } from '@/hooks/useServicePointQueueTypes';
 import { useQueueTypesData } from '@/hooks/useQueueTypesData';
 import { QueueTypeConfig, ServicePoint } from '@/integrations/supabase/schema';
-import { PlusCircle, XCircle, Loader2 } from 'lucide-react';
+import { PlusCircle, XCircle, Loader2, AlertCircle } from 'lucide-react';
 import QueueTypeLabel from '@/components/queue/QueueTypeLabel';
 import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ className }) => {
   const { servicePoints, loading: loadingServicePoints } = useServicePoints();
@@ -22,11 +23,13 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
     deletingId, 
     addMapping, 
     removeMapping, 
-    fetchMappings 
+    fetchMappings,
+    error: mappingsError
   } = useServicePointQueueTypes(selectedServicePointId);
   
   const [availableQueueTypes, setAvailableQueueTypes] = useState<QueueTypeConfig[]>([]);
   const [selectedQueueTypeId, setSelectedQueueTypeId] = useState<string>('');
+  const [isAdding, setIsAdding] = useState(false);
 
   // When service point changes, select first one if none selected
   useEffect(() => {
@@ -65,16 +68,27 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
   const handleAddMapping = async () => {
     if (selectedServicePointId && selectedQueueTypeId) {
       try {
+        setIsAdding(true);
         const success = await addMapping(selectedServicePointId, selectedQueueTypeId);
         if (success) {
           setSelectedQueueTypeId('');
           toast.success('เชื่อมโยงประเภทคิวกับจุดบริการเรียบร้อยแล้ว');
+          // Refresh the mappings to get updated data
+          await fetchMappings();
         } else {
           toast.error('ไม่สามารถเชื่อมโยงประเภทคิวกับจุดบริการได้');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error adding mapping:', error);
-        toast.error('เกิดข้อผิดพลาดในการเชื่อมโยงประเภทคิว');
+        const errorMessage = error?.message || 'เกิดข้อผิดพลาดในการเชื่อมโยงประเภทคิว';
+        toast.error(errorMessage);
+        
+        // Show specific error for RLS issues
+        if (error?.code === '42501') {
+          toast.error('ไม่มีสิทธิ์ในการเพิ่มการเชื่อมโยง กรุณาติดต่อผู้ดูแลระบบ');
+        }
+      } finally {
+        setIsAdding(false);
       }
     }
   };
@@ -84,12 +98,15 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
       const success = await removeMapping(mappingId);
       if (success) {
         toast.success('ยกเลิกการเชื่อมโยงประเภทคิวเรียบร้อยแล้ว');
+        // Refresh the mappings to get updated data
+        await fetchMappings();
       } else {
         toast.error('ไม่สามารถยกเลิกการเชื่อมโยงประเภทคิวได้');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error removing mapping:', error);
-      toast.error('เกิดข้อผิดพลาดในการยกเลิกการเชื่อมโยง');
+      const errorMessage = error?.message || 'เกิดข้อผิดพลาดในการยกเลิกการเชื่อมโยง';
+      toast.error(errorMessage);
     }
   };
 
@@ -107,6 +124,15 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {mappingsError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              เกิดข้อผิดพลาด: {mappingsError}
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin mr-2" />
@@ -160,9 +186,13 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
                       </div>
                       <Button 
                         onClick={handleAddMapping} 
-                        disabled={!selectedQueueTypeId || availableQueueTypes.length === 0}
+                        disabled={!selectedQueueTypeId || availableQueueTypes.length === 0 || isAdding}
                       >
-                        <PlusCircle className="h-4 w-4 mr-2" />
+                        {isAdding ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <PlusCircle className="h-4 w-4 mr-2" />
+                        )}
                         เพิ่ม
                       </Button>
                     </div>
