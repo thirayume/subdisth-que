@@ -40,11 +40,14 @@ const defaultValues: SettingsFormValues = {
 
 export const useSettingsForm = () => {
   const [loading, setLoading] = useState(true);
-  const { settings: generalSettings } = useSettings('general');
-  const { settings: queueSettings } = useSettings('queue');
-  const { settings: notificationSettings } = useSettings('notification');
-  const { queueTypes, loading: loadingQueueTypes } = useQueueTypesData();
   const [queueTypesInitialized, setQueueTypesInitialized] = useState(false);
+  
+  // Initialize all settings hooks at the component level
+  const generalSettingsHook = useSettings('general');
+  const queueSettingsHook = useSettings('queue');
+  const notificationSettingsHook = useSettings('notification');
+  
+  const { queueTypes, loading: loadingQueueTypes } = useQueueTypesData();
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(queueSettingsSchema),
@@ -53,6 +56,10 @@ export const useSettingsForm = () => {
 
   useEffect(() => {
     // Load settings from multiple categories
+    const { settings: generalSettings } = generalSettingsHook;
+    const { settings: queueSettings } = queueSettingsHook;
+    const { settings: notificationSettings } = notificationSettingsHook;
+
     if (generalSettings || queueSettings || notificationSettings) {
       console.log('Loading settings:', { generalSettings, queueSettings, notificationSettings });
       
@@ -133,7 +140,7 @@ export const useSettingsForm = () => {
       form.reset(mergedValues);
       setLoading(false);
     }
-  }, [generalSettings, queueSettings, notificationSettings, form]);
+  }, [generalSettingsHook.settings, queueSettingsHook.settings, notificationSettingsHook.settings, form]);
   
   useEffect(() => {
     if (!loadingQueueTypes && queueTypes && queueTypes.length > 0) {
@@ -167,16 +174,15 @@ export const useSettingsForm = () => {
       console.log('Converted to settings array:', settingsArray);
       
       // Use the appropriate settings hook based on category
-      let updateSettingsHook;
+      let success = false;
       if (category === 'general') {
-        updateSettingsHook = useSettings('general').updateMultipleSettings;
+        success = await generalSettingsHook.updateMultipleSettings(settingsArray, category);
       } else if (category === 'notification') {
-        updateSettingsHook = useSettings('notification').updateMultipleSettings;
+        success = await notificationSettingsHook.updateMultipleSettings(settingsArray, category);
       } else {
-        updateSettingsHook = useSettings('queue').updateMultipleSettings;
+        success = await queueSettingsHook.updateMultipleSettings(settingsArray, category);
       }
       
-      const success = await updateSettingsHook(settingsArray, category);
       return success;
     } catch (error) {
       console.error('Error updating settings:', error);
