@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
@@ -34,10 +33,10 @@ const QueueConfigSection: React.FC<QueueConfigSectionProps> = ({ form }) => {
     try {
       form.setValue('queue_algorithm', value);
       
-      // Save algorithm to Supabase immediately
+      // Save algorithm to Supabase immediately with correct category
       const success = await updateMultipleSettings({
         queue_algorithm: value
-      });
+      }, 'queue'); // Use 'queue' category instead of 'general'
       
       if (success) {
         // Save to localStorage for immediate use
@@ -45,10 +44,14 @@ const QueueConfigSection: React.FC<QueueConfigSectionProps> = ({ form }) => {
         toast.success('บันทึกอัลกอริทึมคิวเรียบร้อยแล้ว');
       } else {
         toast.error('ไม่สามารถบันทึกอัลกอริทึมคิวได้');
+        // Revert form value on error
+        form.setValue('queue_algorithm', form.getValues('queue_algorithm'));
       }
     } catch (error) {
       console.error('Error saving queue algorithm:', error);
       toast.error('เกิดข้อผิดพลาดในการบันทึกอัลกอริทึมคิว');
+      // Revert form value on error
+      form.setValue('queue_algorithm', form.getValues('queue_algorithm'));
     }
   };
 

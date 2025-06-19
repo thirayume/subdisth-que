@@ -12,8 +12,8 @@ export const useUpdateSettings = () => {
       setIsUpdating(true);
       const { key, value } = data;
       
-      // Save to Supabase
-      const { error } = await (supabase as any)
+      // Save to Supabase - fix the upsert structure
+      const { error } = await supabase
         .from('settings')
         .upsert(
           { 
@@ -21,10 +21,14 @@ export const useUpdateSettings = () => {
             key,
             value
           },
-          { onConflict: 'category,key' }
+          { 
+            onConflict: 'category,key',
+            ignoreDuplicates: false 
+          }
         );
 
       if (error) {
+        console.error('Supabase error:', error);
         throw error;
       }
 
@@ -44,7 +48,7 @@ export const useUpdateSettings = () => {
       return true;
     } catch (err: any) {
       console.error(`Error updating setting:`, err);
-      toast.error(`ไม่สามารถบันทึกการตั้งค่าได้`);
+      toast.error(`ไม่สามารถบันทึกการตั้งค่าได้: ${err.message || 'Unknown error'}`);
       return false;
     } finally {
       setIsUpdating(false);
@@ -64,18 +68,33 @@ export const useUpdateSettings = () => {
             value
           }));
 
-      // Save to Supabase
-      const { error } = await (supabase as any)
+      // Filter out any entries with null/undefined keys
+      const validUpdates = updatesArray.filter(item => item.key && item.key.trim() !== '');
+
+      if (validUpdates.length === 0) {
+        console.warn('No valid updates to process');
+        return true;
+      }
+
+      console.log('Updating settings:', validUpdates);
+
+      // Save to Supabase - fix the upsert structure
+      const { error } = await supabase
         .from('settings')
         .upsert(
-          updatesArray.map((item: any) => ({
-            ...item,
-            category: item.category || category
+          validUpdates.map((item: any) => ({
+            category: item.category || category,
+            key: item.key,
+            value: item.value
           })),
-          { onConflict: 'category,key' }
+          { 
+            onConflict: 'category,key',
+            ignoreDuplicates: false 
+          }
         );
 
       if (error) {
+        console.error('Supabase error:', error);
         throw error;
       }
 
@@ -83,7 +102,7 @@ export const useUpdateSettings = () => {
       const currentLocalSettings = JSON.parse(localStorage.getItem(`settings_${category}`) || '[]');
       const updatedLocalSettings = Array.isArray(currentLocalSettings) ? [...currentLocalSettings] : [];
       
-      for (const item of updatesArray) {
+      for (const item of validUpdates) {
         const key = item.key;
         const value = item.value;
         const existingIndex = updatedLocalSettings.findIndex(setting => setting.key === key);
@@ -105,7 +124,7 @@ export const useUpdateSettings = () => {
       return true;
     } catch (err: any) {
       console.error(`Error updating multiple settings:`, err);
-      toast.error(`ไม่สามารถบันทึกการตั้งค่าได้`);
+      toast.error(`ไม่สามารถบันทึกการตั้งค่าได้: ${err.message || 'Unknown error'}`);
       return false;
     } finally {
       setIsUpdating(false);

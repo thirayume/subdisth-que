@@ -24,7 +24,7 @@ export const useSettingsSubmission = ({ form, updateMultipleSettings }: UseSetti
         pharmacy_email: data.pharmacy_email,
       }, 'general');
       
-      // Save queue settings
+      // Save queue settings to 'queue' category
       await updateMultipleSettings({
         queue_start_number: data.queue_start_number,
         queue_reset_daily: data.queue_reset_daily,

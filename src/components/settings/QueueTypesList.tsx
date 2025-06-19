@@ -26,7 +26,7 @@ interface QueueTypesListProps {
 }
 
 const QueueTypesList: React.FC<QueueTypesListProps> = ({
-  queueTypes,
+  queueTypes: formQueueTypes,
   editingQueueType,
   formatOptions,
   onAddQueueType,
@@ -40,7 +40,10 @@ const QueueTypesList: React.FC<QueueTypesListProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedQueueType, setSelectedQueueType] = useState<QueueType | null>(null);
-  const { saveQueueType, deleteQueueType, fetchQueueTypes } = useQueueTypesData();
+  const { queueTypes: dbQueueTypes, saveQueueType, deleteQueueType, fetchQueueTypes } = useQueueTypesData();
+  
+  // Use database queue types as the primary source
+  const queueTypes = dbQueueTypes.length > 0 ? dbQueueTypes : formQueueTypes;
   
   const handleSaveQueueType = async (index: number) => {
     try {
