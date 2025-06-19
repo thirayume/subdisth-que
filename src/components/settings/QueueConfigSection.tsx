@@ -34,7 +34,7 @@ const QueueConfigSection: React.FC<QueueConfigSectionProps> = ({ form }) => {
     try {
       form.setValue('queue_algorithm', value);
       
-      // Save algorithm to Supabase immediately with correct category
+      // Save algorithm to Supabase immediately with correct format and category
       const success = await updateMultipleSettings({
         queue_algorithm: value
       });

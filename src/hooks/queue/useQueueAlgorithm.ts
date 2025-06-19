@@ -18,7 +18,7 @@ export const useQueueAlgorithm = () => {
     // Load algorithm from settings
     const fetchQueueAlgorithm = async () => {
       try {
-        // Try to fetch from queue category first, then general category as fallback
+        // Try to fetch from queue category first
         const { data: queueData, error: queueError } = await supabase
           .from('settings')
           .select('value')
@@ -29,12 +29,17 @@ export const useQueueAlgorithm = () => {
         let algorithm: QueueAlgorithmType = QueueAlgorithmType.FIFO;
         
         if (!queueError && queueData?.value) {
-          // Handle both string and object values properly
-          if (typeof queueData.value === 'string') {
-            algorithm = queueData.value as QueueAlgorithmType;
-          } else if (typeof queueData.value === 'object' && queueData.value !== null) {
-            const valueObj = queueData.value as any;
-            algorithm = valueObj.algorithm || valueObj.value || QueueAlgorithmType.FIFO;
+          // Handle value as string (since we now store it as string in JSONB)
+          const rawValue = queueData.value;
+          const stringValue = typeof rawValue === 'string' ? rawValue : String(rawValue);
+          
+          // Validate that the algorithm is a valid enum value
+          const validAlgorithms = Object.values(QueueAlgorithmType);
+          if (validAlgorithms.includes(stringValue as QueueAlgorithmType)) {
+            algorithm = stringValue as QueueAlgorithmType;
+            logger.info('Successfully loaded queue algorithm from queue category:', algorithm);
+          } else {
+            logger.warn('Invalid algorithm value from queue category, using default FIFO:', stringValue);
           }
         } else {
           // Fallback to general category
@@ -47,28 +52,21 @@ export const useQueueAlgorithm = () => {
             .maybeSingle();
             
           if (!generalError && generalData?.value) {
-            if (typeof generalData.value === 'string') {
-              algorithm = generalData.value as QueueAlgorithmType;
-            } else if (typeof generalData.value === 'object' && generalData.value !== null) {
-              const valueObj = generalData.value as any;
-              algorithm = valueObj.algorithm || valueObj.value || QueueAlgorithmType.FIFO;
+            const rawValue = generalData.value;
+            const stringValue = typeof rawValue === 'string' ? rawValue : String(rawValue);
+            
+            const validAlgorithms = Object.values(QueueAlgorithmType);
+            if (validAlgorithms.includes(stringValue as QueueAlgorithmType)) {
+              algorithm = stringValue as QueueAlgorithmType;
+              logger.info('Successfully loaded queue algorithm from general category:', algorithm);
+            } else {
+              logger.warn('Invalid algorithm value from general category, using default FIFO:', stringValue);
             }
           }
         }
         
-        // Validate that the algorithm is a valid enum value
-        const validAlgorithms = Object.values(QueueAlgorithmType);
-        const isValid = validAlgorithms.includes(algorithm);
-        
-        if (isValid) {
-          setQueueAlgorithm(algorithm);
-          localStorage.setItem('queue_algorithm', algorithm);
-          logger.info('Successfully loaded queue algorithm:', algorithm);
-        } else {
-          logger.warn('Invalid algorithm value from database, using default FIFO:', algorithm);
-          setQueueAlgorithm(QueueAlgorithmType.FIFO);
-          localStorage.setItem('queue_algorithm', QueueAlgorithmType.FIFO);
-        }
+        setQueueAlgorithm(algorithm);
+        localStorage.setItem('queue_algorithm', algorithm);
       } catch (err) {
         logger.error('Error in fetchQueueAlgorithm:', err);
         // Fall back to localStorage

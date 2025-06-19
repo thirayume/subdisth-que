@@ -7,19 +7,19 @@ import { SettingsState, SettingItem, SettingUpdate } from './types';
 export const useUpdateSettings = () => {
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const updateSetting = async (data: SettingItem, category: string = 'general') => {
+  const updateSetting = async (data: SettingItem, category: string = 'queue') => {
     try {
       setIsUpdating(true);
       const { key, value } = data;
       
-      // Save to Supabase - fix the upsert structure
+      // Save to Supabase - fix the upsert structure with proper JSONB handling
       const { error } = await supabase
         .from('settings')
         .upsert(
           { 
             category,
             key,
-            value
+            value: typeof value === 'string' ? value : JSON.stringify(value)
           },
           { 
             onConflict: 'category,key',
@@ -55,7 +55,7 @@ export const useUpdateSettings = () => {
     }
   };
 
-  const updateMultipleSettings = async (updates: SettingUpdate[] | SettingsState, category: string = 'general') => {
+  const updateMultipleSettings = async (updates: SettingUpdate[] | SettingsState, category: string = 'queue') => {
     try {
       setIsUpdating(true);
       
@@ -76,16 +76,16 @@ export const useUpdateSettings = () => {
         return true;
       }
 
-      console.log('Updating settings:', validUpdates);
+      console.log('Updating settings with proper JSONB format:', validUpdates);
 
-      // Save to Supabase - fix the upsert structure
+      // Save to Supabase - fix the upsert structure with proper JSONB handling
       const { error } = await supabase
         .from('settings')
         .upsert(
           validUpdates.map((item: any) => ({
             category: item.category || category,
             key: item.key,
-            value: item.value
+            value: typeof item.value === 'string' ? item.value : JSON.stringify(item.value)
           })),
           { 
             onConflict: 'category,key',

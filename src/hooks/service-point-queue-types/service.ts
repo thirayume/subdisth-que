@@ -53,29 +53,29 @@ export const createServicePointQueueTypeMapping = async (
 ): Promise<ServicePointQueueType> => {
   logger.debug(`Adding mapping: servicePointId=${servicePointId}, queueTypeId=${queueTypeId}`);
 
+  // First, try a simple insert without the complex select to avoid RLS issues
   const { data, error } = await supabase
     .from('service_point_queue_types')
     .insert({
       service_point_id: servicePointId,
       queue_type_id: queueTypeId
     })
-    .select(`
-      *,
-      queue_type:queue_types(id, name, code),
-      service_point:service_points(id, name, code)
-    `);
+    .select('*')
+    .single();
 
   if (error) {
     logger.error('Supabase error during insert:', error);
     throw error;
   }
 
-  if (!data || data.length === 0) {
-    throw new Error('No data returned after adding mapping');
-  }
-
-  logger.debug('Successfully added mapping:', data[0]);
-  return data[0];
+  logger.debug('Successfully added mapping:', data);
+  
+  // Return the data with a simple structure that matches our expected type
+  return {
+    ...data,
+    queue_type: null, // Will be populated by subsequent fetch
+    service_point: null // Will be populated by subsequent fetch
+  } as ServicePointQueueType;
 };
 
 export const deleteServicePointQueueTypeMapping = async (id: string): Promise<boolean> => {
