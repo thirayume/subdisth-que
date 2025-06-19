@@ -21,7 +21,7 @@ export const useQueueAlgorithm = () => {
         const { data, error } = await supabase
           .from('settings')
           .select('value')
-          .eq('category', 'queue')
+          .eq('category', 'general')
           .eq('key', 'queue_algorithm')
           .maybeSingle();
           
@@ -40,20 +40,17 @@ export const useQueueAlgorithm = () => {
           
           // Handle both string and object values properly
           if (typeof data.value === 'string') {
-            // Normalize the string to lowercase for comparison
-            const normalizedValue = data.value.toLowerCase();
-            algorithm = normalizedValue as QueueAlgorithmType;
+            algorithm = data.value as QueueAlgorithmType;
           } else if (typeof data.value === 'object' && data.value !== null) {
             // If it's an object, try to extract the algorithm value
             const valueObj = data.value as any;
-            const extractedValue = valueObj.algorithm || valueObj.value || 'fifo';
-            algorithm = extractedValue.toLowerCase() as QueueAlgorithmType;
+            algorithm = valueObj.algorithm || valueObj.value || QueueAlgorithmType.FIFO;
           } else {
             // Fallback to FIFO if we can't determine the value
             algorithm = QueueAlgorithmType.FIFO;
           }
           
-          // Validate that the algorithm is a valid enum value (case-insensitive)
+          // Validate that the algorithm is a valid enum value
           const validAlgorithms = Object.values(QueueAlgorithmType);
           const isValid = validAlgorithms.includes(algorithm);
           
@@ -134,6 +131,37 @@ export const useQueueAlgorithm = () => {
     
     fetchQueueAlgorithm();
     fetchQueueTypes();
+
+    // Set up real-time subscription for settings changes
+    const settingsChannel = supabase
+      .channel('settings-changes')
+      .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'settings' },
+          (payload: any) => {
+            logger.debug('Settings change detected:', payload);
+            if (payload.new?.key === 'queue_algorithm') {
+              fetchQueueAlgorithm();
+            }
+          }
+      )
+      .subscribe();
+
+    // Set up real-time subscription for queue types changes  
+    const queueTypesChannel = supabase
+      .channel('queue-types-changes')
+      .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'queue_types' },
+          (payload: any) => {
+            logger.debug('Queue types change detected:', payload);
+            fetchQueueTypes();
+          }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(settingsChannel);
+      supabase.removeChannel(queueTypesChannel);
+    };
   }, []);
   
   // Memoize the sortQueues function to prevent infinite re-renders

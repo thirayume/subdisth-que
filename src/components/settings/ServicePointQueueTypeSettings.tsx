@@ -10,17 +10,25 @@ import { useQueueTypesData } from '@/hooks/useQueueTypesData';
 import { QueueTypeConfig, ServicePoint } from '@/integrations/supabase/schema';
 import { PlusCircle, XCircle, Loader2 } from 'lucide-react';
 import QueueTypeLabel from '@/components/queue/QueueTypeLabel';
+import { toast } from 'sonner';
 
 const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ className }) => {
   const { servicePoints, loading: loadingServicePoints } = useServicePoints();
   const { queueTypes, loading: loadingQueueTypes } = useQueueTypesData();
   const [selectedServicePointId, setSelectedServicePointId] = useState<string>('');
-  const { mappings, loading: loadingMappings, deletingId, addMapping, removeMapping, fetchMappings } = useServicePointQueueTypes(selectedServicePointId);
+  const { 
+    mappings, 
+    loading: loadingMappings, 
+    deletingId, 
+    addMapping, 
+    removeMapping, 
+    fetchMappings 
+  } = useServicePointQueueTypes(selectedServicePointId);
   
   const [availableQueueTypes, setAvailableQueueTypes] = useState<QueueTypeConfig[]>([]);
   const [selectedQueueTypeId, setSelectedQueueTypeId] = useState<string>('');
 
-  // When service point changes, select it
+  // When service point changes, select first one if none selected
   useEffect(() => {
     if (servicePoints.length > 0 && !selectedServicePointId) {
       setSelectedServicePointId(servicePoints[0].id);
@@ -33,7 +41,7 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
       const mappedQueueTypeIds = mappings.map(m => m.queue_type_id);
       // Filter available queue types and ensure proper typing
       const available = queueTypes
-        .filter(qt => !mappedQueueTypeIds.includes(qt.id))
+        .filter(qt => qt.enabled && !mappedQueueTypeIds.includes(qt.id))
         .map(qt => qt as unknown as QueueTypeConfig);
       
       setAvailableQueueTypes(available);
@@ -56,14 +64,33 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
 
   const handleAddMapping = async () => {
     if (selectedServicePointId && selectedQueueTypeId) {
-      await addMapping(selectedServicePointId, selectedQueueTypeId);
-      setSelectedQueueTypeId('');
+      try {
+        const success = await addMapping(selectedServicePointId, selectedQueueTypeId);
+        if (success) {
+          setSelectedQueueTypeId('');
+          toast.success('เชื่อมโยงประเภทคิวกับจุดบริการเรียบร้อยแล้ว');
+        } else {
+          toast.error('ไม่สามารถเชื่อมโยงประเภทคิวกับจุดบริการได้');
+        }
+      } catch (error) {
+        console.error('Error adding mapping:', error);
+        toast.error('เกิดข้อผิดพลาดในการเชื่อมโยงประเภทคิว');
+      }
     }
   };
 
   const handleRemoveMapping = async (mappingId: string) => {
-    await removeMapping(mappingId);
-    // No need to manually refresh since the optimistic update handles UI changes
+    try {
+      const success = await removeMapping(mappingId);
+      if (success) {
+        toast.success('ยกเลิกการเชื่อมโยงประเภทคิวเรียบร้อยแล้ว');
+      } else {
+        toast.error('ไม่สามารถยกเลิกการเชื่อมโยงประเภทคิวได้');
+      }
+    } catch (error) {
+      console.error('Error removing mapping:', error);
+      toast.error('เกิดข้อผิดพลาดในการยกเลิกการเชื่อมโยง');
+    }
   };
 
   // Find selected service point object
@@ -81,7 +108,10 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="text-center py-4">กำลังโหลด...</div>
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin mr-2" />
+            กำลังโหลด...
+          </div>
         ) : (
           <>
             <div className="space-y-4">
@@ -121,7 +151,7 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
                             <SelectContent>
                               {availableQueueTypes.map(qt => (
                                 <SelectItem key={qt.id} value={qt.id}>
-                                  {qt.name}
+                                  {qt.name} - {qt.purpose || 'ไม่มีคำอธิบาย'}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -157,6 +187,11 @@ const ServicePointQueueTypeSettings: React.FC<{ className?: string }> = ({ class
                                     <>
                                       <QueueTypeLabel queueType={queueType.code as any} />
                                       <span className="ml-2">{queueType.name}</span>
+                                      {queueType.purpose && (
+                                        <span className="ml-2 text-sm text-gray-500">
+                                          - {queueType.purpose}
+                                        </span>
+                                      )}
                                     </>
                                   )}
                                 </div>
