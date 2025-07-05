@@ -15,13 +15,14 @@ const logger = createLogger('AnalyticsData');
 export const useAnalyticsData = (completedQueues: Queue[], waitingQueues: Queue[]) => {
   // Always define useState hooks first
   const [initialized, setInitialized] = React.useState(false);
+  const [refreshTrigger, setRefreshTrigger] = React.useState(0);
   
   // Time frame state
   const { timeFrame, setTimeFrame } = useTimeFrameState();
   
-  // Chart data hooks
-  const waitTimeData = useWaitTimeData(timeFrame);
-  const throughputData = useThroughputData(timeFrame);
+  // Chart data hooks with refresh trigger
+  const waitTimeData = useWaitTimeData(timeFrame, refreshTrigger);
+  const throughputData = useThroughputData(timeFrame, refreshTrigger);
   
   // Calculate metrics
   const { 
@@ -31,13 +32,21 @@ export const useAnalyticsData = (completedQueues: Queue[], waitingQueues: Queue[
     elderlyCount
   } = useQueueMetrics(completedQueues);
   
-  // Algorithm recommendation
+  // Algorithm recommendation (but don't auto-change)
   const {
     currentAlgorithm,
     recommendedAlgorithm,
     shouldChangeAlgorithm,
     handleChangeAlgorithm
   } = useAlgorithmState(urgentCount, elderlyCount, waitingQueues.length);
+  
+  // Force refresh charts when queues change significantly
+  React.useEffect(() => {
+    const totalQueues = completedQueues.length + waitingQueues.length;
+    if (totalQueues > 0) {
+      setRefreshTrigger(prev => prev + 1);
+    }
+  }, [completedQueues.length, waitingQueues.length]);
   
   // useEffect should be the last hook
   React.useEffect(() => {
@@ -65,6 +74,7 @@ export const useAnalyticsData = (completedQueues: Queue[], waitingQueues: Queue[
     shouldChangeAlgorithm,
     urgentCount,
     elderlyCount,
-    handleChangeAlgorithm
+    handleChangeAlgorithm,
+    refreshTrigger
   };
 };

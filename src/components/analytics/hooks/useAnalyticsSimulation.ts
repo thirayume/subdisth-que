@@ -15,6 +15,7 @@ interface SimulationStats {
   completedQueues: number;
   avgWaitTime: number;
   isSimulationMode: boolean;
+  queueTypeDistribution: Record<string, number>;
 }
 
 export const useAnalyticsSimulation = () => {
@@ -25,7 +26,8 @@ export const useAnalyticsSimulation = () => {
     totalQueues: 0,
     completedQueues: 0,
     avgWaitTime: 0,
-    isSimulationMode: false
+    isSimulationMode: false,
+    queueTypeDistribution: {}
   });
 
   const { fetchQueues } = useQueues();
@@ -77,7 +79,7 @@ export const useAnalyticsSimulation = () => {
     }
   }, []);
 
-  // Realistic hospital timing patterns
+  // Enhanced realistic timing with better distribution
   const getRealisticTiming = (queueType: string, hour: number) => {
     const baseWaitTimes = {
       'GENERAL': { min: 10, max: 30 },
@@ -119,15 +121,28 @@ export const useAnalyticsSimulation = () => {
       // Step 1: Complete cleanup of all today's data
       const deletedCount = await completeCleanup();
       
-      // Step 2: Generate fresh realistic simulation data
+      // Step 2: Generate fresh realistic simulation data using ALL available queue types
       const today = new Date();
       const todayStr = today.toISOString().split('T')[0];
       const enabledQueueTypes = queueTypes.filter(qt => qt.enabled);
       const enabledServicePoints = servicePoints.filter(sp => sp.enabled);
 
-      // Create realistic queue timeline (8 AM to 5 PM)
+      if (enabledQueueTypes.length === 0) {
+        toast.error('ไม่พบประเภทคิวที่เปิดใช้งาน');
+        return;
+      }
+
+      logger.info(`Using ${enabledQueueTypes.length} queue types:`, enabledQueueTypes.map(qt => qt.code));
+
+      // Create realistic queue timeline (8 AM to 5 PM) with better distribution
       const queues = [];
       const totalQueues = 75 + Math.floor(Math.random() * 25); // 75-100 queues
+      const typeDistribution: Record<string, number> = {};
+
+      // Initialize distribution counter
+      enabledQueueTypes.forEach(qt => {
+        typeDistribution[qt.code] = 0;
+      });
 
       for (let i = 0; i < totalQueues; i++) {
         // Simulate arrival times throughout the day
@@ -136,15 +151,9 @@ export const useAnalyticsSimulation = () => {
         const createdTime = new Date(today);
         createdTime.setHours(hour, minute, 0, 0);
 
-        // Select queue type with realistic distribution
-        const queueTypeDistribution = [
-          ...Array(40).fill('GENERAL'),     // 40% general
-          ...Array(25).fill('FOLLOW_UP'),   // 25% pharmacy
-          ...Array(20).fill('ELDERLY'),     // 20% elderly
-          ...Array(15).fill('PRIORITY')     // 15% priority
-        ];
-        const selectedType = queueTypeDistribution[Math.floor(Math.random() * queueTypeDistribution.length)];
-        const queueType = enabledQueueTypes.find(qt => qt.code === selectedType) || enabledQueueTypes[0];
+        // Use ALL available queue types with even distribution
+        const queueType = enabledQueueTypes[i % enabledQueueTypes.length];
+        typeDistribution[queueType.code]++;
 
         // Assign service point based on queue type
         const servicePoint = enabledServicePoints[Math.floor(Math.random() * enabledServicePoints.length)];
@@ -176,7 +185,7 @@ export const useAnalyticsSimulation = () => {
         queues.push({
           patient_id: patient.id,
           type: queueType.code,
-          number: i + 1,
+          number: typeDistribution[queueType.code],
           status,
           queue_date: todayStr,
           service_point_id: servicePoint.id,
@@ -186,6 +195,8 @@ export const useAnalyticsSimulation = () => {
           notes: `🔬 ข้อมูลจำลองโรงพยาบาล - ${queueType.name} (รอ: ${timing.waitMinutes}น, ให้บริการ: ${timing.serviceMinutes}น)`
         });
       }
+
+      logger.info('Queue type distribution:', typeDistribution);
 
       // Insert queues in batches
       const batchSize = 20;
@@ -214,12 +225,13 @@ export const useAnalyticsSimulation = () => {
         totalQueues: queues.length,
         completedQueues: completedCount,
         avgWaitTime: Math.round(avgWait),
-        isSimulationMode: true
+        isSimulationMode: true,
+        queueTypeDistribution: typeDistribution
       });
 
       await fetchQueues();
-      logger.info(`Created ${queues.length} realistic simulation queues (replaced ${deletedCount} existing queues)`);
-      toast.success(`🔬 เตรียมข้อมูลจำลองเรียบร้อย (${queues.length} คิว) | ลบข้อมูลเดิม ${deletedCount} คิว`);
+      logger.info(`Created ${queues.length} realistic simulation queues with distribution:`, typeDistribution);
+      toast.success(`🔬 เตรียมข้อมูลจำลองเรียบร้อย (${queues.length} คิว) | ครอบคลุมทุกประเภท: ${Object.keys(typeDistribution).join(', ')}`);
 
     } catch (error) {
       logger.error('Error preparing simulation:', error);
@@ -312,7 +324,8 @@ export const useAnalyticsSimulation = () => {
         totalQueues: 0,
         completedQueues: 0,
         avgWaitTime: 0,
-        isSimulationMode: false
+        isSimulationMode: false,
+        queueTypeDistribution: {}
       });
 
       await fetchQueues();
