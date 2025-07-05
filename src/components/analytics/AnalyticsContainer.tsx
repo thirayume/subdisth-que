@@ -4,6 +4,7 @@ import { Queue } from '@/integrations/supabase/schema';
 import { supabase } from '@/integrations/supabase/client';
 import QueueAnalytics from '@/components/dashboard/QueueAnalytics';
 import QueueSummaryCards from '@/components/dashboard/QueueSummaryCards';
+import AnalyticsSimulation from './AnalyticsSimulation';
 import { toast } from 'sonner';
 
 interface AnalyticsContainerProps {
@@ -114,6 +115,8 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
 
   return (
     <>
+      <AnalyticsSimulation />
+      
       <QueueSummaryCards 
         waitingQueues={waitingQueues}
         activeQueues={activeQueues}
