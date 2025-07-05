@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for date formatting
  */
@@ -73,4 +74,25 @@ export const formatRelativeTime = (timestamp: string | Date | null | undefined):
     const days = Math.floor(diffInMinutes / 1440);
     return `${days} วันที่แล้ว`;
   }
+};
+
+// Get today's date in YYYY-MM-DD format
+export const getTodayDate = (): string => {
+  return new Date().toISOString().split('T')[0];
+};
+
+// Check if a date string is today
+export const isToday = (dateString: string): boolean => {
+  const today = getTodayDate();
+  const compareDate = dateString.split('T')[0]; // Handle both date and datetime strings
+  return compareDate === today;
+};
+
+// Check if a queue was completed today
+export const isCompletedToday = (completedAt: string | null, queueDate: string): boolean => {
+  if (completedAt) {
+    return isToday(completedAt);
+  }
+  // Fallback to queue_date if completed_at is not available
+  return isToday(queueDate);
 };
