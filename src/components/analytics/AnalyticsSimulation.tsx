@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Play, RotateCcw, Trash2, Clock, Users, Activity } from 'lucide-react';
+import { Play, RotateCcw, Trash2, Clock, Users, Activity, AlertTriangle, Database } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAnalyticsSimulation } from './hooks/useAnalyticsSimulation';
 
@@ -23,21 +23,26 @@ const AnalyticsSimulation: React.FC = () => {
         <CardTitle className="flex items-center gap-2">
           <Activity className="h-5 w-5" />
           การจำลองคิวโรงพยาบาลแบบสมจริง
+          {simulationStats.isSimulationMode && (
+            <Badge variant="outline" className="border-orange-300 bg-orange-100 text-orange-700">
+              🔬 Active
+            </Badge>
+          )}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
           จำลองสถานการณ์คิวในโรงพยาบาลจริง พร้อมเวลารอและเวลาให้บริการที่สมจริง
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Control Buttons */}
+        {/* Enhanced Control Buttons */}
         <div className="flex flex-wrap gap-3">
           <Button
             onClick={prepareSimulation}
             disabled={loading || isRunning}
             className="flex items-center gap-2"
           >
-            <Users className="h-4 w-4" />
-            เตรียมข้อมูล (Prepare)
+            <Database className="h-4 w-4" />
+            เตรียมข้อมูล (ล้างทั้งหมด + จำลองใหม่)
           </Button>
           <Button
             onClick={startTest}
@@ -55,7 +60,7 @@ const AnalyticsSimulation: React.FC = () => {
             className="flex items-center gap-2"
           >
             <Trash2 className="h-4 w-4" />
-            ล้างข้อมูล (Cleanup)
+            ล้างข้อมูลทั้งหมด (กลับสู่ข้อมูลจริง)
           </Button>
         </div>
 
@@ -64,7 +69,7 @@ const AnalyticsSimulation: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
               <div>
-                <p className="text-sm font-medium text-blue-900">คิวทั้งหมด</p>
+                <p className="text-sm font-medium text-blue-900">คิวจำลองทั้งหมด</p>
                 <p className="text-2xl font-bold text-blue-600">{simulationStats.totalQueues}</p>
               </div>
               <Users className="h-8 w-8 text-blue-500" />
@@ -91,24 +96,35 @@ const AnalyticsSimulation: React.FC = () => {
         {/* Status Badges */}
         <div className="flex flex-wrap gap-2">
           {simulationStats.prepared && (
-            <Badge variant="secondary">ข้อมูลพร้อมแล้ว</Badge>
+            <Badge variant="secondary">ข้อมูลจำลองพร้อมแล้ว</Badge>
           )}
           {isRunning && (
             <Badge variant="default" className="animate-pulse">กำลังจำลอง</Badge>
+          )}
+          {simulationStats.isSimulationMode && (
+            <Badge variant="outline" className="border-orange-300 text-orange-700">
+              🔬 โหมดจำลอง
+            </Badge>
           )}
           {simulationStats.completedQueues > 0 && (
             <Badge variant="outline">มีข้อมูลทดสอบ</Badge>
           )}
         </div>
 
-        {/* Instructions */}
+        {/* Enhanced Instructions */}
         <div className="p-4 bg-gray-50 rounded-lg">
-          <h4 className="font-medium mb-2">วิธีการใช้งาน:</h4>
+          <h4 className="font-medium mb-2 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
+            วิธีการใช้งาน (ปรับปรุงใหม่):
+          </h4>
           <ol className="text-sm space-y-1 text-gray-600">
-            <li>1. <strong>เตรียมข้อมูล</strong>: สร้างคิวจำลองแบบสมจริง (50-100 คิว)</li>
-            <li>2. <strong>เริ่มทดสอบ</strong>: จำลองการทำงานของคิวแบบเรียลไทม์</li>
-            <li>3. <strong>ล้างข้อมูล</strong>: ลบข้อมูลทดสอบทั้งหมด</li>
+            <li>1. <strong>เตรียมข้อมูล</strong>: ล้างข้อมูลคิววันนี้ทั้งหมด + สร้างข้อมูลจำลองสมจริง (75-100 คิว)</li>
+            <li>2. <strong>เริ่มทดสอบ</strong>: จำลองการทำงานของคิวแบบเรียลไทม์ (30 วินาที)</li>
+            <li>3. <strong>ล้างข้อมูลทั้งหมด</strong>: ลบข้อมูลจำลองและกลับสู่โหมดข้อมูลจริง</li>
           </ol>
+          <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
+            <strong>หมายเหตุ:</strong> การเตรียมข้อมูลจะลบคิววันนี้ทั้งหมด (ทั้งจำลองและจริง) เพื่อให้ได้ข้อมูลทดสอบที่แม่นยำ
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +14,7 @@ interface SimulationStats {
   totalQueues: number;
   completedQueues: number;
   avgWaitTime: number;
+  isSimulationMode: boolean;
 }
 
 export const useAnalyticsSimulation = () => {
@@ -24,13 +24,58 @@ export const useAnalyticsSimulation = () => {
     prepared: false,
     totalQueues: 0,
     completedQueues: 0,
-    avgWaitTime: 0
+    avgWaitTime: 0,
+    isSimulationMode: false
   });
 
   const { fetchQueues } = useQueues();
   const { patients } = usePatients();
   const { queueTypes } = useQueueTypes();
   const { servicePoints } = useServicePoints();
+
+  // Enhanced cleanup - clears ALL queues from today
+  const completeCleanup = useCallback(async () => {
+    try {
+      logger.info('Starting complete cleanup of all today\'s queues...');
+      toast.info('กำลังล้างข้อมูลคิววันนี้ทั้งหมด...');
+
+      const today = new Date().toISOString().split('T')[0];
+
+      // Get count of queues to be deleted
+      const { data: queueCount, error: countError } = await supabase
+        .from('queues')
+        .select('id', { count: 'exact' })
+        .eq('queue_date', today);
+
+      if (countError) {
+        throw countError;
+      }
+
+      if (!queueCount || queueCount.length === 0) {
+        logger.info('No queues found for today');
+        toast.info('ไม่พบข้อมูลคิววันนี้ที่จะลบ');
+        return;
+      }
+
+      // Delete all queues from today
+      const { error: deleteError } = await supabase
+        .from('queues')
+        .delete()
+        .eq('queue_date', today);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      logger.info(`Successfully deleted ${queueCount.length} queues from today`);
+      toast.success(`ล้างข้อมูลคิววันนี้เรียบร้อยแล้ว (${queueCount.length} คิว)`);
+
+      return queueCount.length;
+    } catch (error) {
+      logger.error('Error in complete cleanup:', error);
+      throw error;
+    }
+  }, []);
 
   // Realistic hospital timing patterns
   const getRealisticTiming = (queueType: string, hour: number) => {
@@ -48,7 +93,6 @@ export const useAnalyticsSimulation = () => {
       'FOLLOW_UP': { min: 3, max: 8 } // Pharmacy faster
     };
 
-    // Peak hours adjustment (9-11 AM, 2-4 PM)
     const isPeakHour = (hour >= 9 && hour <= 11) || (hour >= 14 && hour <= 16);
     const peakMultiplier = isPeakHour ? 1.5 : 1;
 
@@ -64,18 +108,18 @@ export const useAnalyticsSimulation = () => {
   const prepareSimulation = useCallback(async () => {
     setLoading(true);
     try {
-      logger.info('Preparing realistic hospital simulation...');
-      toast.info('กำลังเตรียมข้อมูลจำลองโรงพยาบาล...');
+      logger.info('Preparing comprehensive simulation with complete cleanup...');
+      toast.info('กำลังเตรียมข้อมูลจำลองแบบครอบคลุม...');
 
       if (!patients?.length || !queueTypes?.length || !servicePoints?.length) {
         toast.error('ต้องมีข้อมูลผู้ป่วย ประเภทคิว และจุดบริการก่อน');
         return;
       }
 
-      // Clear existing simulation data
-      await cleanup();
-
-      // Generate realistic queue distribution
+      // Step 1: Complete cleanup of all today's data
+      const deletedCount = await completeCleanup();
+      
+      // Step 2: Generate fresh realistic simulation data
       const today = new Date();
       const todayStr = today.toISOString().split('T')[0];
       const enabledQueueTypes = queueTypes.filter(qt => qt.enabled);
@@ -139,7 +183,7 @@ export const useAnalyticsSimulation = () => {
           created_at: createdTime.toISOString(),
           called_at,
           completed_at,
-          notes: `จำลองคิวโรงพยาบาล - ${queueType.name} (รอ: ${timing.waitMinutes}น, ให้บริการ: ${timing.serviceMinutes}น)`
+          notes: `🔬 ข้อมูลจำลองโรงพยาบาล - ${queueType.name} (รอ: ${timing.waitMinutes}น, ให้บริการ: ${timing.serviceMinutes}น)`
         });
       }
 
@@ -169,12 +213,13 @@ export const useAnalyticsSimulation = () => {
         prepared: true,
         totalQueues: queues.length,
         completedQueues: completedCount,
-        avgWaitTime: Math.round(avgWait)
+        avgWaitTime: Math.round(avgWait),
+        isSimulationMode: true
       });
 
       await fetchQueues();
-      logger.info(`Created ${queues.length} realistic simulation queues`);
-      toast.success(`เตรียมข้อมูลจำลองเรียบร้อย (${queues.length} คิว)`);
+      logger.info(`Created ${queues.length} realistic simulation queues (replaced ${deletedCount} existing queues)`);
+      toast.success(`🔬 เตรียมข้อมูลจำลองเรียบร้อย (${queues.length} คิว) | ลบข้อมูลเดิม ${deletedCount} คิว`);
 
     } catch (error) {
       logger.error('Error preparing simulation:', error);
@@ -182,7 +227,7 @@ export const useAnalyticsSimulation = () => {
     } finally {
       setLoading(false);
     }
-  }, [patients, queueTypes, servicePoints, fetchQueues]);
+  }, [patients, queueTypes, servicePoints, fetchQueues, completeCleanup]);
 
   const startTest = useCallback(async () => {
     if (!simulationStats.prepared) {
@@ -201,7 +246,7 @@ export const useAnalyticsSimulation = () => {
           .from('queues')
           .select('*')
           .eq('status', 'WAITING')
-          .like('notes', '%จำลองคิวโรงพยาบาล%')
+          .like('notes', '%ข้อมูลจำลองโรงพยาบาล%')
           .limit(2);
 
         if (waitingQueues && waitingQueues.length > 0) {
@@ -223,7 +268,7 @@ export const useAnalyticsSimulation = () => {
           .from('queues')
           .select('*')
           .eq('status', 'ACTIVE')
-          .like('notes', '%จำลองคิวโรงพยาบาล%')
+          .like('notes', '%ข้อมูลจำลองโรงพยาบาล%')
           .limit(1);
 
         if (activeQueues && activeQueues.length > 0) {
@@ -256,36 +301,31 @@ export const useAnalyticsSimulation = () => {
   const cleanup = useCallback(async () => {
     setLoading(true);
     try {
-      logger.info('Cleaning up simulation data...');
-      toast.info('กำลังล้างข้อมูลจำลอง...');
+      logger.info('Starting comprehensive cleanup...');
+      toast.info('กำลังล้างข้อมูลทั้งหมด...');
 
-      const { error } = await supabase
-        .from('queues')
-        .delete()
-        .like('notes', '%จำลองคิวโรงพยาบาล%');
-
-      if (error) {
-        throw error;
-      }
+      // Use complete cleanup function
+      await completeCleanup();
 
       setSimulationStats({
         prepared: false,
         totalQueues: 0,
         completedQueues: 0,
-        avgWaitTime: 0
+        avgWaitTime: 0,
+        isSimulationMode: false
       });
 
       await fetchQueues();
-      logger.info('Simulation data cleaned up');
-      toast.success('ล้างข้อมูลจำลองเรียบร้อยแล้ว');
+      logger.info('Comprehensive cleanup completed');
+      toast.success('ล้างข้อมูลทั้งหมดเรียบร้อยแล้ว - กลับสู่โหมดข้อมูลจริง');
 
     } catch (error) {
-      logger.error('Error cleaning up simulation:', error);
+      logger.error('Error in comprehensive cleanup:', error);
       toast.error('เกิดข้อผิดพลาดในการล้างข้อมูล');
     } finally {
       setLoading(false);
     }
-  }, [fetchQueues]);
+  }, [completeCleanup, fetchQueues]);
 
   return {
     isRunning,

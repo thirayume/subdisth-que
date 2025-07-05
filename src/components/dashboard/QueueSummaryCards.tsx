@@ -10,6 +10,7 @@ interface QueueSummaryCardsProps {
   queues: Queue[];
   avgWaitTime?: number;
   avgServiceTime?: number;
+  isSimulationMode?: boolean;
 }
 
 const QueueSummaryCards: React.FC<QueueSummaryCardsProps> = ({ 
@@ -18,7 +19,8 @@ const QueueSummaryCards: React.FC<QueueSummaryCardsProps> = ({
   completedQueues, 
   queues,
   avgWaitTime,
-  avgServiceTime
+  avgServiceTime,
+  isSimulationMode = false
 }) => {
   // Calculate predicted wait time based on number of waiting queues and average service time
   const predictedWaitTime = avgServiceTime 
@@ -43,6 +45,7 @@ const QueueSummaryCards: React.FC<QueueSummaryCardsProps> = ({
           elderly: waitingQueues.filter(q => q.type === 'ELDERLY').length,
           special: waitingQueues.filter(q => q.type === 'FOLLOW_UP').length,
         }}
+        isSimulationMode={isSimulationMode}
       />
     </div>
   );
