@@ -65,40 +65,47 @@ const QueueAnalytics: React.FC<QueueAnalyticsProps> = ({
           />
         )}
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>เวลารอเฉลี่ย</CardTitle>
-              <TabSelector timeFrame={timeFrame} setTimeFrame={setTimeFrame} />
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <Card className="w-full">
+            <CardHeader className="pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <CardTitle className="text-lg">เวลารอเฉลี่ย</CardTitle>
+                <TabSelector timeFrame={timeFrame} setTimeFrame={setTimeFrame} />
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               <WaitTimeChart data={waitTimeData} timeFrame={timeFrame} />
             </CardContent>
           </Card>
           
-          <Card>
-            <CardHeader>
-              <CardTitle>ปริมาณผู้มารับบริการ</CardTitle>
-              <TabSelector timeFrame={timeFrame} setTimeFrame={setTimeFrame} />
+          <Card className="w-full">
+            <CardHeader className="pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <CardTitle className="text-lg">ปริมาณผู้มารับบริการ</CardTitle>
+                <TabSelector timeFrame={timeFrame} setTimeFrame={setTimeFrame} />
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               <ThroughputChart data={throughputData} timeFrame={timeFrame} />
             </CardContent>
           </Card>
         </div>
         
-        <Tabs defaultValue="composition" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>ลักษณะของคิว</CardTitle>
-            </CardHeader>
-            <CardContent>
+        <Card className="w-full">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg">ลักษณะของคิว</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              การกระจายตัวของประเภทคิวที่รออยู่ในปัจจุบัน
+            </p>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <Tabs defaultValue="composition" className="w-full">
               <TabsContent value="composition" className="mt-0">
                 <QueueCompositionChart waitingQueues={waitingQueues} />
               </TabsContent>
-            </CardContent>
-          </Card>
-        </Tabs>
+            </Tabs>
+          </CardContent>
+        </Card>
       </div>
     </DirectionProvider>
   );

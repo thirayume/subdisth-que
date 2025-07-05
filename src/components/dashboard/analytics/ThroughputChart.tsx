@@ -1,6 +1,6 @@
 
 import * as React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { 
   ChartContainer, 
   ChartTooltip, 
@@ -12,26 +12,56 @@ interface ThroughputChartProps {
   timeFrame: 'day' | 'week' | 'month';
 }
 
+const chartConfig = {
+  count: {
+    label: "จำนวนผู้รับบริการ",
+    color: "hsl(var(--chart-2))",
+  },
+}
+
 const ThroughputChart: React.FC<ThroughputChartProps> = ({ data, timeFrame }) => {
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+        ไม่มีข้อมูลผู้รับบริการในช่วงเวลานี้
+      </div>
+    );
+  }
+
   return (
-    <div className="h-80">
-      <ChartContainer config={{}}>
+    <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
         >
-          <CartesianGrid strokeDasharray="3 3" />
+          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
           <XAxis 
             dataKey="time" 
-            label={{ value: timeFrame === 'day' ? 'เวลา' : 'วันที่', position: 'insideBottom', offset: -5 }} 
+            tick={{ fontSize: 12 }}
+            tickLine={{ stroke: 'hsl(var(--muted-foreground))' }}
           />
-          <YAxis label={{ value: 'จำนวนผู้รับบริการ', angle: -90, position: 'insideLeft' }} />
-          <ChartTooltip content={<ChartTooltipContent labelFormatter={(value) => `เวลา: ${value}`} />} />
-          <Legend />
-          <Bar dataKey="count" name="จำนวนผู้รับบริการ" fill="#10b981" barSize={30} />
+          <YAxis 
+            tick={{ fontSize: 12 }}
+            tickLine={{ stroke: 'hsl(var(--muted-foreground))' }}
+          />
+          <ChartTooltip 
+            content={<ChartTooltipContent 
+              labelFormatter={(value) => `เวลา: ${value}`}
+              formatter={(value, name) => [
+                `${value} คน`,
+                chartConfig.count.label
+              ]}
+            />} 
+          />
+          <Bar 
+            dataKey="count" 
+            fill="var(--color-count)"
+            radius={[4, 4, 0, 0]}
+          />
         </BarChart>
-      </ChartContainer>
-    </div>
+      </ResponsiveContainer>
+    </ChartContainer>
   );
 };
 

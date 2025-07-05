@@ -1,6 +1,6 @@
 
 import * as React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { 
   ChartContainer, 
   ChartTooltip, 
@@ -12,26 +12,59 @@ interface WaitTimeChartProps {
   timeFrame: 'day' | 'week' | 'month';
 }
 
+const chartConfig = {
+  waitTime: {
+    label: "เวลารอ (นาที)",
+    color: "hsl(var(--chart-1))",
+  },
+}
+
 const WaitTimeChart: React.FC<WaitTimeChartProps> = ({ data, timeFrame }) => {
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+        ไม่มีข้อมูลเวลารอในช่วงเวลานี้
+      </div>
+    );
+  }
+
   return (
-    <div className="h-80">
-      <ChartContainer config={{}}>
+    <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={data}
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
         >
-          <CartesianGrid strokeDasharray="3 3" />
+          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
           <XAxis 
             dataKey="time" 
-            label={{ value: timeFrame === 'day' ? 'เวลา' : 'วันที่', position: 'insideBottom', offset: -5 }} 
+            tick={{ fontSize: 12 }}
+            tickLine={{ stroke: 'hsl(var(--muted-foreground))' }}
           />
-          <YAxis label={{ value: 'เวลารอ (นาที)', angle: -90, position: 'insideLeft' }} />
-          <ChartTooltip content={<ChartTooltipContent labelFormatter={(value) => `เวลา: ${value}`} />} />
-          <Legend />
-          <Line type="monotone" dataKey="waitTime" name="เวลารอ (นาที)" stroke="#3b82f6" strokeWidth={2} />
+          <YAxis 
+            tick={{ fontSize: 12 }}
+            tickLine={{ stroke: 'hsl(var(--muted-foreground))' }}
+          />
+          <ChartTooltip 
+            content={<ChartTooltipContent 
+              labelFormatter={(value) => `เวลา: ${value}`}
+              formatter={(value, name) => [
+                `${value} นาที`,
+                chartConfig.waitTime.label
+              ]}
+            />} 
+          />
+          <Line 
+            type="monotone" 
+            dataKey="waitTime" 
+            stroke="var(--color-waitTime)"
+            strokeWidth={2}
+            dot={{ fill: "var(--color-waitTime)", strokeWidth: 2, r: 4 }}
+            activeDot={{ r: 6, strokeWidth: 0 }}
+          />
         </LineChart>
-      </ChartContainer>
-    </div>
+      </ResponsiveContainer>
+    </ChartContainer>
   );
 };
 

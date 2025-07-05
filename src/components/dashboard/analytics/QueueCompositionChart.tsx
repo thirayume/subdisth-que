@@ -1,6 +1,6 @@
 
 import * as React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { Queue } from '@/integrations/supabase/schema';
 import { 
   ChartContainer, 
@@ -10,6 +10,13 @@ import {
 
 interface QueueCompositionChartProps {
   waitingQueues: Queue[];
+}
+
+const chartConfig = {
+  count: {
+    label: "จำนวนคิว",
+    color: "hsl(var(--chart-3))",
+  },
 }
 
 const QueueCompositionChart: React.FC<QueueCompositionChartProps> = ({ waitingQueues }) => {
@@ -26,23 +33,55 @@ const QueueCompositionChart: React.FC<QueueCompositionChartProps> = ({ waitingQu
     { type: 'ยาพิเศษ', count: followUpCount },
   ];
 
+  // Check if all counts are zero
+  const hasData = data.some(item => item.count > 0);
+
+  if (!hasData) {
+    return (
+      <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+        ไม่มีคิวรอในขณะนี้
+      </div>
+    );
+  }
+
   return (
-    <div className="h-80">
-      <ChartContainer config={{}}>
+    <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
-          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
           layout="vertical"
+          margin={{ top: 20, right: 30, left: 60, bottom: 20 }}
         >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis type="number" />
-          <YAxis dataKey="type" type="category" />
-          <ChartTooltip content={<ChartTooltipContent labelFormatter={(value) => `ประเภท: ${value}`} />} />
-          <Legend />
-          <Bar dataKey="count" name="จำนวนคิว" fill="#8884d8" />
+          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+          <XAxis 
+            type="number" 
+            tick={{ fontSize: 12 }}
+            tickLine={{ stroke: 'hsl(var(--muted-foreground))' }}
+          />
+          <YAxis 
+            dataKey="type" 
+            type="category" 
+            tick={{ fontSize: 12 }}
+            tickLine={{ stroke: 'hsl(var(--muted-foreground))' }}
+            width={50}
+          />
+          <ChartTooltip 
+            content={<ChartTooltipContent 
+              labelFormatter={(value) => `ประเภท: ${value}`}
+              formatter={(value, name) => [
+                `${value} คิว`,
+                chartConfig.count.label
+              ]}
+            />} 
+          />
+          <Bar 
+            dataKey="count" 
+            fill="var(--color-count)"
+            radius={[0, 4, 4, 0]}
+          />
         </BarChart>
-      </ChartContainer>
-    </div>
+      </ResponsiveContainer>
+    </ChartContainer>
   );
 };
 
