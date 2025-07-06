@@ -130,6 +130,7 @@ const AnalyticsSimulation: React.FC = () => {
                 currentAlgorithm={simulationStats.currentAlgorithm}
                 currentMetrics={currentMetrics}
                 waitingQueues={simulationStats.totalQueues - simulationStats.completedQueues}
+                phaseMetrics={simulationStats.algorithmMetrics}
                 onContinue={() => continueToPhase2()}
                 onChangeAndContinue={(newAlgorithm) => continueToPhase2(newAlgorithm)}
               />
@@ -144,6 +145,7 @@ const AnalyticsSimulation: React.FC = () => {
                 currentAlgorithm={simulationStats.currentAlgorithm}
                 currentMetrics={currentMetrics}
                 waitingQueues={simulationStats.totalQueues - simulationStats.completedQueues}
+                phaseMetrics={simulationStats.algorithmMetrics}
                 onContinue={() => completeSimulation()}
                 onChangeAndContinue={(newAlgorithm) => completeSimulation(newAlgorithm)}
               />
@@ -182,23 +184,78 @@ const AnalyticsSimulation: React.FC = () => {
           </Button>
         </div>
 
-        {/* Algorithm Comparison Results */}
+        {/* Enhanced Algorithm Comparison Results */}
         {showResults && (
           <>
             <div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-4">
                 <BarChart3 className="h-4 w-4 text-green-600" />
-                <h4 className="font-medium text-green-800">ผลเปรียบเทียบอัลกอริธึม</h4>
+                <h4 className="font-medium text-green-800">ผลเปรียบเทียบอัลกอริธึมแบบครบถ้วน</h4>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {simulationStats.algorithmMetrics.map((metric, index) => (
-                  <div key={index} className="bg-white p-3 rounded border">
-                    <div className="font-medium text-gray-800">{metric.algorithm}</div>
-                    <div className="text-sm text-gray-600">เวลารอเฉลี่ย: {metric.avgWaitTime} นาที</div>
-                    <div className="text-sm text-gray-600">ปริมาณงาน: {metric.throughput} คิว</div>
-                    <div className="text-xs text-gray-500">เฟส {index + 1}</div>
-                  </div>
-                ))}
+              
+              {/* Summary Table */}
+              <div className="overflow-x-auto mb-4">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-green-200">
+                      <th className="text-left p-2 text-green-800">เฟส</th>
+                      <th className="text-left p-2 text-green-800">อัลกอริธึม</th>
+                      <th className="text-center p-2 text-green-800">เวลารอเฉลี่ย</th>
+                      <th className="text-center p-2 text-green-800">คิวที่เสร็จ</th>
+                      <th className="text-center p-2 text-green-800">ประสิทธิภาพ</th>
+                      <th className="text-center p-2 text-green-800">คะแนนรวม</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {simulationStats.algorithmMetrics.map((metric, index) => {
+                      const score = Math.round(((100 - metric.avgWaitTime) * 0.4 + metric.throughput * 0.3 + (metric.throughput / Math.max(metric.avgWaitTime, 1)) * 10 * 0.3) * 100) / 100;
+                      const isVest = score === Math.max(...simulationStats.algorithmMetrics.map(m => 
+                        (100 - m.avgWaitTime) * 0.4 + m.throughput * 0.3 + (m.throughput / Math.max(m.avgWaitTime, 1)) * 10 * 0.3
+                      ));
+                      
+                      return (
+                        <tr key={index} className={`border-b border-green-100 ${isVest ? 'bg-green-100' : 'bg-white'}`}>
+                          <td className="p-2 font-medium">{metric.phase}</td>
+                          <td className="p-2">
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              metric.algorithm === 'FIFO' ? 'bg-blue-100 text-blue-700' :
+                              metric.algorithm === 'PRIORITY' ? 'bg-red-100 text-red-700' :
+                              'bg-purple-100 text-purple-700'
+                            }`}>
+                              {metric.algorithm}
+                            </span>
+                            {isVest && <span className="ml-2 text-green-600 text-xs">👑 ดีที่สุด</span>}
+                          </td>
+                          <td className="p-2 text-center">{metric.avgWaitTime} นาที</td>
+                          <td className="p-2 text-center">{metric.completedQueues} คิว</td>
+                          <td className="p-2 text-center">{metric.throughput} คิว/รอบ</td>
+                          <td className="p-2 text-center font-bold text-green-700">{score}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Performance Insights */}
+              <div className="bg-white p-3 rounded border border-green-200">
+                <h5 className="font-medium text-gray-800 mb-2">สรุปผลการทดสอบ:</h5>
+                <div className="text-sm text-gray-600 space-y-1">
+                  {simulationStats.algorithmMetrics.length > 0 && (
+                    <>
+                      <p>• เปรียบเทียบ {simulationStats.algorithmMetrics.length} อัลกอริธึมใน {simulationStats.algorithmMetrics.length} เฟส</p>
+                      <p>• อัลกอริธึมที่มีประสิทธิภาพดีที่สุด: <strong>
+                        {simulationStats.algorithmMetrics.reduce((best, current) => {
+                          const currentScore = (100 - current.avgWaitTime) * 0.4 + current.throughput * 0.3;
+                          const bestScore = (100 - best.avgWaitTime) * 0.4 + best.throughput * 0.3;
+                          return currentScore > bestScore ? current : best;
+                        }).algorithm}
+                      </strong></p>
+                      <p>• เวลารอเฉลี่ยโดยรวม: {Math.round(simulationStats.algorithmMetrics.reduce((sum, m) => sum + m.avgWaitTime, 0) / simulationStats.algorithmMetrics.length)} นาที</p>
+                      <p>• ประสิทธิภาพรวม: {simulationStats.algorithmMetrics.reduce((sum, m) => sum + m.throughput, 0)} คิว</p>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
             
