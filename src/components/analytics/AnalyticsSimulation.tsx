@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Play, RotateCcw, Trash2, Clock, Users, Activity, AlertTriangle, Database, BarChart3, Pause, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAnalyticsSimulation } from './hooks/useAnalyticsSimulation';
+import { useAnalyticsSimulationV2 } from './hooks/useAnalyticsSimulationV2';
 import DecisionPoint from './DecisionPoint';
 
 const AnalyticsSimulation: React.FC = () => {
@@ -19,9 +19,8 @@ const AnalyticsSimulation: React.FC = () => {
     completeSimulation,
     cleanup,
     loading,
-    captureCurrentMetrics,
     downloadSimulationLog
-  } = useAnalyticsSimulation();
+  } = useAnalyticsSimulationV2();
 
   const [currentMetrics, setCurrentMetrics] = React.useState({
     avgWaitTime: 0,
@@ -31,16 +30,14 @@ const AnalyticsSimulation: React.FC = () => {
 
   // Capture metrics when we reach decision points
   React.useEffect(() => {
-    if ((simulationStats.phase === 'PAUSE_30' || simulationStats.phase === 'PAUSE_70') && captureCurrentMetrics) {
-      captureCurrentMetrics(simulationStats.currentAlgorithm).then(metrics => {
-        setCurrentMetrics({
-          avgWaitTime: metrics.avgWaitTime,
-          throughput: metrics.throughput,
-          completedQueues: metrics.completedQueues
-        });
+    if (simulationStats.phase === 'PAUSE_30' || simulationStats.phase === 'PAUSE_70') {
+      setCurrentMetrics({
+        avgWaitTime: simulationStats.avgWaitTime,
+        throughput: simulationStats.completedQueues,
+        completedQueues: simulationStats.completedQueues
       });
     }
-  }, [simulationStats.phase, simulationStats.currentAlgorithm, captureCurrentMetrics]);
+  }, [simulationStats.phase, simulationStats.avgWaitTime, simulationStats.completedQueues]);
 
   const getPhaseDescription = () => {
     switch (simulationStats.phase) {
