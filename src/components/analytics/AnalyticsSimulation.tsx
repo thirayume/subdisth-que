@@ -8,12 +8,14 @@ import { Play, RotateCcw, Trash2, Clock, Users, Activity, AlertTriangle, Databas
 import { toast } from 'sonner';
 import { useAnalyticsSimulationV2 } from './hooks/useAnalyticsSimulationV2';
 import { useSimulationDataFixer } from '@/hooks/analytics/useSimulationDataFixer';
-import DecisionPoint from './DecisionPoint';
+import AlgorithmSelector from './AlgorithmSelector';
 
 const AnalyticsSimulation: React.FC = () => {
   const {
     isRunning,
     simulationStats,
+    selectedAlgorithm,
+    setSelectedAlgorithm,
     prepareSimulation,
     startProgressiveTest,
     continueToPhase2,
@@ -100,14 +102,28 @@ const AnalyticsSimulation: React.FC = () => {
 
         {/* Enhanced Control Buttons */}
         <div className="flex flex-wrap gap-3">
-          <Button
-            onClick={prepareSimulation}
-            disabled={loading || isRunning}
-            className="flex items-center gap-2"
-          >
-            <Database className="h-4 w-4" />
-            เตรียมข้อมูล (ล้างทั้งหมด + จำลองใหม่)
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Button
+              onClick={prepareSimulation}
+              disabled={loading || isRunning}
+              className="flex items-center gap-2"
+            >
+              <Database className="h-4 w-4" />
+              เตรียมข้อมูล (สุ่ม 75-150 คิว)
+            </Button>
+            
+            {/* Algorithm Selection Interface */}
+            {simulationStats.phase === 'PREPARED' && (
+              <AlgorithmSelector
+                currentAlgorithm={simulationStats.currentAlgorithm}
+                selectedAlgorithm={selectedAlgorithm}
+                onAlgorithmChange={setSelectedAlgorithm}
+                onStartSimulation={startProgressiveTest}
+                disabled={loading}
+                isRunning={isRunning}
+              />
+            )}
+          </div>
           
           <Button
             onClick={startProgressiveTest}
@@ -220,7 +236,7 @@ const AnalyticsSimulation: React.FC = () => {
                 <div className="text-sm text-gray-600 space-y-1">
                   {simulationStats.algorithmMetrics.length > 0 && (
                     <>
-                      <p>• เปรียบเทียบ {simulationStats.algorithmMetrics.length} อัลกอริธึมใน {simulationStats.algorithmMetrics.length} เฟส</p>
+                       <p>• เปรียบเทียบ {simulationStats.algorithmMetrics.length} อัลกอริธึมใน {simulationStats.algorithmMetrics.length} เฟส</p>
                       <p>• อัลกอริธึมที่มีประสิทธิภาพดีที่สุด: <strong>
                         {simulationStats.algorithmMetrics.reduce((best, current) => {
                           const currentScore = (100 - current.avgWaitTime) * 0.4 + current.throughput * 0.3;
@@ -229,7 +245,7 @@ const AnalyticsSimulation: React.FC = () => {
                         }).algorithm}
                       </strong></p>
                       <p>• เวลารอเฉลี่ยโดยรวม: {Math.round(simulationStats.algorithmMetrics.reduce((sum, m) => sum + m.avgWaitTime, 0) / simulationStats.algorithmMetrics.length)} นาที</p>
-                      <p>• ประสิทธิภาพรวม: {simulationStats.algorithmMetrics.reduce((sum, m) => sum + m.throughput, 0)} คิว</p>
+                      <p>• คิวที่เสร็จสิ้นรวม: {simulationStats.completedQueues} จาก {simulationStats.totalQueues} คิว</p>
                     </>
                   )}
                 </div>
@@ -320,7 +336,7 @@ const AnalyticsSimulation: React.FC = () => {
             วิธีการใช้งานแบบใหม่ (Progressive Algorithm Testing):
           </h4>
           <ol className="text-sm space-y-1 text-gray-600">
-            <li>1. <strong>เตรียมข้อมูล</strong>: ล้างข้อมูลเดิมและสร้างข้อมูลจำลองใหม่ (75-100 คิว)</li>
+            <li>1. <strong>เตรียมข้อมูล</strong>: ล้างข้อมูลเดิมและสร้างข้อมูลจำลองใหม่ (สุ่ม 75-150 คิว)</li>
             <li>2. <strong>เริ่มทดสอบ</strong>: จำลองแบบก้าวหน้า จะหยุดที่ 30% เพื่อให้เลือกอัลกอริธึม</li>
             <li>3. <strong>จุดตัดสินใจ 30%</strong>: เลือกเปลี่ยนอัลกอริธึมหรือดำเนินต่อด้วยอัลกอริธึมเดิม</li>
             <li>4. <strong>จุดตัดสินใจ 70%</strong>: โอกาสสุดท้ายในการเปลี่ยนอัลกอริธึมก่อนจบ</li>

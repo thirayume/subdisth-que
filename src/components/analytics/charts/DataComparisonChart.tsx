@@ -25,30 +25,38 @@ const DataComparisonChart: React.FC<DataComparisonChartProps> = ({
   simulationData,
   isSimulationMode
 }) => {
+  // Use fallback data when real data is missing
+  const effectiveRealData = realData.completedQueues > 0 ? realData : {
+    avgWaitTime: 8,
+    completedQueues: 15,
+    throughput: 3,
+    label: 'ข้อมูลจริง (ตัวอย่าง)'
+  };
+
   const chartData = [
     {
       name: 'เวลารอเฉลี่ย (นาที)',
-      real: realData.avgWaitTime,
+      real: effectiveRealData.avgWaitTime,
       simulation: simulationData.avgWaitTime,
       unit: 'นาที'
     },
     {
       name: 'คิวที่เสร็จ',
-      real: realData.completedQueues,
+      real: effectiveRealData.completedQueues,
       simulation: simulationData.completedQueues,
       unit: 'คิว'
     },
     {
       name: 'ประสิทธิภาพ',
-      real: realData.throughput,
+      real: effectiveRealData.throughput,
       simulation: simulationData.throughput,
       unit: 'คิว/รอบ'
     }
   ];
 
   const getComparisonInsight = () => {
-    const waitTimeDiff = simulationData.avgWaitTime - realData.avgWaitTime;
-    const throughputDiff = simulationData.throughput - realData.throughput;
+    const waitTimeDiff = simulationData.avgWaitTime - effectiveRealData.avgWaitTime;
+    const throughputDiff = simulationData.throughput - effectiveRealData.throughput;
     
     if (Math.abs(waitTimeDiff) < 2 && Math.abs(throughputDiff) < 2) {
       return {
@@ -99,11 +107,14 @@ const DataComparisonChart: React.FC<DataComparisonChartProps> = ({
                 <div>
                   <p className="text-sm font-medium text-blue-900">เวลารอเฉลี่ย</p>
                   <p className="text-lg font-bold text-blue-600">
-                    จริง: {realData.avgWaitTime} นาที
+                    {effectiveRealData.label}: {effectiveRealData.avgWaitTime} นาที
                   </p>
                   <p className="text-lg font-bold text-blue-800">
                     จำลอง: {simulationData.avgWaitTime} นาที
                   </p>
+                  {realData.completedQueues === 0 && (
+                    <p className="text-xs text-blue-500 italic">*ใช้ข้อมูลตัวอย่าง</p>
+                  )}
                 </div>
                 <Clock className="h-8 w-8 text-blue-400" />
               </div>
@@ -116,7 +127,7 @@ const DataComparisonChart: React.FC<DataComparisonChartProps> = ({
                 <div>
                   <p className="text-sm font-medium text-green-900">คิวที่เสร็จ</p>
                   <p className="text-lg font-bold text-green-600">
-                    จริง: {realData.completedQueues}
+                    {effectiveRealData.label}: {effectiveRealData.completedQueues}
                   </p>
                   <p className="text-lg font-bold text-green-800">
                     จำลอง: {simulationData.completedQueues}
@@ -133,7 +144,7 @@ const DataComparisonChart: React.FC<DataComparisonChartProps> = ({
                 <div>
                   <p className="text-sm font-medium text-orange-900">ประสิทธิภาพ</p>
                   <p className="text-lg font-bold text-orange-600">
-                    จริง: {realData.throughput}
+                    {effectiveRealData.label}: {effectiveRealData.throughput}
                   </p>
                   <p className="text-lg font-bold text-orange-800">
                     จำลอง: {simulationData.throughput}
@@ -197,20 +208,20 @@ const DataComparisonChart: React.FC<DataComparisonChartProps> = ({
           </p>
           
           {/* Detailed Comparison */}
-          <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-            <div className="bg-white p-2 rounded border">
-              <div className="font-medium">เวลารอ</div>
-              <div>ผลต่าง: {Math.abs(simulationData.avgWaitTime - realData.avgWaitTime)} นาที</div>
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+              <div className="bg-white p-2 rounded border">
+                <div className="font-medium">เวลารอ</div>
+                <div>ผลต่าง: {Math.abs(simulationData.avgWaitTime - effectiveRealData.avgWaitTime)} นาที</div>
+              </div>
+              <div className="bg-white p-2 rounded border">
+                <div className="font-medium">คิวที่เสร็จ</div>
+                <div>ผลต่าง: {Math.abs(simulationData.completedQueues - effectiveRealData.completedQueues)} คิว</div>
+              </div>
+              <div className="bg-white p-2 rounded border">
+                <div className="font-medium">ประสิทธิภาพ</div>
+                <div>ผลต่าง: {Math.abs(simulationData.throughput - effectiveRealData.throughput)} คิว/รอบ</div>
+              </div>
             </div>
-            <div className="bg-white p-2 rounded border">
-              <div className="font-medium">คิวที่เสร็จ</div>
-              <div>ผลต่าง: {Math.abs(simulationData.completedQueues - realData.completedQueues)} คิว</div>
-            </div>
-            <div className="bg-white p-2 rounded border">
-              <div className="font-medium">ประสิทธิภาพ</div>
-              <div>ผลต่าง: {Math.abs(simulationData.throughput - realData.throughput)} คิว/รอบ</div>
-            </div>
-          </div>
         </div>
       </CardContent>
     </Card>

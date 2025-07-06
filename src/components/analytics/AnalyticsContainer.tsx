@@ -67,8 +67,8 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
     <>
       <AnalyticsSimulation />
       
-      {/* Data Comparison Chart - Show when both real and simulation data exist */}
-      {hasRealData && hasSimulationData && (
+      {/* Data Comparison Chart - Show when simulation data exists (with fallback for real data) */}
+      {(hasRealData || hasSimulationData) && (
         <DataComparisonChart
           realData={realData}
           simulationData={simulationData}

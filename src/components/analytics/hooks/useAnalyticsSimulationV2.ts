@@ -47,6 +47,7 @@ export interface SimulationStats {
 export const useAnalyticsSimulationV2 = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selectedAlgorithm, setSelectedAlgorithm] = useState('MULTILEVEL');
   const [simulationStats, setSimulationStats] = useState<SimulationStats>({
     prepared: false,
     totalQueues: 0,
@@ -60,7 +61,7 @@ export const useAnalyticsSimulationV2 = () => {
     phase: 'IDLE',
     progress: 0,
     algorithmMetrics: [],
-        currentAlgorithm: 'MULTILEVEL' // Start with MULTILEVEL for mixed queue types
+    currentAlgorithm: 'MULTILEVEL' // Start with MULTILEVEL for mixed queue types
   });
 
   const queryClient = useQueryClient();
@@ -201,9 +202,9 @@ export const useAnalyticsSimulationV2 = () => {
 
       logger.info(`Using ${enabledQueueTypes.length} queue types and ${enabledServicePoints.length} service points`);
 
-      // Create realistic queue distribution (EXACTLY 100 queues for consistent testing, ALL start as WAITING)
+      // Create realistic queue distribution (RANDOM 75-150 queues, ALL start as WAITING)
       const queues = [];
-      const totalQueues = 100; // Fixed at 100 for consistent percentage testing
+      const totalQueues = 75 + Math.floor(Math.random() * 76); // Random between 75-150
       const typeDistribution: Record<string, number> = {};
       const servicePointDistribution: Record<string, number> = {};
 
@@ -276,7 +277,7 @@ export const useAnalyticsSimulationV2 = () => {
         phase: 'PREPARED',
         progress: 0,
         algorithmMetrics: [],
-        currentAlgorithm: 'MULTILEVEL' // Start with MULTILEVEL for mixed queue types
+        currentAlgorithm: selectedAlgorithm // Use selected algorithm
       });
 
       // Force refresh the queue data
@@ -292,7 +293,7 @@ export const useAnalyticsSimulationV2 = () => {
     } finally {
       setLoading(false);
     }
-  }, [patients, queueTypes, servicePoints, mappings, fetchQueues, completeCleanup, queryClient]);
+  }, [patients, queueTypes, servicePoints, mappings, fetchQueues, completeCleanup, queryClient, selectedAlgorithm]);
 
   // Start progressive test - process exactly 30% of queues
   const startProgressiveTest = useCallback(async () => {
@@ -595,6 +596,8 @@ export const useAnalyticsSimulationV2 = () => {
   return {
     isRunning,
     simulationStats,
+    selectedAlgorithm,
+    setSelectedAlgorithm,
     prepareSimulation,
     startProgressiveTest,
     continueToPhase2,

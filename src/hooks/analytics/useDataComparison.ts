@@ -35,12 +35,16 @@ export const useDataComparison = () => {
     try {
       logger.info('🔍 Fetching real queue data...');
       
-      // Fetch real queue data (non-simulation)
+      // Fetch real queue data (non-simulation) from last 7 days
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
       const { data: realQueues, error } = await supabase
         .from('queues')
         .select('*')
         .or('notes.is.null,notes.not.like.%ข้อมูลจำลองโรงพยาบาล%')
         .eq('status', 'COMPLETED')
+        .gte('created_at', sevenDaysAgo.toISOString())
         .order('created_at', { ascending: false })
         .limit(100); // Get recent 100 real queues
 
