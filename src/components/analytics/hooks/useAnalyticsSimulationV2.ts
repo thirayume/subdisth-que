@@ -60,7 +60,7 @@ export const useAnalyticsSimulationV2 = () => {
     phase: 'IDLE',
     progress: 0,
     algorithmMetrics: [],
-    currentAlgorithm: 'FIFO'
+        currentAlgorithm: 'MULTILEVEL' // Start with MULTILEVEL for mixed queue types
   });
 
   const queryClient = useQueryClient();
@@ -276,7 +276,7 @@ export const useAnalyticsSimulationV2 = () => {
         phase: 'PREPARED',
         progress: 0,
         algorithmMetrics: [],
-        currentAlgorithm: 'FIFO'
+        currentAlgorithm: 'MULTILEVEL' // Start with MULTILEVEL for mixed queue types
       });
 
       // Force refresh the queue data
@@ -312,7 +312,22 @@ export const useAnalyticsSimulationV2 = () => {
       // Process exactly 30% of queues using current algorithm
       const result = await processQueuesByPercentage(30, 0, simulationStats.currentAlgorithm, mappings);
       
-      // Update stats and UI
+      // Update stats and UI with progress animation
+      const updateProgress = (progress: number) => {
+        setSimulationStats(prev => ({ 
+          ...prev, 
+          progress,
+          processedQueues: Math.floor((progress / 100) * prev.totalQueues),
+        }));
+      };
+      
+      // Animate progress from 0 to 30
+      for (let i = 0; i <= 30; i += 2) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+        updateProgress(i);
+      }
+      
+      // Final update with actual results
       setSimulationStats(prev => ({ 
         ...prev, 
         phase: 'PAUSE_30', 
@@ -388,6 +403,21 @@ export const useAnalyticsSimulationV2 = () => {
       // Process next 40% of queues (from 30% to 70%)
       const result = await processQueuesByPercentage(70, 30, finalAlgorithm, mappings);
       
+      // Animate progress from 30 to 70
+      const updateProgress = (progress: number) => {
+        setSimulationStats(prev => ({ 
+          ...prev, 
+          progress,
+          processedQueues: Math.floor((progress / 100) * prev.totalQueues),
+        }));
+      };
+      
+      for (let i = 30; i <= 70; i += 2) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+        updateProgress(i);
+      }
+      
+      // Final update with actual results
       setSimulationStats(prev => ({ 
         ...prev, 
         phase: 'PAUSE_70', 
@@ -463,6 +493,21 @@ export const useAnalyticsSimulationV2 = () => {
       // Process remaining 30% of queues
       const result = await processQueuesByPercentage(100, 70, chosenAlgorithm, mappings);
       
+      // Animate progress from 70 to 100
+      const updateProgress = (progress: number) => {
+        setSimulationStats(prev => ({ 
+          ...prev, 
+          progress,
+          processedQueues: Math.floor((progress / 100) * prev.totalQueues),
+        }));
+      };
+      
+      for (let i = 70; i <= 100; i += 2) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+        updateProgress(i);
+      }
+      
+      // Final update with actual results
       setSimulationStats(prev => ({ 
         ...prev, 
         phase: 'COMPLETED', 
@@ -531,7 +576,7 @@ export const useAnalyticsSimulationV2 = () => {
         phase: 'IDLE',
         progress: 0,
         algorithmMetrics: [],
-        currentAlgorithm: 'FIFO'
+        currentAlgorithm: 'MULTILEVEL' // Start with MULTILEVEL for mixed queue types
       });
 
       await queryClient.clear();

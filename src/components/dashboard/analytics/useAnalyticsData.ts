@@ -33,7 +33,7 @@ export const useAnalyticsData = (completedQueues: Queue[], waitingQueues: Queue[
   } = useQueueMetrics(completedQueues);
   
   // Calculate waiting queue metrics for algorithm recommendations
-  const waitingUrgentCount = waitingQueues.filter(q => q.type === 'PRIORITY').length;
+  const waitingUrgentCount = waitingQueues.filter(q => q.type === 'URGENT').length;
   const waitingElderlyCount = waitingQueues.filter(q => q.type === 'ELDERLY').length;
   
   // Algorithm recommendation using WAITING queues (not completed)

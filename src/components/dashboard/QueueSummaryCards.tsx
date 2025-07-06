@@ -41,9 +41,15 @@ const QueueSummaryCards: React.FC<QueueSummaryCardsProps> = ({
         predictedWaitTime={predictedWaitTime}
         queueDistribution={{
           regular: waitingQueues.filter(q => q.type === 'GENERAL').length,
-          urgent: waitingQueues.filter(q => q.type === 'PRIORITY').length,
+          urgent: waitingQueues.filter(q => q.type === 'URGENT').length,
           elderly: waitingQueues.filter(q => q.type === 'ELDERLY').length,
-          special: waitingQueues.filter(q => q.type === 'FOLLOW_UP').length,
+          special: waitingQueues.filter(q => q.type === 'APPOINTMENT').length,
+        }}
+        queueTypeNames={{
+          regular: 'ทั่วไป',
+          urgent: 'ด่วน', 
+          elderly: 'ผู้สูงอายุ',
+          special: 'นัดหมาย'
         }}
         isSimulationMode={isSimulationMode}
       />

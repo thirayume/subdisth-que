@@ -16,7 +16,7 @@ export interface Patient {
   updated_at: string;
 }
 
-export type QueueTypeEnum = 'GENERAL' | 'PRIORITY' | 'ELDERLY' | 'FOLLOW_UP' | 'APPOINTMENT';
+export type QueueTypeEnum = 'GENERAL' | 'URGENT' | 'ELDERLY' | 'FOLLOW_UP' | 'APPOINTMENT';
 export type QueueType = QueueTypeEnum; // Add explicit QueueType export
 export type QueueStatus = 'WAITING' | 'ACTIVE' | 'COMPLETED' | 'SKIPPED' | 'CANCELLED' | 'ON_HOLD';
 

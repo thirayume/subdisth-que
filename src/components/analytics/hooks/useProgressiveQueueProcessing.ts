@@ -264,8 +264,8 @@ const findServicePointForQueue = (queue: any, mappings: any[]) => {
 
 const getAlgorithmWaitTimeReduction = (algorithm: string, queueType: string): number => {
   switch (algorithm) {
-    case 'PRIORITY':
-      return queueType === 'URGENT' || queueType === 'ELDERLY' ? 8 : 2;
+        case 'PRIORITY':
+        return queueType === 'URGENT' || queueType === 'ELDERLY' ? 8 : 2;
     case 'MULTILEVEL':
       return 3;
     case 'FIFO':

@@ -12,7 +12,7 @@ const QueueTypeLabel: React.FC<QueueTypeLabelProps> = ({ queueType, className })
   const getQueueTypeLabel = (type: QueueType) => {
     switch (type) {
       case 'GENERAL': return 'ทั่วไป';
-      case 'PRIORITY': return 'ด่วน';
+      case 'URGENT': return 'ด่วน';
       case 'ELDERLY': return 'ผู้สูงอายุ';
       case 'FOLLOW_UP': return 'ติดตามการใช้ยา';
       case 'APPOINTMENT': return 'นัดหมาย';
@@ -23,7 +23,7 @@ const QueueTypeLabel: React.FC<QueueTypeLabelProps> = ({ queueType, className })
   const getQueueTypeClass = (type: QueueType) => {
     switch (type) {
       case 'GENERAL': return 'text-blue-600 bg-blue-50';
-      case 'PRIORITY': return 'text-red-600 bg-red-50';
+      case 'URGENT': return 'text-red-600 bg-red-50';
       case 'ELDERLY': return 'text-amber-600 bg-amber-50';
       case 'FOLLOW_UP': return 'text-purple-600 bg-purple-50';
       case 'APPOINTMENT': return 'text-green-600 bg-green-50';

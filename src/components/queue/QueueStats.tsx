@@ -74,6 +74,12 @@ interface QueueStatsProps {
     elderly: number;
     special: number;
   };
+  queueTypeNames?: {
+    regular: string;
+    urgent: string;
+    elderly: string;
+    special: string;
+  };
   predictedWaitTime?: number;
   isSimulationMode?: boolean;
 }
@@ -85,6 +91,7 @@ const QueueStats: React.FC<QueueStatsProps> = ({
   avgServiceTime = 8, 
   className,
   queueDistribution = { regular: 70, urgent: 10, elderly: 15, special: 5 },
+  queueTypeNames = { regular: 'ทั่วไป', urgent: 'ด่วน', elderly: 'ผู้สูงอายุ', special: 'นัดหมาย' },
   predictedWaitTime,
   isSimulationMode = false
 }) => {
@@ -128,7 +135,28 @@ const QueueStats: React.FC<QueueStatsProps> = ({
         icon={<div className="bg-green-100 p-3 rounded-full">
           <Users className="w-6 h-6 text-green-600" />
         </div>}
-        footer={<>เฉลี่ย <span className="font-medium">{Math.round((totalQueues / totalPatients) * 10) / 10 || 0}</span> คิว/คน</>}
+        footer={
+          <>
+            <div className="mt-2 space-y-1">
+              <div className="text-xs text-gray-600">การกระจายตัวของประเภทคิว:</div>
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-50 text-blue-700">
+                  {queueTypeNames.regular}: {queueDistribution.regular}
+                </span>
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-50 text-red-700">
+                  {queueTypeNames.urgent}: {queueDistribution.urgent}
+                </span>
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-50 text-green-700">
+                  {queueTypeNames.elderly}: {queueDistribution.elderly}
+                </span>
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-50 text-purple-700">
+                  {queueTypeNames.special}: {queueDistribution.special}
+                </span>
+              </div>
+            </div>
+            เฉลี่ย <span className="font-medium">{Math.round((totalQueues / totalPatients) * 10) / 10 || 0}</span> คิว/คน
+          </>
+        }
         isSimulation={isSimulationMode}
       />
       

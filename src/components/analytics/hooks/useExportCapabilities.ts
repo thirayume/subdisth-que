@@ -26,7 +26,7 @@ export const useExportCapabilities = () => {
     try {
       logger.info('📊 Generating CSV export...');
       
-      // Fetch all simulation queues
+      // Fetch all simulation queues with queue type names
       const { data: queues, error } = await supabase
         .from('queues')
         .select(`
@@ -36,6 +36,11 @@ export const useExportCapabilities = () => {
         `)
         .like('notes', '%ข้อมูลจำลองโรงพยาบาล%')
         .order('created_at', { ascending: true });
+        
+      // Fetch queue types for name mapping
+      const { data: queueTypes } = await supabase
+        .from('queue_types')
+        .select('code, name');
 
       if (error) {
         logger.error('Error fetching queues for CSV:', error);
@@ -46,22 +51,28 @@ export const useExportCapabilities = () => {
         throw new Error('No simulation data found for export');
       }
 
-      // Generate CSV headers
+      // Create queue type name mapping
+      const queueTypeMap = queueTypes?.reduce((acc, qt) => {
+        acc[qt.code] = qt.name;
+        return acc;
+      }, {} as Record<string, string>) || {};
+
+      // Generate CSV headers with Thai names
       const headers = [
-        'Queue ID',
-        'Patient Name',
-        'Patient Phone',
-        'Patient ID',
-        'Queue Type',
-        'Queue Number',
-        'Status',
-        'Service Point',
-        'Created At',
-        'Called At',
-        'Completed At',
-        'Wait Time (Minutes)',
-        'Service Time (Minutes)',
-        'Notes'
+        'รหัสคิว',
+        'ชื่อผู้ป่วย', 
+        'เบอร์โทรศัพท์',
+        'รหัสผู้ป่วย',
+        'ประเภทคิว',
+        'หมายเลขคิว',
+        'สถานะ',
+        'จุดบริการ',
+        'เวลาสร้าง',
+        'เวลาเรียก',
+        'เวลาเสร็จสิ้น',
+        'เวลารอ (นาที)',
+        'เวลาให้บริการ (นาที)',
+        'หมายเหตุ'
       ];
 
       // Generate CSV rows
@@ -76,19 +87,21 @@ export const useExportCapabilities = () => {
 
         return [
           queue.id,
-          queue.patients?.name || 'N/A',
-          queue.patients?.phone || 'N/A',
-          queue.patients?.patient_id || 'N/A',
-          queue.type,
+          queue.patients?.name || 'ไม่ระบุ',
+          queue.patients?.phone || 'ไม่ระบุ',
+          queue.patients?.patient_id || 'ไม่ระบุ',
+          queueTypeMap[queue.type] || queue.type, // Use Thai name
           queue.number,
-          queue.status,
-          queue.service_points?.name || 'N/A',
+          queue.status === 'WAITING' ? 'รออยู่' : 
+          queue.status === 'ACTIVE' ? 'กำลังให้บริการ' :
+          queue.status === 'COMPLETED' ? 'เสร็จสิ้น' : queue.status,
+          queue.service_points?.name || 'ไม่ระบุ',
           queue.created_at,
-          queue.called_at || 'N/A',
-          queue.completed_at || 'N/A',
+          queue.called_at || 'ยังไม่ได้เรียก',
+          queue.completed_at || 'ยังไม่เสร็จสิ้น',
           waitTime,
           serviceTime,
-          queue.notes || 'N/A'
+          queue.notes || 'ไม่มี'
         ];
       });
 
@@ -117,13 +130,13 @@ export const useExportCapabilities = () => {
       }
 
       const headers = [
-        'Phase',
-        'Algorithm',
-        'Average Wait Time (Minutes)',
-        'Throughput (Completed Queues)',
-        'Total Completed Queues',
-        'Processed in Phase',
-        'Timestamp'
+        'เฟส',
+        'อัลกอริธึม',
+        'เวลารอเฉลี่ย (นาที)',
+        'ปริมาณงาน (คิวที่เสร็จสิ้น)',
+        'คิวที่เสร็จสิ้นทั้งหมด',
+        'ประมวลผลในเฟส',
+        'เวลาประทับ'
       ];
 
       const rows = algorithmMetrics.map(metric => [

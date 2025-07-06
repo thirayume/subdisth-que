@@ -23,7 +23,7 @@ const QueueCompositionChart: React.FC<QueueCompositionChartProps> = ({ waitingQu
   // Count the queues by type using the actual data
   const generalCount = waitingQueues.filter(q => q.type === 'GENERAL').length;
   const elderlyCount = waitingQueues.filter(q => q.type === 'ELDERLY').length;
-  const priorityCount = waitingQueues.filter(q => q.type === 'PRIORITY').length;
+  const priorityCount = waitingQueues.filter(q => q.type === 'URGENT').length;
   const followUpCount = waitingQueues.filter(q => q.type === 'FOLLOW_UP').length;
 
   const data = [
