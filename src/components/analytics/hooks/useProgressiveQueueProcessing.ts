@@ -228,10 +228,9 @@ const getPriorityScore = (queueType: string): number => {
   switch (queueType) {
     case 'URGENT': return 0;
     case 'ELDERLY': return 1;
-    case 'PRIORITY': return 2;
-    case 'APPOINTMENT': return 3;
-    case 'GENERAL': return 4;
-    default: return 5;
+    case 'APPOINTMENT': return 2;
+    case 'GENERAL': return 3;
+    default: return 4;
   }
 };
 

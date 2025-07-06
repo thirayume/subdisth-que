@@ -6,9 +6,8 @@ export const queueTypeFormat = {
   'GENERAL': { prefix: 'A', padLength: 3 },
   'PRIORITY': { prefix: 'P', padLength: 3 },
   'ELDERLY': { prefix: 'E', padLength: 3 },
-  'FOLLOW_UP': { prefix: 'F', padLength: 3 },
   'URGENT': { prefix: 'U', padLength: 3 },
-  'SPECIAL': { prefix: 'S', padLength: 3 },
+  'APPOINTMENT': { prefix: 'S', padLength: 3 },
 };
 
 // Format the queue number with the type prefix

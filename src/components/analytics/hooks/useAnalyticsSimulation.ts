@@ -221,17 +221,15 @@ export const useAnalyticsSimulation = () => {
     const baseWaitTimes = {
       'GENERAL': { min: 10, max: 30 },
       'ELDERLY': { min: 5, max: 20 }, // Priority
-      'PRIORITY': { min: 2, max: 10 }, // Emergency
-      'APPOINTMENT': { min: 15, max: 45 }, // Scheduled appointments
-      'FOLLOW_UP': { min: 12, max: 35 } // Follow-up visits
+      'URGENT': { min: 2, max: 10 }, // Emergency
+      'APPOINTMENT': { min: 15, max: 45 } // Scheduled appointments
     };
 
     const baseServiceTimes = {
       'GENERAL': { min: 8, max: 15 },
       'ELDERLY': { min: 10, max: 20 },  
-      'PRIORITY': { min: 5, max: 12 },
-      'APPOINTMENT': { min: 3, max: 8 }, // Appointments faster
-      'FOLLOW_UP': { min: 5, max: 10 } // Follow-up visits
+      'URGENT': { min: 5, max: 12 },
+      'APPOINTMENT': { min: 3, max: 8 } // Appointments faster
     };
 
     const isPeakHour = (hour >= 9 && hour <= 11) || (hour >= 14 && hour <= 16);

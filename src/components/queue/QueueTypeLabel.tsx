@@ -16,7 +16,6 @@ const QueueTypeLabel: React.FC<QueueTypeLabelProps> = ({ queueType, className })
       case 'GENERAL': return 'text-blue-600 bg-blue-50';
       case 'URGENT': return 'text-red-600 bg-red-50';
       case 'ELDERLY': return 'text-amber-600 bg-amber-50';
-      case 'FOLLOW_UP': return 'text-purple-600 bg-purple-50';
       case 'APPOINTMENT': return 'text-green-600 bg-green-50';
       default: return 'text-gray-600 bg-gray-50';
     }

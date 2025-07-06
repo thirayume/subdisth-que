@@ -12,7 +12,8 @@ export const queueTypePurposes: QueueTypePurposes = {
   'GENERAL': 'ทั่วไป',
   'PRIORITY': 'กรณีเร่งด่วน',
   'ELDERLY': 'ผู้สูงอายุ 60 ปีขึ้นไป',
-  'FOLLOW_UP': 'ติดตามการรักษา'
+  'URGENT': 'กรณีฉุกเฉิน',
+  'APPOINTMENT': 'นัดหมาย'
 };
 
 export const useQueueCreation = (): QueueCreationState & QueueCreationActions & { queueTypePurposes: QueueTypePurposes } => {
