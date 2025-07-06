@@ -5,9 +5,20 @@ import { useQueues } from '@/hooks/useQueues';
 import { usePatients } from '@/hooks/usePatients';
 import { useQueueTypes } from '@/hooks/useQueueTypes';
 import { useServicePoints } from '@/hooks/useServicePoints';
+import { useQueryClient } from '@tanstack/react-query';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('AnalyticsSimulation');
+
+export type SimulationPhase = 'IDLE' | 'PREPARING' | 'PREPARED' | 'RUNNING_30' | 'PAUSE_30' | 'RUNNING_70' | 'PAUSE_70' | 'RUNNING_100' | 'COMPLETED';
+
+interface AlgorithmMetrics {
+  algorithm: string;
+  avgWaitTime: number;
+  throughput: number;
+  completedQueues: number;
+  timestamp: string;
+}
 
 interface SimulationStats {
   prepared: boolean;
@@ -16,6 +27,10 @@ interface SimulationStats {
   avgWaitTime: number;
   isSimulationMode: boolean;
   queueTypeDistribution: Record<string, number>;
+  phase: SimulationPhase;
+  progress: number;
+  algorithmMetrics: AlgorithmMetrics[];
+  currentAlgorithm: string;
 }
 
 export const useAnalyticsSimulation = () => {
@@ -27,15 +42,20 @@ export const useAnalyticsSimulation = () => {
     completedQueues: 0,
     avgWaitTime: 0,
     isSimulationMode: false,
-    queueTypeDistribution: {}
+    queueTypeDistribution: {},
+    phase: 'IDLE',
+    progress: 0,
+    algorithmMetrics: [],
+    currentAlgorithm: 'FIFO'
   });
 
+  const queryClient = useQueryClient();
   const { fetchQueues } = useQueues();
   const { patients } = usePatients();
   const { queueTypes } = useQueueTypes();
   const { servicePoints } = useServicePoints();
 
-  // Enhanced cleanup - clears ALL queues from today
+  // Enhanced cleanup with proper React Query cache invalidation
   const completeCleanup = useCallback(async () => {
     try {
       logger.info('Starting complete cleanup of all today\'s queues...');
@@ -43,24 +63,24 @@ export const useAnalyticsSimulation = () => {
 
       const today = new Date().toISOString().split('T')[0];
 
-      // Get count of queues to be deleted first
-      const { data: queueCount, error: countError } = await supabase
+      // Debug: Check current queue data before deletion
+      const { data: beforeCount, error: beforeError } = await supabase
         .from('queues')
-        .select('id', { count: 'exact' })
+        .select('id, notes', { count: 'exact' })
         .eq('queue_date', today);
 
-      if (countError) {
-        logger.error('Error counting queues:', countError);
-        throw countError;
+      if (beforeError) {
+        logger.error('Error checking queues before cleanup:', beforeError);
+        throw beforeError;
       }
 
-      if (!queueCount || queueCount.length === 0) {
+      logger.info(`Before cleanup: Found ${beforeCount?.length || 0} queues for today`);
+
+      if (!beforeCount || beforeCount.length === 0) {
         logger.info('No queues found for today');
         toast.info('ไม่พบข้อมูลคิววันนี้ที่จะลบ');
         return 0;
       }
-
-      logger.info(`Found ${queueCount.length} queues to delete for today`);
 
       // Delete all queues from today
       const { error: deleteError } = await supabase
@@ -73,15 +93,30 @@ export const useAnalyticsSimulation = () => {
         throw deleteError;
       }
 
-      logger.info(`Successfully deleted ${queueCount.length} queues from today`);
-      toast.success(`ล้างข้อมูลคิววันนี้เรียบร้อยแล้ว (${queueCount.length} คิว)`);
+      // Verify deletion worked
+      const { data: afterCount, error: afterError } = await supabase
+        .from('queues')
+        .select('id', { count: 'exact' })
+        .eq('queue_date', today);
 
-      return queueCount.length;
+      const deletedCount = beforeCount.length;
+      const remainingCount = afterCount?.length || 0;
+
+      logger.info(`After cleanup: Deleted ${deletedCount} queues, ${remainingCount} remaining`);
+
+      // Force React Query cache clear and refetch
+      await queryClient.invalidateQueries({ queryKey: ['queues'] });
+      await queryClient.refetchQueries({ queryKey: ['queues'] });
+      await queryClient.clear(); // Clear all cached data
+
+      toast.success(`ล้างข้อมูลคิววันนี้เรียบร้อยแล้ว (ลบ ${deletedCount} คิว)`);
+
+      return deletedCount;
     } catch (error) {
       logger.error('Error in complete cleanup:', error);
       throw error;
     }
-  }, []);
+  }, [queryClient]);
 
   const getRealisticTiming = (queueType: string, hour: number) => {
     const baseWaitTimes = {
@@ -230,11 +265,16 @@ export const useAnalyticsSimulation = () => {
         completedQueues: completedCount,
         avgWaitTime: Math.round(avgWait),
         isSimulationMode: true,
-        queueTypeDistribution: typeDistribution
+        queueTypeDistribution: typeDistribution,
+        phase: 'PREPARED',
+        progress: 0,
+        algorithmMetrics: [],
+        currentAlgorithm: 'FIFO'
       });
 
-      // Force refresh the queue data
-      await fetchQueues();
+      // Force refresh the queue data with cache invalidation
+      await queryClient.invalidateQueries({ queryKey: ['queues'] });
+      await fetchQueues(true);
       
       logger.info(`Created ${queues.length} realistic simulation queues with distribution:`, typeDistribution);
       toast.success(`🔬 เตรียมข้อมูลจำลองเรียบร้อย (${queues.length} คิว) | ครอบคลุมทุกประเภท: ${Object.keys(typeDistribution).join(', ')}`);
@@ -247,25 +287,33 @@ export const useAnalyticsSimulation = () => {
     }
   }, [patients, queueTypes, servicePoints, fetchQueues, completeCleanup]);
 
-  const startTest = useCallback(async () => {
+  // Progressive simulation with algorithm decision points
+  const startProgressiveTest = useCallback(async () => {
     if (!simulationStats.prepared) {
       toast.error('กรุณาเตรียมข้อมูลก่อนทดสอบ');
       return;
     }
 
     setIsRunning(true);
-    toast.info('เริ่มจำลองการทำงานของระบบคิว...');
+    setSimulationStats(prev => ({ ...prev, phase: 'RUNNING_30', progress: 0 }));
+    toast.info('เริ่มจำลองแบบก้าวหน้า - เฟส 1 (0-30%)');
 
     try {
-      // Simulate real-time queue progression
+      let progress = 0;
+      const totalDuration = 60000; // 60 seconds total
+      const updateInterval = 2000; // Update every 2 seconds
+      const maxProgress30 = 30;
+      
       const interval = setInterval(async () => {
+        progress += (maxProgress30 / (totalDuration * 0.3 / updateInterval));
+        
         // Update some waiting queues to active
         const { data: waitingQueues } = await supabase
           .from('queues')
           .select('*')
           .eq('status', 'WAITING')
           .like('notes', '%ข้อมูลจำลองโรงพยาบาล%')
-          .limit(2);
+          .limit(Math.floor(Math.random() * 3) + 1);
 
         if (waitingQueues && waitingQueues.length > 0) {
           const updatePromises = waitingQueues.map(queue => 
@@ -287,34 +335,177 @@ export const useAnalyticsSimulation = () => {
           .select('*')
           .eq('status', 'ACTIVE')
           .like('notes', '%ข้อมูลจำลองโรงพยาบาล%')
-          .limit(1);
+          .limit(Math.floor(Math.random() * 2) + 1);
 
         if (activeQueues && activeQueues.length > 0) {
-          await supabase
-            .from('queues')
-            .update({
-              status: 'COMPLETED',
-              completed_at: new Date().toISOString()
-            })
-            .eq('id', activeQueues[0].id);
+          const completePromises = activeQueues.map(queue =>
+            supabase
+              .from('queues')
+              .update({
+                status: 'COMPLETED',
+                completed_at: new Date().toISOString()
+              })
+              .eq('id', queue.id)
+          );
+
+          await Promise.all(completePromises);
         }
 
-        await fetchQueues();
-      }, 3000); // Update every 3 seconds
+        setSimulationStats(prev => ({ ...prev, progress: Math.min(progress, maxProgress30) }));
+        await fetchQueues(true);
 
-      // Stop after 30 seconds
-      setTimeout(() => {
-        clearInterval(interval);
-        setIsRunning(false);
-        toast.success('การจำลองเสร็จสิ้น - ตรวจสอบผลลัพธ์ในกราฟด้านล่าง');
-      }, 30000);
+        // Pause at 30% for algorithm decision
+        if (progress >= maxProgress30) {
+          clearInterval(interval);
+          setIsRunning(false);
+          setSimulationStats(prev => ({ 
+            ...prev, 
+            phase: 'PAUSE_30', 
+            progress: 30 
+          }));
+          
+          // Capture current metrics
+          const metrics = await captureCurrentMetrics(simulationStats.currentAlgorithm);
+          setSimulationStats(prev => ({ 
+            ...prev, 
+            algorithmMetrics: [...prev.algorithmMetrics, metrics] 
+          }));
+          
+          toast.success('🎯 เฟส 1 เสร็จสิ้น (30%) - พร้อมตัดสินใจเปลี่ยนอัลกอริธึม');
+        }
+      }, updateInterval);
 
     } catch (error) {
-      logger.error('Error during test simulation:', error);
+      logger.error('Error during progressive simulation:', error);
       toast.error('เกิดข้อผิดพลาดในการทดสอบ');
       setIsRunning(false);
     }
   }, [simulationStats.prepared, fetchQueues]);
+
+  // Capture performance metrics at decision points
+  const captureCurrentMetrics = useCallback(async (algorithm: string): Promise<AlgorithmMetrics> => {
+    const { data: completedQueues } = await supabase
+      .from('queues')
+      .select('*')
+      .eq('status', 'COMPLETED')
+      .like('notes', '%ข้อมูลจำลองโรงพยาบาล%');
+
+    const { data: allQueues } = await supabase
+      .from('queues')
+      .select('*')
+      .like('notes', '%ข้อมูลจำลองโรงพยาบาล%');
+
+    const avgWaitTime = completedQueues?.reduce((sum, queue) => {
+      if (queue.called_at && queue.created_at) {
+        const wait = (new Date(queue.called_at).getTime() - new Date(queue.created_at).getTime()) / 60000;
+        return sum + wait;
+      }
+      return sum;
+    }, 0) / Math.max(completedQueues?.length || 1, 1);
+
+    return {
+      algorithm,
+      avgWaitTime: Math.round(avgWaitTime || 0),
+      throughput: completedQueues?.length || 0,
+      completedQueues: completedQueues?.length || 0,
+      timestamp: new Date().toISOString()
+    };
+  }, []);
+
+  // Continue to phase 2 (70%)
+  const continueToPhase2 = useCallback(async (newAlgorithm?: string) => {
+    setIsRunning(true);
+    setSimulationStats(prev => ({ 
+      ...prev, 
+      phase: 'RUNNING_70', 
+      currentAlgorithm: newAlgorithm || prev.currentAlgorithm 
+    }));
+    
+    if (newAlgorithm) {
+      toast.info(`🔄 เปลี่ยนอัลกอริธึมเป็น ${newAlgorithm} - เริ่มเฟส 2 (30-70%)`);
+    } else {
+      toast.info('▶️ ดำเนินต่อเฟส 2 (30-70%) ด้วยอัลกอริธึมเดิม');
+    }
+
+    // Continue simulation for phase 2
+    let progress = 30;
+    const interval = setInterval(async () => {
+      progress += 2;
+      
+      // Similar queue processing logic
+      const { data: waitingQueues } = await supabase
+        .from('queues')
+        .select('*')
+        .eq('status', 'WAITING')
+        .like('notes', '%ข้อมูลจำลองโรงพยาบาล%')
+        .limit(Math.floor(Math.random() * 2) + 1);
+
+      if (waitingQueues && waitingQueues.length > 0) {
+        const updatePromises = waitingQueues.map(queue => 
+          supabase
+            .from('queues')
+            .update({ status: 'ACTIVE', called_at: new Date().toISOString() })
+            .eq('id', queue.id)
+        );
+        await Promise.all(updatePromises);
+      }
+
+      setSimulationStats(prev => ({ ...prev, progress: Math.min(progress, 70) }));
+      await fetchQueues(true);
+
+      if (progress >= 70) {
+        clearInterval(interval);
+        setIsRunning(false);
+        setSimulationStats(prev => ({ ...prev, phase: 'PAUSE_70', progress: 70 }));
+        
+        const metrics = await captureCurrentMetrics(simulationStats.currentAlgorithm);
+        setSimulationStats(prev => ({ 
+          ...prev, 
+          algorithmMetrics: [...prev.algorithmMetrics, metrics] 
+        }));
+        
+        toast.success('🎯 เฟส 2 เสร็จสิ้น (70%) - พร้อมตัดสินใจครั้งสุดท้าย');
+      }
+    }, 2000);
+  }, [simulationStats.currentAlgorithm, fetchQueues, captureCurrentMetrics]);
+
+  // Complete final phase
+  const completeSimulation = useCallback(async (finalAlgorithm?: string) => {
+    setIsRunning(true);
+    setSimulationStats(prev => ({ 
+      ...prev, 
+      phase: 'RUNNING_100', 
+      currentAlgorithm: finalAlgorithm || prev.currentAlgorithm 
+    }));
+    
+    toast.info('🏁 เฟสสุดท้าย (70-100%) - จบการจำลอง');
+
+    let progress = 70;
+    const interval = setInterval(async () => {
+      progress += 3;
+      
+      setSimulationStats(prev => ({ ...prev, progress: Math.min(progress, 100) }));
+      await fetchQueues(true);
+
+      if (progress >= 100) {
+        clearInterval(interval);
+        setIsRunning(false);
+        
+        const finalMetrics = await captureCurrentMetrics(simulationStats.currentAlgorithm);
+        setSimulationStats(prev => ({ 
+          ...prev, 
+          phase: 'COMPLETED', 
+          progress: 100,
+          algorithmMetrics: [...prev.algorithmMetrics, finalMetrics]
+        }));
+        
+        toast.success('🎉 การจำลองเสร็จสมบูรณ์ - ดูผลเปรียบเทียบอัลกอริธึม');
+      }
+    }, 1500);
+  }, [simulationStats.currentAlgorithm, fetchQueues, captureCurrentMetrics]);
+
+  // Legacy simple test for backward compatibility
+  const startTest = startProgressiveTest;
 
   const cleanup = useCallback(async () => {
     setLoading(true);
@@ -325,23 +516,33 @@ export const useAnalyticsSimulation = () => {
       // Use complete cleanup function
       const deletedCount = await completeCleanup();
 
-      // Reset simulation stats
+      // Reset simulation stats completely
       setSimulationStats({
         prepared: false,
         totalQueues: 0,
         completedQueues: 0,
         avgWaitTime: 0,
         isSimulationMode: false,
-        queueTypeDistribution: {}
+        queueTypeDistribution: {},
+        phase: 'IDLE',
+        progress: 0,
+        algorithmMetrics: [],
+        currentAlgorithm: 'FIFO'
       });
 
-      // Force refresh the queue data multiple times to ensure UI updates
-      await fetchQueues();
+      // Force refresh the queue data with proper cache invalidation
+      await queryClient.invalidateQueries({ queryKey: ['queues'] });
+      await fetchQueues(true);
       
-      // Add a small delay and refresh again to ensure the data is updated
+      // Double-check and force multiple refreshes
       setTimeout(async () => {
-        await fetchQueues();
+        await queryClient.refetchQueries({ queryKey: ['queues'] });
+        await fetchQueues(true);
       }, 1000);
+
+      setTimeout(async () => {
+        await fetchQueues(true);
+      }, 2000);
 
       logger.info('Comprehensive cleanup completed');
       toast.success(`ล้างข้อมูลทั้งหมดเรียบร้อยแล้ว (ลบ ${deletedCount} คิว) - กลับสู่โหมดข้อมูลจริง`);
@@ -353,14 +554,18 @@ export const useAnalyticsSimulation = () => {
     } finally {
       setLoading(false);
     }
-  }, [completeCleanup, fetchQueues]);
+  }, [completeCleanup, fetchQueues, queryClient]);
 
   return {
     isRunning,
     simulationStats,
     prepareSimulation,
     startTest,
+    startProgressiveTest,
+    continueToPhase2,
+    completeSimulation,
     cleanup,
-    loading
+    loading,
+    captureCurrentMetrics
   };
 };

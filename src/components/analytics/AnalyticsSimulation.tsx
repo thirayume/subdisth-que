@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Play, RotateCcw, Trash2, Clock, Users, Activity, AlertTriangle, Database, BarChart3 } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Play, RotateCcw, Trash2, Clock, Users, Activity, AlertTriangle, Database, BarChart3, Pause, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAnalyticsSimulation } from './hooks/useAnalyticsSimulation';
 
@@ -12,28 +13,69 @@ const AnalyticsSimulation: React.FC = () => {
     isRunning,
     simulationStats,
     prepareSimulation,
-    startTest,
+    startProgressiveTest,
+    continueToPhase2,
+    completeSimulation,
     cleanup,
     loading
   } = useAnalyticsSimulation();
+
+  const getPhaseDescription = () => {
+    switch (simulationStats.phase) {
+      case 'IDLE': return 'ยังไม่ได้เริ่มต้น';
+      case 'PREPARING': return 'กำลังเตรียมข้อมูล...';
+      case 'PREPARED': return 'พร้อมเริ่มการจำลอง';
+      case 'RUNNING_30': return 'กำลังจำลอง - เฟส 1 (0-30%)';
+      case 'PAUSE_30': return 'หยุดชั่วคราว - เฟส 1 เสร็จสิ้น (30%)';
+      case 'RUNNING_70': return 'กำลังจำลอง - เฟส 2 (30-70%)';
+      case 'PAUSE_70': return 'หยุดชั่วคราว - เฟส 2 เสร็จสิ้น (70%)';
+      case 'RUNNING_100': return 'กำลังจำลอง - เฟสสุดท้าย (70-100%)';
+      case 'COMPLETED': return 'การจำลองเสร็จสมบูรณ์';
+      default: return 'ไม่ทราบสถานะ';
+    }
+  };
+
+  const canStartTest = simulationStats.prepared && !isRunning && simulationStats.phase === 'PREPARED';
+  const canContinuePhase2 = !isRunning && simulationStats.phase === 'PAUSE_30';
+  const canCompleteSimulation = !isRunning && simulationStats.phase === 'PAUSE_70';
+  const showResults = simulationStats.phase === 'COMPLETED' && simulationStats.algorithmMetrics.length > 0;
 
   return (
     <Card className="mb-6">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Activity className="h-5 w-5" />
-          การจำลองคิวโรงพยาบาลแบบสมจริง
+          การจำลองคิวโรงพยาบาลแบบสมจริง (Progressive Testing)
           {simulationStats.isSimulationMode && (
             <Badge variant="outline" className="border-orange-300 bg-orange-100 text-orange-700">
               🔬 Active
             </Badge>
           )}
+          {simulationStats.phase !== 'IDLE' && (
+            <Badge variant="secondary">{getPhaseDescription()}</Badge>
+          )}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          จำลองสถานการณ์คิวในโรงพยาบาลจริง พร้อมเวลารอและเวลาให้บริการที่สมจริง ครอบคลุมทุกประเภทคิว
+          จำลองสถานการณ์คิวในโรงพยาบาลจริง พร้อมทดสอบอัลกอริธึมที่จุดหยุด 30% และ 70%
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Progress Bar for Progressive Testing */}
+        {simulationStats.phase !== 'IDLE' && (
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">ความคืบหน้าการจำลอง</span>
+              <span className="text-sm text-muted-foreground">{simulationStats.progress}%</span>
+            </div>
+            <Progress value={simulationStats.progress} className="w-full" />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span className={simulationStats.progress >= 30 ? 'text-green-600 font-medium' : ''}>30% - จุดตัดสินใจ 1</span>
+              <span className={simulationStats.progress >= 70 ? 'text-green-600 font-medium' : ''}>70% - จุดตัดสินใจ 2</span>
+              <span className={simulationStats.progress >= 100 ? 'text-green-600 font-medium' : ''}>100% - เสร็จสิ้น</span>
+            </div>
+          </div>
+        )}
+
         {/* Enhanced Control Buttons */}
         <div className="flex flex-wrap gap-3">
           <Button
@@ -44,15 +86,67 @@ const AnalyticsSimulation: React.FC = () => {
             <Database className="h-4 w-4" />
             เตรียมข้อมูล (ล้างทั้งหมด + จำลองใหม่)
           </Button>
+          
           <Button
-            onClick={startTest}
-            disabled={loading || !simulationStats.prepared}
+            onClick={startProgressiveTest}
+            disabled={loading || !canStartTest}
             variant="default"
             className="flex items-center gap-2"
           >
             <Play className="h-4 w-4" />
-            {isRunning ? 'กำลังทดสอบ...' : 'เริ่มทดสอบ (Test)'}
+            {isRunning ? 'กำลังทดสอบ...' : 'เริ่มทดสอบแบบก้าวหน้า'}
           </Button>
+
+          {canContinuePhase2 && (
+            <Button
+              onClick={() => continueToPhase2()}
+              variant="secondary"
+              className="flex items-center gap-2"
+            >
+              <ArrowRight className="h-4 w-4" />
+              ดำเนินต่อเฟส 2 (เดิม)
+            </Button>
+          )}
+
+          {canContinuePhase2 && (
+            <Button
+              onClick={() => {
+                const newAlgorithm = simulationStats.currentAlgorithm === 'FIFO' ? 'PRIORITY' : 'FIFO';
+                continueToPhase2(newAlgorithm);
+              }}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              เปลี่ยนอัลกอริธึม + เฟส 2
+            </Button>
+          )}
+
+          {canCompleteSimulation && (
+            <Button
+              onClick={() => completeSimulation()}
+              variant="secondary"
+              className="flex items-center gap-2"
+            >
+              <ArrowRight className="h-4 w-4" />
+              จบการจำลอง (เดิม)
+            </Button>
+          )}
+
+          {canCompleteSimulation && (
+            <Button
+              onClick={() => {
+                const finalAlgorithm = simulationStats.currentAlgorithm === 'FIFO' ? 'MULTILEVEL' : 'FIFO';
+                completeSimulation(finalAlgorithm);
+              }}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              เปลี่ยนอัลกอริธึม + จบ
+            </Button>
+          )}
+          
           <Button
             onClick={cleanup}
             disabled={loading}
@@ -64,7 +158,35 @@ const AnalyticsSimulation: React.FC = () => {
           </Button>
         </div>
 
-        {/* Simulation Status */}
+        {/* Algorithm Comparison Results */}
+        {showResults && (
+          <div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+            <div className="flex items-center gap-2 mb-3">
+              <BarChart3 className="h-4 w-4 text-green-600" />
+              <h4 className="font-medium text-green-800">ผลเปรียบเทียบอัลกอริธึม</h4>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {simulationStats.algorithmMetrics.map((metric, index) => (
+                <div key={index} className="bg-white p-3 rounded border">
+                  <div className="font-medium text-gray-800">{metric.algorithm}</div>
+                  <div className="text-sm text-gray-600">เวลารอเฉลี่ย: {metric.avgWaitTime} นาที</div>
+                  <div className="text-sm text-gray-600">ปริมาณงาน: {metric.throughput} คิว</div>
+                  <div className="text-xs text-gray-500">เฟส {index + 1}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Current Algorithm Status */}
+        {simulationStats.phase !== 'IDLE' && (
+          <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+            <Activity className="h-4 w-4 text-blue-600" />
+            <span className="text-sm font-medium text-blue-800">
+              อัลกอริธึมปัจจุบัน: {simulationStats.currentAlgorithm}
+            </span>
+          </div>
+        )}
         {simulationStats.prepared && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -135,16 +257,17 @@ const AnalyticsSimulation: React.FC = () => {
         <div className="p-4 bg-gray-50 rounded-lg">
           <h4 className="font-medium mb-2 flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-amber-600" />
-            วิธีการใช้งาน (ปรับปรุงใหม่):
+            วิธีการใช้งานแบบใหม่ (Progressive Algorithm Testing):
           </h4>
           <ol className="text-sm space-y-1 text-gray-600">
-            <li>1. <strong>เตรียมข้อมูล</strong>: ล้างข้อมูลคิววันนี้ทั้งหมด + สร้างข้อมูลจำลองสมจริง (75-100 คิว) ครอบคลุมทุกประเภทคิว</li>
-            <li>2. <strong>เริ่มทดสอบ</strong>: จำลองการทำงานของคิวแบบเรียลไทม์ (30 วินาที) พร้อมอัพเดทกราห</li>
-            <li>3. <strong>เปรียบเทียบอัลกอริธึม</strong>: ใช้ปุ่มเปรียบเทียบเพื่อดูผลกระทบก่อนเปลี่ยนอัลกอริธึม</li>
-            <li>4. <strong>ล้างข้อมูลทั้งหมด</strong>: ลบข้อมูลจำลองและกลับสู่โหมดข้อมูลจริง</li>
+            <li>1. <strong>เตรียมข้อมูล</strong>: ล้างข้อมูลเดิมและสร้างข้อมูลจำลองใหม่ (75-100 คิว)</li>
+            <li>2. <strong>เริ่มทดสอบ</strong>: จำลองแบบก้าวหน้า จะหยุดที่ 30% เพื่อให้เลือกอัลกอริธึม</li>
+            <li>3. <strong>จุดตัดสินใจ 30%</strong>: เลือกเปลี่ยนอัลกอริธึมหรือดำเนินต่อด้วยอัลกอริธึมเดิม</li>
+            <li>4. <strong>จุดตัดสินใจ 70%</strong>: โอกาสสุดท้ายในการเปลี่ยนอัลกอริธึมก่อนจบ</li>
+            <li>5. <strong>ดูผลเปรียบเทียบ</strong>: เมื่อเสร็จสิ้น จะแสดงผลเปรียบเทียบทุกอัลกอริธึมที่ทดสอบ</li>
           </ol>
           <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
-            <strong>หมายเหตุ:</strong> การเตรียมข้อมูลจะใช้ประเภทคิวทั้งหมดที่เปิดใช้งาน และกระจายให้เท่าๆ กัน
+            <strong>ข้อดี:</strong> ทดสอบอัลกอริธึมหลายตัวในการจำลองเดียว และเห็นผลกระทบจริงต่อประสิทธิภาพ
           </div>
         </div>
       </CardContent>
