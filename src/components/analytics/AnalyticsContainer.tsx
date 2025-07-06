@@ -6,12 +6,13 @@ import QueueAnalytics from '@/components/dashboard/QueueAnalytics';
 import QueueSummaryCards from '@/components/dashboard/QueueSummaryCards';
 import OverallStats from '@/components/dashboard/OverallStats';
 import AnalyticsSimulation from './AnalyticsSimulation';
+import DataComparisonChart from './charts/DataComparisonChart';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle } from 'lucide-react';
 import { useSimulationDataIsolation } from './hooks/useSimulationDataIsolation';
-import { useExportCapabilities } from './hooks/useExportCapabilities';
+import { useDataComparison } from '@/hooks/analytics/useDataComparison';
 
 interface AnalyticsContainerProps {
   queues: Queue[];
@@ -26,7 +27,7 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
   
   // Use isolated simulation data hook
   const { simulationMetrics } = useSimulationDataIsolation();
-  const { exportSimulationPackage } = useExportCapabilities();
+  const { realData, simulationData, hasSimulationData, hasRealData } = useDataComparison();
   
   // Determine if we're using simulation or real data
   const isSimulationMode = simulationMetrics.isSimulationMode;
@@ -59,22 +60,21 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
   
   // Set up export event listener
   React.useEffect(() => {
-    const handleExportRequest = (event: CustomEvent) => {
-      if (event.detail?.algorithmMetrics) {
-        exportSimulationPackage(event.detail.algorithmMetrics);
-      }
-    };
-
-    window.addEventListener('exportSimulationPackage', handleExportRequest as EventListener);
-    
-    return () => {
-      window.removeEventListener('exportSimulationPackage', handleExportRequest as EventListener);
-    };
-  }, [exportSimulationPackage]);
+    // Component initialization
+  }, []);
 
   return (
     <>
       <AnalyticsSimulation />
+      
+      {/* Data Comparison Chart - Show when both real and simulation data exist */}
+      {hasRealData && hasSimulationData && (
+        <DataComparisonChart
+          realData={realData}
+          simulationData={simulationData}
+          isSimulationMode={isSimulationMode}
+        />
+      )}
       
       {isSimulationMode && (
         <Card className="mb-6 border-orange-200 bg-orange-50">
