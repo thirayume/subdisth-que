@@ -43,21 +43,24 @@ export const useAnalyticsSimulation = () => {
 
       const today = new Date().toISOString().split('T')[0];
 
-      // Get count of queues to be deleted
+      // Get count of queues to be deleted first
       const { data: queueCount, error: countError } = await supabase
         .from('queues')
         .select('id', { count: 'exact' })
         .eq('queue_date', today);
 
       if (countError) {
+        logger.error('Error counting queues:', countError);
         throw countError;
       }
 
       if (!queueCount || queueCount.length === 0) {
         logger.info('No queues found for today');
         toast.info('ไม่พบข้อมูลคิววันนี้ที่จะลบ');
-        return;
+        return 0;
       }
+
+      logger.info(`Found ${queueCount.length} queues to delete for today`);
 
       // Delete all queues from today
       const { error: deleteError } = await supabase
@@ -66,6 +69,7 @@ export const useAnalyticsSimulation = () => {
         .eq('queue_date', today);
 
       if (deleteError) {
+        logger.error('Error deleting queues:', deleteError);
         throw deleteError;
       }
 
@@ -79,7 +83,6 @@ export const useAnalyticsSimulation = () => {
     }
   }, []);
 
-  // Enhanced realistic timing with better distribution
   const getRealisticTiming = (queueType: string, hour: number) => {
     const baseWaitTimes = {
       'GENERAL': { min: 10, max: 30 },
@@ -207,6 +210,7 @@ export const useAnalyticsSimulation = () => {
           .insert(batch);
 
         if (error) {
+          logger.error('Error inserting batch:', error);
           throw error;
         }
       }
@@ -229,13 +233,15 @@ export const useAnalyticsSimulation = () => {
         queueTypeDistribution: typeDistribution
       });
 
+      // Force refresh the queue data
       await fetchQueues();
+      
       logger.info(`Created ${queues.length} realistic simulation queues with distribution:`, typeDistribution);
       toast.success(`🔬 เตรียมข้อมูลจำลองเรียบร้อย (${queues.length} คิว) | ครอบคลุมทุกประเภท: ${Object.keys(typeDistribution).join(', ')}`);
 
     } catch (error) {
       logger.error('Error preparing simulation:', error);
-      toast.error('เกิดข้อผิดพลาดในการเตรียมข้อมูล');
+      toast.error(`เกิดข้อผิดพลาดในการเตรียมข้อมูล: ${error instanceof Error ? error.message : 'ไม่ทราบสาเหตุ'}`);
     } finally {
       setLoading(false);
     }
@@ -317,8 +323,9 @@ export const useAnalyticsSimulation = () => {
       toast.info('กำลังล้างข้อมูลทั้งหมด...');
 
       // Use complete cleanup function
-      await completeCleanup();
+      const deletedCount = await completeCleanup();
 
+      // Reset simulation stats
       setSimulationStats({
         prepared: false,
         totalQueues: 0,
@@ -328,13 +335,21 @@ export const useAnalyticsSimulation = () => {
         queueTypeDistribution: {}
       });
 
+      // Force refresh the queue data multiple times to ensure UI updates
       await fetchQueues();
+      
+      // Add a small delay and refresh again to ensure the data is updated
+      setTimeout(async () => {
+        await fetchQueues();
+      }, 1000);
+
       logger.info('Comprehensive cleanup completed');
-      toast.success('ล้างข้อมูลทั้งหมดเรียบร้อยแล้ว - กลับสู่โหมดข้อมูลจริง');
+      toast.success(`ล้างข้อมูลทั้งหมดเรียบร้อยแล้ว (ลบ ${deletedCount} คิว) - กลับสู่โหมดข้อมูลจริง`);
 
     } catch (error) {
       logger.error('Error in comprehensive cleanup:', error);
-      toast.error('เกิดข้อผิดพลาดในการล้างข้อมูล');
+      const errorMessage = error instanceof Error ? error.message : 'ไม่ทราบสาเหตุ';
+      toast.error(`เกิดข้อผิดพลาดในการล้างข้อมูล: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
