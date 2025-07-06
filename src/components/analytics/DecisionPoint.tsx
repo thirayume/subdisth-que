@@ -26,13 +26,31 @@ const DecisionPoint: React.FC<DecisionPointProps> = ({
   onContinue,
   onChangeAndContinue
 }) => {
-  const getAlternativeAlgorithm = () => {
-    switch (currentAlgorithm) {
-      case 'FIFO': return 'PRIORITY';
-      case 'PRIORITY': return 'MULTILEVEL';
-      case 'MULTILEVEL': return 'FIFO';
-      default: return 'PRIORITY';
+  const getRecommendedAlgorithm = () => {
+    const { avgWaitTime, throughput, completedQueues } = currentMetrics;
+    
+    // Analyze current performance and queue composition
+    if (avgWaitTime > 25 || throughput < 3) {
+      // Poor performance - recommend algorithm change
+      if (currentAlgorithm === 'FIFO') {
+        return waitingQueues > 10 ? 'PRIORITY' : 'MULTILEVEL';
+      } else if (currentAlgorithm === 'PRIORITY') {
+        return 'MULTILEVEL'; // Try balanced approach
+      } else {
+        return 'FIFO'; // Back to simple but reliable
+      }
+    } else if (avgWaitTime < 15 && throughput > 5) {
+      // Good performance - but could optimize further
+      if (currentAlgorithm === 'FIFO' && waitingQueues > 15) {
+        return 'MULTILEVEL'; // Scale better with more queues
+      } else if (currentAlgorithm === 'MULTILEVEL' && waitingQueues < 8) {
+        return 'FIFO'; // Simpler for fewer queues
+      }
     }
+    
+    // Default: suggest different algorithm for comparison
+    const alternatives = ['FIFO', 'PRIORITY', 'MULTILEVEL'].filter(alg => alg !== currentAlgorithm);
+    return alternatives[Math.floor(Math.random() * alternatives.length)];
   };
 
   const getPerformanceInsights = () => {
@@ -59,7 +77,7 @@ const DecisionPoint: React.FC<DecisionPointProps> = ({
     }
   };
 
-  const alternativeAlgorithm = getAlternativeAlgorithm();
+  const recommendedAlgorithm = getRecommendedAlgorithm();
   const insights = getPerformanceInsights();
   const StatusIcon = insights.icon;
 
@@ -141,12 +159,12 @@ const DecisionPoint: React.FC<DecisionPointProps> = ({
             </Button>
             
             <Button
-              onClick={() => onChangeAndContinue(alternativeAlgorithm)}
+              onClick={() => onChangeAndContinue(recommendedAlgorithm)}
               variant="outline"
               className="flex items-center gap-2 flex-1"
             >
               <RotateCcw className="h-4 w-4" />
-              เปลี่ยนเป็น {alternativeAlgorithm}
+              เปลี่ยนเป็น {recommendedAlgorithm}
             </Button>
           </div>
         </div>
@@ -156,10 +174,10 @@ const DecisionPoint: React.FC<DecisionPointProps> = ({
           <h5 className="font-medium mb-2">คาดการณ์ผลกระทบ:</h5>
           <div className="text-sm space-y-1">
             <p><strong>หากดำเนินต่อด้วย {currentAlgorithm}:</strong> รักษาความสม่ำเสมอ แต่อาจไม่เหมาะกับสถานการณ์ปัจจุบัน</p>
-            <p><strong>หากเปลี่ยนเป็น {alternativeAlgorithm}:</strong> 
-              {alternativeAlgorithm === 'PRIORITY' && ' เร่งคิวสำคัญ ลดเวลารอโดยรวม'}
-              {alternativeAlgorithm === 'MULTILEVEL' && ' สมดุลระหว่างประเภทคิว ยุติธรรมมากขึ้น'}
-              {alternativeAlgorithm === 'FIFO' && ' เน้นความยุติธรรมตามลำดับมาถึง'}
+            <p><strong>หากเปลี่ยนเป็น {recommendedAlgorithm}:</strong> 
+              {recommendedAlgorithm === 'PRIORITY' && ' เร่งคิวสำคัญ ลดเวลารอโดยรวม'}
+              {recommendedAlgorithm === 'MULTILEVEL' && ' สมดุลระหว่างประเภทคิว ยุติธรรมมากขึ้น'}
+              {recommendedAlgorithm === 'FIFO' && ' เน้นความยุติธรรมตามลำดับมาถึง'}
             </p>
           </div>
         </div>

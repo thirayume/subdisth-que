@@ -19,7 +19,8 @@ const AnalyticsSimulation: React.FC = () => {
     completeSimulation,
     cleanup,
     loading,
-    captureCurrentMetrics
+    captureCurrentMetrics,
+    downloadSimulationLog
   } = useAnalyticsSimulation();
 
   const [currentMetrics, setCurrentMetrics] = React.useState({
@@ -160,22 +161,36 @@ const AnalyticsSimulation: React.FC = () => {
 
         {/* Algorithm Comparison Results */}
         {showResults && (
-          <div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
-            <div className="flex items-center gap-2 mb-3">
-              <BarChart3 className="h-4 w-4 text-green-600" />
-              <h4 className="font-medium text-green-800">ผลเปรียบเทียบอัลกอริธึม</h4>
+          <>
+            <div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+              <div className="flex items-center gap-2 mb-3">
+                <BarChart3 className="h-4 w-4 text-green-600" />
+                <h4 className="font-medium text-green-800">ผลเปรียบเทียบอัลกอริธึม</h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {simulationStats.algorithmMetrics.map((metric, index) => (
+                  <div key={index} className="bg-white p-3 rounded border">
+                    <div className="font-medium text-gray-800">{metric.algorithm}</div>
+                    <div className="text-sm text-gray-600">เวลารอเฉลี่ย: {metric.avgWaitTime} นาที</div>
+                    <div className="text-sm text-gray-600">ปริมาณงาน: {metric.throughput} คิว</div>
+                    <div className="text-xs text-gray-500">เฟส {index + 1}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {simulationStats.algorithmMetrics.map((metric, index) => (
-                <div key={index} className="bg-white p-3 rounded border">
-                  <div className="font-medium text-gray-800">{metric.algorithm}</div>
-                  <div className="text-sm text-gray-600">เวลารอเฉลี่ย: {metric.avgWaitTime} นาที</div>
-                  <div className="text-sm text-gray-600">ปริมาณงาน: {metric.throughput} คิว</div>
-                  <div className="text-xs text-gray-500">เฟส {index + 1}</div>
-                </div>
-              ))}
+            
+            {/* Download Log Button */}
+            <div className="flex justify-center">
+              <Button
+                onClick={downloadSimulationLog}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <BarChart3 className="h-4 w-4" />
+                ดาวน์โหลดรายงานผลการทดสอบแบบละเอียด
+              </Button>
             </div>
-          </div>
+          </>
         )}
 
         {/* Current Algorithm Status */}
