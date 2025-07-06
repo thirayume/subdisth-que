@@ -98,8 +98,8 @@ export const useProgressiveQueueProcessing = () => {
     // Apply algorithm-specific processing to selected queues
     const processedQueues = await applyAlgorithmProcessing(selectedQueues, algorithm, servicePointMappings);
     
-    // Complete some active queues based on algorithm efficiency
-    const completedCount = await completeActiveQueues(algorithm);
+    // Complete some active queues to reach target completion percentage
+    const completedCount = await completeActiveQueues(algorithm, targetPercentage, totalQueues);
 
     const metrics = await calculateCurrentMetrics();
     
@@ -156,12 +156,16 @@ export const useProgressiveQueueProcessing = () => {
         processedQueues = waitingQueues;
     }
 
-    // Process queues with service point assignment
+    // Process queues with service point assignment and realistic wait times
     const updatePromises = processedQueues.map(async (queue) => {
       const servicePoint = findServicePointForQueue(queue, servicePointMappings);
-      const waitTimeReduction = getAlgorithmWaitTimeReduction(algorithm, queue.type);
+      const baseWaitTime = getAlgorithmWaitTimeReduction(algorithm, queue.type);
       
-      const adjustedCalledAt = new Date(Date.now() - (waitTimeReduction * 60000));
+      // Calculate realistic called_at time (created_at + base wait time + random variation)
+      const createdTime = new Date(queue.created_at).getTime();
+      const waitTimeMinutes = Math.max(1, baseWaitTime + Math.random() * 5); // Minimum 1 minute, add random variation
+      const calledAtTime = createdTime + (waitTimeMinutes * 60000);
+      const adjustedCalledAt = new Date(calledAtTime);
       
       simulationLogger.logQueueStateChange(queue.id, 'WAITING', 'ACTIVE', algorithm, `PROCESSING_${algorithm}`);
       
@@ -179,8 +183,8 @@ export const useProgressiveQueueProcessing = () => {
     return processedQueues;
   }, []);
 
-  // Complete active queues with algorithm-specific completion rates
-  const completeActiveQueues = useCallback(async (algorithm: string): Promise<number> => {
+  // Complete active queues with algorithm-specific completion rates to reach target completion percentage
+  const completeActiveQueues = useCallback(async (algorithm: string, targetPercentage: number, totalQueues: number): Promise<number> => {
     const { data: activeQueues } = await supabase
       .from('queues')
       .select('*')
@@ -190,23 +194,43 @@ export const useProgressiveQueueProcessing = () => {
 
     if (!activeQueues || activeQueues.length === 0) return 0;
 
-    // Algorithm-specific completion efficiency
-    const completionRate = getAlgorithmCompletionRate(algorithm);
-    const queuesToComplete = Math.min(
-      activeQueues.length, 
-      Math.max(1, Math.floor(activeQueues.length * completionRate))
-    );
+    // Calculate how many queues should be completed to reach target percentage
+    const targetCompletedCount = Math.floor((targetPercentage / 100) * totalQueues);
+    
+    // Get current completed count
+    const { data: currentCompleted } = await supabase
+      .from('queues')
+      .select('id')
+      .eq('status', 'COMPLETED')
+      .like('notes', '%ข้อมูลจำลองโรงพยาบาล%');
+    
+    const currentCompletedCount = currentCompleted?.length || 0;
+    const needToComplete = Math.max(0, targetCompletedCount - currentCompletedCount);
+    const queuesToComplete = Math.min(activeQueues.length, needToComplete);
+
+    logger.info(`📊 COMPLETION LOGIC: Target=${targetCompletedCount}, Current=${currentCompletedCount}, Need=${needToComplete}, Will complete=${queuesToComplete}`);
+
+    if (queuesToComplete <= 0) {
+      logger.info('No additional queues need to be completed');
+      return 0;
+    }
 
     const selectedQueues = activeQueues.slice(0, queuesToComplete);
     
     const completePromises = selectedQueues.map(queue => {
+      // Calculate realistic completed_at time (called_at + service time)
+      const calledTime = new Date(queue.called_at).getTime();
+      const serviceTimeMinutes = Math.max(2, 5 + Math.random() * 10); // 2-15 minutes service time
+      const completedAtTime = calledTime + (serviceTimeMinutes * 60000);
+      const completedAt = new Date(completedAtTime);
+      
       simulationLogger.logQueueStateChange(queue.id, 'ACTIVE', 'COMPLETED', algorithm, `COMPLETION_${algorithm}`);
       
       return supabase
         .from('queues')
         .update({
           status: 'COMPLETED',
-          completed_at: new Date().toISOString()
+          completed_at: completedAt.toISOString()
         })
         .eq('id', queue.id);
     });
@@ -281,14 +305,15 @@ const findServicePointForQueue = (queue: any, mappings: any[]) => {
 };
 
 const getAlgorithmWaitTimeReduction = (algorithm: string, queueType: string): number => {
+  // Return realistic base wait times (in minutes) instead of reductions
   switch (algorithm) {
-        case 'PRIORITY':
-        return queueType === 'URGENT' || queueType === 'ELDERLY' ? 8 : 2;
+    case 'PRIORITY':
+      return queueType === 'URGENT' || queueType === 'ELDERLY' ? 3 : 8;
     case 'MULTILEVEL':
-      return 3;
+      return 6;
     case 'FIFO':
     default:
-      return 0;
+      return 10;
   }
 };
 

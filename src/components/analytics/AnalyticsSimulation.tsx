@@ -7,6 +7,8 @@ import { Progress } from '@/components/ui/progress';
 import { Play, RotateCcw, Trash2, Clock, Users, Activity, AlertTriangle, Database, BarChart3, Pause, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAnalyticsSimulationV2 } from './hooks/useAnalyticsSimulationV2';
+import { useSimulationCSVExport } from '@/hooks/analytics/useSimulationCSVExport';
+import { useSimulationDataFixer } from '@/hooks/analytics/useSimulationDataFixer';
 import DecisionPoint from './DecisionPoint';
 
 const AnalyticsSimulation: React.FC = () => {
@@ -21,6 +23,9 @@ const AnalyticsSimulation: React.FC = () => {
     loading,
     downloadSimulationLog
   } = useAnalyticsSimulationV2();
+
+  const { exportSimulationData } = useSimulationCSVExport();
+  const { fixSimulationTimestamps } = useSimulationDataFixer();
 
   const [currentMetrics, setCurrentMetrics] = React.useState({
     avgWaitTime: 0,
@@ -153,6 +158,27 @@ const AnalyticsSimulation: React.FC = () => {
           >
             <Trash2 className="h-4 w-4" />
             ล้างข้อมูลทั้งหมด (กลับสู่ข้อมูลจริง)
+          </Button>
+
+          {/* Data Management Buttons */}
+          <Button
+            onClick={fixSimulationTimestamps}
+            disabled={loading}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Clock className="h-4 w-4" />
+            แก้ไขเวลาข้อมูลจำลอง
+          </Button>
+
+          <Button
+            onClick={exportSimulationData}
+            disabled={loading}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <BarChart3 className="h-4 w-4" />
+            ดาวน์โหลด CSV
           </Button>
         </div>
 
