@@ -63,53 +63,55 @@ export const useAnalyticsSimulation = () => {
 
       const today = new Date().toISOString().split('T')[0];
 
-      // Debug: Check current queue data before deletion
-      const { data: beforeCount, error: beforeError } = await supabase
+      // Check for ALL queues (including simulation and non-simulation)
+      const { data: allQueues, error: checkError } = await supabase
         .from('queues')
         .select('id, notes', { count: 'exact' })
         .eq('queue_date', today);
 
-      if (beforeError) {
-        logger.error('Error checking queues before cleanup:', beforeError);
-        throw beforeError;
+      if (checkError) {
+        logger.error('Error checking queues before cleanup:', checkError);
+        throw checkError;
       }
 
-      logger.info(`Before cleanup: Found ${beforeCount?.length || 0} queues for today`);
+      logger.info(`Before cleanup: Found ${allQueues?.length || 0} queues for today`);
 
-      if (!beforeCount || beforeCount.length === 0) {
-        logger.info('No queues found for today');
-        toast.info('ไม่พบข้อมูลคิววันนี้ที่จะลบ');
-        return 0;
-      }
+      let deletedCount = 0;
+      
+      if (allQueues && allQueues.length > 0) {
+        // Delete ALL queues from today (both simulation and real)
+        const { error: deleteError } = await supabase
+          .from('queues')
+          .delete()
+          .eq('queue_date', today);
 
-      // Delete all queues from today
-      const { error: deleteError } = await supabase
-        .from('queues')
-        .delete()
-        .eq('queue_date', today);
-
-      if (deleteError) {
-        logger.error('Error deleting queues:', deleteError);
-        throw deleteError;
+        if (deleteError) {
+          logger.error('Error deleting queues:', deleteError);
+          throw deleteError;
+        }
+        
+        deletedCount = allQueues.length;
       }
 
       // Verify deletion worked
-      const { data: afterCount, error: afterError } = await supabase
+      const { data: afterCount } = await supabase
         .from('queues')
         .select('id', { count: 'exact' })
         .eq('queue_date', today);
 
-      const deletedCount = beforeCount.length;
       const remainingCount = afterCount?.length || 0;
-
       logger.info(`After cleanup: Deleted ${deletedCount} queues, ${remainingCount} remaining`);
 
-      // Force React Query cache clear and refetch
-      await queryClient.invalidateQueries({ queryKey: ['queues'] });
-      await queryClient.refetchQueries({ queryKey: ['queues'] });
-      await queryClient.clear(); // Clear all cached data
+      // Force complete React Query cache refresh
+      await queryClient.clear(); // Clear ALL cached data first
+      await queryClient.invalidateQueries(); // Invalidate all queries
+      await queryClient.refetchQueries({ queryKey: ['queues'] }); // Force refetch
 
-      toast.success(`ล้างข้อมูลคิววันนี้เรียบร้อยแล้ว (ลบ ${deletedCount} คิว)`);
+      if (deletedCount > 0) {
+        toast.success(`ล้างข้อมูลคิววันนี้เรียบร้อยแล้ว (ลบ ${deletedCount} คิว)`);
+      } else {
+        toast.info('ไม่พบข้อมูลคิววันนี้ที่จะลบ - ระบบสะอาดแล้ว');
+      }
 
       return deletedCount;
     } catch (error) {
@@ -123,14 +125,16 @@ export const useAnalyticsSimulation = () => {
       'GENERAL': { min: 10, max: 30 },
       'ELDERLY': { min: 5, max: 20 }, // Priority
       'PRIORITY': { min: 2, max: 10 }, // Emergency
-      'FOLLOW_UP': { min: 15, max: 45 } // Pharmacy
+      'APPOINTMENT': { min: 15, max: 45 }, // Scheduled appointments
+      'FOLLOW_UP': { min: 12, max: 35 } // Follow-up visits
     };
 
     const baseServiceTimes = {
       'GENERAL': { min: 8, max: 15 },
       'ELDERLY': { min: 10, max: 20 },  
       'PRIORITY': { min: 5, max: 12 },
-      'FOLLOW_UP': { min: 3, max: 8 } // Pharmacy faster
+      'APPOINTMENT': { min: 3, max: 8 }, // Appointments faster
+      'FOLLOW_UP': { min: 5, max: 10 } // Follow-up visits
     };
 
     const isPeakHour = (hour >= 9 && hour <= 11) || (hour >= 14 && hour <= 16);
@@ -307,49 +311,8 @@ export const useAnalyticsSimulation = () => {
       const interval = setInterval(async () => {
         progress += (maxProgress30 / (totalDuration * 0.3 / updateInterval));
         
-        // Update some waiting queues to active
-        const { data: waitingQueues } = await supabase
-          .from('queues')
-          .select('*')
-          .eq('status', 'WAITING')
-          .like('notes', '%ข้อมูลจำลองโรงพยาบาล%')
-          .limit(Math.floor(Math.random() * 3) + 1);
-
-        if (waitingQueues && waitingQueues.length > 0) {
-          const updatePromises = waitingQueues.map(queue => 
-            supabase
-              .from('queues')
-              .update({
-                status: 'ACTIVE',
-                called_at: new Date().toISOString()
-              })
-              .eq('id', queue.id)
-          );
-
-          await Promise.all(updatePromises);
-        }
-
-        // Complete some active queues
-        const { data: activeQueues } = await supabase
-          .from('queues')
-          .select('*')
-          .eq('status', 'ACTIVE')
-          .like('notes', '%ข้อมูลจำลองโรงพยาบาล%')
-          .limit(Math.floor(Math.random() * 2) + 1);
-
-        if (activeQueues && activeQueues.length > 0) {
-          const completePromises = activeQueues.map(queue =>
-            supabase
-              .from('queues')
-              .update({
-                status: 'COMPLETED',
-                completed_at: new Date().toISOString()
-              })
-              .eq('id', queue.id)
-          );
-
-          await Promise.all(completePromises);
-        }
+        // Apply algorithm-based queue processing
+        await applyAlgorithmToSimulation(simulationStats.currentAlgorithm);
 
         setSimulationStats(prev => ({ ...prev, progress: Math.min(progress, maxProgress30) }));
         await fetchQueues(true);
@@ -412,6 +375,87 @@ export const useAnalyticsSimulation = () => {
     };
   }, []);
 
+  // Apply algorithm-specific queue processing during simulation
+  const applyAlgorithmToSimulation = useCallback(async (algorithm: string) => {
+    const { data: waitingQueues } = await supabase
+      .from('queues')
+      .select('*')
+      .eq('status', 'WAITING')
+      .like('notes', '%ข้อมูลจำลองโรงพยาบาล%')
+      .order('created_at', { ascending: true });
+
+    if (!waitingQueues || waitingQueues.length === 0) return;
+
+    // Apply different processing logic based on algorithm
+    let queuesToProcess = [...waitingQueues];
+    
+    switch (algorithm) {
+      case 'FIFO':
+        // Process in order of arrival (already sorted by created_at)
+        queuesToProcess = queuesToProcess.slice(0, Math.floor(Math.random() * 3) + 1);
+        break;
+        
+      case 'PRIORITY':
+        // Prioritize PRIORITY and ELDERLY queues first
+        queuesToProcess.sort((a, b) => {
+          const aPriority = ['PRIORITY', 'ELDERLY'].includes(a.type) ? 0 : 1;
+          const bPriority = ['PRIORITY', 'ELDERLY'].includes(b.type) ? 0 : 1;
+          return aPriority - bPriority;
+        });
+        queuesToProcess = queuesToProcess.slice(0, Math.floor(Math.random() * 4) + 2); // Process more
+        break;
+        
+      case 'MULTILEVEL':
+        // Process by queue type levels
+        const typeOrder = ['PRIORITY', 'ELDERLY', 'GENERAL', 'APPOINTMENT'];
+        queuesToProcess.sort((a, b) => {
+          const aIndex = typeOrder.indexOf(a.type);
+          const bIndex = typeOrder.indexOf(b.type);
+          return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
+        });
+        queuesToProcess = queuesToProcess.slice(0, Math.floor(Math.random() * 3) + 2);
+        break;
+        
+      default:
+        queuesToProcess = queuesToProcess.slice(0, Math.floor(Math.random() * 2) + 1);
+    }
+
+    // Update selected queues to ACTIVE
+    if (queuesToProcess.length > 0) {
+      const updatePromises = queuesToProcess.map(queue => 
+        supabase
+          .from('queues')
+          .update({
+            status: 'ACTIVE',
+            called_at: new Date().toISOString()
+          })
+          .eq('id', queue.id)
+      );
+      await Promise.all(updatePromises);
+    }
+
+    // Complete some active queues (algorithm affects completion rate)
+    const { data: activeQueues } = await supabase
+      .from('queues')
+      .select('*')
+      .eq('status', 'ACTIVE')
+      .like('notes', '%ข้อมูลจำลองโรงพยาบาล%')
+      .limit(algorithm === 'PRIORITY' ? 3 : 2); // Priority algorithm completes faster
+
+    if (activeQueues && activeQueues.length > 0) {
+      const completePromises = activeQueues.map(queue =>
+        supabase
+          .from('queues')
+          .update({
+            status: 'COMPLETED',
+            completed_at: new Date().toISOString()
+          })
+          .eq('id', queue.id)
+      );
+      await Promise.all(completePromises);
+    }
+  }, []);
+
   // Continue to phase 2 (70%)
   const continueToPhase2 = useCallback(async (newAlgorithm?: string) => {
     setIsRunning(true);
@@ -432,23 +476,8 @@ export const useAnalyticsSimulation = () => {
     const interval = setInterval(async () => {
       progress += 2;
       
-      // Similar queue processing logic
-      const { data: waitingQueues } = await supabase
-        .from('queues')
-        .select('*')
-        .eq('status', 'WAITING')
-        .like('notes', '%ข้อมูลจำลองโรงพยาบาล%')
-        .limit(Math.floor(Math.random() * 2) + 1);
-
-      if (waitingQueues && waitingQueues.length > 0) {
-        const updatePromises = waitingQueues.map(queue => 
-          supabase
-            .from('queues')
-            .update({ status: 'ACTIVE', called_at: new Date().toISOString() })
-            .eq('id', queue.id)
-        );
-        await Promise.all(updatePromises);
-      }
+      // Apply algorithm-based queue processing
+      await applyAlgorithmToSimulation(simulationStats.currentAlgorithm);
 
       setSimulationStats(prev => ({ ...prev, progress: Math.min(progress, 70) }));
       await fetchQueues(true);
@@ -516,7 +545,7 @@ export const useAnalyticsSimulation = () => {
       // Use complete cleanup function
       const deletedCount = await completeCleanup();
 
-      // Reset simulation stats completely
+      // Reset simulation stats completely to initial state
       setSimulationStats({
         prepared: false,
         totalQueues: 0,
@@ -530,22 +559,28 @@ export const useAnalyticsSimulation = () => {
         currentAlgorithm: 'FIFO'
       });
 
-      // Force refresh the queue data with proper cache invalidation
-      await queryClient.invalidateQueries({ queryKey: ['queues'] });
-      await fetchQueues(true);
+      // Force complete data refresh with multiple methods
+      await queryClient.clear(); // Clear all cache first
+      await queryClient.invalidateQueries(); // Invalidate all queries
+      await fetchQueues(true); // Force fetch with fresh data
       
-      // Double-check and force multiple refreshes
+      // Set additional timeouts to ensure UI updates
       setTimeout(async () => {
-        await queryClient.refetchQueries({ queryKey: ['queues'] });
+        await queryClient.refetchQueries({ queryKey: ['queues'], stale: true });
         await fetchQueues(true);
-      }, 1000);
+      }, 500);
 
       setTimeout(async () => {
         await fetchQueues(true);
-      }, 2000);
+      }, 1500);
 
       logger.info('Comprehensive cleanup completed');
-      toast.success(`ล้างข้อมูลทั้งหมดเรียบร้อยแล้ว (ลบ ${deletedCount} คิว) - กลับสู่โหมดข้อมูลจริง`);
+      
+      if (deletedCount > 0) {
+        toast.success(`ล้างข้อมูลทั้งหมดเรียบร้อยแล้ว (ลบ ${deletedCount} คิว) - กลับสู่โหมดข้อมูลจริง`);
+      } else {
+        toast.success('ระบบล้างข้อมูลเรียบร้อย - กลับสู่โหมดข้อมูลจริง');
+      }
 
     } catch (error) {
       logger.error('Error in comprehensive cleanup:', error);

@@ -35,7 +35,7 @@ export const useQueueMetrics = (completedQueues: Queue[]) => {
     let elderlyCount = 0;
 
     queues.forEach(queue => {
-      // Count by types
+      // Count by types - use schema enum types
       if (queue.type === 'PRIORITY') urgentCount++;
       if (queue.type === 'ELDERLY') elderlyCount++;
 

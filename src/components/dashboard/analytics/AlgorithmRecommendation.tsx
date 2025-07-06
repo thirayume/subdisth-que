@@ -29,10 +29,13 @@ const AlgorithmRecommendation: React.FC<AlgorithmRecommendationProps> = ({
   if (!shouldChangeAlgorithm) return null;
 
   const getRecommendationReason = () => {
+    const urgentPercentage = waitingQueueCount > 0 ? Math.round((urgentCount / waitingQueueCount) * 100) : 0;
+    const elderlyPercentage = waitingQueueCount > 0 ? Math.round((elderlyCount / waitingQueueCount) * 100) : 0;
+    
     if (recommendedAlgorithm === QueueAlgorithmType.PRIORITY) {
-      return `พบคิวเร่งด่วน ${urgentCount} คิว (${Math.round((urgentCount / waitingQueueCount) * 100)}% ของคิวทั้งหมด)`;
+      return `พบคิวเร่งด่วน ${urgentCount} คิว (${urgentPercentage}% ของคิวทั้งหมด)`;
     } else if (recommendedAlgorithm === QueueAlgorithmType.MULTILEVEL) {
-      return `พบคิวผู้สูงอายุ ${elderlyCount} คิว (${Math.round((elderlyCount / waitingQueueCount) * 100)}% ของคิวทั้งหมด)`;
+      return `พบคิวผู้สูงอายุ ${elderlyCount} คิว (${elderlyPercentage}% ของคิวทั้งหมด)`;
     } else {
       return `คิวจำนวนมาก (${waitingQueueCount} คิว) เหมาะสำหรับอัลกอริธึมแบบปรับตัว`;
     }
