@@ -55,67 +55,139 @@ export const useAnalyticsSimulation = () => {
   const { queueTypes } = useQueueTypes();
   const { servicePoints } = useServicePoints();
 
-  // Enhanced cleanup with proper React Query cache invalidation
+  // Enhanced cleanup with comprehensive logging and date-agnostic filtering
   const completeCleanup = useCallback(async () => {
+    const startTime = Date.now();
+    logger.info('🧹 CLEANUP STARTED - User clicked cleanup button', { timestamp: new Date().toISOString() });
+    
     try {
-      logger.info('Starting complete cleanup of all today\'s queues...');
-      toast.info('กำลังล้างข้อมูลคิววันนี้ทั้งหมด...');
+      // Step 1: Show loading and log start
+      toast.info('🔍 กำลังค้นหาข้อมูลจำลอง...');
+      logger.info('Step 1: Searching for simulation queues');
 
-      const today = new Date().toISOString().split('T')[0];
-
-      // Check for ALL queues (including simulation and non-simulation)
-      const { data: allQueues, error: checkError } = await supabase
+      // First, try to find simulation queues by notes pattern (regardless of date)
+      const { data: simulationQueues, error: simCheckError } = await supabase
         .from('queues')
-        .select('id, notes', { count: 'exact' })
-        .eq('queue_date', today);
+        .select('id, notes, queue_date, created_at', { count: 'exact' })
+        .like('notes', '%ข้อมูลจำลองโรงพยาบาล%');
 
-      if (checkError) {
-        logger.error('Error checking queues before cleanup:', checkError);
-        throw checkError;
+      if (simCheckError) {
+        logger.error('❌ Error checking simulation queues:', simCheckError);
+        throw simCheckError;
       }
 
-      logger.info(`Before cleanup: Found ${allQueues?.length || 0} queues for today`);
+      logger.info(`🔍 Found ${simulationQueues?.length || 0} simulation queues:`, 
+        simulationQueues?.map(q => ({ id: q.id, date: q.queue_date, created: q.created_at })));
 
       let deletedCount = 0;
-      
-      if (allQueues && allQueues.length > 0) {
-        // Delete ALL queues from today (both simulation and real)
-        const { error: deleteError } = await supabase
+      let deletionStrategy = '';
+
+      if (simulationQueues && simulationQueues.length > 0) {
+        // Delete simulation queues
+        toast.info(`🗑️ กำลังลบคิวจำลอง ${simulationQueues.length} คิว...`);
+        logger.info('Step 2: Deleting simulation queues by pattern matching');
+        
+        const { error: deleteSimError } = await supabase
           .from('queues')
           .delete()
-          .eq('queue_date', today);
+          .like('notes', '%ข้อมูลจำลองโรงพยาบาล%');
 
-        if (deleteError) {
-          logger.error('Error deleting queues:', deleteError);
-          throw deleteError;
+        if (deleteSimError) {
+          logger.error('❌ Error deleting simulation queues:', deleteSimError);
+          throw deleteSimError;
         }
         
-        deletedCount = allQueues.length;
+        deletedCount = simulationQueues.length;
+        deletionStrategy = 'simulation-only';
+      } else {
+        // No simulation queues found, delete all today's queues as fallback
+        const today = new Date().toISOString().split('T')[0];
+        logger.info('Step 2: No simulation queues found, checking today\'s queues as fallback');
+        toast.info('⚠️ ไม่พบคิวจำลอง กำลังตรวจสอบคิววันนี้...');
+
+        const { data: todayQueues, error: todayCheckError } = await supabase
+          .from('queues')
+          .select('id, notes', { count: 'exact' })
+          .eq('queue_date', today);
+
+        if (todayCheckError) {
+          logger.error('❌ Error checking today queues:', todayCheckError);
+          throw todayCheckError;
+        }
+
+        logger.info(`📅 Found ${todayQueues?.length || 0} queues for today (${today})`);
+
+        if (todayQueues && todayQueues.length > 0) {
+          toast.info(`🗑️ กำลังลบคิววันนี้ ${todayQueues.length} คิว...`);
+          
+          const { error: deleteTodayError } = await supabase
+            .from('queues')
+            .delete()
+            .eq('queue_date', today);
+
+          if (deleteTodayError) {
+            logger.error('❌ Error deleting today queues:', deleteTodayError);
+            throw deleteTodayError;
+          }
+          
+          deletedCount = todayQueues.length;
+          deletionStrategy = 'today-fallback';
+        }
       }
 
-      // Verify deletion worked
-      const { data: afterCount } = await supabase
+      // Step 3: Verify deletion
+      toast.info('✅ กำลังตรวจสอบการลบข้อมูล...');
+      logger.info('Step 3: Verifying deletion');
+
+      const { data: remainingSimQueues } = await supabase
         .from('queues')
         .select('id', { count: 'exact' })
-        .eq('queue_date', today);
+        .like('notes', '%ข้อมูลจำลองโรงพยาบาล%');
 
-      const remainingCount = afterCount?.length || 0;
-      logger.info(`After cleanup: Deleted ${deletedCount} queues, ${remainingCount} remaining`);
+      const remainingSimCount = remainingSimQueues?.length || 0;
+      logger.info(`✅ Verification: ${remainingSimCount} simulation queues remaining after cleanup`);
+
+      // Step 4: Force complete state and cache reset
+      toast.info('🔄 กำลังรีเซ็ตระบบ...');
+      logger.info('Step 4: Resetting all states and cache');
+
+      // Clear localStorage simulation data
+      try {
+        localStorage.removeItem('queueAlgorithm');
+        localStorage.removeItem('simulationMode');
+        localStorage.removeItem('algorithmMetrics');
+      } catch (e) {
+        logger.warn('LocalStorage clear failed:', e);
+      }
 
       // Force complete React Query cache refresh
       await queryClient.clear(); // Clear ALL cached data first
       await queryClient.invalidateQueries(); // Invalidate all queries
       await queryClient.refetchQueries({ queryKey: ['queues'] }); // Force refetch
 
+      const duration = Date.now() - startTime;
+      logger.info(`🎉 CLEANUP COMPLETED successfully`, {
+        deletedCount,
+        deletionStrategy,
+        remainingSimCount,
+        duration: `${duration}ms`,
+        timestamp: new Date().toISOString()
+      });
+
       if (deletedCount > 0) {
-        toast.success(`ล้างข้อมูลคิววันนี้เรียบร้อยแล้ว (ลบ ${deletedCount} คิว)`);
+        toast.success(`🎉 ล้างข้อมูลเรียบร้อยแล้ว (ลบ ${deletedCount} คิว, เหลือจำลอง ${remainingSimCount} คิว) - กลับสู่โหมดข้อมูลจริง`);
       } else {
-        toast.info('ไม่พบข้อมูลคิววันนี้ที่จะลบ - ระบบสะอาดแล้ว');
+        toast.success('✨ ระบบสะอาดแล้ว - ไม่พบข้อมูลที่ต้องลบ - กลับสู่โหมดข้อมูลจริง');
       }
 
       return deletedCount;
     } catch (error) {
-      logger.error('Error in complete cleanup:', error);
+      const duration = Date.now() - startTime;
+      logger.error('💥 CLEANUP FAILED:', {
+        error: error instanceof Error ? error.message : error,
+        duration: `${duration}ms`,
+        timestamp: new Date().toISOString()
+      });
       throw error;
     }
   }, [queryClient]);
@@ -538,14 +610,14 @@ export const useAnalyticsSimulation = () => {
 
   const cleanup = useCallback(async () => {
     setLoading(true);
+    logger.info('🧹 MANUAL CLEANUP BUTTON CLICKED - Starting comprehensive cleanup...');
+    
     try {
-      logger.info('Starting comprehensive cleanup...');
-      toast.info('กำลังล้างข้อมูลทั้งหมด...');
-
-      // Use complete cleanup function
+      // Use complete cleanup function with all enhancements
       const deletedCount = await completeCleanup();
 
       // Reset simulation stats completely to initial state
+      logger.info('📊 Resetting simulation state to initial values');
       setSimulationStats({
         prepared: false,
         totalQueues: 0,
@@ -560,6 +632,7 @@ export const useAnalyticsSimulation = () => {
       });
 
       // Force complete data refresh with multiple methods
+      logger.info('🔄 Forcing data refresh and cache reset');
       await queryClient.clear(); // Clear all cache first
       await queryClient.invalidateQueries(); // Invalidate all queries
       await fetchQueues(true); // Force fetch with fresh data
@@ -574,16 +647,10 @@ export const useAnalyticsSimulation = () => {
         await fetchQueues(true);
       }, 1500);
 
-      logger.info('Comprehensive cleanup completed');
-      
-      if (deletedCount > 0) {
-        toast.success(`ล้างข้อมูลทั้งหมดเรียบร้อยแล้ว (ลบ ${deletedCount} คิว) - กลับสู่โหมดข้อมูลจริง`);
-      } else {
-        toast.success('ระบบล้างข้อมูลเรียบร้อย - กลับสู่โหมดข้อมูลจริง');
-      }
+      logger.info('✅ Manual cleanup completed successfully');
 
     } catch (error) {
-      logger.error('Error in comprehensive cleanup:', error);
+      logger.error('💥 Manual cleanup failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'ไม่ทราบสาเหตุ';
       toast.error(`เกิดข้อผิดพลาดในการล้างข้อมูล: ${errorMessage}`);
     } finally {
