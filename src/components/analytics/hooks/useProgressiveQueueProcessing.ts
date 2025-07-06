@@ -26,20 +26,39 @@ export const useProgressiveQueueProcessing = () => {
   ): Promise<QueueProcessingResult> => {
     logger.info(`🎯 PROGRESSIVE PROCESSING: ${currentPercentage}% → ${targetPercentage}% using ${algorithm}`);
     
-    // Get all simulation queues ordered by creation time
-    const { data: allQueues } = await supabase
+    // Get all simulation queues ordered by creation time (simplified query)
+    logger.info('🔍 Fetching simulation queues...');
+    const { data: allQueues, error: queryError } = await supabase
       .from('queues')
-      .select(`
-        *, 
-        patients(name, phone),
-        service_points(name, code)
-      `)
-      .like('notes', '%ข้อمูลจำลองโรงพยาบาล%')
+      .select('*')
+      .like('notes', '%ข้อมูลจำลองโรงพยาบาล%')
       .order('created_at', { ascending: true });
 
+    if (queryError) {
+      logger.error('❌ Database query error:', queryError);
+      throw new Error(`Database query failed: ${queryError.message}`);
+    }
+
     if (!allQueues || allQueues.length === 0) {
+      logger.warn('⚠️ No simulation queues found in database');
+      
+      // Check if there are any queues at all with simulation notes
+      const { data: checkQueues, error: checkError } = await supabase
+        .from('queues')
+        .select('id, notes')
+        .not('notes', 'is', null)
+        .limit(5);
+      
+      if (checkError) {
+        logger.error('❌ Check query error:', checkError);
+      } else {
+        logger.info('📊 Sample queue notes:', checkQueues?.map(q => q.notes));
+      }
+      
       throw new Error('No simulation queues found');
     }
+
+    logger.info(`✅ Found ${allQueues.length} simulation queues`);
 
     const totalQueues = allQueues.length;
     const currentProcessedCount = Math.floor((currentPercentage / 100) * totalQueues);
