@@ -176,15 +176,29 @@ const AnalyticsSimulation: React.FC = () => {
               </div>
             </div>
             
-            {/* Download Log Button */}
-            <div className="flex justify-center">
+            {/* Enhanced Export Options */}
+            <div className="flex flex-wrap justify-center gap-3">
               <Button
                 onClick={downloadSimulationLog}
                 variant="outline"
                 className="flex items-center gap-2"
               >
                 <BarChart3 className="h-4 w-4" />
-                ดาวน์โหลดรายงานผลการทดสอบแบบละเอียด
+                ดาวน์โหลดรายงาน JSON
+              </Button>
+              <Button
+                onClick={() => {
+                  // This will be handled by the export hook
+                  const event = new CustomEvent('exportSimulationPackage', {
+                    detail: { algorithmMetrics: simulationStats.algorithmMetrics }
+                  });
+                  window.dispatchEvent(event);
+                }}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <BarChart3 className="h-4 w-4" />
+                ดาวน์โหลดข้อมูล CSV + รูปภาพ
               </Button>
             </div>
           </>

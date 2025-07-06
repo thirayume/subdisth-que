@@ -17,16 +17,16 @@ export interface QueueProcessingResult {
 }
 
 export const useProgressiveQueueProcessing = () => {
-  // Process exactly the specified percentage of total queues
+  // Process EXACTLY the specified percentage of total queues with TRUE PROGRESSIVE LOGIC
   const processQueuesByPercentage = useCallback(async (
     targetPercentage: number,
     currentPercentage: number,
     algorithm: string,
     servicePointMappings: any[]
   ): Promise<QueueProcessingResult> => {
-    logger.info(`🎯 Processing queues from ${currentPercentage}% to ${targetPercentage}% using ${algorithm}`);
+    logger.info(`🎯 PROGRESSIVE PROCESSING: ${currentPercentage}% → ${targetPercentage}% using ${algorithm}`);
     
-    // Get all simulation queues
+    // Get all simulation queues ordered by creation time
     const { data: allQueues } = await supabase
       .from('queues')
       .select(`
@@ -34,7 +34,7 @@ export const useProgressiveQueueProcessing = () => {
         patients(name, phone),
         service_points(name, code)
       `)
-      .like('notes', '%ข้อมูลจำลองโรงพยาบาล%')
+      .like('notes', '%ข้อمูลจำลองโรงพยาบาล%')
       .order('created_at', { ascending: true });
 
     if (!allQueues || allQueues.length === 0) {
@@ -44,35 +44,40 @@ export const useProgressiveQueueProcessing = () => {
     const totalQueues = allQueues.length;
     const currentProcessedCount = Math.floor((currentPercentage / 100) * totalQueues);
     const targetProcessedCount = Math.floor((targetPercentage / 100) * totalQueues);
-    const queuesToProcessNow = targetProcessedCount - currentProcessedCount;
+    const exactQueuesToProcess = targetProcessedCount - currentProcessedCount;
 
-    logger.info(`Total queues: ${totalQueues}, Processing ${queuesToProcessNow} queues (${currentProcessedCount} → ${targetProcessedCount})`);
+    logger.info(`📊 EXACT PROCESSING: Total=${totalQueues}, Current=${currentProcessedCount}, Target=${targetProcessedCount}, ToProcess=${exactQueuesToProcess}`);
     
     simulationLogger.log('PROGRESSIVE_PROCESSING_START', `PROCESSING_${targetPercentage}`, algorithm, {
       totalQueues,
       currentProcessedCount,
       targetProcessedCount,
-      queuesToProcessNow,
-      algorithm
+      exactQueuesToProcess,
+      algorithm,
+      progressiveType: 'EXACT_PERCENTAGE'
     });
 
-    // Get waiting queues that should be processed next
-    const waitingQueues = allQueues
-      .filter(q => q.status === 'WAITING')
-      .slice(0, queuesToProcessNow);
-
+    // Get EXACTLY the number of waiting queues we need to process
+    const waitingQueues = allQueues.filter(q => q.status === 'WAITING');
+    
     if (waitingQueues.length === 0) {
       logger.info('No waiting queues to process');
       return {
         processedCount: 0,
         completedCount: 0,
-        remainingCount: allQueues.filter(q => q.status === 'WAITING').length,
+        remainingCount: 0,
         metrics: await calculateCurrentMetrics()
       };
     }
 
-    // Apply algorithm-specific processing
-    const processedQueues = await applyAlgorithmProcessing(waitingQueues, algorithm, servicePointMappings);
+    // Take EXACTLY the number of queues we need to process
+    const exactQueuesToProcessNow = Math.min(exactQueuesToProcess, waitingQueues.length);
+    const selectedQueues = waitingQueues.slice(0, exactQueuesToProcessNow);
+
+    logger.info(`🎯 Processing EXACTLY ${selectedQueues.length} queues out of ${waitingQueues.length} waiting`);
+
+    // Apply algorithm-specific processing to selected queues
+    const processedQueues = await applyAlgorithmProcessing(selectedQueues, algorithm, servicePointMappings);
     
     // Complete some active queues based on algorithm efficiency
     const completedCount = await completeActiveQueues(algorithm);
@@ -80,16 +85,17 @@ export const useProgressiveQueueProcessing = () => {
     const metrics = await calculateCurrentMetrics();
     
     simulationLogger.log('PROGRESSIVE_PROCESSING_COMPLETE', `PROCESSING_${targetPercentage}`, algorithm, {
-      processedQueues: processedQueues.length,
+      exactlyProcessed: processedQueues.length,
       completedCount,
-      remainingWaiting: allQueues.filter(q => q.status === 'WAITING').length - processedQueues.length,
-      metrics
+      remainingWaiting: waitingQueues.length - processedQueues.length,
+      metrics,
+      progressiveType: 'EXACT_PERCENTAGE'
     });
 
     return {
       processedCount: processedQueues.length,
       completedCount,
-      remainingCount: allQueues.filter(q => q.status === 'WAITING').length - processedQueues.length,
+      remainingCount: waitingQueues.length - processedQueues.length,
       metrics
     };
   }, []);

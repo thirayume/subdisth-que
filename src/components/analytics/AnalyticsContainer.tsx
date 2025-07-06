@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle } from 'lucide-react';
+import { useSimulationDataIsolation } from './hooks/useSimulationDataIsolation';
+import { useExportCapabilities } from './hooks/useExportCapabilities';
 
 interface AnalyticsContainerProps {
   queues: Queue[];
@@ -21,16 +23,22 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
   const [activeQueues, setActiveQueues] = React.useState<Queue[]>([]);
   const [completedQueues, setCompletedQueues] = React.useState<Queue[]>([]);
   const [skippedQueues, setSkippedQueues] = React.useState<Queue[]>([]);
-  const [todayStats, setTodayStats] = React.useState({
-    avgWaitTime: 0,
-    avgServiceTime: 0
-  });
-  const [overallStats, setOverallStats] = React.useState({
+  
+  // Use isolated simulation data hook
+  const { simulationMetrics } = useSimulationDataIsolation();
+  const { exportSimulationPackage } = useExportCapabilities();
+  
+  // Determine if we're using simulation or real data
+  const isSimulationMode = simulationMetrics.isSimulationMode;
+  const displayStats = isSimulationMode ? {
+    avgWaitTime: simulationMetrics.avgWaitTime,
+    avgServiceTime: simulationMetrics.avgServiceTime,
+    totalCompletedQueues: simulationMetrics.completedQueues
+  } : {
     avgWaitTime: 0,
     avgServiceTime: 0,
     totalCompletedQueues: 0
-  });
-  const [isSimulationMode, setIsSimulationMode] = React.useState(false);
+  };
 
   // Update filtered queues when the main queues array changes
   React.useEffect(() => {
@@ -45,139 +53,24 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
       setCompletedQueues(completed);
       setSkippedQueues(skipped);
 
-      // Check if we're in simulation mode
-      const hasSimulationData = queues.some(q => q.notes?.includes('🔬 ข้อมูลจำลองโรงพยาบาล'));
-      setIsSimulationMode(hasSimulationData);
+      // Simulation mode is handled by the hook
     }
   }, [queues, sortQueues]);
   
-  // Fetch today's statistics directly from Supabase
+  // Set up export event listener
   React.useEffect(() => {
-    const fetchTodayStats = async () => {
-      try {
-        // Get today's date at midnight
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        // Fetch completed queues for today
-        const { data, error } = await supabase
-          .from('queues')
-          .select('*')
-          .eq('status', 'COMPLETED')
-          .gte('created_at', today.toISOString())
-          .order('created_at', { ascending: false });
-          
-        if (error) {
-          console.error('Error fetching today stats:', error);
-          toast.error('ไม่สามารถดึงข้อมูลสถิติได้');
-          return;
-        }
-        
-        if (data && data.length > 0) {
-          // Calculate average wait time (from created to called)
-          const totalWaitTime = data.reduce((sum, queue) => {
-            if (queue.called_at && queue.created_at) {
-              const waitMs = new Date(queue.called_at).getTime() - new Date(queue.created_at).getTime();
-              return sum + (waitMs / 60000); // Convert to minutes
-            }
-            return sum;
-          }, 0);
-          
-          // Calculate average service time (from called to completed)
-          const totalServiceTime = data.reduce((sum, queue) => {
-            if (queue.completed_at && queue.called_at) {
-              const serviceMs = new Date(queue.completed_at).getTime() - new Date(queue.called_at).getTime();
-              return sum + (serviceMs / 60000); // Convert to minutes
-            }
-            return sum;
-          }, 0);
-          
-          setTodayStats({
-            avgWaitTime: data.length > 0 ? totalWaitTime / data.length : 0,
-            avgServiceTime: data.length > 0 ? totalServiceTime / data.length : 0
-          });
-          
-          console.log('Fetched today stats:', {
-            count: data.length,
-            avgWaitTime: totalWaitTime / data.length,
-            avgServiceTime: totalServiceTime / data.length
-          });
-        }
-      } catch (err) {
-        console.error('Error fetching today stats:', err);
+    const handleExportRequest = (event: CustomEvent) => {
+      if (event.detail?.algorithmMetrics) {
+        exportSimulationPackage(event.detail.algorithmMetrics);
       }
     };
 
-    const fetchOverallStats = async () => {
-      try {
-        // Fetch all completed queues (overall statistics)
-        const { data, error } = await supabase
-          .from('queues')
-          .select('*')
-          .eq('status', 'COMPLETED')
-          .order('created_at', { ascending: false });
-          
-        if (error) {
-          console.error('Error fetching overall stats:', error);
-          return;
-        }
-        
-        if (data && data.length > 0) {
-          // Calculate overall average wait time
-          const totalWaitTime = data.reduce((sum, queue) => {
-            if (queue.called_at && queue.created_at) {
-              const waitMs = new Date(queue.called_at).getTime() - new Date(queue.created_at).getTime();
-              return sum + (waitMs / 60000);
-            }
-            return sum;
-          }, 0);
-          
-          // Calculate overall average service time
-          const totalServiceTime = data.reduce((sum, queue) => {
-            if (queue.completed_at && queue.called_at) {
-              const serviceMs = new Date(queue.completed_at).getTime() - new Date(queue.called_at).getTime();
-              return sum + (serviceMs / 60000);
-            }
-            return sum;
-          }, 0);
-          
-          setOverallStats({
-            avgWaitTime: data.length > 0 ? totalWaitTime / data.length : 0,
-            avgServiceTime: data.length > 0 ? totalServiceTime / data.length : 0,
-            totalCompletedQueues: data.length
-          });
-          
-          console.log('Fetched overall stats:', {
-            totalCount: data.length,
-            avgWaitTime: totalWaitTime / data.length,
-            avgServiceTime: totalServiceTime / data.length
-          });
-        }
-      } catch (err) {
-        console.error('Error fetching overall stats:', err);
-      }
-    };
+    window.addEventListener('exportSimulationPackage', handleExportRequest as EventListener);
     
-    fetchTodayStats();
-    fetchOverallStats();
-    
-    // Set up real-time subscription for queues
-    const channel = supabase
-      .channel('analytics-queue-changes')
-      .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'queues' },
-          (payload) => {
-            console.log('Queue change detected in analytics:', payload);
-            fetchTodayStats(); // Refresh stats when changes occur
-            fetchOverallStats();
-          }
-      )
-      .subscribe();
-      
     return () => {
-      supabase.removeChannel(channel);
+      window.removeEventListener('exportSimulationPackage', handleExportRequest as EventListener);
     };
-  }, []);
+  }, [exportSimulationPackage]);
 
   return (
     <>
@@ -209,24 +102,34 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
         activeQueues={activeQueues}
         completedQueues={completedQueues}
         queues={queues}
-        avgWaitTime={todayStats.avgWaitTime}
-        avgServiceTime={todayStats.avgServiceTime}
+        avgWaitTime={displayStats.avgWaitTime}
+        avgServiceTime={displayStats.avgServiceTime}
         isSimulationMode={isSimulationMode}
       />
 
-      {/* Overall Statistics Section */}
+      {/* Statistics Section - Show appropriate data based on mode */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>สถิติโดยรวม</CardTitle>
+          <CardTitle>
+            {isSimulationMode ? 'สถิติการจำลอง' : 'สถิติโดยรวม'}
+            {isSimulationMode && (
+              <Badge variant="outline" className="ml-2 border-orange-300 text-orange-700">
+                🔬 Simulation Data
+              </Badge>
+            )}
+          </CardTitle>
           <p className="text-sm text-muted-foreground">
-            ข้อมูลสะสมทั้งหมดตั้งแต่เริ่มใช้ระบบ
+            {isSimulationMode 
+              ? 'ข้อมูลจากการจำลองระบบคิวโรงพยาบาล'
+              : 'ข้อมูลสะสมทั้งหมดตั้งแต่เริ่มใช้ระบบ'
+            }
           </p>
         </CardHeader>
         <CardContent>
           <OverallStats
-            avgWaitTime={overallStats.avgWaitTime}
-            avgServiceTime={overallStats.avgServiceTime}
-            totalCompletedQueues={overallStats.totalCompletedQueues}
+            avgWaitTime={displayStats.avgWaitTime}
+            avgServiceTime={displayStats.avgServiceTime}
+            totalCompletedQueues={displayStats.totalCompletedQueues}
           />
         </CardContent>
       </Card>

@@ -73,19 +73,19 @@ export const useAnalyticsSimulationV2 = () => {
   const { processQueuesByPercentage } = useProgressiveQueueProcessing();
   const { analyzeCurrentQueues, generateRecommendation, getContextualInsights } = useIntelligentDecisionPoint();
 
-  // Enhanced cleanup with comprehensive logging
+  // Enhanced cleanup with comprehensive logging and verification
   const completeCleanup = useCallback(async () => {
     const startTime = Date.now();
-    logger.info('🧹 CLEANUP STARTED - User clicked cleanup button');
-    simulationLogger.log('CLEANUP_STARTED', 'CLEANUP', 'UNKNOWN', 'User initiated complete cleanup');
+    logger.info('🧹 ENHANCED CLEANUP STARTED - Complete data isolation cleanup');
+    simulationLogger.log('CLEANUP_STARTED', 'CLEANUP', 'UNKNOWN', 'User initiated complete cleanup with verification');
     
     try {
-      toast.info('🔍 กำลังค้นหาข้อมูลจำลอง...');
+      toast.info('🔍 กำลังค้นหาข้อมูลจำลองทั้งหมด...');
       
-      // Find ALL simulation queues by notes pattern
+      // Step 1: Find ALL simulation queues with comprehensive search
       const { data: simulationQueues, error: simCheckError } = await supabase
         .from('queues')
-        .select('id, notes, queue_date, created_at, status', { count: 'exact' })
+        .select('id, notes, queue_date, created_at, status, type, number', { count: 'exact' })
         .like('notes', '%ข้อมูลจำลองโรงพยาบาล%');
 
       if (simCheckError) {
@@ -97,6 +97,7 @@ export const useAnalyticsSimulationV2 = () => {
       if (simulationQueues && simulationQueues.length > 0) {
         toast.info(`🗑️ กำลังลบคิวจำลองทั้งหมด ${simulationQueues.length} คิว...`);
         
+        // Step 2: Delete all simulation queues
         const { error: deleteSimError } = await supabase
           .from('queues')
           .delete()
@@ -108,41 +109,66 @@ export const useAnalyticsSimulationV2 = () => {
         }
         
         deletedCount = simulationQueues.length;
+        logger.info(`✅ Deleted ${deletedCount} simulation queues`);
       }
 
-      // Clear localStorage and cache
+      // Step 3: Verify cleanup completion
+      toast.info('🔍 กำลังตรวจสอบการล้างข้อมูล...');
+      const { data: remainingQueues } = await supabase
+        .from('queues')
+        .select('id')
+        .like('notes', '%ข้อมูลจำลองโรงพยาบาล%');
+
+      if (remainingQueues && remainingQueues.length > 0) {
+        logger.warn(`⚠️ Found ${remainingQueues.length} remaining simulation queues after cleanup`);
+        throw new Error(`Cleanup incomplete: ${remainingQueues.length} simulation queues remain`);
+      }
+
+      // Step 4: Clear all caches and local storage
       try {
         localStorage.removeItem('queueAlgorithm');
         localStorage.removeItem('simulationMode');
         localStorage.removeItem('algorithmMetrics');
+        localStorage.removeItem('simulationStats');
+        sessionStorage.removeItem('simulationData');
       } catch (e) {
-        logger.warn('LocalStorage clear failed:', e);
+        logger.warn('LocalStorage/SessionStorage clear failed:', e);
       }
 
+      // Step 5: Force complete cache refresh
       await queryClient.clear();
       await queryClient.invalidateQueries();
       await queryClient.refetchQueries({ queryKey: ['queues'] });
+      await queryClient.refetchQueries({ queryKey: ['analytics'] });
 
       const duration = Date.now() - startTime;
-      logger.info(`🎉 CLEANUP COMPLETED successfully in ${duration}ms`);
+      logger.info(`🎉 ENHANCED CLEANUP COMPLETED successfully in ${duration}ms`);
       
       simulationLogger.log('CLEANUP_COMPLETED', 'IDLE', 'FIFO', {
         deletedCount,
-        duration: `${duration}ms`
+        duration: `${duration}ms`,
+        verificationPassed: true,
+        cleanupType: 'ENHANCED_WITH_VERIFICATION'
       });
       
       simulationLogger.clearLogs();
 
       if (deletedCount > 0) {
-        toast.success(`🎉 ล้างข้อมูลเรียบร้อยแล้ว (ลบ ${deletedCount} คิว) - กลับสู่โหมดข้อมูลจริง`);
+        toast.success(`🎉 ล้างข้อมูลเรียบร้อยแล้ว (ลบ ${deletedCount} คิว) - กลับสู่โหมดข้อมูลจริง`, { duration: 4000 });
       } else {
-        toast.success('✨ ระบบสะอาดแล้ว - ไม่พบข้อมูลที่ต้องลบ');
+        toast.success('✨ ระบบสะอาดแล้ว - ไม่พบข้อมูลที่ต้องลบ', { duration: 4000 });
       }
 
       return deletedCount;
     } catch (error) {
       const duration = Date.now() - startTime;
-      logger.error('💥 CLEANUP FAILED:', error);
+      logger.error('💥 ENHANCED CLEANUP FAILED:', error);
+      
+      simulationLogger.log('CLEANUP_FAILED', 'ERROR', 'UNKNOWN', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        duration: `${duration}ms`
+      });
+      
       throw error;
     }
   }, [queryClient]);
@@ -175,9 +201,9 @@ export const useAnalyticsSimulationV2 = () => {
 
       logger.info(`Using ${enabledQueueTypes.length} queue types and ${enabledServicePoints.length} service points`);
 
-      // Create realistic queue distribution (75-100 queues, ALL start as WAITING)
+      // Create realistic queue distribution (EXACTLY 100 queues for consistent testing, ALL start as WAITING)
       const queues = [];
-      const totalQueues = 75 + Math.floor(Math.random() * 25);
+      const totalQueues = 100; // Fixed at 100 for consistent percentage testing
       const typeDistribution: Record<string, number> = {};
       const servicePointDistribution: Record<string, number> = {};
 
