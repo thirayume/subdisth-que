@@ -2,6 +2,7 @@
 import React from 'react';
 import { QueueType } from '@/integrations/supabase/schema';
 import { cn } from '@/lib/utils';
+import { getQueueTypeLabel } from '@/utils/queueTypeUtils';
 
 interface QueueTypeLabelProps {
   queueType: QueueType;
@@ -9,16 +10,6 @@ interface QueueTypeLabelProps {
 }
 
 const QueueTypeLabel: React.FC<QueueTypeLabelProps> = ({ queueType, className }) => {
-  const getQueueTypeLabel = (type: QueueType) => {
-    switch (type) {
-      case 'GENERAL': return 'ทั่วไป';
-      case 'URGENT': return 'ด่วน';
-      case 'ELDERLY': return 'ผู้สูงอายุ';
-      case 'FOLLOW_UP': return 'ติดตามการใช้ยา';
-      case 'APPOINTMENT': return 'นัดหมาย';
-      default: return 'ไม่ระบุ';
-    }
-  };
   
   const getQueueTypeClass = (type: QueueType) => {
     switch (type) {

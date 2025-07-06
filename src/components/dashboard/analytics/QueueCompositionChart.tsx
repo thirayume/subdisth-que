@@ -7,6 +7,7 @@ import {
   ChartTooltip, 
   ChartTooltipContent
 } from '@/components/ui/chart';
+import { getQueueTypeLabel, getAllQueueTypes } from '@/utils/queueTypeUtils';
 
 interface QueueCompositionChartProps {
   waitingQueues: Queue[];
@@ -20,18 +21,14 @@ const chartConfig = {
 }
 
 const QueueCompositionChart: React.FC<QueueCompositionChartProps> = ({ waitingQueues }) => {
-  // Count the queues by type using the actual data
-  const generalCount = waitingQueues.filter(q => q.type === 'GENERAL').length;
-  const elderlyCount = waitingQueues.filter(q => q.type === 'ELDERLY').length;
-  const priorityCount = waitingQueues.filter(q => q.type === 'URGENT').length;
-  const followUpCount = waitingQueues.filter(q => q.type === 'FOLLOW_UP').length;
-
-  const data = [
-    { type: 'ทั่วไป', count: generalCount },
-    { type: 'ผู้สูงอายุ', count: elderlyCount },
-    { type: 'เร่งด่วน', count: priorityCount },
-    { type: 'ยาพิเศษ', count: followUpCount },
-  ];
+  // Create data for all queue types dynamically
+  const data = getAllQueueTypes().map(queueType => {
+    const count = waitingQueues.filter(q => q.type === queueType).length;
+    return {
+      type: getQueueTypeLabel(queueType),
+      count: count
+    };
+  });
 
   // Check if all counts are zero
   const hasData = data.some(item => item.count > 0);
