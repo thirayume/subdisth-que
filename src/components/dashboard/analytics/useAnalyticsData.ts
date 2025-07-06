@@ -24,21 +24,25 @@ export const useAnalyticsData = (completedQueues: Queue[], waitingQueues: Queue[
   const waitTimeData = useWaitTimeData(timeFrame, refreshTrigger);
   const throughputData = useThroughputData(timeFrame, refreshTrigger);
   
-  // Calculate metrics
+  // Calculate metrics from completed queues
   const { 
     averageWaitTime,
     averageServiceTime,
-    urgentCount,
-    elderlyCount
+    urgentCount: completedUrgentCount,
+    elderlyCount: completedElderlyCount
   } = useQueueMetrics(completedQueues);
   
-  // Algorithm recommendation (but don't auto-change)
+  // Calculate waiting queue metrics for algorithm recommendations
+  const waitingUrgentCount = waitingQueues.filter(q => q.type === 'PRIORITY').length;
+  const waitingElderlyCount = waitingQueues.filter(q => q.type === 'ELDERLY').length;
+  
+  // Algorithm recommendation using WAITING queues (not completed)
   const {
     currentAlgorithm,
     recommendedAlgorithm,
     shouldChangeAlgorithm,
     handleChangeAlgorithm
-  } = useAlgorithmState(urgentCount, elderlyCount, waitingQueues.length);
+  } = useAlgorithmState(waitingUrgentCount, waitingElderlyCount, waitingQueues.length);
   
   // Force refresh charts when queues change significantly
   React.useEffect(() => {
@@ -72,8 +76,8 @@ export const useAnalyticsData = (completedQueues: Queue[], waitingQueues: Queue[
     currentAlgorithm,
     recommendedAlgorithm,
     shouldChangeAlgorithm,
-    urgentCount,
-    elderlyCount,
+    urgentCount: waitingUrgentCount,
+    elderlyCount: waitingElderlyCount,
     handleChangeAlgorithm,
     refreshTrigger
   };

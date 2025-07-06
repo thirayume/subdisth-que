@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Play, RotateCcw, Trash2, Clock, Users, Activity, AlertTriangle, Database, BarChart3, Pause, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAnalyticsSimulation } from './hooks/useAnalyticsSimulation';
+import DecisionPoint from './DecisionPoint';
 
 const AnalyticsSimulation: React.FC = () => {
   const {
@@ -17,8 +18,28 @@ const AnalyticsSimulation: React.FC = () => {
     continueToPhase2,
     completeSimulation,
     cleanup,
-    loading
+    loading,
+    captureCurrentMetrics
   } = useAnalyticsSimulation();
+
+  const [currentMetrics, setCurrentMetrics] = React.useState({
+    avgWaitTime: 0,
+    throughput: 0,
+    completedQueues: 0
+  });
+
+  // Capture metrics when we reach decision points
+  React.useEffect(() => {
+    if ((simulationStats.phase === 'PAUSE_30' || simulationStats.phase === 'PAUSE_70') && captureCurrentMetrics) {
+      captureCurrentMetrics(simulationStats.currentAlgorithm).then(metrics => {
+        setCurrentMetrics({
+          avgWaitTime: metrics.avgWaitTime,
+          throughput: metrics.throughput,
+          completedQueues: metrics.completedQueues
+        });
+      });
+    }
+  }, [simulationStats.phase, simulationStats.currentAlgorithm, captureCurrentMetrics]);
 
   const getPhaseDescription = () => {
     switch (simulationStats.phase) {
@@ -97,54 +118,33 @@ const AnalyticsSimulation: React.FC = () => {
             {isRunning ? 'กำลังทดสอบ...' : 'เริ่มทดสอบแบบก้าวหน้า'}
           </Button>
 
+          {/* Decision Point Components - Show intelligent decision interfaces */}
+          {/* Phase 1 Decision Point (30%) */}
           {canContinuePhase2 && (
-            <Button
-              onClick={() => continueToPhase2()}
-              variant="secondary"
-              className="flex items-center gap-2"
-            >
-              <ArrowRight className="h-4 w-4" />
-              ดำเนินต่อเฟส 2 (เดิม)
-            </Button>
+            <div className="col-span-full">
+              <DecisionPoint
+                phase={30}
+                currentAlgorithm={simulationStats.currentAlgorithm}
+                currentMetrics={currentMetrics}
+                waitingQueues={simulationStats.totalQueues - simulationStats.completedQueues}
+                onContinue={() => continueToPhase2()}
+                onChangeAndContinue={(newAlgorithm) => continueToPhase2(newAlgorithm)}
+              />
+            </div>
           )}
 
-          {canContinuePhase2 && (
-            <Button
-              onClick={() => {
-                const newAlgorithm = simulationStats.currentAlgorithm === 'FIFO' ? 'PRIORITY' : 'FIFO';
-                continueToPhase2(newAlgorithm);
-              }}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <RotateCcw className="h-4 w-4" />
-              เปลี่ยนอัลกอริธึม + เฟส 2
-            </Button>
-          )}
-
+          {/* Phase 2 Decision Point (70%) */}
           {canCompleteSimulation && (
-            <Button
-              onClick={() => completeSimulation()}
-              variant="secondary"
-              className="flex items-center gap-2"
-            >
-              <ArrowRight className="h-4 w-4" />
-              จบการจำลอง (เดิม)
-            </Button>
-          )}
-
-          {canCompleteSimulation && (
-            <Button
-              onClick={() => {
-                const finalAlgorithm = simulationStats.currentAlgorithm === 'FIFO' ? 'MULTILEVEL' : 'FIFO';
-                completeSimulation(finalAlgorithm);
-              }}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <RotateCcw className="h-4 w-4" />
-              เปลี่ยนอัลกอริธึม + จบ
-            </Button>
+            <div className="col-span-full">
+              <DecisionPoint
+                phase={70}
+                currentAlgorithm={simulationStats.currentAlgorithm}
+                currentMetrics={currentMetrics}
+                waitingQueues={simulationStats.totalQueues - simulationStats.completedQueues}
+                onContinue={() => completeSimulation()}
+                onChangeAndContinue={(newAlgorithm) => completeSimulation(newAlgorithm)}
+              />
+            </div>
           )}
           
           <Button

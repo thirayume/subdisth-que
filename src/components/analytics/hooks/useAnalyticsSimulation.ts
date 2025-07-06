@@ -63,12 +63,12 @@ export const useAnalyticsSimulation = () => {
     try {
       // Step 1: Show loading and log start
       toast.info('🔍 กำลังค้นหาข้อมูลจำลอง...');
-      logger.info('Step 1: Searching for simulation queues');
+      logger.info('Step 1: Searching for simulation queues across ALL dates');
 
-      // First, try to find simulation queues by notes pattern (regardless of date)
+      // Find ALL simulation queues by notes pattern (regardless of date)
       const { data: simulationQueues, error: simCheckError } = await supabase
         .from('queues')
-        .select('id, notes, queue_date, created_at', { count: 'exact' })
+        .select('id, notes, queue_date, created_at, status', { count: 'exact' })
         .like('notes', '%ข้อมูลจำลองโรงพยาบาล%');
 
       if (simCheckError) {
@@ -76,16 +76,16 @@ export const useAnalyticsSimulation = () => {
         throw simCheckError;
       }
 
-      logger.info(`🔍 Found ${simulationQueues?.length || 0} simulation queues:`, 
-        simulationQueues?.map(q => ({ id: q.id, date: q.queue_date, created: q.created_at })));
+      logger.info(`🔍 Found ${simulationQueues?.length || 0} simulation queues across all dates:`, 
+        simulationQueues?.map(q => ({ id: q.id, date: q.queue_date, created: q.created_at, status: q.status })));
 
       let deletedCount = 0;
       let deletionStrategy = '';
 
       if (simulationQueues && simulationQueues.length > 0) {
-        // Delete simulation queues
-        toast.info(`🗑️ กำลังลบคิวจำลอง ${simulationQueues.length} คิว...`);
-        logger.info('Step 2: Deleting simulation queues by pattern matching');
+        // Delete ALL simulation queues
+        toast.info(`🗑️ กำลังลบคิวจำลองทั้งหมด ${simulationQueues.length} คิว...`);
+        logger.info('Step 2: Deleting ALL simulation queues by pattern matching');
         
         const { error: deleteSimError } = await supabase
           .from('queues')
@@ -449,6 +449,8 @@ export const useAnalyticsSimulation = () => {
 
   // Apply algorithm-specific queue processing during simulation
   const applyAlgorithmToSimulation = useCallback(async (algorithm: string) => {
+    logger.info(`🎯 Applying ${algorithm} algorithm processing...`);
+    
     const { data: waitingQueues } = await supabase
       .from('queues')
       .select('*')
@@ -456,45 +458,71 @@ export const useAnalyticsSimulation = () => {
       .like('notes', '%ข้อมูลจำลองโรงพยาบาล%')
       .order('created_at', { ascending: true });
 
-    if (!waitingQueues || waitingQueues.length === 0) return;
+    if (!waitingQueues || waitingQueues.length === 0) {
+      logger.info('No waiting queues found for processing');
+      return;
+    }
 
-    // Apply different processing logic based on algorithm
+    logger.info(`Found ${waitingQueues.length} waiting queues to process with ${algorithm}`);
+
+    // Apply REAL algorithm differences that affect processing order and timing
     let queuesToProcess = [...waitingQueues];
+    let processingCount = 0;
+    let completionBonus = 0;
     
     switch (algorithm) {
       case 'FIFO':
-        // Process in order of arrival (already sorted by created_at)
-        queuesToProcess = queuesToProcess.slice(0, Math.floor(Math.random() * 3) + 1);
+        // First In, First Out - strict order by creation time
+        queuesToProcess.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        processingCount = Math.floor(Math.random() * 2) + 2; // 2-3 queues
+        completionBonus = 0;
+        logger.info('FIFO: Processing in strict creation order');
         break;
         
       case 'PRIORITY':
-        // Prioritize PRIORITY and ELDERLY queues first
+        // Priority first, then by creation time
         queuesToProcess.sort((a, b) => {
-          const aPriority = ['PRIORITY', 'ELDERLY'].includes(a.type) ? 0 : 1;
-          const bPriority = ['PRIORITY', 'ELDERLY'].includes(b.type) ? 0 : 1;
-          return aPriority - bPriority;
+          const aPriority = a.type === 'PRIORITY' ? 0 : a.type === 'ELDERLY' ? 1 : 2;
+          const bPriority = b.type === 'PRIORITY' ? 0 : b.type === 'ELDERLY' ? 1 : 2;
+          if (aPriority !== bPriority) return aPriority - bPriority;
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         });
-        queuesToProcess = queuesToProcess.slice(0, Math.floor(Math.random() * 4) + 2); // Process more
+        processingCount = Math.floor(Math.random() * 3) + 3; // 3-5 queues (faster processing)
+        completionBonus = 1; // Complete 1 extra queue
+        logger.info('PRIORITY: Processing priority queues first, faster completion');
         break;
         
       case 'MULTILEVEL':
-        // Process by queue type levels
-        const typeOrder = ['PRIORITY', 'ELDERLY', 'GENERAL', 'APPOINTMENT'];
-        queuesToProcess.sort((a, b) => {
-          const aIndex = typeOrder.indexOf(a.type);
-          const bIndex = typeOrder.indexOf(b.type);
-          return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
+        // Round-robin style processing across queue types
+        const typeGroups: Record<string, any[]> = {};
+        queuesToProcess.forEach(queue => {
+          if (!typeGroups[queue.type]) typeGroups[queue.type] = [];
+          typeGroups[queue.type].push(queue);
         });
-        queuesToProcess = queuesToProcess.slice(0, Math.floor(Math.random() * 3) + 2);
+        
+        // Take from each type alternately
+        const balanced: any[] = [];
+        const maxLen = Math.max(...Object.values(typeGroups).map(arr => arr.length));
+        for (let i = 0; i < maxLen; i++) {
+          Object.values(typeGroups).forEach(arr => {
+            if (arr[i]) balanced.push(arr[i]);
+          });
+        }
+        queuesToProcess = balanced;
+        processingCount = Math.floor(Math.random() * 2) + 3; // 3-4 queues (balanced)
+        completionBonus = 0;
+        logger.info('MULTILEVEL: Balanced processing across queue types');
         break;
         
       default:
-        queuesToProcess = queuesToProcess.slice(0, Math.floor(Math.random() * 2) + 1);
+        processingCount = Math.floor(Math.random() * 2) + 1; // 1-2 queues
     }
 
-    // Update selected queues to ACTIVE
-    if (queuesToProcess.length > 0) {
-      const updatePromises = queuesToProcess.map(queue => 
+    // Process selected queues to ACTIVE
+    const selectedQueues = queuesToProcess.slice(0, processingCount);
+    if (selectedQueues.length > 0) {
+      logger.info(`Processing ${selectedQueues.length} queues to ACTIVE status`);
+      const updatePromises = selectedQueues.map(queue => 
         supabase
           .from('queues')
           .update({
@@ -506,16 +534,22 @@ export const useAnalyticsSimulation = () => {
       await Promise.all(updatePromises);
     }
 
-    // Complete some active queues (algorithm affects completion rate)
+    // Complete some active queues with algorithm-specific completion rates
     const { data: activeQueues } = await supabase
       .from('queues')
       .select('*')
       .eq('status', 'ACTIVE')
       .like('notes', '%ข้อมูลจำลองโรงพยาบาล%')
-      .limit(algorithm === 'PRIORITY' ? 3 : 2); // Priority algorithm completes faster
+      .order('called_at', { ascending: true });
 
     if (activeQueues && activeQueues.length > 0) {
-      const completePromises = activeQueues.map(queue =>
+      const baseCompletions = Math.min(activeQueues.length, Math.floor(Math.random() * 2) + 1);
+      const totalCompletions = Math.min(activeQueues.length, baseCompletions + completionBonus);
+      
+      logger.info(`Completing ${totalCompletions} active queues`);
+      const queuesToComplete = activeQueues.slice(0, totalCompletions);
+      
+      const completePromises = queuesToComplete.map(queue =>
         supabase
           .from('queues')
           .update({

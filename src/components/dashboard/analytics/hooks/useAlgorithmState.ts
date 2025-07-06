@@ -22,18 +22,28 @@ export const useAlgorithmState = (urgentCount: number, elderlyCount: number, wai
     let recommended = QueueAlgorithmType.FIFO;
     let shouldChange = false;
     
-    // If there are many urgent cases, prioritize them
-    if (urgentCount > 3 || (urgentCount > 0 && urgentCount / waitingQueueCount > 0.2)) {
+    // Avoid division by zero errors
+    if (waitingQueueCount === 0) {
+      setRecommendedAlgorithm(recommended);
+      setShouldChangeAlgorithm(false);
+      return;
+    }
+    
+    const urgentPercentage = (urgentCount / waitingQueueCount) * 100;
+    const elderlyPercentage = (elderlyCount / waitingQueueCount) * 100;
+    
+    // If there are many urgent cases (Priority queues), prioritize them
+    if (urgentCount >= 3 || urgentPercentage > 20) {
       recommended = QueueAlgorithmType.PRIORITY;
       shouldChange = currentAlgorithm !== QueueAlgorithmType.PRIORITY;
     } 
-    // If there's a mix of elderly and regular, use multilevel
-    else if (elderlyCount > 5 || (elderlyCount > 0 && elderlyCount / waitingQueueCount > 0.3)) {
+    // If there's a significant mix of elderly and regular, use multilevel
+    else if (elderlyCount >= 2 || elderlyPercentage > 15) {
       recommended = QueueAlgorithmType.MULTILEVEL;
       shouldChange = currentAlgorithm !== QueueAlgorithmType.MULTILEVEL;
     } 
-    // For a well-distributed mix with a larger queue, suggest feedback queue
-    else if (waitingQueueCount > 10) {
+    // For larger queues with diverse types, suggest multilevel feedback
+    else if (waitingQueueCount > 15) {
       recommended = QueueAlgorithmType.MULTILEVEL_FEEDBACK;
       shouldChange = currentAlgorithm !== QueueAlgorithmType.MULTILEVEL_FEEDBACK;
     }
