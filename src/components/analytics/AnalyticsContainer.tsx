@@ -68,6 +68,52 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
 
   return (
     <>
+      {/* Prominent Mode Indicator - Always visible at top */}
+      <div className={`sticky top-0 z-10 mb-6 rounded-lg border-2 ${
+        isSimulationMode 
+          ? 'border-orange-400 bg-gradient-to-r from-orange-50 to-orange-100 shadow-lg shadow-orange-200/50' 
+          : 'border-green-400 bg-gradient-to-r from-green-50 to-green-100 shadow-lg shadow-green-200/50'
+      }`}>
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-full ${
+              isSimulationMode ? 'bg-orange-200' : 'bg-green-200'
+            }`}>
+              {isSimulationMode ? (
+                <AlertTriangle className="h-6 w-6 text-orange-700" />
+              ) : (
+                <div className="h-6 w-6 rounded-full bg-green-500 animate-pulse" />
+              )}
+            </div>
+            <div>
+              <h2 className={`text-lg font-semibold ${
+                isSimulationMode ? 'text-orange-800' : 'text-green-800'
+              }`}>
+                {isSimulationMode ? '🔬 โหมดข้อมูลจำลอง (Simulation Mode)' : '📊 โหมดข้อมูลจริง (Real-time Data)'}
+              </h2>
+              <p className={`text-sm ${
+                isSimulationMode ? 'text-orange-700' : 'text-green-700'
+              }`}>
+                {isSimulationMode 
+                  ? 'ข้อมูลจำลองสำหรับการทดสอบอัลกอริทึม - ไม่ใช่ข้อมูลจริงของผู้ป่วย'
+                  : 'ข้อมูลจริงจากระบบคิวโรงพยาบาล - อัปเดตแบบเรียลไทม์'
+                }
+              </p>
+            </div>
+          </div>
+          <Badge 
+            variant="outline" 
+            className={`text-sm font-medium px-3 py-1 ${
+              isSimulationMode 
+                ? 'border-orange-400 text-orange-800 bg-orange-200/50' 
+                : 'border-green-400 text-green-800 bg-green-200/50'
+            }`}
+          >
+            {isSimulationMode ? 'SIMULATION' : 'LIVE DATA'}
+          </Badge>
+        </div>
+      </div>
+
       <AnalyticsSimulation />
       
       {/* Data Comparison Chart - Show when simulation data exists (with fallback for real data) */}
@@ -91,27 +137,6 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
             skipped: skippedQueues.length 
           }}
         />
-      )}
-      
-      {isSimulationMode && (
-        <Card className="mb-6 border-orange-200 bg-orange-50">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-600" />
-              <CardTitle className="text-orange-800">โหมดข้อมูลจำลอง</CardTitle>
-              <Badge variant="outline" className="border-orange-300 text-orange-700">
-                🔬 Simulation Mode
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-orange-700">
-              ข้อมูลที่แสดงอยู่เป็นข้อมูลจำลองเพื่อการทดสอบ ไม่ใช่ข้อมูลจริงของผู้ป่วย
-              <br />
-              กดปุ่ม "ล้างข้อมูล (Cleanup)" เพื่อกลับสู่โหมดข้อมูลจริง
-            </p>
-          </CardContent>
-        </Card>
       )}
 
       <PerformanceMonitor />
