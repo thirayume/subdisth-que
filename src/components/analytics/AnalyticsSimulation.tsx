@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { useAnalyticsSimulationV2 } from './hooks/useAnalyticsSimulationV2';
 import { useSimulationDataFixer } from '@/hooks/analytics/useSimulationDataFixer';
 import AlgorithmSelector from './AlgorithmSelector';
+import DecisionPoint from './DecisionPoint';
 
 const AnalyticsSimulation: React.FC = () => {
   const {
