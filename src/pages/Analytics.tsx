@@ -15,10 +15,12 @@ const Analytics = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-3 md:p-6 min-h-screen bg-background">
       <DirectionProvider dir="ltr">
-        <AnalyticsHeader />
-        <AnalyticsContainer queues={queues} sortQueues={sortQueuesWrapper} />
+        <div className="max-w-7xl mx-auto space-y-6">
+          <AnalyticsHeader />
+          <AnalyticsContainer queues={queues} sortQueues={sortQueuesWrapper} />
+        </div>
       </DirectionProvider>
     </div>
   );

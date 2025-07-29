@@ -1,7 +1,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, Line, LineChart } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, ChartConfig } from '@/components/ui/chart';
 import { TrendingUp, TrendingDown, BarChart3, Clock, Users, Activity } from 'lucide-react';
 
 interface DataComparisonChartProps {
@@ -82,6 +83,17 @@ const DataComparisonChart: React.FC<DataComparisonChartProps> = ({
   const insight = getComparisonInsight();
   const InsightIcon = insight.icon;
 
+  const chartConfig: ChartConfig = {
+    real: {
+      label: "ข้อมูลจริง",
+      color: "hsl(var(--primary))",
+    },
+    simulation: {
+      label: "ข้อมูลจำลอง", 
+      color: "hsl(var(--secondary))",
+    },
+  };
+
   return (
     <Card className="mb-6">
       <CardHeader>
@@ -159,24 +171,24 @@ const DataComparisonChart: React.FC<DataComparisonChartProps> = ({
         {/* Comparison Chart */}
         <div className="bg-white p-4 rounded-lg border">
           <h4 className="font-medium mb-4">เปรียบเทียบทางกราฟ</h4>
-          <ResponsiveContainer width="100%" height={300}>
+          <ChartContainer config={chartConfig} className="h-[300px]">
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
-              <Tooltip 
-                formatter={(value, name) => [
-                  `${value} ${chartData.find(d => d.real === value || d.simulation === value)?.unit || ''}`,
-                  name === 'real' ? 'ข้อมูลจริง' : 'ข้อมูลจำลอง'
-                ]}
+              <ChartTooltip 
+                content={<ChartTooltipContent 
+                  formatter={(value, name) => [
+                    `${value} ${chartData.find(d => d.real === value || d.simulation === value)?.unit || ''}`,
+                    name === 'real' ? 'ข้อมูลจริง' : 'ข้อมูลจำลอง'
+                  ]}
+                />}
               />
-              <Legend 
-                formatter={(value) => value === 'real' ? 'ข้อมูลจริง' : 'ข้อมูลจำลอง'}
-              />
-              <Bar dataKey="real" fill="hsl(var(--primary))" name="real" />
-              <Bar dataKey="simulation" fill="hsl(var(--secondary))" name="simulation" />
+              <ChartLegend content={<ChartLegendContent />} />
+              <Bar dataKey="real" fill="var(--color-real)" name="real" />
+              <Bar dataKey="simulation" fill="var(--color-simulation)" name="simulation" />
             </BarChart>
-          </ResponsiveContainer>
+          </ChartContainer>
         </div>
 
         {/* Analysis Insights */}

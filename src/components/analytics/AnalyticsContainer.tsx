@@ -7,6 +7,9 @@ import QueueSummaryCards from '@/components/dashboard/QueueSummaryCards';
 import OverallStats from '@/components/dashboard/OverallStats';
 import AnalyticsSimulation from './AnalyticsSimulation';
 import DataComparisonChart from './charts/DataComparisonChart';
+import ExportAnalytics from './ExportAnalytics';
+import PerformanceMonitor from './PerformanceMonitor';
+import { AnalyticsLoadingSkeleton } from './LoadingStates';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -75,6 +78,20 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
           isSimulationMode={isSimulationMode}
         />
       )}
+
+      {/* Export Analytics - Show when we have data to export */}
+      {(hasRealData || hasSimulationData) && (
+        <ExportAnalytics
+          realData={realData}
+          simulationData={simulationData}
+          queueStats={{ 
+            waiting: waitingQueues.length, 
+            active: activeQueues.length, 
+            completed: completedQueues.length, 
+            skipped: skippedQueues.length 
+          }}
+        />
+      )}
       
       {isSimulationMode && (
         <Card className="mb-6 border-orange-200 bg-orange-50">
@@ -96,8 +113,10 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
           </CardContent>
         </Card>
       )}
+
+      <PerformanceMonitor />
       
-      <QueueSummaryCards 
+      <QueueSummaryCards
         waitingQueues={waitingQueues}
         activeQueues={activeQueues}
         completedQueues={completedQueues}
