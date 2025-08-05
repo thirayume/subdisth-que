@@ -11,6 +11,7 @@ import { createLogger } from '@/utils/logger';
 import { simulationLogger } from '@/utils/simulationLogger';
 import { useProgressiveQueueProcessing } from './useProgressiveQueueProcessing';
 import { useIntelligentDecisionPoint } from './useIntelligentDecisionPoint';
+import { simulationModeEmitter } from '@/hooks/useSimulationModeSync';
 
 const logger = createLogger('AnalyticsSimulationV2');
 
@@ -154,6 +155,9 @@ export const useAnalyticsSimulationV2 = () => {
       
       simulationLogger.clearLogs();
 
+      // Immediately switch to real-time mode
+      simulationModeEmitter.emit(false);
+      
       if (deletedCount > 0) {
         toast.success(`🎉 ล้างข้อมูลเรียบร้อยแล้ว (ลบ ${deletedCount} คิว) - กลับสู่โหมดข้อมูลจริง`, { duration: 4000 });
       } else {
@@ -280,6 +284,9 @@ export const useAnalyticsSimulationV2 = () => {
         currentAlgorithm: selectedAlgorithm // Use selected algorithm
       });
 
+      // Immediately switch to simulation mode
+      simulationModeEmitter.emit(true);
+      
       // Force refresh the queue data
       await queryClient.invalidateQueries({ queryKey: ['queues'] });
       await fetchQueues(true);
@@ -304,6 +311,10 @@ export const useAnalyticsSimulationV2 = () => {
 
     setIsRunning(true);
     setSimulationStats(prev => ({ ...prev, phase: 'RUNNING_30', progress: 0 }));
+    
+    // Ensure we're in simulation mode when starting
+    simulationModeEmitter.emit(true);
+    
     toast.info('เริ่มจำลองแบบก้าวหน้า - ประมวลผล 30% ของคิวทั้งหมด');
 
     try {
@@ -559,6 +570,9 @@ export const useAnalyticsSimulationV2 = () => {
   const cleanup = useCallback(async () => {
     setLoading(true);
     logger.info('🧹 MANUAL CLEANUP BUTTON CLICKED');
+    
+    // Immediately switch to real-time mode for instant UI feedback
+    simulationModeEmitter.emit(false);
     
     try {
       await completeCleanup();

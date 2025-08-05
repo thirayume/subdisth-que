@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/utils/logger';
 import { simulationLogger } from '@/utils/simulationLogger';
+import { simulationModeEmitter } from '@/hooks/useSimulationModeSync';
 
 const logger = createLogger('SimulationDataIsolation');
 
@@ -44,7 +45,7 @@ export const useSimulationDataIsolation = () => {
 
       if (!allSimQueues || allSimQueues.length === 0) {
         // No simulation data - reset to normal mode
-        setSimulationMetrics({
+        const defaultMetrics = {
           avgWaitTime: 0,
           avgServiceTime: 0,
           totalQueues: 0,
@@ -52,7 +53,11 @@ export const useSimulationDataIsolation = () => {
           waitingQueues: 0,
           activeQueues: 0,
           isSimulationMode: false
-        });
+        };
+        setSimulationMetrics(defaultMetrics);
+        
+        // Immediately broadcast real-time mode
+        simulationModeEmitter.emit(false);
         return;
       }
 
@@ -100,6 +105,9 @@ export const useSimulationDataIsolation = () => {
 
       setSimulationMetrics(metrics);
       
+      // Immediately broadcast simulation mode
+      simulationModeEmitter.emit(true);
+      
       logger.info('📊 Simulation metrics calculated:', metrics);
       
       // Log metrics capture
@@ -134,7 +142,7 @@ export const useSimulationDataIsolation = () => {
       }
 
       if (!realQueues || realQueues.length === 0) {
-        setSimulationMetrics({
+        const defaultMetrics = {
           avgWaitTime: 0,
           avgServiceTime: 0,
           totalQueues: 0,
@@ -142,7 +150,11 @@ export const useSimulationDataIsolation = () => {
           waitingQueues: 0,
           activeQueues: 0,
           isSimulationMode: false
-        });
+        };
+        setSimulationMetrics(defaultMetrics);
+        
+        // Immediately broadcast real-time mode
+        simulationModeEmitter.emit(false);
         return;
       }
 
@@ -174,6 +186,10 @@ export const useSimulationDataIsolation = () => {
       };
 
       setSimulationMetrics(metrics);
+      
+      // Immediately broadcast real-time mode
+      simulationModeEmitter.emit(false);
+      
       logger.info('📊 Real hospital metrics calculated:', metrics);
 
     } catch (error) {
@@ -242,7 +258,8 @@ export const useSimulationDataIsolation = () => {
           { event: '*', schema: 'public', table: 'queues' },
           (payload) => {
             logger.info('Queue change detected, refreshing metrics...', payload);
-            setTimeout(refreshMetrics, 500); // Small delay to ensure DB consistency
+            // Remove delay for immediate updates
+            refreshMetrics();
           }
       )
       .subscribe();

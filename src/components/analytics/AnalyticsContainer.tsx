@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertTriangle } from 'lucide-react';
 import { useSimulationDataIsolation } from './hooks/useSimulationDataIsolation';
 import { useDataComparison } from '@/hooks/analytics/useDataComparison';
+import { useSimulationModeSync } from '@/hooks/useSimulationModeSync';
 
 interface AnalyticsContainerProps {
   queues: Queue[];
@@ -32,8 +33,11 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
   const { simulationMetrics } = useSimulationDataIsolation();
   const { realData, simulationData, hasSimulationData, hasRealData } = useDataComparison();
   
-  // Determine if we're using simulation or real data
-  const isSimulationMode = simulationMetrics.isSimulationMode;
+  // Use immediate mode synchronization for instant UI updates
+  const { isSimulationMode: syncedMode } = useSimulationModeSync();
+  
+  // Use synced mode for immediate updates, with fallback to metrics
+  const isSimulationMode = syncedMode || simulationMetrics.isSimulationMode;
   const displayStats = isSimulationMode ? {
     avgWaitTime: simulationMetrics.avgWaitTime,
     avgServiceTime: simulationMetrics.avgServiceTime,
