@@ -4,7 +4,7 @@ import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('queueFetching');
 
-export const getNext3WaitingQueues = async (): Promise<{ queue: Queue; patient: Patient }[]> => {
+export const getNext3WaitingQueues = async (): Promise<{ queue: Queue; patient: Patient , servicePoint: ServicePoint }[]> => {
   try {
     // Get today's date
     const today = new Date().toISOString().split('T')[0];
@@ -14,7 +14,8 @@ export const getNext3WaitingQueues = async (): Promise<{ queue: Queue; patient: 
       .from('queues')
       .select(`
         *,
-        patients (*)
+        patients (*),
+        service_points:service_points!queues_service_point_id_fkey (*)
       `)
       .eq('status', 'WAITING')
       .eq('queue_date', today)
@@ -34,10 +35,11 @@ export const getNext3WaitingQueues = async (): Promise<{ queue: Queue; patient: 
 
     // Map queues with their patients
     const queuePatientPairs = queues
-      .filter(q => q.patients) // Only include queues with patients
+      .filter(q => q.patients && q.service_points) // Only include queues with patients
       .map(q => ({
         queue: q as Queue,
-        patient: q.patients as Patient
+        patient: q.patients as Patient,
+        servicePoint: q.service_points as ServicePoint,
       }));
 
     logger.info(`Found ${queuePatientPairs.length} waiting queues with patients`);
@@ -72,7 +74,8 @@ export const getNextQueuesPerServicePoint = async (): Promise<{ servicePoint: Se
         .from('queues')
         .select(`
           *,
-          patients (*)
+          patients (*),
+          service_points:service_points!queues_service_point_id_fkey (*)
         `)
         .eq('status', 'WAITING')
         .eq('queue_date', today)

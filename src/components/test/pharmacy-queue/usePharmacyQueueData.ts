@@ -181,6 +181,8 @@ export const usePharmacyQueueData = ({ servicePointId, refreshTrigger = 0 }: Use
   return {
     selectedServicePoint,
     queuesByStatus,
+    queues,
+    patients,
     getPatientName,
     getPatientData,
     handleCallQueue,

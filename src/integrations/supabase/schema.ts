@@ -14,11 +14,18 @@ export interface Patient {
   profile_image?: string;
   created_at: string;
   updated_at: string;
+  ID_card?: string;
 }
 
-export type QueueTypeEnum = 'GENERAL' | 'URGENT' | 'ELDERLY' | 'APPOINTMENT';
+export type QueueTypeEnum = "GENERAL" | "URGENT" | "ELDERLY" | "APPOINTMENT";
 export type QueueType = QueueTypeEnum; // Add explicit QueueType export
-export type QueueStatus = 'WAITING' | 'ACTIVE' | 'COMPLETED' | 'SKIPPED' | 'CANCELLED' | 'ON_HOLD';
+export type QueueStatus =
+  | "WAITING"
+  | "ACTIVE"
+  | "COMPLETED"
+  | "SKIPPED"
+  | "CANCELLED"
+  | "ON_HOLD";
 
 export interface Queue {
   id: string;
@@ -37,9 +44,10 @@ export interface Queue {
   queue_date?: string;
   paused_at?: string;
   appointment_id?: string;
+  noti_at?: string;
 }
 
-export type AppointmentStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
+export type AppointmentStatus = "SCHEDULED" | "COMPLETED" | "CANCELLED";
 
 export interface Appointment {
   id: string;

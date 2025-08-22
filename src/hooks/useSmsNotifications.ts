@@ -33,8 +33,11 @@ export const useSmsNotifications = () => {
       const totalQueues = queuePatientPairs.length;
 
       // Send SMS to each queue-patient pair
-      for (const { queue, patient } of queuePatientPairs) {
-        const success = await sendSmsToPatient(patient, queue);
+      for (const { queue, patient, servicePoint } of queuePatientPairs) {
+        if(queue.noti_at){
+          continue;
+        }
+        const success = await sendSmsToPatient(patient, queue, servicePoint);
         if (success) {
           totalSent++;
         }

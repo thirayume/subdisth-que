@@ -42,6 +42,7 @@ const QueueManagementContainer: React.FC = () => {
   // Handle patient info view
   const handleViewPatientInfo = (patientId: string) => {
     const patient = patients.find(p => p.id === patientId);
+    console.log("handleViewPatientInfo:",patient)
     if (patient) {
       setSelectedPatient(patient);
       setPatientInfoOpen(true);

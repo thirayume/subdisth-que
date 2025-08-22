@@ -8,7 +8,7 @@ interface PharmacyQueueTabContentProps {
   queues: any[];
   emptyMessage: string;
   getPatientName: (patientId: string) => string;
-  onViewPatientInfo: (queue: any) => void;
+  onViewPatientInfo: (queue: any , value:string) => void;
   onCallQueue?: (queueId: string) => void;
   onUpdateStatus?: (queueId: string, status: string) => void;
   onRecallQueue?: (queueId: string) => void;
@@ -54,9 +54,10 @@ const PharmacyQueueTabContent: React.FC<PharmacyQueueTabContentProps> = ({
             onComplete={onUpdateStatus ? () => onUpdateStatus(queue.id, 'COMPLETED') : undefined}
             onRecall={onRecallQueue ? () => onRecallQueue(queue.id) : undefined}
             onHold={onHoldQueue ? () => onHoldQueue(queue.id) : undefined}
+            onPaused={onUpdateStatus ? () => onUpdateStatus(queue.id, 'PAUSED') : undefined}
             onTransfer={onTransferClick ? () => onTransferClick(queue.id) : undefined}
             onReturnToWaiting={onReturnToWaiting ? () => onReturnToWaiting(queue.id) : undefined}
-            onViewPatientInfo={() => onViewPatientInfo(queue)}
+            onViewPatientInfo={() => onViewPatientInfo(queue,value)}
             isPharmacyInterface={true}
           />
         ))

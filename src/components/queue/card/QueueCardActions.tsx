@@ -16,6 +16,7 @@ interface QueueCardActionsProps {
   onTransfer?: () => void;
   onReturnToWaiting?: () => void;
   onHold?: () => void;
+  onPaused?:() => void;
   onViewPatientInfo?: () => void;
   onCancel?: () => void;
   isPharmacyInterface?: boolean;
@@ -32,6 +33,7 @@ const QueueCardActions: React.FC<QueueCardActionsProps> = ({
   onHold,
   onViewPatientInfo,
   onCancel,
+  onPaused,
   isPharmacyInterface = false
 }) => {
   // Function to handle queue announcement
@@ -86,7 +88,7 @@ const QueueCardActions: React.FC<QueueCardActionsProps> = ({
       )}
       
       {/* Hold Queue - Show for active queues */}
-      {onHold && queue.status === 'ACTIVE' && (
+      {onPaused && queue.status === 'ACTIVE' && (
         <Button variant="outline" size="sm" onClick={onHold}>
           <Pause className="h-4 w-4 mr-1" />
           พัก

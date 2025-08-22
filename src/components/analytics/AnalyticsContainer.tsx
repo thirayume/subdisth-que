@@ -1,61 +1,66 @@
-
-import * as React from 'react';
-import { Queue } from '@/integrations/supabase/schema';
-import { supabase } from '@/integrations/supabase/client';
-import QueueAnalytics from '@/components/dashboard/QueueAnalytics';
-import QueueSummaryCards from '@/components/dashboard/QueueSummaryCards';
-import OverallStats from '@/components/dashboard/OverallStats';
-import AnalyticsSimulation from './AnalyticsSimulation';
-import DataComparisonChart from './charts/DataComparisonChart';
-import ExportAnalytics from './ExportAnalytics';
-import PerformanceMonitor from './PerformanceMonitor';
-import { AnalyticsLoadingSkeleton } from './LoadingStates';
-import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { AlertTriangle } from 'lucide-react';
-import { useSimulationDataIsolation } from './hooks/useSimulationDataIsolation';
-import { useDataComparison } from '@/hooks/analytics/useDataComparison';
-import { useSimulationModeSync } from '@/hooks/useSimulationModeSync';
+import * as React from "react";
+import { Queue } from "@/integrations/supabase/schema";
+import { supabase } from "@/integrations/supabase/client";
+import QueueAnalytics from "@/components/dashboard/QueueAnalytics";
+import QueueSummaryCards from "@/components/dashboard/QueueSummaryCards";
+import OverallStats from "@/components/dashboard/OverallStats";
+import AnalyticsSimulation from "./AnalyticsSimulation";
+import DataComparisonChart from "./charts/DataComparisonChart";
+import ExportAnalytics from "./ExportAnalytics";
+import PerformanceMonitor from "./PerformanceMonitor";
+import { AnalyticsLoadingSkeleton } from "./LoadingStates";
+import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { AlertTriangle } from "lucide-react";
+import { useSimulationDataIsolation } from "./hooks/useSimulationDataIsolation";
+import { useDataComparison } from "@/hooks/analytics/useDataComparison";
+import { useSimulationModeSync } from "@/hooks/useSimulationModeSync";
 
 interface AnalyticsContainerProps {
   queues: Queue[];
   sortQueues: (queues: Queue[]) => Queue[];
 }
 
-const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQueues }) => {
+const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({
+  queues,
+  sortQueues,
+}) => {
   const [waitingQueues, setWaitingQueues] = React.useState<Queue[]>([]);
   const [activeQueues, setActiveQueues] = React.useState<Queue[]>([]);
   const [completedQueues, setCompletedQueues] = React.useState<Queue[]>([]);
   const [skippedQueues, setSkippedQueues] = React.useState<Queue[]>([]);
-  
+
   // Use isolated simulation data hook
   const { simulationMetrics } = useSimulationDataIsolation();
-  const { realData, simulationData, hasSimulationData, hasRealData } = useDataComparison();
-  
+  const { realData, simulationData, hasSimulationData, hasRealData } =
+    useDataComparison();
+
   // Use immediate mode synchronization for instant UI updates
   const { isSimulationMode: syncedMode } = useSimulationModeSync();
-  
+
   // Use synced mode for immediate updates, with fallback to metrics
   const isSimulationMode = syncedMode || simulationMetrics.isSimulationMode;
-  const displayStats = isSimulationMode ? {
-    avgWaitTime: simulationMetrics.avgWaitTime,
-    avgServiceTime: simulationMetrics.avgServiceTime,
-    totalCompletedQueues: simulationMetrics.completedQueues
-  } : {
-    avgWaitTime: 0,
-    avgServiceTime: 0,
-    totalCompletedQueues: 0
-  };
+  const displayStats = isSimulationMode
+    ? {
+        avgWaitTime: simulationMetrics.avgWaitTime,
+        avgServiceTime: simulationMetrics.avgServiceTime,
+        totalCompletedQueues: simulationMetrics.completedQueues,
+      }
+    : {
+        avgWaitTime: 0,
+        avgServiceTime: 0,
+        totalCompletedQueues: 0,
+      };
 
   // Update filtered queues when the main queues array changes
   React.useEffect(() => {
     if (queues) {
-      const waiting = queues.filter(q => q.status === 'WAITING');
-      const active = queues.filter(q => q.status === 'ACTIVE');
-      const completed = queues.filter(q => q.status === 'COMPLETED');
-      const skipped = queues.filter(q => q.status === 'SKIPPED');
-      
+      const waiting = queues.filter((q) => q.status === "WAITING");
+      const active = queues.filter((q) => q.status === "ACTIVE");
+      const completed = queues.filter((q) => q.status === "COMPLETED");
+      const skipped = queues.filter((q) => q.status === "SKIPPED");
+
       setWaitingQueues(sortQueues(waiting));
       setActiveQueues(active);
       setCompletedQueues(completed);
@@ -64,7 +69,7 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
       // Simulation mode is handled by the hook
     }
   }, [queues, sortQueues]);
-  
+
   // Set up export event listener
   React.useEffect(() => {
     // Component initialization
@@ -73,7 +78,7 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
   return (
     <>
       {/* Prominent Mode Indicator - Always visible at top */}
-      <div className={`sticky top-0 z-10 mb-6 rounded-lg border-2 ${
+      {/* <div className={`sticky top-0 z-10 mb-6 rounded-lg border-2 ${
         isSimulationMode 
           ? 'border-orange-400 bg-gradient-to-r from-orange-50 to-orange-100 shadow-lg shadow-orange-200/50' 
           : 'border-green-400 bg-gradient-to-r from-green-50 to-green-100 shadow-lg shadow-green-200/50'
@@ -134,17 +139,17 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
         <ExportAnalytics
           realData={realData}
           simulationData={simulationData}
-          queueStats={{ 
-            waiting: waitingQueues.length, 
-            active: activeQueues.length, 
-            completed: completedQueues.length, 
-            skipped: skippedQueues.length 
+          queueStats={{
+            waiting: waitingQueues.length,
+            active: activeQueues.length,
+            completed: completedQueues.length,
+            skipped: skippedQueues.length,
           }}
         />
       )}
 
-      <PerformanceMonitor />
-      
+      {/* <PerformanceMonitor /> */}
+
       <QueueSummaryCards
         waitingQueues={waitingQueues}
         activeQueues={activeQueues}
@@ -159,18 +164,20 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>
-            {isSimulationMode ? 'สถิติการจำลอง' : 'สถิติโดยรวม'}
+            {isSimulationMode ? "สถิติการจำลอง" : "สถิติโดยรวม"}
             {isSimulationMode && (
-              <Badge variant="outline" className="ml-2 border-orange-300 text-orange-700">
+              <Badge
+                variant="outline"
+                className="ml-2 border-orange-300 text-orange-700"
+              >
                 🔬 Simulation Data
               </Badge>
             )}
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            {isSimulationMode 
-              ? 'ข้อมูลจากการจำลองระบบคิวโรงพยาบาล'
-              : 'ข้อมูลสะสมทั้งหมดตั้งแต่เริ่มใช้ระบบ'
-            }
+            {isSimulationMode
+              ? "ข้อมูลจากการจำลองระบบคิวโรงพยาบาล"
+              : "ข้อมูลสะสมทั้งหมดตั้งแต่เริ่มใช้ระบบ"}
           </p>
         </CardHeader>
         <CardContent>
@@ -181,8 +188,8 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({ queues, sortQue
           />
         </CardContent>
       </Card>
-      
-      <QueueAnalytics 
+
+      <QueueAnalytics
         completedQueues={completedQueues}
         waitingQueues={waitingQueues}
         activeQueues={activeQueues}

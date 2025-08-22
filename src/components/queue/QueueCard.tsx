@@ -15,6 +15,7 @@ interface QueueCardProps {
   onTransfer?: () => void;
   onReturnToWaiting?: () => void;
   onHold?: () => void;
+  onPaused?:()=> void;
   onViewPatientInfo?: () => void;
   onCancel?: () => void;
   servicePointId?: string;
@@ -34,6 +35,7 @@ const QueueCard: React.FC<QueueCardProps> = ({
   onTransfer,
   onReturnToWaiting,
   onHold,
+  onPaused,
   onViewPatientInfo,
   onCancel,
   servicePointName,
@@ -41,7 +43,7 @@ const QueueCard: React.FC<QueueCardProps> = ({
   showServicePointInfo = false,
   isPharmacyInterface = false
 }) => {
-  const hasActions = onComplete || onSkip || onCall || onRecall || onTransfer || onReturnToWaiting || onHold || onViewPatientInfo || onCancel;
+  const hasActions = onComplete || onSkip || onCall || onRecall || onTransfer || onReturnToWaiting || onHold || onViewPatientInfo || onCancel || onPaused;
   
   return (
     <Card className={isPharmacyInterface ? "border-pharmacy-200" : ""}>
@@ -73,6 +75,7 @@ const QueueCard: React.FC<QueueCardProps> = ({
             onTransfer={onTransfer}
             onReturnToWaiting={onReturnToWaiting}
             onHold={onHold}
+            onPaused={onPaused}
             onViewPatientInfo={onViewPatientInfo}
             onCancel={onCancel}
             isPharmacyInterface={isPharmacyInterface}

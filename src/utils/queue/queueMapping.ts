@@ -16,6 +16,9 @@ export const mapToQueueObject = (queueData: any): Queue => {
     updated_at: queueData.updated_at,
     called_at: queueData.called_at || null,
     completed_at: queueData.completed_at || null,
-    queue_date: queueData.queue_date || null
+    queue_date: queueData.queue_date || null,
+    skipped_at: queueData.skipped_at || null,
+    cancelled_at: queueData.cancelled_at || null,
+    paused_at: queueData.paused_at || null,
   };
 };
