@@ -59,7 +59,7 @@ const AppointmentSearchForm: React.FC<AppointmentSearchFormProps> = ({
     <div className="mb-4 space-y-2">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
         {/* Patient Name Search */}
-        <div className="relative">
+        <div className="relative col-span-2">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <Input
             placeholder="ค้นหาตามชื่อผู้ป่วย..."
@@ -70,7 +70,7 @@ const AppointmentSearchForm: React.FC<AppointmentSearchFormProps> = ({
         </div>
 
         {/* Phone Number Search */}
-        <div className="relative">
+        {/* <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <Input
             placeholder="ค้นหาตามเบอร์โทรศัพท์..."
@@ -78,9 +78,9 @@ const AppointmentSearchForm: React.FC<AppointmentSearchFormProps> = ({
             value={phoneSearchTerm}
             onChange={(e) => setPhoneSearchTerm(e.target.value)}
           />
-        </div>
+        </div> */}
 
-        <div className="relative">
+        {/* <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <Input
             placeholder="ค้นหาตามเลขบัตรประชาชน..."
@@ -88,7 +88,7 @@ const AppointmentSearchForm: React.FC<AppointmentSearchFormProps> = ({
             value={idcardSearchTerm}
             onChange={(e) => setIDcardSearchTerm(e.target.value)}
           />
-        </div>
+        </div> */}
 
         {/* Date Range Picker */}
         <div className="flex gap-2">

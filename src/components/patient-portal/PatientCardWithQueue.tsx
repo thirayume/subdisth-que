@@ -134,14 +134,7 @@ const PatientCardWithQueue: React.FC<PatientCardWithQueueProps> = ({
   };
 
   const handleQueueClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    console.log(
-      "[PatientCardWithQueue] Queue button clicked for patient:",
-      patient.name
-    );
-    if (onQueueClick && queueInfo) {
-      onQueueClick(patient, queueInfo);
-    }
+    onSelect(patient);
   };
 
   return (

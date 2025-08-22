@@ -79,12 +79,8 @@ const CreateQueueDialogContent: React.FC<CreateQueueDialogContentProps> = ({
 
   // Control when to show the ID card and phone input fields
   // Show them after search is completed and when a patient is selected or new patient form is shown
-  const showIdCardInput = Boolean(
-    matchedPatients.length > 0 || patientId || showNewPatientForm
-  );
-  const showPhoneInput = Boolean(
-    matchedPatients.length > 0 || patientId || showNewPatientForm
-  );
+  const showIdCardInput = Boolean(showNewPatientForm);
+  const showPhoneInput = Boolean(showNewPatientForm);
 
   console.log("matchedPatients", matchedPatients);
   console.log("showNewPatientForm", showNewPatientForm);
@@ -115,26 +111,23 @@ const CreateQueueDialogContent: React.FC<CreateQueueDialogContentProps> = ({
         showNewPatientForm={showNewPatientForm}
       />
 
-      {(matchedPatients.length > 0 && showNewPatientForm) ||
-        (matchedPatients.length === 0 &&
-          showNewPatientForm &&
-          (searchType === "phone" ? (
-            <IdCardInput
-              idCardNumber={idCardNumber}
-              setIdCardNumber={setIdCardNumber}
-              onEnterPress={handleSearch}
-              disabled={isSearching}
-              showIdCardInput={showIdCardInput}
-            />
-          ) : (
-            <PhoneInput
-              phoneNumber={phoneNumber}
-              setPhoneNumber={setPhoneNumber}
-              onEnterPress={handleSearch}
-              disabled={isSearching}
-              showPhoneInput={showPhoneInput}
-            />
-          )))}
+      {searchType === "phone" ? (
+        <IdCardInput
+          idCardNumber={idCardNumber}
+          setIdCardNumber={setIdCardNumber}
+          onEnterPress={handleSearch}
+          disabled={isSearching}
+          showIdCardInput={showIdCardInput}
+        />
+      ) : (
+        <PhoneInput
+          phoneNumber={phoneNumber}
+          setPhoneNumber={setPhoneNumber}
+          onEnterPress={handleSearch}
+          disabled={isSearching}
+          showPhoneInput={showPhoneInput}
+        />
+      )}
 
       <QueueDetailsForm
         queueType={queueType}

@@ -158,7 +158,7 @@ function App() {
                       );
                       const contextPatient = appointmentPatientContext
                         ? JSON.parse(appointmentPatientContext)
-                        : selectedPatient;
+                        : selectedPatient || patients[0];
 
                       if (!contextPatient) {
                         window.location.href = "/patient-portal";
@@ -180,7 +180,7 @@ function App() {
                       );
                       const contextPatient = medicationPatientContext
                         ? JSON.parse(medicationPatientContext)
-                        : selectedPatient;
+                        : selectedPatient || patients[0];
 
                       if (!contextPatient) {
                         window.location.href = "/patient-portal";
@@ -202,7 +202,7 @@ function App() {
                       );
                       const contextPatient = profilePatientContext
                         ? JSON.parse(profilePatientContext)
-                        : selectedPatient;
+                        : selectedPatient || patients[0];
 
                       if (!contextPatient) {
                         window.location.href = "/patient-portal";
