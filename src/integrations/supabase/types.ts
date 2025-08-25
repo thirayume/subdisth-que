@@ -145,6 +145,7 @@ export type Database = {
           id: string;
           instructions: string | null;
           medication_id: string;
+          dispensed: number | null;
           notes: string | null;
           patient_id: string;
           start_date: string;
@@ -155,6 +156,7 @@ export type Database = {
           dosage: string;
           end_date?: string | null;
           id?: string;
+          dispensed: number | null;
           instructions?: string | null;
           medication_id: string;
           notes?: string | null;
@@ -167,6 +169,7 @@ export type Database = {
           dosage?: string;
           end_date?: string | null;
           id?: string;
+          dispensed: number | null;
           instructions?: string | null;
           medication_id?: string;
           notes?: string | null;

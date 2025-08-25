@@ -1,13 +1,12 @@
-
-import * as React from 'react';
-import { DirectionProvider } from '@radix-ui/react-direction';
-import { useQueues } from '@/hooks/useQueues';
-import AnalyticsHeader from '@/components/analytics/AnalyticsHeader';
-import AnalyticsContainer from '@/components/analytics/AnalyticsContainer';
-import { Queue } from '@/integrations/supabase/schema';
+import * as React from "react";
+import { DirectionProvider } from "@radix-ui/react-direction";
+import { useQueues } from "@/hooks/useQueues";
+import AnalyticsHeader from "@/components/analytics/AnalyticsHeader";
+import AnalyticsContainer from "@/components/analytics/AnalyticsContainer";
+import { Queue } from "@/integrations/supabase/schema";
 
 const Analytics = () => {
-  const { queues, sortQueues } = useQueues();
+  const { allQueuesNofilter, sortQueues, queues } = useQueues();
 
   // Create a wrapper function that matches the expected signature
   const sortQueuesWrapper = (queues: Queue[]): Queue[] => {

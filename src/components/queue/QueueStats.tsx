@@ -75,6 +75,8 @@ interface QueueStatsProps {
   totalPatients: number;
   avgWaitingTime?: number;
   avgServiceTime?: number;
+  avgWaitTimeToday?: number;
+  avgServiceTimeToday?: number;
   className?: string;
   queueDistribution?: {
     regular: number;
@@ -107,6 +109,8 @@ const QueueStats: React.FC<QueueStatsProps> = ({
   },
   predictedWaitTime,
   isSimulationMode = false,
+  avgWaitTimeToday,
+  avgServiceTimeToday,
 }) => {
   // Only show predicted wait time if wait time prediction is enabled
   const showPrediction =
@@ -116,10 +120,15 @@ const QueueStats: React.FC<QueueStatsProps> = ({
   const roundedAvgWaitingTime = Math.round(avgWaitingTime);
   const roundedAvgServiceTime = Math.round(avgServiceTime);
 
+  const roundedAvgWaitingTimeToday = Math.round(avgWaitTimeToday);
+  const roundedAvgServiceTimeToday = Math.round(avgServiceTimeToday);
+
+  console.log("avgWaitTimeToday", avgWaitTimeToday);
+  console.log("predictedWaitTime", predictedWaitTime);
   return (
     <div
       className={`grid grid-cols-1 md:grid-cols-${
-        showPrediction ? "3" : "3"
+        showPrediction ? "4" : "3"
       } gap-6 ${className}`}
     >
       <QueueStatCard
@@ -139,14 +148,13 @@ const QueueStats: React.FC<QueueStatsProps> = ({
             </span>
           </>
         }
-        trend={{ value: 12, label: "จากสัปดาห์ที่แล้ว", positive: true }}
         isSimulation={isSimulationMode}
       />
 
       <QueueStatCard
         title="เวลารอเฉลี่ย (วันนี้)"
         subtitle="จากข้อมูลวันนี้เท่านั้น"
-        value={`${roundedAvgWaitingTime} นาที`}
+        value={`${roundedAvgWaitingTimeToday} นาที`}
         icon={
           <div className="bg-amber-100 p-3 rounded-full">
             <Clock className="w-6 h-6 text-amber-600" />
@@ -154,11 +162,10 @@ const QueueStats: React.FC<QueueStatsProps> = ({
         }
         footer={
           <>
-            เปรียบเทียบรายสัปดาห์{" "}
-            <span className="font-medium text-green-600">-12%</span>
+            ขึ้นอยู่กับเวลารอเข้ารับบริการของวันนี้{" "}
+            {/* <span className="font-medium text-green-600">-12%</span> */}
           </>
         }
-        trend={{ value: 12, label: "ลดลงจากสัปดาห์ที่แล้ว", positive: true }}
         isSimulation={isSimulationMode}
       />
 
@@ -206,7 +213,7 @@ const QueueStats: React.FC<QueueStatsProps> = ({
         <QueueStatCard
           title="คาดการณ์เวลารอ (คิวต่อไป)"
           subtitle="จากการวิเคราะห์ปัจจุบัน"
-          value={`${predictedWaitTime || roundedAvgWaitingTime} นาที`}
+          value={`${predictedWaitTime} นาที`}
           icon={
             <div className="bg-purple-100 p-3 rounded-full">
               <BarChart4 className="w-6 h-6 text-purple-600" />
@@ -214,10 +221,11 @@ const QueueStats: React.FC<QueueStatsProps> = ({
           }
           footer={<>ขึ้นอยู่กับปริมาณผู้รับบริการปัจจุบัน</>}
           trend={
-            avgWaitingTime > predictedWaitTime
+            avgWaitTimeToday >= predictedWaitTime
               ? {
                   value: Math.round(
-                    ((avgWaitingTime - predictedWaitTime) / avgWaitingTime) *
+                    ((avgWaitTimeToday - predictedWaitTime) /
+                      avgWaitTimeToday) *
                       100
                   ),
                   label: "เร็วกว่าค่าเฉลี่ย",
@@ -225,7 +233,8 @@ const QueueStats: React.FC<QueueStatsProps> = ({
                 }
               : {
                   value: Math.round(
-                    ((predictedWaitTime - avgWaitingTime) / avgWaitingTime) *
+                    ((predictedWaitTime - avgWaitTimeToday) /
+                      avgWaitTimeToday) *
                       100
                   ),
                   label: "ช้ากว่าค่าเฉลี่ย",

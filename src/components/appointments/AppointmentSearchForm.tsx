@@ -62,7 +62,7 @@ const AppointmentSearchForm: React.FC<AppointmentSearchFormProps> = ({
         <div className="relative col-span-2">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <Input
-            placeholder="ค้นหาตามชื่อผู้ป่วย..."
+            placeholder="ค้นหาด้วยชื่อ เบอร์โทร เลขบัตรประชาชนผู้ป่วย..."
             className="pl-10"
             value={nameSearchTerm}
             onChange={(e) => setNameSearchTerm(e.target.value)}

@@ -1,10 +1,10 @@
-import { useState, useCallback, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { createLogger } from '@/utils/logger';
-import { simulationLogger } from '@/utils/simulationLogger';
-import { simulationModeEmitter } from '@/hooks/useSimulationModeSync';
+import { useState, useCallback, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { createLogger } from "@/utils/logger";
+import { simulationLogger } from "@/utils/simulationLogger";
+import { simulationModeEmitter } from "@/hooks/useSimulationModeSync";
 
-const logger = createLogger('SimulationDataIsolation');
+const logger = createLogger("SimulationDataIsolation");
 
 export interface SimulationMetrics {
   avgWaitTime: number;
@@ -14,32 +14,38 @@ export interface SimulationMetrics {
   waitingQueues: number;
   activeQueues: number;
   isSimulationMode: boolean;
+  avgWaitTimeToday: number;
+  avgServiceTimeToday: number;
 }
 
 export const useSimulationDataIsolation = () => {
-  const [simulationMetrics, setSimulationMetrics] = useState<SimulationMetrics>({
-    avgWaitTime: 0,
-    avgServiceTime: 0,
-    totalQueues: 0,
-    completedQueues: 0,
-    waitingQueues: 0,
-    activeQueues: 0,
-    isSimulationMode: false
-  });
+  const [simulationMetrics, setSimulationMetrics] = useState<SimulationMetrics>(
+    {
+      avgWaitTime: 0,
+      avgServiceTime: 0,
+      totalQueues: 0,
+      completedQueues: 0,
+      waitingQueues: 0,
+      activeQueues: 0,
+      avgWaitTimeToday: 0,
+      avgServiceTimeToday: 0,
+      isSimulationMode: false,
+    }
+  );
 
   // Fetch ONLY simulation data metrics
   const fetchSimulationMetrics = useCallback(async () => {
     try {
-      logger.info('🔍 Fetching simulation-only metrics...');
-      
+      logger.info("🔍 Fetching simulation-only metrics...");
+
       // Check if we have simulation queues
       const { data: allSimQueues, error: simError } = await supabase
-        .from('queues')
-        .select('*')
-        .like('notes', '%ข้อมูลจำลองโรงพยาบาล%');
+        .from("queues")
+        .select("*")
+        .like("notes", "%ข้อมูลจำลองโรงพยาบาล%");
 
       if (simError) {
-        logger.error('Error fetching simulation queues:', simError);
+        logger.error("Error fetching simulation queues:", simError);
         return;
       }
 
@@ -52,19 +58,19 @@ export const useSimulationDataIsolation = () => {
           completedQueues: 0,
           waitingQueues: 0,
           activeQueues: 0,
-          isSimulationMode: false
+          isSimulationMode: false,
         };
         setSimulationMetrics(defaultMetrics);
-        
+
         // Immediately broadcast real-time mode
         simulationModeEmitter.emit(false);
         return;
       }
 
       // We have simulation data - calculate metrics
-      const completedSim = allSimQueues.filter(q => q.status === 'COMPLETED');
-      const waitingSim = allSimQueues.filter(q => q.status === 'WAITING');
-      const activeSim = allSimQueues.filter(q => q.status === 'ACTIVE');
+      const completedSim = allSimQueues.filter((q) => q.status === "COMPLETED");
+      const waitingSim = allSimQueues.filter((q) => q.status === "WAITING");
+      const activeSim = allSimQueues.filter((q) => q.status === "ACTIVE");
 
       // Calculate simulation-specific metrics
       let avgWaitTime = 0;
@@ -74,8 +80,10 @@ export const useSimulationDataIsolation = () => {
         // Calculate average wait time (created to called)
         const totalWaitTime = completedSim.reduce((sum, queue) => {
           if (queue.called_at && queue.created_at) {
-            const waitMs = new Date(queue.called_at).getTime() - new Date(queue.created_at).getTime();
-            return sum + (waitMs / 60000); // Convert to minutes
+            const waitMs =
+              new Date(queue.called_at).getTime() -
+              new Date(queue.created_at).getTime();
+            return sum + waitMs / 60000; // Convert to minutes
           }
           return sum;
         }, 0);
@@ -83,8 +91,10 @@ export const useSimulationDataIsolation = () => {
         // Calculate average service time (called to completed)
         const totalServiceTime = completedSim.reduce((sum, queue) => {
           if (queue.completed_at && queue.called_at) {
-            const serviceMs = new Date(queue.completed_at).getTime() - new Date(queue.called_at).getTime();
-            return sum + (serviceMs / 60000); // Convert to minutes
+            const serviceMs =
+              new Date(queue.completed_at).getTime() -
+              new Date(queue.called_at).getTime();
+            return sum + serviceMs / 60000; // Convert to minutes
           }
           return sum;
         }, 0);
@@ -100,44 +110,47 @@ export const useSimulationDataIsolation = () => {
         completedQueues: completedSim.length,
         waitingQueues: waitingSim.length,
         activeQueues: activeSim.length,
-        isSimulationMode: true
+        isSimulationMode: true,
       };
 
       setSimulationMetrics(metrics);
-      
+
       // Immediately broadcast simulation mode
       simulationModeEmitter.emit(true);
-      
-      logger.info('📊 Simulation metrics calculated:', metrics);
-      
-      // Log metrics capture
-      simulationLogger.log('METRICS_CAPTURED', 'METRICS_FETCH', 'CURRENT', 'Simulation metrics fetched', metrics);
 
+      logger.info("📊 Simulation metrics calculated:", metrics);
+
+      // Log metrics capture
+      simulationLogger.log(
+        "METRICS_CAPTURED",
+        "METRICS_FETCH",
+        "CURRENT",
+        "Simulation metrics fetched",
+        metrics
+      );
     } catch (error) {
-      logger.error('Error fetching simulation metrics:', error);
+      logger.error("Error fetching simulation metrics:", error);
     }
   }, []);
 
   // Fetch ONLY real (non-simulation) data metrics
   const fetchRealMetrics = useCallback(async () => {
     try {
-      logger.info('🏥 Fetching real hospital data metrics...');
-      
+      logger.info("🏥 Fetching real hospital data metrics...");
+
       // Get today's date at midnight
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       // Fetch real (non-simulation) completed queues for today
       const { data: realQueues, error } = await supabase
-        .from('queues')
-        .select('*')
-        .eq('status', 'COMPLETED')
-        .gte('created_at', today.toISOString())
-        .not('notes', 'like', '%ข้อมูลจำลองโรงพยาบาล%')
-        .order('created_at', { ascending: false });
+        .from("queues")
+        .select("*")
+        .eq("status", "COMPLETED")
+        .order("created_at", { ascending: false });
 
       if (error) {
-        logger.error('Error fetching real metrics:', error);
+        logger.error("Error fetching real metrics:", error);
         return;
       }
 
@@ -149,10 +162,12 @@ export const useSimulationDataIsolation = () => {
           completedQueues: 0,
           waitingQueues: 0,
           activeQueues: 0,
-          isSimulationMode: false
+          isSimulationMode: false,
+          avgWaitTimeToday: 0,
+          avgServiceTimeToday: 0,
         };
         setSimulationMetrics(defaultMetrics);
-        
+
         // Immediately broadcast real-time mode
         simulationModeEmitter.emit(false);
         return;
@@ -161,39 +176,79 @@ export const useSimulationDataIsolation = () => {
       // Calculate real data metrics
       const totalWaitTime = realQueues.reduce((sum, queue) => {
         if (queue.called_at && queue.created_at) {
-          const waitMs = new Date(queue.called_at).getTime() - new Date(queue.created_at).getTime();
-          return sum + (waitMs / 60000);
+          const waitMs =
+            new Date(queue.called_at).getTime() -
+            new Date(queue.created_at).getTime();
+          return sum + waitMs / 60000;
         }
         return sum;
       }, 0);
 
       const totalServiceTime = realQueues.reduce((sum, queue) => {
         if (queue.completed_at && queue.called_at) {
-          const serviceMs = new Date(queue.completed_at).getTime() - new Date(queue.called_at).getTime();
-          return sum + (serviceMs / 60000);
+          const serviceMs =
+            new Date(queue.completed_at).getTime() -
+            new Date(queue.called_at).getTime();
+          return sum + serviceMs / 60000;
+        }
+        return sum;
+      }, 0);
+
+      //today Cal
+      const totalWaitTimeToday = realQueues.reduce((sum, queue) => {
+        console.log("queue_date", queue.queue_date);
+        console.log("dateNow:", new Date().toISOString());
+        if (
+          queue.called_at &&
+          queue.created_at &&
+          queue.queue_date === new Date().toISOString().split("T")[0]
+        ) {
+          const waitMs =
+            new Date(queue.called_at).getTime() -
+            new Date(queue.created_at).getTime();
+          return sum + waitMs / 60000;
+        }
+        return sum;
+      }, 0);
+
+      console.log("totalWaitTimeToday", totalWaitTimeToday);
+
+      const totalServiceTimeToday = realQueues.reduce((sum, queue) => {
+        if (
+          queue.completed_at &&
+          queue.called_at &&
+          queue.queue_date === new Date().toISOString().split("T")[0]
+        ) {
+          const serviceMs =
+            new Date(queue.completed_at).getTime() -
+            new Date(queue.called_at).getTime();
+          return sum + serviceMs / 60000;
         }
         return sum;
       }, 0);
 
       const metrics = {
-        avgWaitTime: Math.round((totalWaitTime / realQueues.length) * 100) / 100,
-        avgServiceTime: Math.round((totalServiceTime / realQueues.length) * 100) / 100,
+        avgWaitTime: Math.round(totalWaitTime / realQueues.length),
+        avgServiceTime: Math.round(totalServiceTime / realQueues.length),
         totalQueues: realQueues.length,
         completedQueues: realQueues.length,
         waitingQueues: 0,
         activeQueues: 0,
-        isSimulationMode: false
+        avgWaitTimeToday: Math.round(totalWaitTimeToday / realQueues.length),
+        avgServiceTimeToday: Math.round(
+          totalServiceTimeToday / realQueues.length
+        ),
+        isSimulationMode: false,
       };
 
       setSimulationMetrics(metrics);
-      
+
       // Immediately broadcast real-time mode
       simulationModeEmitter.emit(false);
-      
-      logger.info('📊 Real hospital metrics calculated:', metrics);
 
+      logger.info("📊 Real hospital metrics calculated:", metrics);
     } catch (error) {
-      logger.error('Error fetching real metrics:', error);
+      logger.error("Error fetching real metrics:", error);
     }
   }, []);
 
@@ -202,9 +257,9 @@ export const useSimulationDataIsolation = () => {
     try {
       // First check if we have any simulation data
       const { data: simCheck } = await supabase
-        .from('queues')
-        .select('id')
-        .like('notes', '%ข้อมูลจำลองโรงพยาบาล%')
+        .from("queues")
+        .select("id")
+        .like("notes", "%ข้อมูลจำลองโรงพยาบาล%")
         .limit(1);
 
       if (simCheck && simCheck.length > 0) {
@@ -215,34 +270,40 @@ export const useSimulationDataIsolation = () => {
         await fetchRealMetrics();
       }
     } catch (error) {
-      logger.error('Error refreshing metrics:', error);
+      logger.error("Error refreshing metrics:", error);
     }
   }, [fetchSimulationMetrics, fetchRealMetrics]);
 
   // Verify complete cleanup
   const verifyCleanup = useCallback(async (): Promise<boolean> => {
     try {
-      logger.info('🔍 Verifying cleanup completion...');
-      
+      logger.info("🔍 Verifying cleanup completion...");
+
       const { data: remainingSimQueues, error } = await supabase
-        .from('queues')
-        .select('id, notes, status, created_at')
-        .like('notes', '%ข้อมูลจำลองโรงพยาบาล%');
+        .from("queues")
+        .select("id, notes, status, created_at")
+        .like("notes", "%ข้อมูลจำลองโรงพยาบาล%");
 
       if (error) {
-        logger.error('Error verifying cleanup:', error);
+        logger.error("Error verifying cleanup:", error);
         return false;
       }
 
-      const isCleanupComplete = !remainingSimQueues || remainingSimQueues.length === 0;
-      
-      logger.info(`✅ Cleanup verification: ${isCleanupComplete ? 'COMPLETE' : 'INCOMPLETE'}`, {
-        remainingSimQueues: remainingSimQueues?.length || 0
-      });
+      const isCleanupComplete =
+        !remainingSimQueues || remainingSimQueues.length === 0;
+
+      logger.info(
+        `✅ Cleanup verification: ${
+          isCleanupComplete ? "COMPLETE" : "INCOMPLETE"
+        }`,
+        {
+          remainingSimQueues: remainingSimQueues?.length || 0,
+        }
+      );
 
       return isCleanupComplete;
     } catch (error) {
-      logger.error('Error during cleanup verification:', error);
+      logger.error("Error during cleanup verification:", error);
       return false;
     }
   }, []);
@@ -253,14 +314,15 @@ export const useSimulationDataIsolation = () => {
 
     // Set up real-time subscription for queue changes
     const channel = supabase
-      .channel('simulation-data-isolation')
-      .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'queues' },
-          (payload) => {
-            logger.info('Queue change detected, refreshing metrics...', payload);
-            // Remove delay for immediate updates
-            refreshMetrics();
-          }
+      .channel("simulation-data-isolation")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "queues" },
+        (payload) => {
+          logger.info("Queue change detected, refreshing metrics...", payload);
+          // Remove delay for immediate updates
+          refreshMetrics();
+        }
       )
       .subscribe();
 
@@ -274,6 +336,6 @@ export const useSimulationDataIsolation = () => {
     refreshMetrics,
     verifyCleanup,
     fetchSimulationMetrics,
-    fetchRealMetrics
+    fetchRealMetrics,
   };
 };

@@ -1,7 +1,6 @@
-
-import * as React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Clock, Users, UserCheck } from 'lucide-react';
+import * as React from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Clock, Users, UserCheck } from "lucide-react";
 
 interface SummaryCardsProps {
   waitingQueueCount: number;
@@ -14,23 +13,25 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({
   waitingQueueCount,
   averageWaitTime,
   averageServiceTime,
-  completedQueueCount
+  completedQueueCount,
 }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
       <Card className="shadow-sm bg-card">
         <CardContent className="p-4">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">คิวที่รอ</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                คิวที่รอ
+              </p>
               <h3 className="text-2xl font-bold">{waitingQueueCount}</h3>
             </div>
             <Users className="h-4 w-4 text-muted-foreground" />
           </div>
         </CardContent>
       </Card>
-      
-      <Card className="shadow-sm bg-card">
+
+      {/* <Card className="shadow-sm bg-card">
         <CardContent className="p-4">
           <div className="flex justify-between items-start">
             <div>
@@ -40,21 +41,25 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({
             <Clock className="h-4 w-4 text-muted-foreground" />
           </div>
         </CardContent>
-      </Card>
-      
+      </Card> */}
+
       <Card className="shadow-sm bg-card">
         <CardContent className="p-4">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">เวลาให้บริการเฉลี่ย</p>
-              <h3 className="text-2xl font-bold">{Math.round(averageServiceTime)} นาที</h3>
+              <p className="text-sm font-medium text-muted-foreground">
+                เวลาให้บริการเฉลี่ย
+              </p>
+              <h3 className="text-2xl font-bold">
+                {Math.round(averageServiceTime)} นาที
+              </h3>
             </div>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </div>
         </CardContent>
       </Card>
-      
-      <Card className="shadow-sm bg-card">
+
+      {/* <Card className="shadow-sm bg-card">
         <CardContent className="p-4">
           <div className="flex justify-between items-start">
             <div>
@@ -64,7 +69,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({
             <UserCheck className="h-4 w-4 text-muted-foreground" />
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 };

@@ -36,21 +36,27 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({
   const { realData, simulationData, hasSimulationData, hasRealData } =
     useDataComparison();
 
+  console.log("simulationMetrics:", simulationMetrics);
+
   // Use immediate mode synchronization for instant UI updates
   const { isSimulationMode: syncedMode } = useSimulationModeSync();
 
   // Use synced mode for immediate updates, with fallback to metrics
   const isSimulationMode = syncedMode || simulationMetrics.isSimulationMode;
-  const displayStats = isSimulationMode
+  const displayStats = simulationMetrics
     ? {
         avgWaitTime: simulationMetrics.avgWaitTime,
         avgServiceTime: simulationMetrics.avgServiceTime,
         totalCompletedQueues: simulationMetrics.completedQueues,
+        avgWaitTimeToday: simulationMetrics.avgWaitTimeToday,
+        avgServiceTimeToday: simulationMetrics.avgServiceTimeToday,
       }
     : {
         avgWaitTime: 0,
         avgServiceTime: 0,
         totalCompletedQueues: 0,
+        avgWaitTimeToday: 0,
+        avgServiceTimeToday: 0,
       };
 
   // Update filtered queues when the main queues array changes
@@ -135,7 +141,7 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({
       )}
 
       {/* Export Analytics - Show when we have data to export */}
-      {(hasRealData || hasSimulationData) && (
+      {/* {(hasRealData || hasSimulationData) && (
         <ExportAnalytics
           realData={realData}
           simulationData={simulationData}
@@ -146,7 +152,7 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({
             skipped: skippedQueues.length,
           }}
         />
-      )}
+      )} */}
 
       {/* <PerformanceMonitor /> */}
 
@@ -157,6 +163,8 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({
         queues={queues}
         avgWaitTime={displayStats.avgWaitTime}
         avgServiceTime={displayStats.avgServiceTime}
+        avgWaitTimeToday={displayStats.avgWaitTimeToday}
+        avgServiceTimeToday={displayStats.avgServiceTimeToday}
         isSimulationMode={isSimulationMode}
       />
 
@@ -165,14 +173,14 @@ const AnalyticsContainer: React.FC<AnalyticsContainerProps> = ({
         <CardHeader>
           <CardTitle>
             {isSimulationMode ? "สถิติการจำลอง" : "สถิติโดยรวม"}
-            {isSimulationMode && (
+            {/* {isSimulationMode && (
               <Badge
                 variant="outline"
                 className="ml-2 border-orange-300 text-orange-700"
               >
                 🔬 Simulation Data
               </Badge>
-            )}
+            )} */}
           </CardTitle>
           <p className="text-sm text-muted-foreground">
             {isSimulationMode

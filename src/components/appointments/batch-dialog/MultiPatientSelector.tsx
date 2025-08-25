@@ -47,7 +47,7 @@ export const MultiPatientSelector: React.FC<MultiPatientSelectorProps> = ({
         <Label>ค้นหาและเลือกผู้ป่วย</Label>
         <div className="flex gap-2 mt-1">
           <Input
-            placeholder="ค้นหาด้วยชื่อ/เบอร์โทรศัพท์/เลขบัตรประจำตัวประชาชน"
+            placeholder="ค้นหาด้วยชื่อ เบอร์โทรศัพท์ เลขบัตรประชาชนผู้ป่วย..."
             value={searchTerm}
             onChange={(e) => onSearchTermChange(e.target.value)}
           />
