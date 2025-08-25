@@ -53,17 +53,6 @@ export const useQueueActions = () => {
   /**
    * Creates a new queue for an existing patient
    */
-
-  const getBangkokDateString = (): string => {
-    const dtf = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Asia/Bangkok",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-    return dtf.format(new Date());
-  };
-
   const createQueueForExistingPatient = React.useCallback(
     async (patientId: string): Promise<QueueCreationResult | null> => {
       try {
@@ -77,7 +66,7 @@ export const useQueueActions = () => {
             type: queueType,
             status: "WAITING",
             notes: notes,
-            queue_date: getBangkokDateString(),
+            queue_date: new Date().toISOString().split("T")[0],
           })
           .select();
 
