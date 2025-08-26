@@ -182,9 +182,9 @@ const QueueStats: React.FC<QueueStatsProps> = ({
           <>
             <div className="mt-2 space-y-1">
               <div className="text-xs text-gray-600">
-                การกระจายตัวของประเภทคิว:
+                ข้อมูลผู้เข้ารับบริการทั้งหมดของวันนี้
               </div>
-              <div className="flex flex-wrap gap-2">
+              {/* <div className="flex flex-wrap gap-2">
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-50 text-blue-700">
                   {queueTypeNames.regular}: {queueDistribution.regular}
                 </span>
@@ -197,13 +197,13 @@ const QueueStats: React.FC<QueueStatsProps> = ({
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-50 text-purple-700">
                   {queueTypeNames.special}: {queueDistribution.special}
                 </span>
-              </div>
+              </div> */}
             </div>
-            เฉลี่ย{" "}
+            {/* เฉลี่ย{" "}
             <span className="font-medium">
               {Math.round((totalQueues / totalPatients) * 10) / 10 || 0}
             </span>{" "}
-            คิว/คน
+            คิว/คน */}
           </>
         }
         isSimulation={isSimulationMode}

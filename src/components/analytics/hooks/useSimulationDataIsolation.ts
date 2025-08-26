@@ -172,6 +172,19 @@ export const useSimulationDataIsolation = () => {
         simulationModeEmitter.emit(false);
         return;
       }
+      const queueTodayCount = realQueues.reduce((sum, queue) => {
+        if (
+          queue.called_at &&
+          queue.created_at &&
+          queue.completed_at &&
+          queue.queue_date === new Date().toISOString().split("T")[0]
+        ) {
+          return sum + 1;
+        }
+        return sum;
+      }, 0);
+
+      console.log("queueTodayCount", queueTodayCount);
 
       // Calculate real data metrics
       const totalWaitTime = realQueues.reduce((sum, queue) => {
@@ -234,9 +247,9 @@ export const useSimulationDataIsolation = () => {
         completedQueues: realQueues.length,
         waitingQueues: 0,
         activeQueues: 0,
-        avgWaitTimeToday: Math.round(totalWaitTimeToday / realQueues.length),
+        avgWaitTimeToday: Math.round(totalWaitTimeToday / queueTodayCount),
         avgServiceTimeToday: Math.round(
-          totalServiceTimeToday / realQueues.length
+          totalServiceTimeToday / queueTodayCount
         ),
         isSimulationMode: false,
       };

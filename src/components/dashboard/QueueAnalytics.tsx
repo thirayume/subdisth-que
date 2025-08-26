@@ -43,7 +43,7 @@ const QueueAnalytics: React.FC<QueueAnalyticsProps> = ({
     handleChangeAlgorithm,
   } = useAnalyticsData(completedQueues, waitingQueues);
 
-  console.log(averageWaitTime);
+  console.log("averageWaitTime", averageWaitTime);
 
   return (
     <DirectionProvider dir="ltr">

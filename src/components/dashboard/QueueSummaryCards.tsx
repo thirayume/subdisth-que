@@ -30,15 +30,17 @@ const QueueSummaryCards: React.FC<QueueSummaryCardsProps> = ({
     ? Math.round(
         (waitingQueues.length * avgServiceTimeToday) /
           Math.max(activeQueues.length, 1)
-      )
+      ) //จำนวนคิวที่รออยู่*ค่าเฉลี่ยของเวลาที่เข้ารับบริการ/คิวที่ถูกเรียก(ถ้าไม่มี=0,มี=1)
     : undefined;
-
+  console.log("predictedWaitTime", predictedWaitTime);
+  console.log("waitingQueues", waitingQueues);
   // Get unique patient IDs to count total patients
   const uniquePatientIds = new Set(queues.map((queue) => queue.patient_id));
   const totalPatients = uniquePatientIds.size;
 
-  console.log("waitingQueues", waitingQueues.length);
-  console.log(" Math.max(activeQueues.length, 1)", activeQueues.length);
+  console.log("avgWaitTimeToday", avgWaitTimeToday);
+  console.log("avgServiceTimeToday", avgServiceTimeToday);
+
   return (
     <div className="mb-6">
       <QueueStats
@@ -47,7 +49,7 @@ const QueueSummaryCards: React.FC<QueueSummaryCardsProps> = ({
         avgWaitingTime={avgWaitTime}
         avgServiceTime={avgServiceTime}
         predictedWaitTime={predictedWaitTime}
-        avgWaitTimeToday={Math.round(avgWaitTimeToday)}
+        avgWaitTimeToday={Math.round(avgWaitTimeToday) || 0}
         avgServiceTimeToday={avgServiceTimeToday}
         queueDistribution={{
           regular: waitingQueues.filter((q) => q.type === "GENERAL").length,
