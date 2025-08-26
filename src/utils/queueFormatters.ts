@@ -73,7 +73,11 @@ export const formatQueueNumber = (
   queueNumber: number
 ): string => {
   // Get the format configuration for this queue type
+  console.log("queueType", queueType);
+  console.log("queueNumber", queueNumber);
   const format = queueTypeConfigs[queueType];
+
+  console.log("format:", format);
 
   // If format is not found, use a default format
   if (!format) {

@@ -1,10 +1,9 @@
-
-import React, { useState, useEffect } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Queue } from '@/integrations/supabase/schema';
-import { formatQueueNumber } from '@/utils/queueFormatters';
-import { Calendar, Clock, User } from 'lucide-react';
-import { appointmentQueueService } from '@/services/appointmentQueueService';
+import React, { useState, useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Queue } from "@/integrations/supabase/schema";
+import { formatQueueNumber } from "@/utils/queueFormatters";
+import { Calendar, Clock, User } from "lucide-react";
+import { appointmentQueueService } from "@/services/appointmentQueueService";
 
 interface QueueCardInfoProps {
   queue: Queue;
@@ -19,7 +18,7 @@ const QueueCardInfo: React.FC<QueueCardInfoProps> = ({
   patientName,
   servicePointName,
   suggestedServicePointName,
-  showServicePointInfo = true
+  showServicePointInfo = true,
 }) => {
   const [appointmentInfo, setAppointmentInfo] = useState<any>(null);
 
@@ -27,7 +26,8 @@ const QueueCardInfo: React.FC<QueueCardInfoProps> = ({
   useEffect(() => {
     const fetchAppointmentInfo = async () => {
       if (queue.appointment_id) {
-        const appointment = await appointmentQueueService.getAppointmentByQueueId(queue.id);
+        const appointment =
+          await appointmentQueueService.getAppointmentByQueueId(queue.id);
         setAppointmentInfo(appointment);
       }
     };
@@ -35,17 +35,19 @@ const QueueCardInfo: React.FC<QueueCardInfoProps> = ({
     fetchAppointmentInfo();
   }, [queue.id, queue.appointment_id]);
 
+  console.log("que", queue);
+
   return (
     <div className="flex-1">
       <div className="flex items-center gap-2 mb-2">
         <span className="text-2xl font-bold text-gray-900">
           {formatQueueNumber(queue.type, queue.number)}
         </span>
-        <Badge variant={queue.type === 'APPOINTMENT' ? 'default' : 'secondary'}>
-          {queue.type === 'APPOINTMENT' ? 'นัดหมาย' : queue.type}
+        <Badge variant={queue.type === "APPOINTMENT" ? "default" : "secondary"}>
+          {queue.type === "APPOINTMENT" ? "นัดหมาย" : queue.type}
         </Badge>
       </div>
-      
+
       <div className="flex items-center gap-1 text-gray-700 mb-1">
         <User className="w-4 h-4" />
         <span className="font-medium">{patientName}</span>
@@ -62,23 +64,25 @@ const QueueCardInfo: React.FC<QueueCardInfoProps> = ({
             <div className="flex items-center gap-1 mb-1">
               <Clock className="w-3 h-3" />
               <span>
-                {new Date(appointmentInfo.date).toLocaleDateString('th-TH', {
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
+                {new Date(appointmentInfo.date).toLocaleDateString("th-TH", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
                 })}
               </span>
             </div>
             <div className="font-medium">{appointmentInfo.purpose}</div>
             {appointmentInfo.notes && (
-              <div className="text-xs text-blue-500 mt-1">{appointmentInfo.notes}</div>
+              <div className="text-xs text-blue-500 mt-1">
+                {appointmentInfo.notes}
+              </div>
             )}
           </div>
         </div>
       )}
-      
+
       {showServicePointInfo && (
         <div className="mt-2">
           {servicePointName ? (
@@ -87,16 +91,15 @@ const QueueCardInfo: React.FC<QueueCardInfoProps> = ({
             </div>
           ) : suggestedServicePointName ? (
             <div className="text-sm text-orange-600">
-              <span className="font-medium">แนะนำ:</span> {suggestedServicePointName}
+              <span className="font-medium">แนะนำ:</span>{" "}
+              {suggestedServicePointName}
             </div>
           ) : (
-            <div className="text-sm text-gray-400">
-              ยังไม่ได้กำหนดจุดบริการ
-            </div>
+            <div className="text-sm text-gray-400">ยังไม่ได้กำหนดจุดบริการ</div>
           )}
         </div>
       )}
-      
+
       {queue.notes && (
         <div className="mt-2 text-sm text-gray-600">
           <span className="font-medium">หมายเหตุ:</span> {queue.notes}

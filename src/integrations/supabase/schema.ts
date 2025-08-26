@@ -31,7 +31,7 @@ export interface Queue {
   id: string;
   number: number;
   patient_id: string;
-  type: QueueTypeEnum;
+  type: string;
   status: QueueStatus;
   service_point_id?: string;
   notes?: string;
