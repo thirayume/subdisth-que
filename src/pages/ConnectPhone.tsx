@@ -119,7 +119,7 @@ const ConnectPhone: React.FC = () => {
               </label>
               <Input
                 id="phone"
-                type="tel"
+                type="text"
                 placeholder="เลขบัตรประจำตัวประชาชน"
                 value={phoneNumber}
                 onChange={(e) => {
