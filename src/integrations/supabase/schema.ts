@@ -69,6 +69,7 @@ export interface Medication {
   unit: string;
   stock: number;
   min_stock: number;
+  image?: string;
   created_at: string;
   updated_at: string;
 }
@@ -126,4 +127,37 @@ export interface ServicePointQueueType {
   queue_type_id: string;
   created_at: string;
   updated_at: string;
+}
+
+// INS-specific types
+export interface ServicePointIns {
+  id: string;
+  code: string;
+  name: string;
+  location?: string;
+  enabled: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface QueueIns {
+  id: string;
+  number: number;
+  type: string;
+  status: QueueStatus;
+  service_point_id: string;
+  // Dates & timestamps
+  queue_date?: string;
+  created_at?: string;
+  updated_at?: string;
+  called_at?: string;
+  completed_at?: string;
+  skipped_at?: string;
+  cancelled_at?: string;
+  paused_at?: string | null;
+  transferred_at?: string;
+  noti_at?: string;
+  // Patient contact/identity for INS
+  phone_number?: string | null;
+  ID_card?: string;
 }

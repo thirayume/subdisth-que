@@ -554,6 +554,176 @@ export type Database = {
         };
         Relationships: [];
       };
+      service_points_ins: {
+        Row: {
+          id: string;
+          code: string | null;
+          name: string | null;
+          enabled: boolean | null;
+          created_at: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          code?: string | null;
+          name?: string | null;
+          enabled?: boolean | null;
+          created_at?: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          code?: string | null;
+          name?: string | null;
+          enabled?: boolean | null;
+          created_at?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      queues_ins: {
+        Row: {
+          id: string;
+          number: number | null;
+          created_at: string;
+          type: string | null;
+          status: string | null;
+          queue_date: string | null;
+          service_point_id: string | null;
+          transferred_to_service_point_id: string | null;
+          called_at: string | null;
+          completed_at: string | null;
+          cancelled_at: string | null;
+          paused_at: string | null;
+          skipped_at: string | null;
+          transferred_at: string | null;
+          noti_at: string | null;
+          phone_number: string | null;
+          ID_card: string | null;
+        };
+        Insert: {
+          id?: string;
+          number?: number | null;
+          created_at?: string;
+          type?: string | null;
+          status?: string | null;
+          queue_date?: string | null;
+          service_point_id?: string | null;
+          transferred_to_service_point_id?: string | null;
+          called_at?: string | null;
+          completed_at?: string | null;
+          cancelled_at?: string | null;
+          paused_at?: string | null;
+          skipped_at?: string | null;
+          transferred_at?: string | null;
+          noti_at?: string | null;
+          phone_number?: string | null;
+          ID_card?: string | null;
+        };
+        Update: {
+          id?: string;
+          number?: number | null;
+          created_at?: string;
+          type?: string | null;
+          status?: string | null;
+          queue_date?: string | null;
+          service_point_id?: string | null;
+          transferred_to_service_point_id?: string | null;
+          called_at?: string | null;
+          completed_at?: string | null;
+          cancelled_at?: string | null;
+          paused_at?: string | null;
+          skipped_at?: string | null;
+          transferred_at?: string | null;
+          noti_at?: string | null;
+          phone_number?: string | null;
+          ID_card?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "queues_ins_service_point_id_fkey";
+            columns: ["service_point_id"];
+            isOneToOne: false;
+            referencedRelation: "service_points_ins";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      queue_ins_types: {
+        Row: {
+          id: string;
+          code: string;
+          name: string;
+          prefix: string;
+          purpose: string | null;
+          format: string;
+          enabled: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          name: string;
+          prefix: string;
+          purpose?: string | null;
+          format: string;
+          enabled?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          code?: string;
+          name?: string;
+          prefix?: string;
+          purpose?: string | null;
+          format?: string;
+          enabled?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      service_point_queue_ins_types: {
+        Row: {
+          id: string;
+          service_point_ins_id: string;
+          queue_ins_type_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          service_point_ins_id: string;
+          queue_ins_type_id: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          service_point_ins_id?: string;
+          queue_ins_type_id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "service_point_queue_types_queue_type_ins_id_fkey";
+            columns: ["queue_ins_type_id"];
+            isOneToOne: false;
+            referencedRelation: "queue_ins_types";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "service_point_queue_types_service_point_ins_id_fkey";
+            columns: ["service_point_ins_id"];
+            isOneToOne: false;
+            referencedRelation: "service_points_ins";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       user_roles: {
         Row: {
           created_at: string | null;

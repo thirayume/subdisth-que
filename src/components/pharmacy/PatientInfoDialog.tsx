@@ -1,38 +1,44 @@
-
-import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Patient } from '@/integrations/supabase/schema';
-import { formatThaiDate } from '@/utils/dateUtils';
-import { Phone, MapPin, Calendar, User, Loader2 } from 'lucide-react';
-import PatientMedicationHistory from './PatientMedicationHistory';
-import { usePatientMedications } from '@/hooks/usePatientMedications';
-import { useMedicationsContext } from '@/components/medications/context/MedicationsContext';
-import { useMedications } from '@/hooks/useMedications';
-import EnhancedMedicationDispenseDialog from './medication-dispense/EnhancedMedicationDispenseDialog';
+import React from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Patient } from "@/integrations/supabase/schema";
+import { formatThaiDate } from "@/utils/dateUtils";
+import { Phone, MapPin, Calendar, User, Loader2 } from "lucide-react";
+import PatientMedicationHistory from "./PatientMedicationHistory";
+import { usePatientMedications } from "@/hooks/usePatientMedications";
+import { useMedicationsContext } from "@/components/medications/context/MedicationsContext";
+import { useMedications } from "@/hooks/useMedications";
+import EnhancedMedicationDispenseDialog from "./medication-dispense/EnhancedMedicationDispenseDialog";
 
 interface PatientInfoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   patient: Patient | null;
   queueNumber?: string;
+  showPharmacyTab?: boolean;
 }
 
 const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
   open,
   onOpenChange,
   patient,
-  queueNumber
+  queueNumber,
+  showPharmacyTab = true,
 }) => {
-  const { 
-    medications: patientMedications, 
+  const {
+    medications: patientMedications,
     loading: medicationsLoading,
     addMedication,
-    fetchMedicationHistory
+    fetchMedicationHistory,
   } = usePatientMedications(patient?.id);
-  
+
   // Try to use context, but fallback to direct hook if not available
   let medications, medicationsListLoading;
   try {
@@ -49,26 +55,28 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
   if (!patient) return null;
 
   const safeMedications = Array.isArray(medications) ? medications : [];
-  const safePatientMedications = Array.isArray(patientMedications) ? patientMedications : [];
+  const safePatientMedications = Array.isArray(patientMedications)
+    ? patientMedications
+    : [];
 
   const handleRefreshHistory = () => {
     if (patient?.id) {
-      console.log('Refreshing medication history for patient:', patient.id);
+      console.log("Refreshing medication history for patient:", patient.id);
       fetchMedicationHistory(patient.id);
     }
   };
 
   const handleDispenseMedication = async (data: any) => {
-    console.log('Dispensing medication in dialog:', data);
+    console.log("Dispensing medication in dialog:", data);
     const result = await addMedication(data);
-    
+
     // Refresh history immediately after successful dispensing
     if (result && patient?.id) {
       setTimeout(() => {
         handleRefreshHistory();
       }, 500); // Small delay to ensure data is saved
     }
-    
+
     return result;
   };
 
@@ -83,10 +91,16 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
         </DialogHeader>
 
         <Tabs defaultValue="info" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList
+            className={`grid w-full ${
+              showPharmacyTab ? "grid-cols-3" : "grid-cols-2"
+            }`}
+          >
             <TabsTrigger value="info">ข้อมูลส่วนตัว</TabsTrigger>
             <TabsTrigger value="history">ประวัติการรับยา</TabsTrigger>
-            <TabsTrigger value="dispense">จ่ายยา</TabsTrigger>
+            {showPharmacyTab && (
+              <TabsTrigger value="dispense">จ่ายยา</TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="info">
@@ -100,11 +114,13 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-gray-500" />
                       <div>
-                        <div className="text-sm text-gray-500">ชื่อ-นามสกุล</div>
+                        <div className="text-sm text-gray-500">
+                          ชื่อ-นามสกุล
+                        </div>
                         <div className="font-medium">{patient.name}</div>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
                       <Badge variant="outline">
                         รหัสผู้ป่วย: {patient.patient_id}
@@ -114,8 +130,12 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
                     <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4 text-gray-500" />
                       <div>
-                        <div className="text-sm text-gray-500">เบอร์โทรศัพท์</div>
-                        <div className="font-medium">{patient.phone || '-'}</div>
+                        <div className="text-sm text-gray-500">
+                          เบอร์โทรศัพท์
+                        </div>
+                        <div className="font-medium">
+                          {patient.phone || "-"}
+                        </div>
                       </div>
                     </div>
 
@@ -124,7 +144,9 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
                         <Calendar className="h-4 w-4 text-gray-500" />
                         <div>
                           <div className="text-sm text-gray-500">วันเกิด</div>
-                          <div className="font-medium">{formatThaiDate(patient.birth_date)}</div>
+                          <div className="font-medium">
+                            {formatThaiDate(patient.birth_date)}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -156,8 +178,12 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
                     )}
 
                     <div>
-                      <div className="text-sm text-gray-500">วันที่ลงทะเบียน</div>
-                      <div className="font-medium">{formatThaiDate(patient.created_at)}</div>
+                      <div className="text-sm text-gray-500">
+                        วันที่ลงทะเบียน
+                      </div>
+                      <div className="font-medium">
+                        {formatThaiDate(patient.created_at)}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -174,27 +200,29 @@ const PatientInfoDialog: React.FC<PatientInfoDialogProps> = ({
             />
           </TabsContent>
 
-          <TabsContent value="dispense">
-            {medicationsListLoading ? (
-              <Card>
-                <CardContent className="flex items-center justify-center py-8">
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    กำลังโหลดข้อมูลยา...
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <EnhancedMedicationDispenseDialog
-                patientId={patient.id}
-                medications={safeMedications}
-                patientMedications={safePatientMedications}
-                loading={medicationsLoading}
-                onDispenseMedication={handleDispenseMedication}
-                onRefreshHistory={handleRefreshHistory}
-              />
-            )}
-          </TabsContent>
+          {showPharmacyTab && (
+            <TabsContent value="dispense">
+              {medicationsListLoading ? (
+                <Card>
+                  <CardContent className="flex items-center justify-center py-8">
+                    <div className="flex items-center gap-2 text-gray-500">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      กำลังโหลดข้อมูลยา...
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <EnhancedMedicationDispenseDialog
+                  patientId={patient.id}
+                  medications={safeMedications}
+                  patientMedications={safePatientMedications}
+                  loading={medicationsLoading}
+                  onDispenseMedication={handleDispenseMedication}
+                  onRefreshHistory={handleRefreshHistory}
+                />
+              )}
+            </TabsContent>
+          )}
         </Tabs>
       </DialogContent>
     </Dialog>

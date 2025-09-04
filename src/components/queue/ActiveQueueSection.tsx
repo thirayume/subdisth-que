@@ -2,12 +2,8 @@ import React, { useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Queue, Patient, ServicePoint } from "@/integrations/supabase/schema";
 import { formatQueueNumber } from "@/utils/queueFormatters";
-import {
-  initializeAudioChunks,
-  playNextChunk,
-  cancelSpeech,
-} from "@/utils/tts/audioManager";
-import { defaultTTSOptions } from "@/utils/tts/types";
+import { cancelSpeech } from "@/utils/tts/audioManager";
+import { announceQueue } from "@/utils/textToSpeech";
 
 interface ActiveQueueSectionProps {
   activeQueues: Queue[];
@@ -29,14 +25,15 @@ const ActiveQueueSection: React.FC<ActiveQueueSectionProps> = ({
   const enqueuedSetRef = useRef<Set<string>>(new Set()); // key: `${id}:${called_at}`
   const isDrainingRef = useRef<boolean>(false);
 
-  // Build announcement chunks for a queue item
+  // ฟังก์ชันนี้ไม่จำเป็นต้องใช้อีกต่อไปเนื่องจากเราใช้ announceQueue แทน
+  // แต่เราจะเก็บไว้เพื่อความเข้ากันได้กับโค้ดเดิม
   const buildChunks = (q: Queue): string[] => {
     const patient = findPatient(q.patient_id);
     const patientName = patient ? patient.name : "ผู้ป่วย";
     const servicePoint = findServicePoint(q.service_point_id ?? null);
     console.log("servicePoint:", servicePoint);
     const servicePointName = servicePoint ? servicePoint.name : "";
-    const numberText = formatQueueNumber(q.type, q.number);
+    const numberText = formatQueueNumber(q.type as any, q.number);
 
     const chunks: string[] = [
       `ขอเชิญหมายเลข ${numberText}`,
@@ -53,11 +50,19 @@ const ActiveQueueSection: React.FC<ActiveQueueSectionProps> = ({
       while (pendingQueueRef.current.length > 0) {
         const item = pendingQueueRef.current.shift()!;
         try {
-          initializeAudioChunks(item.chunks);
-          await new Promise<void>((resolve) => {
-            // Resolve on success or error to keep the queue moving
-            playNextChunk(defaultTTSOptions, resolve, () => resolve());
-          });
+          // หาข้อมูล queue จากไอดี
+          const queue = activeQueues.find((q) => q.id === item.id);
+          if (queue) {
+            const servicePoint = findServicePoint(
+              queue.service_point_id ?? null
+            );
+            // ใช้ announceQueue แทนการใช้ initializeAudioChunks และ playNextChunk โดยตรง
+            await announceQueue(
+              queue.number,
+              servicePoint || { name: "ช่องบริการ หนึ่ง" },
+              queue.type
+            );
+          }
         } finally {
           // Mark this queue id as announced for this called_at
           announcedMapRef.current.set(item.id, item.called_at);
@@ -107,7 +112,7 @@ const ActiveQueueSection: React.FC<ActiveQueueSectionProps> = ({
   }, []);
 
   return (
-    <div className="lg:col-span-6 space-y-6">
+    <div className="lg:col-span-12 space-y-6">
       <h2 className="text-xl font-semibold text-gray-800">กำลังให้บริการ</h2>
 
       {activeQueues.length === 0 ? (
@@ -137,7 +142,7 @@ const ActiveQueueSection: React.FC<ActiveQueueSectionProps> = ({
                       กำลังเรียก
                     </div>
                     <div className="queue-number text-8xl font-bold text-pharmacy-600 mb-4">
-                      {formatQueueNumber(queue.type, queue.number)}
+                      {formatQueueNumber(queue.type as any, queue.number)}
                     </div>
                     <div className="text-lg font-medium text-gray-800 mb-1">
                       {patientName}

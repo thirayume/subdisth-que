@@ -8,6 +8,8 @@ import Patients from "@/pages/Patients";
 import Medications from "@/pages/Medications";
 import QueueManagement from "@/pages/QueueManagement";
 import QueueBoard from "@/pages/QueueBoard";
+import QueueInsBoard from "@/pages/QueueInsBoard";
+import CombinedQueueBoard from "@/pages/CombinedQueueBoard";
 import Settings from "@/pages/Settings";
 import Analytics from "@/pages/Analytics";
 import Appointments from "@/pages/Appointments";
@@ -27,6 +29,8 @@ import PatientAppointments from "@/components/patient-portal/PatientAppointments
 import PatientProfile from "@/components/patient-portal/PatientProfile";
 import PatientMedications from "@/components/patient-portal/PatientMedications";
 import { Toaster } from "@/components/ui/toaster";
+import QueueCreateINS from "./pages/QueueCreateINS";
+import InsQueue from "./pages/InsQueue";
 
 // Create a QueryClient instance
 const queryClient = new QueryClient({
@@ -103,6 +107,15 @@ function App() {
                 }
               />
               <Route
+                path="/ins-queue"
+                element={
+                  <Layout fullWidth={true}>
+                    <InsQueue />
+                  </Layout>
+                }
+              />
+
+              <Route
                 path="/service-point-queue"
                 element={
                   <Layout>
@@ -144,8 +157,14 @@ function App() {
               />
               <Route path="/auth/line/callback" element={<LineCallback />} />
               <Route path="/queue/create" element={<CreateQueue />} />
+              <Route path="/queue/create-ins" element={<QueueCreateINS />} />
               <Route path="/queue-ticket" element={<QueueTicket />} />
               <Route path="/queue-board" element={<QueueBoard />} />
+              <Route path="/queue-board-ins" element={<QueueInsBoard />} />
+              <Route
+                path="/combined-queue-board"
+                element={<CombinedQueueBoard />}
+              />
 
               {/* Patient portal protected routes */}
               <Route

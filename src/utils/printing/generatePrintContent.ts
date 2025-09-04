@@ -1,39 +1,41 @@
+import { BASE_URL } from "@/config/constants";
+import { formatQueueNumber } from "@/utils/queueFormatters";
+import { PrintQueueOptions } from "./types";
+import { DEFAULT_PRINT_STYLES, QR_CODE_SCRIPT_URL } from "./constants";
+import { createLogger } from "@/utils/logger";
 
-import { BASE_URL } from '@/config/constants';
-import { formatQueueNumber } from '@/utils/queueFormatters';
-import { PrintQueueOptions } from './types';
-import { DEFAULT_PRINT_STYLES, QR_CODE_SCRIPT_URL } from './constants';
-import { createLogger } from '@/utils/logger';
-
-const logger = createLogger('generatePrintContent');
+const logger = createLogger("generatePrintContent");
 
 export function generatePrintContent(options: PrintQueueOptions): string {
   const {
     queueNumber,
     queueType,
-    patientName = '',
-    patientPhone = '',
-    patientLineId = '',
-    purpose = '',
+    patientName = "",
+    patientPhone = "",
+    patientLineId = "",
+    purpose = "",
     estimatedWaitTime = 15,
+    waitTiemQueueNext = 0,
   } = options;
-  
+
   const formattedQueueNumber = formatQueueNumber(queueType, queueNumber);
-  
+
   // Create the QR code URL for tracking the queue
-  const patientPortalUrl = `${BASE_URL}/patient-portal?queue=${queueNumber}${queueType ? `&type=${queueType}` : ''}`;
+  const patientPortalUrl = `${BASE_URL}/patient-portal?queue=${queueNumber}${
+    queueType ? `&type=${queueType}` : ""
+  }`;
   logger.debug(`Generated QR URL: ${patientPortalUrl}`);
-  
-  const currentDate = new Date().toLocaleDateString('th-TH', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
+
+  const currentDate = new Date().toLocaleDateString("th-TH", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
-  
-  const currentTime = new Date().toLocaleTimeString('th-TH');
-  
+
+  const currentTime = new Date().toLocaleTimeString("th-TH");
+
   logger.debug(`Formatted date and time: ${currentDate} ${currentTime}`);
-  
+
   return `
     <!DOCTYPE html>
     <html>
@@ -48,15 +50,31 @@ export function generatePrintContent(options: PrintQueueOptions): string {
       </head>
       <body>
         <h2>คิวของท่าน</h2>
-        ${patientName ? `<div class="patient-header">${patientName}</div>` : ''}
-        ${patientPhone ? `<div class="patient-info">📱 ${patientPhone}</div>` : ''}
+        ${patientName ? `<div class="patient-header">${patientName}</div>` : ""}
+        ${
+          patientPhone
+            ? `<div class="patient-info">📱 ${patientPhone}</div>`
+            : ""
+        }
         
         <div class="queue-number">${formattedQueueNumber}</div>
         
-        ${estimatedWaitTime ? `<div class="wait-time">⏱️ เวลารอโดยประมาณ: ${estimatedWaitTime} นาที</div>` : ''}
+        ${
+          waitTiemQueueNext
+            ? `<div class="wait-time">⏱️ เวลารอโดยประมาณ: ${waitTiemQueueNext} นาที</div>`
+            : ""
+        }
         
-        ${patientLineId ? `<div class="patient-info">💬 LINE ID: ${patientLineId}</div>` : ''}
-        ${purpose ? `<div class="purpose-info">วัตถุประสงค์: ${purpose}</div>` : ''}
+        ${
+          patientLineId
+            ? `<div class="patient-info">💬 LINE ID: ${patientLineId}</div>`
+            : ""
+        }
+        ${
+          purpose
+            ? `<div class="purpose-info">วัตถุประสงค์: ${purpose}</div>`
+            : ""
+        }
         
         <div class="queue-info">
           วันที่: ${currentDate}

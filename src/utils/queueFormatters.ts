@@ -44,9 +44,15 @@ const fetchFromDatabase = async () => {
       .from("queue_types")
       .select("code, prefix, format")
       .order("priority", { ascending: false });
+
+    const { data: queueTypesIns } = await (supabase as any)
+      .from("queue_ins_types")
+      .select("code, prefix, format")
+      .order("priority", { ascending: false });
+
     if (error) throw error;
-    if (data) {
-      queueTypeConfigs = mapQueueTypesToConfig(data);
+    if (data && queueTypesIns) {
+      queueTypeConfigs = mapQueueTypesToConfig([...data, ...queueTypesIns]);
     }
   } catch (e) {
     // Fail silently; fallback logic will handle missing configs
@@ -69,7 +75,7 @@ const fetchFromDatabase = async () => {
 
 // Format the queue number with the type prefix
 export const formatQueueNumber = (
-  queueType: QueueType,
+  queueType: any,
   queueNumber: number
 ): string => {
   // Get the format configuration for this queue type

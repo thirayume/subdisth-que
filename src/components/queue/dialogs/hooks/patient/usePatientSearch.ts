@@ -26,7 +26,10 @@ export const usePatientSearch = (): PatientSearchState &
   }, []);
 
   const handleSearch = React.useCallback(async () => {
-    const searchValue = searchType === "phone" ? phoneNumber : idCardNumber;
+    const searchValue =
+      searchType === "phone"
+        ? phoneNumber
+        : idCardNumber?.replace(/[\s-]/g, "");
     const searchField = searchType === "phone" ? "phone" : "ID_card";
     const errorMessage =
       searchType === "phone"
@@ -48,6 +51,7 @@ export const usePatientSearch = (): PatientSearchState &
       logger.debug(
         `Making Supabase request to search for patients by ${searchField}`
       );
+
       const { data, error } = await supabase
         .from("patients")
         .select("*")

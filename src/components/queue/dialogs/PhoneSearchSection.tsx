@@ -50,7 +50,17 @@ const PhoneSearchSection: React.FC<PhoneSearchSectionProps> = ({
       setPhoneNumber(value);
     } else {
       logger.verbose(`ID card number input changed: ${value}`);
-      setIdCardNumber(value);
+      const formatIdCard = (value: string) => {
+        const numbers = value.replace(/\D/g, "");
+        if (numbers.length <= 13) {
+          return numbers.replace(
+            /(\d{1})(\d{4})(\d{5})(\d{2})(\d{1})/,
+            "$1-$2-$3-$4-$5"
+          );
+        }
+        return value;
+      };
+      setIdCardNumber(formatIdCard(value));
     }
   };
 
@@ -100,6 +110,7 @@ const PhoneSearchSection: React.FC<PhoneSearchSectionProps> = ({
             searchType === "phone" ? "กรอกเบอร์โทรศัพท์" : "กรอกเลขบัตรประชาชน"
           }
           disabled={isSearching}
+          maxLength={searchType === "id_card" ? 17 : 10}
         />
         <Button
           variant="outline"

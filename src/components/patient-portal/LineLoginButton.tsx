@@ -59,7 +59,8 @@ const LineLoginButton: React.FC<LineLoginButtonProps> = ({
       // Generate a fake token
       const fakeToken = `line-${Math.random().toString(36).substring(2, 15)}`;
 
-      onLoginSuccess(fakeToken, phoneNumber);
+      const cleanIDCard = phoneNumber?.replace(/[\s-]/g, "");
+      onLoginSuccess(fakeToken, cleanIDCard);
       toast.success("เข้าสู่ระบบสำเร็จ");
     } catch (error) {
       console.error("Error logging in:", error);
@@ -74,14 +75,27 @@ const LineLoginButton: React.FC<LineLoginButtonProps> = ({
       <form onSubmit={handlePhoneSubmit} className="space-y-4">
         <div className="space-y-2">
           <label htmlFor="phone" className="text-sm font-medium text-gray-700">
-            กรอกเบอร์โทรศัพท์เพื่อเข้าสู่ระบบ
+            กรอกเลขบัตรประจำตัวประชาชนเพื่อเข้าสู่ระบบ
           </label>
           <Input
             id="phone"
-            type="tel"
-            placeholder="เบอร์โทรศัพท์"
+            type="text"
+            placeholder="X-XXXX-XXXXX-XX-X"
             value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
+            onChange={(e) => {
+              const formatIdCard = (value: string) => {
+                const numbers = value.replace(/\D/g, "");
+                if (numbers.length <= 13) {
+                  return numbers.replace(
+                    /(\d{1})(\d{4})(\d{5})(\d{2})(\d{1})/,
+                    "$1-$2-$3-$4-$5"
+                  );
+                }
+                return value;
+              };
+              setPhoneNumber(formatIdCard(e.target.value));
+            }}
+            maxLength={17}
             required
           />
         </div>
@@ -122,7 +136,7 @@ const LineLoginButton: React.FC<LineLoginButtonProps> = ({
           onClick={handleShowPhoneInput}
           className="text-sm text-gray-500 hover:underline"
         >
-          หรือเข้าสู่ระบบด้วยเบอร์โทรศัพท์
+          หรือเข้าสู่ระบบด้วยเลขบัตรประจำตัวประชาชน
         </button>
       </div>
     </div>

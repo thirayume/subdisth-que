@@ -10,6 +10,7 @@ import { speakText } from "@/utils/textToSpeech";
 import { Patient } from "@/integrations/supabase/schema";
 import { useIsMobile } from "@/hooks/use-mobile";
 import SelectedPatientInfo from "./SelectedPatientInfo";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface PatientMedicationsProps {
   patient: Patient;
@@ -19,6 +20,7 @@ const PatientMedications: React.FC<PatientMedicationsProps> = ({ patient }) => {
   const { medications, loading } = usePatientMedications(patient.id);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const isMobile = useIsMobile();
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const handleBack = () => {
     window.location.href = "/patient-portal";
@@ -115,7 +117,18 @@ const PatientMedications: React.FC<PatientMedicationsProps> = ({ patient }) => {
                 key={med.id}
                 className="p-4 rounded-md border border-gray-200 hover:border-pharmacy-200 hover:bg-pharmacy-50 transition-colors"
               >
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-3">
+                  {med.medication?.image && (
+                    <img
+                      src={med.medication.image}
+                      alt={med.medication?.name || "Medication"}
+                      className="h-16 w-16 object-cover rounded-md border flex-shrink-0 cursor-zoom-in"
+                      loading="lazy"
+                      onClick={() =>
+                        setPreviewImage(med.medication!.image as string)
+                      }
+                    />
+                  )}
                   <div className="flex-1">
                     <h3 className="font-medium text-pharmacy-700">
                       {med.medication?.name}
@@ -167,6 +180,21 @@ const PatientMedications: React.FC<PatientMedicationsProps> = ({ patient }) => {
               </div>
             ))}
           </div>
+          {/* Image Lightbox */}
+          <Dialog
+            open={!!previewImage}
+            onOpenChange={(open) => !open && setPreviewImage(null)}
+          >
+            <DialogContent className="sm:max-w-2xl">
+              {previewImage && (
+                <img
+                  src={previewImage}
+                  alt="Medication preview"
+                  className="w-full h-auto max-h-[80vh] object-contain rounded-md"
+                />
+              )}
+            </DialogContent>
+          </Dialog>
         </CardContent>
       </Card>
     );

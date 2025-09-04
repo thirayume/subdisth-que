@@ -6,6 +6,7 @@ import PatientHeader from "@/components/patients/PatientHeader";
 import PatientStats from "@/components/patients/PatientStats";
 import PatientFormCard from "@/components/patients/PatientFormCard";
 import PatientFilterSection from "@/components/patients/PatientFilterSection";
+import PatientInfoDialog from "@/components/pharmacy/PatientInfoDialog";
 
 const PatientDashboard = () => {
   const {
@@ -22,6 +23,7 @@ const PatientDashboard = () => {
   const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [showPatientInfoDialog, setShowPatientInfoDialog] = useState(false);
   const navigate = useNavigate();
 
   // Filter patients based on search term
@@ -58,7 +60,7 @@ const PatientDashboard = () => {
 
   const handleSelectPatient = (patient: Patient) => {
     setSelectedPatient(patient);
-    // Navigate to patient detail or show detail modal
+    setShowPatientInfoDialog(true);
   };
 
   const handleEditPatient = (patient: Patient) => {
@@ -109,6 +111,14 @@ const PatientDashboard = () => {
           onEditPatient={handleEditPatient}
         />
       )}
+
+      {/* Patient Info Dialog */}
+      <PatientInfoDialog
+        open={showPatientInfoDialog}
+        onOpenChange={(open) => setShowPatientInfoDialog(open)}
+        patient={selectedPatient}
+        showPharmacyTab={false}
+      />
     </div>
   );
 };
