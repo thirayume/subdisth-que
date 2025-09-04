@@ -41,7 +41,7 @@ const ConnectPhone: React.FC = () => {
       const { data: existingPatient, error: findError } = await supabase
         .from("patients")
         .select("*")
-        .eq("ID_card", phoneNumber)
+        .eq("ID_card", phoneNumber?.replace(/[\s-]/g, ""))
         .single();
 
       if (findError && findError.code !== "PGRST116") {
@@ -122,7 +122,20 @@ const ConnectPhone: React.FC = () => {
                 type="tel"
                 placeholder="เลขบัตรประจำตัวประชาชน"
                 value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
+                onChange={(e) => {
+                  const formatIdCard = (value: string) => {
+                    const numbers = value.replace(/\D/g, "");
+                    if (numbers.length <= 13) {
+                      return numbers.replace(
+                        /(\d{1})(\d{4})(\d{5})(\d{2})(\d{1})/,
+                        "$1-$2-$3-$4-$5"
+                      );
+                    }
+                    return value;
+                  };
+                  setPhoneNumber(formatIdCard(e.target.value));
+                }}
+                maxLength={17}
                 required
               />
               <p className="text-xs text-gray-500">
