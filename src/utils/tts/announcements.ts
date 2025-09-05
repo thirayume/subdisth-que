@@ -85,10 +85,10 @@ export function createServicePointAnnouncement(
   if (servicePointInfo && (servicePointInfo.code || servicePointInfo.name)) {
     let servicePointParts = [];
 
-    if (servicePointInfo.code) {
-      const thaiCode = convertServicePointCodeToThai(servicePointInfo.code);
-      servicePointParts.push(thaiCode);
-    }
+    // if (servicePointInfo.code) {
+    //   const thaiCode = convertServicePointCodeToThai(servicePointInfo.code);
+    //   servicePointParts.push(thaiCode);
+    // }
 
     if (servicePointInfo.name) {
       servicePointParts.push(servicePointInfo.name);

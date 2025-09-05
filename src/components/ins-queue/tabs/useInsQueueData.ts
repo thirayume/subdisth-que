@@ -30,7 +30,7 @@ export const useInsQueueData = ({
   // Fetch queues
   const fetchQueues = useCallback(
     async (forceRefresh = false) => {
-      if (!servicePointId && !forceRefresh) return;
+      if (!forceRefresh) return;
 
       setLoading(true);
       try {
@@ -44,7 +44,7 @@ export const useInsQueueData = ({
           console.error("Error fetching INS queues:", error);
           return;
         }
-
+        console.log("Fetched INS queues:", data);
         setQueues(data || []);
       } catch (error) {
         console.error("Error in fetchQueues:", error);
@@ -52,20 +52,20 @@ export const useInsQueueData = ({
         setLoading(false);
       }
     },
-    [servicePointId]
+    [refreshTrigger]
   );
 
   // Fetch queues on mount and when refreshTrigger changes
   useEffect(() => {
-    fetchQueues();
+    fetchQueues(true);
   }, [fetchQueues, refreshTrigger]);
 
   // Filter queues for the selected service point
   const servicePointQueues = useMemo(() => {
-    if (!servicePointId) return [];
+    // if (!servicePointId) return [];
 
     return queues.filter((queue) => {
-      const isServicePointMatch = queue.service_point_id === servicePointId;
+      // const isServicePointMatch = queue.service_point_id === servicePointId;
 
       // Include all relevant statuses
       const isRelevantStatus = [
@@ -86,9 +86,9 @@ export const useInsQueueData = ({
         : new Date(queue.created_at || "");
       const isRecentQueue = queueDate >= threeDaysAgo;
 
-      return isServicePointMatch && isRelevantStatus && isRecentQueue;
+      return isRelevantStatus && isRecentQueue;
     });
-  }, [queues, servicePointId]);
+  }, [queues]);
 
   // Get selected service point
   const selectedServicePoint = servicePointId
@@ -100,9 +100,11 @@ export const useInsQueueData = ({
     const waiting = servicePointQueues.filter(
       (q) => q.status === "WAITING" && !q.paused_at
     );
-    const active = servicePointQueues.filter((q) => q.status === "ACTIVE");
+    const active = servicePointQueues.filter(
+      (q) => q.status === "ACTIVE" && q.service_point_id === servicePointId
+    );
     const completed = servicePointQueues.filter(
-      (q) => q.status === "COMPLETED"
+      (q) => q.status === "COMPLETED" && q.service_point_id === servicePointId
     );
     const skipped = servicePointQueues.filter((q) => q.status === "SKIPPED");
     const paused = servicePointQueues.filter(
@@ -110,14 +112,18 @@ export const useInsQueueData = ({
     );
 
     return { waiting, active, completed, skipped, paused };
-  }, [servicePointQueues]);
+  }, [servicePointQueues, servicePointId]);
 
   // Queue action handlers
   const handleCallQueue = async (queueId: string) => {
     try {
       const { error } = await supabase
         .from("queues_ins")
-        .update({ status: "ACTIVE", called_at: new Date().toISOString() })
+        .update({
+          status: "ACTIVE",
+          called_at: new Date().toISOString(),
+          service_point_id: servicePointId,
+        })
         .eq("id", queueId);
 
       if (error) {

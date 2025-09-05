@@ -22,8 +22,7 @@ export const useQueueTypesData = () => {
 
       const { data: queueTypesIns } = await (supabase as any)
         .from("queue_ins_types")
-        .select("*")
-        .order("priority", { ascending: false });
+        .select("*");
 
       if (error) {
         throw error;

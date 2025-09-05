@@ -47,8 +47,7 @@ const fetchFromDatabase = async () => {
 
     const { data: queueTypesIns } = await (supabase as any)
       .from("queue_ins_types")
-      .select("code, prefix, format")
-      .order("priority", { ascending: false });
+      .select("code, prefix, format");
 
     if (error) throw error;
     if (data && queueTypesIns) {

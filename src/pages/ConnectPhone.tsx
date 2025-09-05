@@ -63,7 +63,7 @@ const ConnectPhone: React.FC = () => {
         if (updateError) throw updateError;
 
         // Store user data and navigate to patient portal
-        localStorage.setItem("userPhone", phoneNumber);
+        localStorage.setItem("userPhone", phoneNumber?.replace(/[\s-]/g, ""));
         toast.success("เชื่อมต่อ LINE Account เรียบร้อยแล้ว");
         navigate("/patient-portal");
       } else {
