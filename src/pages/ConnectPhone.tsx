@@ -25,7 +25,7 @@ const ConnectPhone: React.FC = () => {
     e.preventDefault();
 
     if (!phoneNumber.trim()) {
-      toast.error("กรุณากรอกเบอร์โทรศัพท์");
+      toast.error("กรุณากรอกเลขบัตรประชาชน");
       return;
     }
 
@@ -67,7 +67,7 @@ const ConnectPhone: React.FC = () => {
         toast.success("เชื่อมต่อ LINE Account เรียบร้อยแล้ว");
         navigate("/patient-portal");
       } else {
-        toast.error("ไม่พบข้อมูลผู้ป่วยที่มีเบอร์โทรศัพท์นี้");
+        toast.error("ไม่พบข้อมูลผู้ป่วยของเลขบัตรประชาชนนี้");
       }
     } catch (error) {
       console.error("Error connecting phone:", error);

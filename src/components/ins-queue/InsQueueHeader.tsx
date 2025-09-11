@@ -1,6 +1,7 @@
 import React from "react";
 import { RefreshCw, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -9,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ServicePointIns } from "@/integrations/supabase/schema";
+import { useNavigate } from "react-router-dom";
 
 interface InsQueueHeaderProps {
   selectedServicePoint: ServicePointIns | null;
@@ -23,52 +25,59 @@ const InsQueueHeader: React.FC<InsQueueHeaderProps> = ({
   onServicePointChange,
   onRefresh,
 }) => {
+  const navigate = useNavigate();
+
+  const handleSettingsClick = () => {
+    navigate("/settings");
+  };
+
   return (
-    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-800">ระบบจัดการคิวเข้าตรวจ</h1>
-        <p className="text-gray-500 mt-1">จัดการคิวผู้ป่วยที่รอเข้าตรวจ</p>
-      </div>
+    <Card>
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold text-pharmacy-600">บริการตรวจ</h1>
+            <Select
+              value={selectedServicePoint?.id || ""}
+              onValueChange={onServicePointChange}
+            >
+              <SelectTrigger className="w-64">
+                <SelectValue placeholder="เลือกจุดบริการ" />
+              </SelectTrigger>
+              <SelectContent>
+                {servicePoints.map((servicePoint) => (
+                  <SelectItem key={servicePoint.id} value={servicePoint.id}>
+                    {servicePoint.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      <div className="flex items-center gap-3 self-end md:self-auto">
-        <div className="w-64">
-          <Select
-            value={selectedServicePoint?.id || ""}
-            onValueChange={onServicePointChange}
-          >
-            <SelectTrigger className="h-10">
-              <SelectValue placeholder="เลือกจุดบริการ" />
-            </SelectTrigger>
-            <SelectContent>
-              {servicePoints.map((servicePoint) => (
-                <SelectItem key={servicePoint.id} value={servicePoint.id}>
-                  {servicePoint.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRefresh}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              รีเฟรช
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSettingsClick}
+              className="flex items-center gap-2"
+            >
+              <Settings className="h-4 w-4" />
+              ตั้งค่า
+            </Button>
+          </div>
         </div>
-
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={onRefresh}
-          className="h-10 w-10"
-          title="รีเฟรช"
-        >
-          <RefreshCw className="h-4 w-4" />
-        </Button>
-
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-10 w-10"
-          title="ตั้งค่า"
-        >
-          <Settings className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

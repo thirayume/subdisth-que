@@ -126,6 +126,7 @@ const InsQueueTabs: React.FC<InsQueueTabsProps> = ({
             onUpdateStatus={handleUpdateStatus}
             onTabChange={setCurrentTab}
             servicePoints={servicePoints}
+            selectedServicePoint={selectedServicePoint}
           />
 
           <InsQueueTabContent
@@ -140,6 +141,7 @@ const InsQueueTabs: React.FC<InsQueueTabsProps> = ({
             onTransferClick={handleTransferClick}
             onTabChange={setCurrentTab}
             servicePoints={servicePoints}
+            selectedServicePoint={selectedServicePoint}
           />
 
           <InsQueueTabContent
@@ -153,6 +155,7 @@ const InsQueueTabs: React.FC<InsQueueTabsProps> = ({
             onUpdateStatus={handleUpdateStatus}
             onTabChange={setCurrentTab}
             servicePoints={servicePoints}
+            selectedServicePoint={selectedServicePoint}
           />
 
           <InsQueueTabContent
@@ -165,6 +168,7 @@ const InsQueueTabs: React.FC<InsQueueTabsProps> = ({
             onCancelQueue={handleCancelQueue}
             onTabChange={setCurrentTab}
             servicePoints={servicePoints}
+            selectedServicePoint={selectedServicePoint}
           />
 
           <InsQueueTabContent
@@ -176,6 +180,7 @@ const InsQueueTabs: React.FC<InsQueueTabsProps> = ({
             isCompleted={true}
             onTabChange={setCurrentTab}
             servicePoints={servicePoints}
+            selectedServicePoint={selectedServicePoint}
           />
         </div>
       </Tabs>

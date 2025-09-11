@@ -160,4 +160,8 @@ export interface QueueIns {
   // Patient contact/identity for INS
   phone_number?: string | null;
   ID_card?: string;
+  // Additional patient information
+  full_name?: string;
+  house_number?: string | null;
+  moo?: string | null;
 }

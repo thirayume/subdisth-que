@@ -17,29 +17,14 @@ import {
   PhoneForwarded,
   ArrowRightFromLine,
   Calendar,
+  CreditCard,
+  Home,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
 import { formatQueueInsNumber } from "@/utils/queueInsFormatters";
 import { announceQueue } from "@/utils/textToSpeech";
-
-// Function to mask ID card number, showing only the last 4 digits
-const maskIdCard = (idCard: string | undefined): string => {
-  if (!idCard) return "ไม่ระบุเลขบัตร";
-
-  // If ID card is shorter than 4 characters, just return it as is
-  if (idCard.length <= 4) return idCard;
-
-  // Get the last 4 digits
-  const lastFourDigits = idCard.slice(-4);
-
-  // Create a mask of X characters for the rest of the digits
-  const maskLength = idCard.length - 4;
-  const mask = "X".repeat(maskLength);
-
-  // Return the masked ID card number
-  return `${mask}${lastFourDigits}`;
-};
+import { maskIdCard } from "@/utils/formatters";
 
 interface InsQueueTabContentProps {
   value?: string;
@@ -59,6 +44,7 @@ interface InsQueueTabContentProps {
   isCancelled?: boolean;
   onTabChange?: (value: string) => void;
   servicePoints?: ServicePointIns[];
+  selectedServicePoint?: ServicePointIns;
 }
 
 const InsQueueTabContent: React.FC<InsQueueTabContentProps> = ({
@@ -79,6 +65,7 @@ const InsQueueTabContent: React.FC<InsQueueTabContentProps> = ({
   isCompleted = false,
   isCancelled = false,
   servicePoints,
+  selectedServicePoint,
 }) => {
   if (!Array.isArray(queues) || queues.length === 0) {
     return (
@@ -111,13 +98,28 @@ const InsQueueTabContent: React.FC<InsQueueTabContentProps> = ({
                     <Badge variant="default">{queue.type}</Badge>
                   </div>
 
-                  {/* Patient ID card */}
+                  {/* Full name */}
                   <div className="flex items-center gap-1 text-gray-700 mb-1">
                     <User className="w-4 h-4" />
                     <span className="font-medium">
-                      {getIdCard
-                        ? maskIdCard(getIdCard(queue))
-                        : maskIdCard(queue.ID_card)}
+                      {queue.full_name || "ไม่ระบุชื่อ"}
+                    </span>
+                  </div>
+
+                  {/* Patient ID card - showing full ID */}
+                  <div className="flex items-center gap-1 text-gray-700 mb-1">
+                    <CreditCard className="w-4 h-4" />
+                    <span className="font-medium">
+                      {getIdCard ? getIdCard(queue) : queue.ID_card}
+                    </span>
+                  </div>
+
+                  {/* House number and Moo */}
+                  <div className="flex items-center gap-1 text-gray-700 mb-1">
+                    <Home className="w-4 h-4" />
+                    <span className="font-medium">
+                      บ้านเลขที่: {queue.house_number || "-"} หมู่:{" "}
+                      {queue.moo || "-"}
                     </span>
                   </div>
 
@@ -223,12 +225,15 @@ const InsQueueTabContent: React.FC<InsQueueTabContentProps> = ({
                     onClick={() => {
                       onCallQueue(queue.id);
                       // Announce queue when called
-                      const sp = servicePoints?.find(
-                        (sp) => sp.id === queue.service_point_id
-                      );
+                      // const sp = servicePoints?.find(
+                      //   (sp) => sp.id === selectedServicePoint?.id
+                      // );
                       announceQueue(
                         queue.number,
-                        { code: sp?.code, name: sp?.name },
+                        {
+                          code: selectedServicePoint?.code,
+                          name: selectedServicePoint?.name,
+                        },
                         queue.type
                       );
                     }}

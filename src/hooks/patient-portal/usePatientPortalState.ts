@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import {
   Patient,
   Queue,
+  QueueIns,
   QueueStatus,
   QueueTypeEnum,
 } from "@/integrations/supabase/schema";
@@ -14,17 +15,21 @@ export const usePatientPortalState = () => {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [activeQueue, setActiveQueue] = useState<Queue | null>(null);
+  const [activeQueueIns, setActiveQueueIns] = useState<QueueIns | null>(null);
   const [availableQueues, setAvailableQueues] = useState<Queue[]>([]);
+  const [availableQueuesIns, setAvailableQueuesIns] = useState<QueueIns[]>([]);
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const [isStaffMode, setIsStaffMode] = useState<boolean>(false);
 
   const checkForActiveQueues = async (patientData: Patient[]) => {
     try {
       const patientIds = patientData.map((p) => p.id);
+      const idCards = patientData.map((p) => p.ID_card).filter(Boolean);
 
       // Get today's date
       const today = new Date().toISOString().split("T")[0];
 
+      // Get regular queues
       const { data: queueData, error: queueError } = await supabase
         .from("queues")
         .select("*")
@@ -33,10 +38,23 @@ export const usePatientPortalState = () => {
         .eq("queue_date", today)
         .order("created_at", { ascending: false });
 
-      if (queueError) throw queueError;
+      // Get INS queues separately - match by ID card
+      const { data: queueInsData, error: queueInsError } = await supabase
+        .from("queues_ins")
+        .select("*")
+        .in("ID_card", idCards)
+        .in("status", ["WAITING", "ACTIVE"])
+        .eq("queue_date", today)
+        .order("created_at", { ascending: false });
 
+      if (queueError) throw queueError;
+      if (queueInsError) throw queueInsError;
+
+      console.log("queueInsData:", queueInsData);
+
+      // Process regular queues
       if (queueData && queueData.length > 0) {
-        console.log("[DEBUG] Found queues:", queueData.length);
+        console.log("[DEBUG] Found regular queues:", queueData.length);
         // Convert string type to QueueType and string status to QueueStatus
         const typedQueues: Queue[] = queueData.map((queue) => ({
           ...queue,
@@ -61,9 +79,44 @@ export const usePatientPortalState = () => {
             setSelectedPatient(patientData[0]);
           }
         }
-        // If multiple queues, let user select (don't auto-select)
       } else {
-        console.log("[DEBUG] No active queues found");
+        console.log("[DEBUG] No active regular queues found");
+      }
+
+      // Process INS queues
+      if (queueInsData && queueInsData.length > 0) {
+        console.log("[DEBUG] Found INS queues:", queueInsData.length);
+        // Convert status to QueueStatus
+        const typedQueuesIns: QueueIns[] = queueInsData.map((queue) => ({
+          ...queue,
+          status: queue.status as QueueStatus,
+        }));
+
+        setAvailableQueuesIns(typedQueuesIns);
+
+        // If there's only one INS queue, auto-select it
+        if (typedQueuesIns.length === 1) {
+          const singleQueueIns = typedQueuesIns[0];
+          setActiveQueueIns(singleQueueIns);
+
+          const queuePatient = patientData.find(
+            (p) => p.ID_card === singleQueueIns.ID_card
+          );
+          if (queuePatient) {
+            setSelectedPatient(queuePatient);
+          } else {
+            setSelectedPatient(patientData[0]);
+          }
+        }
+      } else {
+        console.log("[DEBUG] No active INS queues found");
+      }
+
+      // If no queues at all, just select the first patient
+      if (
+        (!queueData || queueData.length === 0) &&
+        (!queueInsData || queueInsData.length === 0)
+      ) {
         // No active queues, select first patient for profile view
         setSelectedPatient(patientData[0]);
       }
@@ -131,14 +184,18 @@ export const usePatientPortalState = () => {
     selectedPatient,
     patients,
     activeQueue,
+    activeQueueIns,
     availableQueues,
+    availableQueuesIns,
     phoneNumber,
     isStaffMode,
     setIsAuthenticated,
     setSelectedPatient,
     setPatients,
     setActiveQueue,
+    setActiveQueueIns,
     setAvailableQueues,
+    setAvailableQueuesIns,
     setPhoneNumber,
     setIsStaffMode,
     checkForActiveQueues,

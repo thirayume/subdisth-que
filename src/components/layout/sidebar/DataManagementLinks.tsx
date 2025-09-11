@@ -46,7 +46,7 @@ const DataManagementLinks: React.FC<DataManagementLinksProps> = ({
         isActive={isActiveRoute}
         onClick={closeSidebar}
       >
-        ประวัติคิว
+        ประวัติคิวรับยา
       </SidebarNavLink>
     </SidebarSection>
   );

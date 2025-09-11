@@ -37,7 +37,7 @@ const QueueManagementLinks: React.FC<QueueManagementLinksProps> = ({
           isActive={isActiveRoute}
           onClick={closeSidebar}
         >
-          จัดการคิว
+          จัดการคิวรับยา
         </SidebarNavLink>
         <SidebarNavLink
           to="/queue/create"

@@ -167,10 +167,10 @@ const PatientCardWithQueue: React.FC<PatientCardWithQueueProps> = ({
             <span>{patient.ID_card}</span>
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+          {/* <div className="flex items-center gap-2 text-sm text-gray-600">
             <span className="font-medium">รหัสผู้ป่วย:</span>
             <span>{patient.patient_id}</span>
-          </div>
+          </div> */}
 
           {/* Queue Information */}
           {queueInfo && (
@@ -220,7 +220,7 @@ const PatientCardWithQueue: React.FC<PatientCardWithQueueProps> = ({
               onClick={handleAppointmentsClick}
             >
               <Calendar className="w-4 h-4 mr-1" />
-              นัดหมาย
+              ดูนัดหมาย
             </Button>
 
             <Button
@@ -230,7 +230,7 @@ const PatientCardWithQueue: React.FC<PatientCardWithQueueProps> = ({
               onClick={handleMedicationsClick}
             >
               <Stethoscope className="w-4 h-4 mr-1" />
-              ยา
+              วิธีการใช้ยา
             </Button>
 
             <Button

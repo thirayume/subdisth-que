@@ -127,7 +127,7 @@ const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="w-5 h-5 text-blue-600" />
-              สถานะคิว
+              สถานะคิวรับยา
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -176,7 +176,7 @@ const ActiveQueueView: React.FC<ActiveQueueViewProps> = ({
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               >
                 <Calendar className="w-4 h-4 mr-2" />
-                จัดการนัดหมาย
+                ดูนัดหมาย
               </Button>
 
               <Button

@@ -27,6 +27,9 @@ const QueueCreateINS = () => {
   const [formData, setFormData] = useState({
     phoneNumber: "",
     idCard: "",
+    houseNumber: "",
+    moo: "",
+    full_name: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -65,6 +68,11 @@ const QueueCreateINS = () => {
       if (!/^\d{13}$/.test(idCardDigitsOnly)) {
         newErrors.idCard = "เลขบัตรประชาชนต้องเป็นตัวเลข 13 หลัก";
       }
+    }
+
+    // ตรวจสอบชื่อ-นามสกุล (บังคับ)
+    if (!formData.full_name.trim()) {
+      newErrors.full_name = "กรุณากรอกชื่อ-นามสกุล";
     }
 
     // ตรวจสอบเบอร์โทร (ไม่บังคับ แต่ถ้ากรอกต้องถูกต้อง)
@@ -107,6 +115,7 @@ const QueueCreateINS = () => {
     } else if (field === "phoneNumber") {
       formattedValue = formatPhoneNumber(value);
     }
+    // No special formatting for houseNumber and moo fields
 
     setFormData((prev) => ({
       ...prev,
@@ -182,6 +191,8 @@ const QueueCreateINS = () => {
     try {
       const queueNum = await generateQueueNumber();
       const today = new Date().toISOString().split("T")[0];
+      const idCardClean = formData.idCard.replace(/\D/g, "");
+      const phoneNumberClean = formData.phoneNumber.replace(/\D/g, "") || null;
 
       // Fetch the first service point from service_points_ins table
       const { data: servicePoints, error: servicePointError } = await supabase
@@ -201,14 +212,95 @@ const QueueCreateINS = () => {
 
       const servicePointId = servicePoints[0].id;
 
-      const queueData: Partial<QueueIns> = {
+      // Check if patient exists with the given ID card
+      const { data: existingPatients, error: patientError } = await supabase
+        .from("patients")
+        .select("id")
+        .eq("ID_card", idCardClean)
+        .limit(1);
+
+      if (patientError) {
+        throw patientError;
+      }
+
+      let patientId: string;
+
+      // If patient doesn't exist, create a new patient record
+      if (!existingPatients || existingPatients.length === 0) {
+        // Generate a patient ID (you can customize this format as needed)
+        const patientIdPrefix = "PT";
+        const timestamp = Date.now().toString().slice(-6);
+        const randomDigits = Math.floor(Math.random() * 1000)
+          .toString()
+          .padStart(3, "0");
+        const generatedPatientId = `${patientIdPrefix}${timestamp}${randomDigits}`;
+
+        // Create patient data
+        const patientData = {
+          name: formData.full_name,
+          patient_id: generatedPatientId,
+          phone: phoneNumberClean || "", // Phone is required in the schema
+          address: formData.houseNumber
+            ? `${
+                formData.houseNumber ? `บ้านเลขที่ ${formData.houseNumber}` : ""
+              }${formData.moo ? ` หมู่ ${formData.moo}` : ""}`
+            : null,
+          ID_card: idCardClean,
+        };
+
+        // Insert new patient
+        const { data: newPatient, error: insertError } = await supabase
+          .from("patients")
+          .insert([patientData])
+          .select("id");
+
+        if (insertError) {
+          throw insertError;
+        }
+
+        if (!newPatient || newPatient.length === 0) {
+          throw new Error("Failed to create patient record");
+        }
+
+        patientId = newPatient[0].id;
+      } else {
+        patientId = existingPatients[0].id;
+
+        // Update patient information if they already exist
+        const { error: updateError } = await supabase
+          .from("patients")
+          .update({
+            name: formData.full_name,
+            phone: phoneNumberClean || "", // Phone is required in the schema
+            address: formData.houseNumber
+              ? `${formData.houseNumber}${
+                  formData.moo ? ` หมู่ ${formData.moo}` : ""
+                }`
+              : null,
+          })
+          .eq("id", patientId);
+
+        if (updateError) {
+          console.error("Error updating patient:", updateError);
+          // Continue with queue creation even if patient update fails
+        }
+      }
+
+      const queueData: Partial<QueueIns> & {
+        house_number?: string | null;
+        moo?: string | null;
+        full_name?: string | null;
+      } = {
         number: queueNum,
         type: "CHECK",
         status: "WAITING",
         queue_date: today,
-        phone_number: formData.phoneNumber.replace(/\D/g, "") || null,
-        ID_card: formData.idCard.replace(/\D/g, ""),
-        service_point_id: servicePointId,
+        phone_number: phoneNumberClean,
+        ID_card: idCardClean,
+        full_name: formData.full_name,
+        house_number: formData.houseNumber || null,
+        moo: formData.moo || null,
+        service_point_id: null,
       };
 
       const { error } = await supabase.from("queues_ins").insert([queueData]);
@@ -234,6 +326,9 @@ const QueueCreateINS = () => {
     setFormData({
       phoneNumber: "",
       idCard: "",
+      houseNumber: "",
+      moo: "",
+      full_name: "",
     });
     setErrors({});
   };
@@ -376,6 +471,91 @@ const QueueCreateINS = () => {
                 />
                 {errors.idCard && (
                   <p className="text-red-500 text-sm mt-1">{errors.idCard}</p>
+                )}
+              </div>
+
+              {/* ชื่อ-นามสกุล */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="full_name"
+                  className="text-sm font-medium text-gray-700 flex items-center gap-2"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  ชื่อ-นามสกุล <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="full_name"
+                  type="text"
+                  placeholder="กรอกชื่อ-นามสกุล"
+                  value={formData.full_name}
+                  onChange={(e) =>
+                    handleInputChange("full_name", e.target.value)
+                  }
+                  className={`h-12 rounded-xl border-2 transition-all duration-200 ${
+                    errors.full_name
+                      ? "border-red-300 focus:border-red-500"
+                      : "border-gray-200 focus:border-blue-500"
+                  }`}
+                  required
+                />
+                {errors.full_name && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.full_name}
+                  </p>
+                )}
+              </div>
+
+              {/* บ้านเลขที่ */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="houseNumber"
+                  className="text-sm font-medium text-gray-700 flex items-center gap-2"
+                >
+                  บ้านเลขที่
+                </Label>
+                <Input
+                  id="houseNumber"
+                  type="text"
+                  placeholder="กรอกบ้านเลขที่"
+                  value={formData.houseNumber}
+                  onChange={(e) =>
+                    handleInputChange("houseNumber", e.target.value)
+                  }
+                  className={`h-12 rounded-xl border-2 transition-all duration-200 ${
+                    errors.houseNumber
+                      ? "border-red-300 focus:border-red-500"
+                      : "border-gray-200 focus:border-blue-500"
+                  }`}
+                />
+                {errors.houseNumber && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.houseNumber}
+                  </p>
+                )}
+              </div>
+
+              {/* หมู่ */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="moo"
+                  className="text-sm font-medium text-gray-700 flex items-center gap-2"
+                >
+                  หมู่
+                </Label>
+                <Input
+                  id="moo"
+                  type="text"
+                  placeholder="กรอกหมู่"
+                  value={formData.moo}
+                  onChange={(e) => handleInputChange("moo", e.target.value)}
+                  className={`h-12 rounded-xl border-2 transition-all duration-200 ${
+                    errors.moo
+                      ? "border-red-300 focus:border-red-500"
+                      : "border-gray-200 focus:border-blue-500"
+                  }`}
+                />
+                {errors.moo && (
+                  <p className="text-red-500 text-sm mt-1">{errors.moo}</p>
                 )}
               </div>
 

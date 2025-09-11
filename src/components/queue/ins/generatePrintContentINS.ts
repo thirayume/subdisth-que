@@ -64,11 +64,9 @@ const INS_PRINT_STYLES = `
     display: inline-block;
   }
   .footer {
-    margin-top: 30px;
+    margin-top: 20px;
     font-size: 14px;
     color: #666;
-    border-top: 1px dashed #ccc;
-    padding-top: 15px;
   }
   .hospital-name {
     font-size: 16px;
@@ -124,8 +122,9 @@ export function generatePrintContentINS(
   );
 
   // Create the QR code URL for tracking the queue
-  const patientPortalUrl = `${BASE_URL}/patient-portal?queue=${queueNumber}&type=${queueType}`;
+  const patientPortalUrl = `${BASE_URL}/patient-portal`;
   logger.debug(`Generated QR URL: ${patientPortalUrl}`);
+  console.log(`Generated QR URL for INS: ${patientPortalUrl}`);
 
   const currentDate = new Date().toLocaleDateString("th-TH", {
     year: "numeric",
@@ -175,12 +174,30 @@ export function generatePrintContentINS(
           เวลา: ${currentTime}
         </div>
         
+        <!-- QR Code for patient portal -->
+        <div class="qr-container">
+          <div id="qrcode"></div>
+          </div>
+          <p class="qr-text">สแกนเพื่อติดตามคิว</p>
+
         <div class="footer">
           <div class="hospital-name">โรงพยาบาลส่งเสริมสุขภาพตำบลหนองแวง</div>
           <p>ขอบคุณที่ใช้บริการ</p>
         </div>
         
-        <!-- No script needed as printing is handled by printInCurrentWindow -->
+        <script>
+          // Generate QR code when the page loads
+          window.onload = function() {
+            new QRCode(document.getElementById("qrcode"), {
+              text: "${patientPortalUrl}",
+              width: 128,
+              height: 128,
+              colorDark: "#000000",
+              colorLight: "#ffffff",
+              correctLevel: QRCode.CorrectLevel.H
+            });
+          }
+        </script>
       </body>
     </html>
   `;

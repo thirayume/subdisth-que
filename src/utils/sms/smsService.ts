@@ -104,14 +104,10 @@ export const sendSmsToInsQueue = async (
     const formattedQueueNumber = formatQueueInsNumber(queue.type, queue.number);
 
     // Get message template
-    const messageTemplate = await getMessageTemplate();
-    const message = messageTemplate
-      ? messageTemplate
-          .replace("{queueNumber}", formattedQueueNumber)
-          .replace("{servicePoint}", servicePoint?.name || "")
-      : `ท่านกำลังจะได้รับบริการในคิวถัดไป คิวหมายเลข ${formattedQueueNumber}${
-          servicePoint?.name ? ` ที่ช่องบริการ ${servicePoint.name}` : ""
-        } `;
+    // const messageTemplate = await getMessageTemplate();
+    const message = `ท่านกำลังจะได้รับบริการตรวจในคิวถัดไป คิวหมายเลข ${formattedQueueNumber}${
+      servicePoint?.name ? ` ที่ช่องบริการ ${servicePoint.name}` : ""
+    } `;
 
     const { error } = await supabase.functions.invoke("send-sms-notification", {
       body: {

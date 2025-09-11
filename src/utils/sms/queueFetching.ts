@@ -75,7 +75,7 @@ export const getNext3WaitingQueuesIns = async (): Promise<
       .select(
         `
         *,
-        service_points:service_points_ins!queues_ins_service_point_id_fkey (*)
+        service_points_ins (*)
       `
       )
       .eq("status", "WAITING")
@@ -83,6 +83,8 @@ export const getNext3WaitingQueuesIns = async (): Promise<
       .is("paused_at", null)
       .order("created_at", { ascending: true })
       .limit(3);
+
+    console.log("Fetched next 3 waiting queues:", queues);
 
     if (queueError) {
       logger.error("Error fetching next 3 waiting queues:", queueError);
@@ -96,10 +98,10 @@ export const getNext3WaitingQueuesIns = async (): Promise<
 
     // Map queues with their patients
     const queuePatientPairs = queues
-      .filter((q) => q.service_points) // Only include queues with patients
+      // .filter((q) => q.service_points_ins) // Only include queues with patients
       .map((q) => ({
         queue: q as QueueIns,
-        servicePoint: q.service_points as ServicePointIns,
+        servicePoint: q.service_points_ins as ServicePointIns,
       }));
 
     logger.info(

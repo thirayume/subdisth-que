@@ -13,6 +13,8 @@ import {
   List,
   Calendar as CalendarIcon,
   Download,
+  Pill,
+  X,
 } from "lucide-react";
 import { format, startOfDay, endOfDay } from "date-fns";
 import { th } from "date-fns/locale";
@@ -36,6 +38,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { DateRange } from "react-day-picker";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,6 +56,32 @@ import {
   ensureValidAlgorithm,
 } from "@/hooks/useQueueTypes";
 
+interface MedicationDetails {
+  id: string;
+  name: string;
+  description?: string;
+  unit?: string;
+  category?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface Medication {
+  id: string;
+  medication_id: string;
+  patient_id: string;
+  dosage: string;
+  instructions: string;
+  dispensed: number;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+  start_date: string;
+  end_date: string;
+  queue_date?: string;
+  medication?: MedicationDetails;
+}
+
 const QueueHistory = () => {
   const [queues, setQueues] = useState<any[]>([]);
   const [patients, setPatients] = useState<any[]>([]);
@@ -55,6 +91,13 @@ const QueueHistory = () => {
     averageWaitTime: 0,
     totalPatients: 0,
   });
+
+  // Dialog state
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<any>(null);
+  const [selectedQueueDate, setSelectedQueueDate] = useState<string>("");
+  const [medications, setMedications] = useState<Medication[]>([]);
+  const [loadingMedications, setLoadingMedications] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -280,6 +323,61 @@ const QueueHistory = () => {
     const diffMinutes = Math.round((calledTime - createdTime) / (1000 * 60));
 
     return `${diffMinutes} นาที`;
+  };
+
+  // Function to fetch patient medications
+  const fetchPatientMedications = async (
+    patientId: string,
+    queueDate: string
+  ) => {
+    if (!patientId) return;
+
+    setLoadingMedications(true);
+    try {
+      // Fetch medications for this patient on the specific queue date
+      const { data, error } = (await supabase
+        .from("patient_medications")
+        .select(
+          `
+          *,
+          medication:medications(*)
+        `
+        )
+        .eq("patient_id", patientId)
+        .eq("start_date", queueDate)) as {
+        data: Medication[] | null;
+        error: any;
+      };
+
+      if (error) {
+        console.error("Error fetching medications:", error);
+        toast.error("ไม่สามารถดึงข้อมูลยาได้");
+        return;
+      }
+
+      if (data) {
+        setMedications(data);
+      } else {
+        setMedications([]);
+      }
+    } catch (err) {
+      console.error("Error in fetchPatientMedications:", err);
+      toast.error("เกิดข้อผิดพลาดในการดึงข้อมูลยา");
+    } finally {
+      setLoadingMedications(false);
+    }
+  };
+
+  // Function to handle opening the medications dialog
+  const handleOpenMedicationsDialog = (queue: any) => {
+    const patientId = queue.patient_id;
+    const queueDate = queue.queue_date;
+    const patient = patients.find((p) => p.id === patientId);
+
+    setSelectedPatient(patient);
+    setSelectedQueueDate(queueDate);
+    setIsDialogOpen(true);
+    fetchPatientMedications(patientId, queueDate);
   };
 
   const handleDateRangeChange = (range: DateRange | undefined) => {
@@ -539,7 +637,10 @@ const QueueHistory = () => {
                 </TableRow>
               ) : (
                 sortedQueues.map((queue) => (
-                  <TableRow key={queue.id}>
+                  <TableRow
+                    key={queue.id}
+                    onClick={() => handleOpenMedicationsDialog(queue)}
+                  >
                     <TableCell>
                       {format(
                         new Date(queue.completed_at || queue.created_at),
@@ -567,7 +668,13 @@ const QueueHistory = () => {
                       </span>
                     </TableCell>
                     <TableCell>
-                      {queue.patient?.name || getPatientName(queue.patient_id)}
+                      <button
+                        onClick={() => handleOpenMedicationsDialog(queue)}
+                        className="text-left hover:text-blue-600 hover:underline focus:outline-none"
+                      >
+                        {queue.patient?.name ||
+                          getPatientName(queue.patient_id)}
+                      </button>
                     </TableCell>
                     <TableCell>{calculateWaitingTime(queue)}</TableCell>
                     <TableCell>{calculateServiceTime(queue)}</TableCell>
@@ -578,6 +685,99 @@ const QueueHistory = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Medications Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pill className="h-5 w-5" />
+              รายการยาของผู้ป่วย
+            </DialogTitle>
+            <DialogDescription>
+              {selectedPatient ? (
+                <div className="mt-2">
+                  <p className="font-medium text-base">
+                    {selectedPatient.name}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    วันที่:{" "}
+                    {selectedQueueDate
+                      ? format(new Date(selectedQueueDate), "dd MMMM yyyy", {
+                          locale: th,
+                        })
+                      : "-"}
+                  </p>
+                </div>
+              ) : (
+                "กำลังโหลดข้อมูล..."
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            {loadingMedications ? (
+              <div className="flex justify-center py-8">
+                <p>กำลังโหลดข้อมูลยา...</p>
+              </div>
+            ) : medications.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p>ไม่พบข้อมูลยาสำหรับผู้ป่วยรายนี้ในวันที่เลือก</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[180px]">ชื่อยา</TableHead>
+                        <TableHead>ขนาด</TableHead>
+                        <TableHead>วิธีใช้</TableHead>
+                        <TableHead className="text-right">
+                          จำนวนที่จ่าย
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {medications.map((med) => {
+                        // Fetch medication name from medication_id
+                        // For now, just display the ID until we implement medication lookup
+                        const medicationName =
+                          med.medication?.name || med.medication_id;
+
+                        return (
+                          <TableRow key={med.id}>
+                            <TableCell className="font-medium">
+                              {medicationName}
+                            </TableCell>
+                            <TableCell>
+                              {med.dosage}
+                              {med.medication?.unit}
+                            </TableCell>
+                            <TableCell>{med.instructions}</TableCell>
+                            <TableCell className="text-right">
+                              {med.dispensed}
+                              {med.medication?.unit}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                <div className="text-sm text-gray-500 mt-2">
+                  <p>หมายเหตุ: แสดงเฉพาะรายการยาที่จ่ายในวันที่เลือกเท่านั้น</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setIsDialogOpen(false)}>ปิด</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

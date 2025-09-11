@@ -600,6 +600,9 @@ export type Database = {
           noti_at: string | null;
           phone_number: string | null;
           ID_card: string | null;
+          house_number: string | null;
+          moo: string | null;
+          full_name: string | null;
         };
         Insert: {
           id?: string;
@@ -619,6 +622,9 @@ export type Database = {
           noti_at?: string | null;
           phone_number?: string | null;
           ID_card?: string | null;
+          house_number?: string | null;
+          moo?: string | null;
+          full_name?: string | null;
         };
         Update: {
           id?: string;
@@ -638,6 +644,9 @@ export type Database = {
           noti_at?: string | null;
           phone_number?: string | null;
           ID_card?: string | null;
+          house_number?: string | null;
+          moo?: string | null;
+          full_name?: string | null;
         };
         Relationships: [
           {
