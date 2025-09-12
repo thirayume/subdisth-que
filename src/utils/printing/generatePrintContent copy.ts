@@ -3,63 +3,10 @@ import { formatQueueNumber } from "@/utils/queueFormatters";
 import { PrintQueueOptions } from "./types";
 import { DEFAULT_PRINT_STYLES, QR_CODE_SCRIPT_URL } from "./constants";
 import { createLogger } from "@/utils/logger";
-import { supabase } from "@/integrations/supabase/client";
 
 const logger = createLogger("generatePrintContent");
 
-/**
- * Fetches hospital settings from the settings table
- * @returns Promise with hospital name and phone
- */
-async function fetchHospitalSettings(): Promise<{
-  hospital_name: string;
-  hospital_phone: string;
-}> {
-  try {
-    const { data, error } = await supabase
-      .from("settings")
-      .select("key, value")
-      .eq("category", "general")
-      .in("key", ["hospital_name", "hospital_phone"]);
-
-    if (error) {
-      console.error("Error fetching hospital settings:", error);
-      return {
-        hospital_name: "โรงพยาบาลส่งเสริมสุขภาพตำบลหนองแวง",
-        hospital_phone: "",
-      };
-    }
-
-    const settings: { hospital_name: string; hospital_phone: string } = {
-      hospital_name: "โรงพยาบาลส่งเสริมสุขภาพตำบลหนองแวง",
-      hospital_phone: "",
-    };
-
-    if (data && data.length > 0) {
-      data.forEach((setting) => {
-        if (
-          setting.key === "hospital_name" ||
-          setting.key === "hospital_phone"
-        ) {
-          settings[setting.key as keyof typeof settings] =
-            setting.value as string;
-        }
-      });
-    }
-
-    return settings;
-  } catch (error) {
-    console.error("Error fetching hospital settings:", error);
-    return {
-      hospital_name: "โรงพยาบาลส่งเสริมสุขภาพตำบลหนองแวง",
-      hospital_phone: "",
-    };
-  }
-}
-
-export async function generatePrintContent(
-  options: PrintQueueOptions
-): Promise<string> {
+export function generatePrintContent(options: PrintQueueOptions): string {
   const {
     queueNumber,
     queueType,
@@ -79,8 +26,6 @@ export async function generatePrintContent(
   }`;
   logger.debug(`Generated QR URL: ${patientPortalUrl}`);
 
-  console.log(`Generated QR URL: ${patientPortalUrl}`);
-
   const currentDate = new Date().toLocaleDateString("th-TH", {
     year: "numeric",
     month: "long",
@@ -90,10 +35,6 @@ export async function generatePrintContent(
   const currentTime = new Date().toLocaleTimeString("th-TH");
 
   logger.debug(`Formatted date and time: ${currentDate} ${currentTime}`);
-
-  // Fetch hospital settings
-  const { hospital_name, hospital_phone } = await fetchHospitalSettings();
-  logger.debug(`Hospital settings: ${hospital_name}, ${hospital_phone}`);
 
   return `
     <!DOCTYPE html>
@@ -109,10 +50,31 @@ export async function generatePrintContent(
       </head>
       <body>
         <h2>คิวรับยา</h2>
-
+        ${patientName ? `<div class="patient-header">${patientName}</div>` : ""}
+        ${
+          patientPhone
+            ? `<div class="patient-info">📱 ${patientPhone}</div>`
+            : ""
+        }
+        
         <div class="queue-number">${formattedQueueNumber}</div>
         
-        ${purpose ? `<div class="purpose-info">${purpose}</div>` : ""}
+        ${
+          waitTiemQueueNext
+            ? `<div class="wait-time">⏱️ เวลารอโดยประมาณ: ${waitTiemQueueNext} นาที</div>`
+            : ""
+        }
+        
+        ${
+          patientLineId
+            ? `<div class="patient-info">💬 LINE ID: ${patientLineId}</div>`
+            : ""
+        }
+        ${
+          purpose
+            ? `<div class="purpose-info">วัตถุประสงค์: ${purpose}</div>`
+            : ""
+        }
         
         <div class="queue-info">
           วันที่: ${currentDate}
@@ -121,11 +83,10 @@ export async function generatePrintContent(
           เวลา: ${currentTime}
         </div>
         
+        <p>สแกน QR Code เพื่อติดตามคิวบน LINE</p>
         <div id="qrcode" class="qr-container"></div>
-        <p class="qr-text">สแกนเพื่อติดตามคิว</p>
+        
         <div class="footer">
-          <div class="hospital-name">${hospital_name}</div>
-          ${hospital_phone ? `<p>โทร. ${hospital_phone}</p>` : ""}
           <p>ขอบคุณที่ใช้บริการ</p>
         </div>
         

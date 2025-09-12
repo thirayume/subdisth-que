@@ -249,9 +249,9 @@ const PatientProfile: React.FC<PatientProfileProps> = ({ patient }) => {
                         />
                       </FormControl>
                       <FormMessage />
-                      <p className="text-sm text-gray-500 mt-1">
+                      {/* <p className="text-sm text-gray-500 mt-1">
                         ข้อมูลนี้จะใช้สำหรับคำนวณลำดับคิวในกรณีที่มีการนัดหมาย
-                      </p>
+                      </p> */}
                     </FormItem>
                   )}
                 />

@@ -79,6 +79,11 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
       return patient ? patient.name : "Unknown";
     });
 
+  const getPatientById = (id: string): Patient => {
+    const patient = patients.find((p) => p.id === id);
+    return patient;
+  };
+
   // Handle hold queue with proper parameters
   const handleHoldQueue = (queueId: string) => {
     const queue = activeQueues.find((q) => q.id === queueId);
@@ -112,6 +117,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
           <TabsContent value="waiting" className="h-full m-0">
             <QueueTabContent
               queues={actualWaitingQueues}
+              getPatientById={getPatientById}
               patients={patients}
               status="WAITING"
               getPatientName={getPatientName}
@@ -127,6 +133,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
               queues={activeQueues}
               patients={patients}
               status="ACTIVE"
+              getPatientById={getPatientById}
               getPatientName={getPatientName}
               onUpdateStatus={onUpdateStatus}
               onRecallQueue={onRecallQueue}
@@ -145,6 +152,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
           <TabsContent value="paused" className="h-full m-0">
             <QueueTabContent
               queues={pausedQueues}
+              getPatientById={getPatientById}
               patients={patients}
               status="WAITING"
               getPatientName={getPatientName}
@@ -164,6 +172,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
           <TabsContent value="skipped" className="h-full m-0">
             <QueueTabContent
               queues={skippedQueues}
+              getPatientById={getPatientById}
               patients={patients}
               status="SKIPPED"
               getPatientName={getPatientName}
@@ -182,6 +191,7 @@ const QueueTabsContainer: React.FC<QueueTabsContainerProps> = ({
           <TabsContent value="completed" className="h-full m-0">
             <QueueTabContent
               queues={completedQueues}
+              getPatientById={getPatientById}
               patients={patients}
               status="COMPLETED"
               getPatientName={getPatientName}

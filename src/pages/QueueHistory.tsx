@@ -292,9 +292,19 @@ const QueueHistory = () => {
     return queueType ? queueType.name : "ไม่ระบุ";
   };
 
+  const getQueueTypePrefix = (typeCode: string, number: number) => {
+    const queueType = queueTypes.find((qt) => qt.code === typeCode);
+    return queueType
+      ? queueType.prefix +
+          number.toString().padStart(queueType.format.length, "0")
+      : "";
+  };
+
   const getQueueTypeClass = (typeCode: string) => {
     const queueType = queueTypes.find((qt) => qt.code === typeCode);
     if (!queueType) return "text-gray-600 bg-gray-50";
+
+    console.log("queueType", queueType);
 
     // Assign colors based on priority or other characteristics
     const priority = queueType.priority || 0;
@@ -384,12 +394,15 @@ const QueueHistory = () => {
     setDateRange(range);
   };
 
-  const handleExportData = () => {
+  const handleExportData = async () => {
+    toast.loading("กำลังเตรียมข้อมูลสำหรับการดาวน์โหลด...");
+
     // Create CSV content
     let csvContent =
-      "วันที่,เวลา,หมายเลขคิว,ประเภท,ผู้ป่วย,เวลารอคิว,เวลาให้บริการ\n";
+      "วันที่,เวลา,หมายเลขคิว,ประเภท,ผู้ป่วย,เวลารอคิว,เวลาให้บริการ,รายการยา\n";
 
-    sortedQueues.forEach((queue) => {
+    // Process each queue and fetch medications
+    for (const queue of sortedQueues) {
       const date = format(
         new Date(queue.completed_at || queue.created_at),
         "dd/MM/yyyy",
@@ -400,17 +413,50 @@ const QueueHistory = () => {
         "HH:mm น.",
         { locale: th }
       );
-      const queueNumber = queue.number;
+      const queueNumber = getQueueTypePrefix(queue.type, queue.number);
       const queueTypeLabel = getQueueTypeLabel(queue.type);
       const patientName =
         queue.patient?.name || getPatientName(queue.patient_id);
       const waitTime = calculateWaitingTime(queue);
       const serviceTime = calculateServiceTime(queue);
 
-      csvContent += `${date},${time},${queueNumber},${queueTypeLabel},${patientName},${waitTime},${serviceTime}\n`;
-    });
+      // Fetch medications for this patient on this date
+      let medicationText = "";
+      try {
+        const { data: medData, error } = await supabase
+          .from("patient_medications")
+          .select(
+            `
+            *,
+            medication:medications(*)
+          `
+          )
+          .eq("patient_id", queue.patient_id)
+          .eq("start_date", queue.queue_date);
 
-    console.log("sortedQueues:", sortedQueues);
+        if (!error && medData && medData.length > 0) {
+          // Format medications as a single string with semicolons between items
+          medicationText = medData
+            .map(
+              (med: any) =>
+                `${med.medication?.name || med.medication_id} ${med.dosage}${
+                  med.medication?.unit
+                } ${med.instructions} (จำนวน ${med.dispensed || 0}${
+                  med.medication?.unit
+                })`
+            )
+            .join("; ");
+        }
+      } catch (err) {
+        console.error("Error fetching medications for export:", err);
+      }
+
+      // Escape any commas in the medication text to prevent CSV format issues
+      medicationText = `"${medicationText.replace(/"/g, '""')}"`;
+
+      csvContent += `${date},${time},${queueNumber},${queueTypeLabel},${patientName},${waitTime},${serviceTime},${medicationText}\n`;
+    }
+
     // Create download link
     const blob = new Blob(["\uFEFF" + csvContent], {
       type: "text/csv;charset=utf-8;",
@@ -427,6 +473,7 @@ const QueueHistory = () => {
     link.click();
     document.body.removeChild(link);
 
+    toast.dismiss();
     toast.success("ดาวน์โหลดข้อมูลเรียบร้อยแล้ว");
   };
 
@@ -656,7 +703,7 @@ const QueueHistory = () => {
                       )}
                     </TableCell>
                     <TableCell className="font-medium">
-                      {queue.number}
+                      {getQueueTypePrefix(queue.type, queue.number)}
                     </TableCell>
                     <TableCell>
                       <span

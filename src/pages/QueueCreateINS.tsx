@@ -340,7 +340,7 @@ const QueueCreateINS = () => {
       // คำนวณเวลารอคิว
       const waitTime = await calculateWaitTimeQueueNext();
 
-      printQueueTicketINS({
+      await printQueueTicketINS({
         queueNumber,
         phoneNumber: formData.phoneNumber.replace(/\D/g, "") || "",
         purpose: "ตรวจทั่วไป",

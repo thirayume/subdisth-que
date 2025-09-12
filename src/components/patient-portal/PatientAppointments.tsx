@@ -2,7 +2,16 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, Calendar, Edit, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Calendar,
+  Edit,
+  User,
+  Home,
+  CreditCard,
+  Trash2,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Patient } from "@/integrations/supabase/schema";
 import { toast } from "sonner";
@@ -156,8 +165,33 @@ const PatientAppointments: React.FC<PatientAppointmentsProps> = ({
             <CardTitle className="text-lg">ข้อมูลผู้ป่วย</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="font-medium">{patient.name}</p>
-            <p className="text-gray-600">{patient.phone}</p>
+            <div className="flex items-center gap-1 text-gray-700 mb-1">
+              <User className="w-4 h-4" />
+              <span>{patient.name}</span>
+            </div>
+            {/* Patient Info */}
+
+            {/* <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Phone className="w-4 h-4" />
+            <span>{patient.phone}</span>
+          </div> */}
+
+            <div className="flex items-center gap-1 text-gray-700 mb-1">
+              <CreditCard className="w-4 h-4" />
+              {/* <span className="font-medium">เลขบัตรประจำตัวประชาชน:</span> */}
+              <span>{patient.ID_card}</span>
+            </div>
+
+            {/* House number and Moo */}
+            <div className="flex items-center gap-1 text-gray-700 mb-1">
+              <Home className="w-4 h-4" />
+              <span>{patient.address}</span>
+            </div>
+
+            {/* <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span className="font-medium">รหัสผู้ป่วย:</span>
+            <span>{patient.patient_id}</span>
+          </div> */}
           </CardContent>
         </Card>
 

@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { QueueIns, ServicePointIns } from "@/integrations/supabase/schema";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Clock,
   User,
+  CreditCard,
+  Home,
   Phone,
   Calendar,
   Stethoscope,
@@ -17,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface PatientCardWithQueueProps {
   patient: Patient;
   isSelected: boolean;
+  getIdCard?: (queue: QueueIns) => string;
   onSelect: (patient: Patient) => void;
   onAppointmentsClick?: (patient: Patient) => void;
   onMedicationsClick?: (patient: Patient) => void;
@@ -157,14 +161,22 @@ const PatientCardWithQueue: React.FC<PatientCardWithQueueProps> = ({
       <CardContent className="pt-0">
         <div className="space-y-3">
           {/* Patient Info */}
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+
+          {/* <div className="flex items-center gap-2 text-sm text-gray-600">
             <Phone className="w-4 h-4" />
             <span>{patient.phone}</span>
-          </div>
+          </div> */}
 
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <span className="font-medium">เลขบัตรประจำตัวประชาชน:</span>
+            <CreditCard className="w-4 h-4" />
+            {/* <span className="font-medium">เลขบัตรประจำตัวประชาชน:</span> */}
             <span>{patient.ID_card}</span>
+          </div>
+
+          {/* House number and Moo */}
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Home className="w-4 h-4" />
+            <span>{patient.address}</span>
           </div>
 
           {/* <div className="flex items-center gap-2 text-sm text-gray-600">

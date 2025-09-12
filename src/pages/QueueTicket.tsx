@@ -92,8 +92,8 @@ const QueueTicket = () => {
     queue.number
   );
 
-  const handlePrint = () => {
-    printQueueTicket({
+  const handlePrint = async () => {
+    await printQueueTicket({
       queueNumber: queue.number,
       queueType: queue.type as QueueTypeEnum,
       patientName: patient?.name,

@@ -71,14 +71,14 @@ const QueueCreatedContent: React.FC<QueueCreatedContentProps> = ({
         formattedQueueNumber={formattedQueueNumber}
       />
 
-      <div className="my-3 text-center">
+      {/* <div className="my-3 text-center">
         <Badge
           variant="outline"
           className="bg-pharmacy-50 text-pharmacy-700 border-pharmacy-200 px-3 py-1"
         >
           เวลารอโดยประมาณ: {estimatedWaitTime} นาที
         </Badge>
-      </div>
+      </div> */}
 
       <div className="w-full max-w-[250px] mx-auto">
         <LineQRCode

@@ -21,7 +21,9 @@ export interface PrintQueueTicketINSOptions {
  * Opens a new window with INS queue ticket content and triggers the print dialog
  * This is a specialized version for the QueueCreateINS page
  */
-export function printQueueTicketINS(options: PrintQueueTicketINSOptions): void {
+export async function printQueueTicketINS(
+  options: PrintQueueTicketINSOptions
+): Promise<void> {
   const {
     queueNumber,
     phoneNumber,
@@ -39,7 +41,7 @@ export function printQueueTicketINS(options: PrintQueueTicketINSOptions): void {
   try {
     // Generate the HTML content for printing using our specialized function
     logger.debug(`[printQueueTicketINS] Generating print content`);
-    const printContent = generatePrintContentINS(options);
+    const printContent = await generatePrintContentINS(options);
 
     // Print in the current window using an iframe
     logger.debug("[printQueueTicketINS] Printing in current window");

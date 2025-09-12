@@ -3,7 +3,6 @@ import { formatQueueNumber } from "@/utils/queueFormatters";
 import { createLogger } from "@/utils/logger";
 import { PrintQueueTicketINSOptions } from "./PrintQueueTicketINS";
 import { formatQueueInsNumber } from "@/utils/queueInsFormatters";
-import { supabase } from "@/integrations/supabase/client";
 
 // Constants specific to INS printing
 const QR_CODE_SCRIPT_URL =
@@ -32,6 +31,8 @@ const INS_PRINT_STYLES = `
     color: #0f766e;
     margin: 20px 0;
     padding: 10px;
+    border: 2px dashed #0f766e;
+    border-radius: 10px;
     display: inline-block;
   }
   .patient-info {
@@ -100,62 +101,12 @@ const INS_PRINT_STYLES = `
 const logger = createLogger("generatePrintContentINS");
 
 /**
- * Fetches hospital settings from the settings table
- * @returns Promise with hospital name and phone
- */
-async function fetchHospitalSettings(): Promise<{
-  hospital_name: string;
-  hospital_phone: string;
-}> {
-  try {
-    const { data, error } = await supabase
-      .from("settings")
-      .select("key, value")
-      .eq("category", "general")
-      .in("key", ["hospital_name", "hospital_phone"]);
-
-    if (error) {
-      console.error("Error fetching hospital settings:", error);
-      return {
-        hospital_name: "โรงพยาบาลส่งเสริมสุขภาพตำบลหนองแวง",
-        hospital_phone: "",
-      };
-    }
-
-    const settings: { hospital_name: string; hospital_phone: string } = {
-      hospital_name: "โรงพยาบาลส่งเสริมสุขภาพตำบลหนองแวง",
-      hospital_phone: "",
-    };
-
-    if (data && data.length > 0) {
-      data.forEach((setting) => {
-        if (
-          setting.key === "hospital_name" ||
-          setting.key === "hospital_phone"
-        ) {
-          settings[setting.key as keyof typeof settings] =
-            setting.value as string;
-        }
-      });
-    }
-
-    return settings;
-  } catch (error) {
-    console.error("Error fetching hospital settings:", error);
-    return {
-      hospital_name: "โรงพยาบาลส่งเสริมสุขภาพตำบลหนองแวง",
-      hospital_phone: "",
-    };
-  }
-}
-
-/**
  * Generates HTML content for printing INS queue tickets
  * This is a specialized version for the QueueCreateINS page
  */
-export async function generatePrintContentINS(
+export function generatePrintContentINS(
   options: PrintQueueTicketINSOptions
-): Promise<string> {
+): string {
   const {
     queueNumber,
     phoneNumber = "",
@@ -185,10 +136,6 @@ export async function generatePrintContentINS(
 
   logger.debug(`Formatted date and time: ${currentDate} ${currentTime}`);
 
-  // Fetch hospital settings
-  const { hospital_name, hospital_phone } = await fetchHospitalSettings();
-  logger.debug(`Hospital settings: ${hospital_name}, ${hospital_phone}`);
-
   return `
     <!DOCTYPE html>
     <html>
@@ -208,6 +155,18 @@ export async function generatePrintContentINS(
         
         <div class="purpose-info">🏥 ${purpose}</div>
         
+        ${
+          phoneNumber
+            ? `<div class="patient-info">📱 เบอร์โทร: ${phoneNumber}</div>`
+            : ""
+        }
+        
+        ${
+          waitTiemQueueNext
+            ? `<div class="wait-time">⏱️ เวลารอโดยประมาณ: ${waitTiemQueueNext} นาที</div>`
+            : ""
+        }
+        
         <div class="queue-info">
           วันที่: ${currentDate}
         </div>
@@ -222,8 +181,7 @@ export async function generatePrintContentINS(
           <p class="qr-text">สแกนเพื่อติดตามคิว</p>
 
         <div class="footer">
-          <div class="hospital-name">${hospital_name}</div>
-          ${hospital_phone ? `<p>โทร. ${hospital_phone}</p>` : ""}
+          <div class="hospital-name">โรงพยาบาลส่งเสริมสุขภาพตำบลหนองแวง</div>
           <p>ขอบคุณที่ใช้บริการ</p>
         </div>
         
@@ -232,8 +190,8 @@ export async function generatePrintContentINS(
           window.onload = function() {
             new QRCode(document.getElementById("qrcode"), {
               text: "${patientPortalUrl}",
-              width: 180,
-              height: 180,
+              width: 128,
+              height: 128,
               colorDark: "#000000",
               colorLight: "#ffffff",
               correctLevel: QRCode.CorrectLevel.H

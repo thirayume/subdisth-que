@@ -1,20 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Queue } from "@/integrations/supabase/schema";
+import { Patient, Queue, QueueIns } from "@/integrations/supabase/schema";
 import { formatQueueNumber } from "@/utils/queueFormatters";
-import { Calendar, Clock, User } from "lucide-react";
+import { Calendar, Clock, User, Home, CreditCard } from "lucide-react";
 import { appointmentQueueService } from "@/services/appointmentQueueService";
 
 interface QueueCardInfoProps {
   queue: Queue;
+  patient: Patient;
   patientName: string;
   servicePointName?: string;
   suggestedServicePointName?: string;
   showServicePointInfo?: boolean;
+  getIdCard?: (queue: QueueIns) => string;
 }
 
 const QueueCardInfo: React.FC<QueueCardInfoProps> = ({
   queue,
+  patient,
   patientName,
   servicePointName,
   suggestedServicePointName,
@@ -52,6 +55,20 @@ const QueueCardInfo: React.FC<QueueCardInfoProps> = ({
         <User className="w-4 h-4" />
         <span className="font-medium">{patientName}</span>
       </div>
+
+      {/* Patient ID card - showing full ID */}
+      <div className="flex items-center gap-1 text-gray-700 mb-1">
+        <CreditCard className="w-4 h-4" />
+        <span className="font-medium">{patient?.ID_card}</span>
+      </div>
+
+      {/* House number and Moo */}
+      {patient?.address && (
+        <div className="flex items-center gap-1 text-gray-700 mb-1">
+          <Home className="w-4 h-4" />
+          <span className="font-medium">{patient?.address}</span>
+        </div>
+      )}
 
       {/* Show appointment information if available */}
       {appointmentInfo && (

@@ -8,7 +8,9 @@ const logger = createLogger("printQueue");
 /**
  * Opens a new window with queue ticket content and triggers the print dialog
  */
-export function printQueueTicket(options: PrintQueueOptions): void {
+export async function printQueueTicket(
+  options: PrintQueueOptions
+): Promise<void> {
   const { queueNumber, queueType, waitTiemQueueNext = 0 } = options;
   const formattedQueueNumber = formatQueueNumber(queueType, queueNumber);
 
@@ -31,7 +33,7 @@ export function printQueueTicket(options: PrintQueueOptions): void {
     }
 
     // Generate the HTML content for printing
-    const printContent = generatePrintContent(options);
+    const printContent = await generatePrintContent(options);
 
     // Write the content to the new window and trigger print
     logger.debug("[printQueueTicket] Writing content to print window");

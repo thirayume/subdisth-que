@@ -30,10 +30,10 @@ const QueueCreatedHeader: React.FC<QueueCreatedHeaderProps> = ({
         </DialogDescription>
       )}
 
-      <div className="mt-2 flex items-center justify-center text-gray-600 text-sm">
+      {/* <div className="mt-2 flex items-center justify-center text-gray-600 text-sm">
         <Clock className="h-4 w-4 mr-1 text-pharmacy-500" />
         <span>เวลารอโดยประมาณ: {waitTiemQueueNext} นาที</span>
-      </div>
+      </div> */}
     </DialogHeader>
   );
 };

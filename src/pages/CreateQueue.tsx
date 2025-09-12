@@ -20,6 +20,7 @@ import {
   Loader2,
   Search,
   CheckCircle,
+  Printer,
 } from "lucide-react";
 import { createLogger } from "@/utils/logger";
 import QueuePageHeader from "@/components/queue/QueuePageHeader";
@@ -29,7 +30,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { QueueType } from "@/integrations/supabase/schema";
 import { useQueueTypesData } from "@/hooks/useQueueTypesData";
-import QueueCreatedDialog from "@/components/queue/QueueCreatedDialog";
+import { printQueueTicket } from "@/utils/printUtils";
+// QueueCreatedDialog removed as requested
 
 const logger = createLogger("CreateQueue");
 
@@ -72,8 +74,7 @@ const CreateQueue: React.FC = () => {
     React.useState<QueueType | null>(null);
   const [createdPurpose, setCreatedPurpose] = React.useState("");
 
-  // QR dialog
-  const [qrDialogOpen, setQrDialogOpen] = React.useState(false);
+  // Patient info for display
   const [finalPatientName, setFinalPatientName] = React.useState("");
   const [finalPatientPhone, setFinalPatientPhone] = React.useState("");
   const [finalPatientLineId, setFinalPatientLineId] = React.useState("");
@@ -450,9 +451,8 @@ const CreateQueue: React.FC = () => {
           // Keep the line ID if it exists
         }
 
-        // Set success state and open dialog
+        // Set success state
         setIsSuccess(true);
-        setQrDialogOpen(true);
         setHasSearched(false);
 
         // Show success message
@@ -491,10 +491,36 @@ const CreateQueue: React.FC = () => {
     setSelectedPatientIdCard("");
   };
 
-  // Handle QR dialog close
-  const handleQrDialogClose = () => {
-    setQrDialogOpen(false);
-    resetForm();
+  // Format queue number with prefix
+  const getQueueTypePrefix = (typeCode: string, number: number) => {
+    const queueType = queueTypes.find((qt) => qt.code === typeCode);
+    return queueType
+      ? queueType.prefix +
+          number.toString().padStart(queueType.format?.length || 3, "0")
+      : number.toString();
+  };
+
+  // Handle print button click
+  const handlePrint = async () => {
+    if (!createdQueueNumber || !createdQueueType) return;
+
+    try {
+      await printQueueTicket({
+        queueNumber: createdQueueNumber,
+        queueType: createdQueueType,
+        patientName: finalPatientName,
+        patientPhone: finalPatientPhone,
+        patientLineId: finalPatientLineId,
+        purpose: createdPurpose,
+      });
+
+      toast.success("กำลังพิมพ์บัตรคิว", { id: "print-ticket" });
+    } catch (error) {
+      console.error("Error printing ticket:", error);
+      toast.error("เกิดข้อผิดพลาดในการพิมพ์บัตรคิว", {
+        id: "print-ticket-error",
+      });
+    }
   };
 
   // Render success state with QR code dialog
@@ -523,7 +549,9 @@ const CreateQueue: React.FC = () => {
 
               <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-2xl p-6 mb-6">
                 <div className="text-6xl font-bold mb-2">
-                  {createdQueueNumber}
+                  {createdQueueType && createdQueueNumber
+                    ? getQueueTypePrefix(createdQueueType, createdQueueNumber)
+                    : createdQueueNumber}
                 </div>
                 <div className="text-lg opacity-90">หมายเลขคิว</div>
               </div>
@@ -533,7 +561,15 @@ const CreateQueue: React.FC = () => {
                 <p>หรือติดตามสถานะคิวผ่านระบบ</p>
               </div>
 
-              <div className="space-y-3">
+              <div>
+                <Button
+                  onClick={handlePrint}
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-medium py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 mb-3"
+                >
+                  <Printer className="w-5 h-5" />
+                  พิมพ์บัตรคิว
+                </Button>
+
                 <Button
                   onClick={resetForm}
                   variant="outline"
@@ -548,19 +584,6 @@ const CreateQueue: React.FC = () => {
 
         {/* Footer */}
         <HospitalFooter />
-
-        {/* QR Code Dialog */}
-        <QueueCreatedDialog
-          open={qrDialogOpen}
-          onOpenChange={setQrDialogOpen}
-          queueNumber={createdQueueNumber}
-          queueType={createdQueueType || "GENERAL"}
-          patientName={finalPatientName}
-          patientPhone={finalPatientPhone}
-          patientLineId={finalPatientLineId}
-          purpose={createdPurpose}
-          onDialogClose={handleQrDialogClose}
-        />
       </div>
     );
   }

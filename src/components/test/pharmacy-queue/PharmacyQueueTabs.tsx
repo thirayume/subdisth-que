@@ -64,6 +64,11 @@ const PharmacyQueueTabs: React.FC<PharmacyQueueTabsProps> = ({
     setTransferQueueId(null);
   };
 
+  const getPatientById = (id: string): Patient => {
+    const patient = getPatientData(id);
+    return patient;
+  };
+
   return (
     <div className="h-full">
       <Tabs defaultValue="waiting" className="h-full flex flex-col">
@@ -113,6 +118,7 @@ const PharmacyQueueTabs: React.FC<PharmacyQueueTabsProps> = ({
         <div className="flex-1 overflow-auto">
           <PharmacyQueueTabContent
             value="waiting"
+            getPatientById={getPatientById}
             queues={queuesByStatus.waiting}
             emptyMessage="ไม่มีคิวที่รอดำเนินการ"
             getPatientName={getPatientName}
@@ -123,6 +129,7 @@ const PharmacyQueueTabs: React.FC<PharmacyQueueTabsProps> = ({
 
           <PharmacyQueueTabContent
             value="active"
+            getPatientById={getPatientById}
             queues={queuesByStatus.active}
             emptyMessage="ไม่มีคิวที่กำลังให้บริการ"
             getPatientName={getPatientName}
@@ -135,6 +142,7 @@ const PharmacyQueueTabs: React.FC<PharmacyQueueTabsProps> = ({
 
           <PharmacyQueueTabContent
             value="paused"
+            getPatientById={getPatientById}
             queues={queuesByStatus.paused}
             emptyMessage="ไม่มีคิวที่พัก"
             getPatientName={getPatientName}
@@ -146,6 +154,7 @@ const PharmacyQueueTabs: React.FC<PharmacyQueueTabsProps> = ({
 
           <PharmacyQueueTabContent
             value="skipped"
+            getPatientById={getPatientById}
             queues={queuesByStatus.skipped}
             emptyMessage="ไม่มีคิวที่ถูกข้าม"
             getPatientName={getPatientName}
@@ -156,6 +165,7 @@ const PharmacyQueueTabs: React.FC<PharmacyQueueTabsProps> = ({
 
           <PharmacyQueueTabContent
             value="completed"
+            getPatientById={getPatientById}
             queues={queuesByStatus.completed}
             emptyMessage="ไม่มีคิวที่เสร็จสิ้น"
             getPatientName={getPatientName}
