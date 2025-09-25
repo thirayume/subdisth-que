@@ -53,7 +53,9 @@ export const useSimulationDataIsolation = () => {
         // No simulation data - reset to normal mode
         const defaultMetrics = {
           avgWaitTime: 0,
+          avgWaitTimeToday: 0,
           avgServiceTime: 0,
+          avgServiceTimeToday: 0,
           totalQueues: 0,
           completedQueues: 0,
           waitingQueues: 0,
@@ -105,7 +107,9 @@ export const useSimulationDataIsolation = () => {
 
       const metrics = {
         avgWaitTime: Math.round(avgWaitTime * 100) / 100,
+        avgWaitTimeToday: Math.round(avgWaitTime * 100) / 100,
         avgServiceTime: Math.round(avgServiceTime * 100) / 100,
+        avgServiceTimeToday: Math.round(avgServiceTime * 100) / 100,
         totalQueues: allSimQueues.length,
         completedQueues: completedSim.length,
         waitingQueues: waitingSim.length,

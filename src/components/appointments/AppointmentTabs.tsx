@@ -56,6 +56,8 @@ const AppointmentTabs: React.FC<AppointmentTabsProps> = ({
         setNameSearchTerm={setNameSearchTerm}
         phoneSearchTerm={phoneSearchTerm}
         setPhoneSearchTerm={setPhoneSearchTerm}
+        idcardSearchTerm=""
+        setIDcardSearchTerm={() => {}}
         dateRange={dateRange}
         setDateRange={setDateRange}
         onClearSearch={onClearSearch}

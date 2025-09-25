@@ -72,7 +72,7 @@ const QueueBoardDisplay: React.FC<QueueBoardDisplayProps> = ({
       <CardContent className="p-0">
         <div className="bg-gray-50 py-2 px-4 border-b">
           <div className="flex justify-between items-center">
-            <QueueTypeLabel queueType={queue.type} />
+            <QueueTypeLabel queueType={queue.type as any} />
             <p className="text-sm text-gray-500">
               {new Date(queue.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
             </p>

@@ -56,7 +56,7 @@ export const useInsQueueCoreActions = (
       }
 
       if (data) {
-        updateQueueInState(data);
+        updateQueueInState(data as any);
         
         // Announce queue if voice is enabled
         if (voiceEnabled) {
