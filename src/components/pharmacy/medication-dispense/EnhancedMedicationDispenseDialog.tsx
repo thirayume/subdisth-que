@@ -57,7 +57,7 @@ const EnhancedMedicationDispenseDialog: React.FC<
         medication: med.medication!,
         dosage: med.dosage,
         instructions: med.instructions || "",
-        dispensed: med.dispensed || 1,
+        dispensed: (med as any).dispensed || 1,
       })
     );
 

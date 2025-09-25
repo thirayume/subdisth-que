@@ -13,7 +13,7 @@ export const useServicePointIns = () => {
       try {
         setLoading(true);
         const { data, error } = await supabase
-          .from('service_points_ins')
+          .from('service_points_ins' as any)
           .select('*')
           .eq('enabled', true)
           .order('name', { ascending: true });
@@ -22,11 +22,11 @@ export const useServicePointIns = () => {
           throw new Error(error.message);
         }
 
-        setServicePoints(data || []);
+        setServicePoints((data as unknown as ServicePointIns[]) || []);
         
         // Set the first service point as selected if available and no selection exists
         if (data && data.length > 0 && !selectedServicePoint) {
-          setSelectedServicePoint(data[0]);
+          setSelectedServicePoint(data[0] as unknown as ServicePointIns);
         }
       } catch (err) {
         setError(err as Error);

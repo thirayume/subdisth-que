@@ -41,9 +41,9 @@ export const useInsQueueTransferActions = (
       }
 
       if (data) {
-        updateQueueInState(data);
+        updateQueueInState(data as QueueIns);
         toast.success('โอนคิว INS เรียบร้อยแล้ว');
-        return data;
+        return data as QueueIns;
       }
 
       return null;
@@ -76,9 +76,9 @@ export const useInsQueueTransferActions = (
       }
 
       if (data) {
-        updateQueueInState(data);
+        updateQueueInState(data as QueueIns);
         toast.success('พักคิว INS เรียบร้อยแล้ว');
-        return data;
+        return data as QueueIns;
       }
 
       return null;

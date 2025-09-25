@@ -123,7 +123,7 @@ export const useInsQueueCore = () => {
         if (data) {
           await fetchQueues();
           toast.success("เพิ่มคิว INS เรียบร้อยแล้ว");
-          return data;
+          return data as QueueIns;
         }
 
         return null;
@@ -167,7 +167,7 @@ export const useInsQueueCore = () => {
 
         if (data) {
           await fetchQueues();
-          return data;
+          return data as QueueIns;
         }
 
         return null;

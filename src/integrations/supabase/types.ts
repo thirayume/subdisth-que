@@ -451,6 +451,75 @@ export type Database = {
           },
         ]
       }
+      queues_ins: {
+        Row: {
+          called_at: string | null
+          cancelled_at: string | null
+          completed_at: string | null
+          created_at: string
+          full_name: string | null
+          house_number: string | null
+          id: string
+          id_card: string | null
+          moo: string | null
+          noti_at: string | null
+          number: number
+          paused_at: string | null
+          phone_number: string | null
+          queue_date: string
+          service_point_id: string | null
+          skipped_at: string | null
+          status: string
+          transferred_at: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          called_at?: string | null
+          cancelled_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          full_name?: string | null
+          house_number?: string | null
+          id?: string
+          id_card?: string | null
+          moo?: string | null
+          noti_at?: string | null
+          number: number
+          paused_at?: string | null
+          phone_number?: string | null
+          queue_date?: string
+          service_point_id?: string | null
+          skipped_at?: string | null
+          status?: string
+          transferred_at?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          called_at?: string | null
+          cancelled_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          full_name?: string | null
+          house_number?: string | null
+          id?: string
+          id_card?: string | null
+          moo?: string | null
+          noti_at?: string | null
+          number?: number
+          paused_at?: string | null
+          phone_number?: string | null
+          queue_date?: string
+          service_point_id?: string | null
+          skipped_at?: string | null
+          status?: string
+          transferred_at?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       service_point_queue_types: {
         Row: {
           created_at: string
@@ -491,6 +560,39 @@ export type Database = {
         ]
       }
       service_points: {
+        Row: {
+          code: string
+          created_at: string
+          enabled: boolean
+          id: string
+          location: string | null
+          name: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          location?: string | null
+          name: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          location?: string | null
+          name?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      service_points_ins: {
         Row: {
           code: string
           created_at: string

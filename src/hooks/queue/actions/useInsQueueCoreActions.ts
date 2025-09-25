@@ -56,7 +56,7 @@ export const useInsQueueCoreActions = (
       }
 
       if (data) {
-        updateQueueInState(data as any);
+        updateQueueInState(data as QueueIns);
         
         // Announce queue if voice is enabled
         if (voiceEnabled) {
@@ -81,7 +81,7 @@ export const useInsQueueCoreActions = (
         }
         
         toast.success(`เรียกคิว INS หมายเลข ${queue.number} เรียบร้อยแล้ว`);
-        return data;
+        return data as QueueIns;
       }
 
       return null;
@@ -112,9 +112,9 @@ export const useInsQueueCoreActions = (
       }
 
       if (data) {
-        updateQueueInState(data);
+        updateQueueInState(data as QueueIns);
         toast.success('นำคิว INS กลับมารอเรียบร้อยแล้ว');
-        return data;
+        return data as QueueIns;
       }
 
       return null;

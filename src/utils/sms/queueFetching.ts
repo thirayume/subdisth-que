@@ -101,7 +101,7 @@ export const getNext3WaitingQueuesIns = async (): Promise<
       // .filter((q) => q.service_points_ins) // Only include queues with patients
       .map((q) => ({
         queue: q as QueueIns,
-        servicePoint: q.service_points_ins as ServicePointIns,
+        servicePoint: q.service_points_ins as unknown as ServicePointIns,
       }));
 
     logger.info(

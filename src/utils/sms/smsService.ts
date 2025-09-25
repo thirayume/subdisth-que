@@ -66,7 +66,7 @@ export const sendSmsToPatient = async (
 
     // Update notification timestamp on the queue
     const { error: updateError } = await supabase
-      .from("queues")
+      .from("queues" as any)
       .update({ noti_at: new Date().toISOString() })
       .eq("id", queue.id);
 

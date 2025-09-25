@@ -1,6 +1,7 @@
 import { createLogger } from "@/utils/logger";
 import { useInsQueueCore } from "./queue/core/useInsQueueCore";
 import { useInsQueueActionHandlers } from "./queue/core/useInsQueueActionHandlers";
+import { QueueIns } from "@/integrations/supabase/schema";
 
 const logger = createLogger("useInsQueues");
 
@@ -36,7 +37,7 @@ export const useInsQueues = () => {
     putQueueOnHold,
     returnSkippedQueueToWaiting,
   } = useInsQueueActionHandlers(
-    queues,
+    queues as QueueIns[],
     updateQueueStatus,
     updateQueueInState,
     fetchQueues

@@ -303,7 +303,7 @@ const QueueCreateINS = () => {
         service_point_id: null,
       };
 
-      const { error } = await supabase.from("queues_ins").insert([queueData]);
+      const { error } = await supabase.from("queues_ins" as any).insert([queueData]);
 
       if (error) {
         throw error;

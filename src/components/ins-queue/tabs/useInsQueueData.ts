@@ -35,7 +35,7 @@ export const useInsQueueData = ({
       setLoading(true);
       try {
         const { data, error } = await supabase
-          .from("queues_ins")
+          .from("queues_ins" as any)
           .select("*")
           .eq("queue_date", new Date().toISOString().split("T")[0])
           .order("created_at", { ascending: true });
@@ -45,7 +45,7 @@ export const useInsQueueData = ({
           return;
         }
         console.log("Fetched INS queues:", data);
-        setQueues(data || []);
+        setQueues((data as unknown as QueueIns[]) || []);
       } catch (error) {
         console.error("Error in fetchQueues:", error);
       } finally {
@@ -118,7 +118,7 @@ export const useInsQueueData = ({
   const handleCallQueue = async (queueId: string) => {
     try {
       const { error } = await supabase
-        .from("queues_ins")
+        .from("queues_ins" as any)
         .update({
           status: "ACTIVE",
           called_at: new Date().toISOString(),
@@ -160,7 +160,7 @@ export const useInsQueueData = ({
       }
 
       const { error } = await supabase
-        .from("queues_ins")
+        .from("queues_ins" as any)
         .update(updateData)
         .eq("id", queueId);
 
@@ -183,7 +183,7 @@ export const useInsQueueData = ({
       // Instead of using recalled_at which doesn't exist in the schema,
       // we'll update the called_at timestamp to indicate a recall
       const { error } = await supabase
-        .from("queues_ins")
+        .from("queues_ins" as any)
         .update({ called_at: new Date().toISOString() })
         .eq("id", queueId);
 
@@ -204,7 +204,7 @@ export const useInsQueueData = ({
   const handleHoldQueue = async (queueId: string) => {
     try {
       const { error } = await supabase
-        .from("queues_ins")
+        .from("queues_ins" as any)
         .update({ paused_at: new Date().toISOString(), status: "WAITING" })
         .eq("id", queueId);
 
@@ -228,7 +228,7 @@ export const useInsQueueData = ({
   ) => {
     try {
       const { error } = await supabase
-        .from("queues_ins")
+        .from("queues_ins" as any)
         .update({
           service_point_id: targetServicePointId,
           transferred_at: new Date().toISOString(),
@@ -253,7 +253,7 @@ export const useInsQueueData = ({
   const handleReturnToWaiting = async (queueId: string) => {
     try {
       const { error } = await supabase
-        .from("queues_ins")
+        .from("queues_ins" as any)
         .update({
           status: "WAITING",
           paused_at: null,
@@ -278,7 +278,7 @@ export const useInsQueueData = ({
   const handleCancelQueue = async (queueId: string) => {
     try {
       const { error } = await supabase
-        .from("queues_ins")
+        .from("queues_ins" as any)
         .update({
           status: "CANCELLED",
           cancelled_at: new Date().toISOString(),
